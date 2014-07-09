@@ -4,13 +4,15 @@ import com.beust.jcommander.JCommander;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.api.dispatch.RequestType;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
-import static org.whitesource.fs.Constants.ORG_TOKEN_PROPERTY_KEY;
-import static org.whitesource.fs.Constants.PROJECT_TOKEN_PROPERTY_KEY;
-import static org.whitesource.fs.Constants.PROJECT_NAME_PROPERTY_KEY;
+import static org.whitesource.fs.Constants.*;
 
 /**
  * Author: Itai Marko
@@ -32,7 +34,21 @@ public class Main {
 
         Properties configProps = ReadAndValidateConfigFile(commandLineArgs.configFilePath);
         WhitesourceFSAgent whitesourceAgent = new WhitesourceFSAgent(commandLineArgs.dependencyDir, configProps);
-        whitesourceAgent.updateWhitesource();
+
+        boolean checkPolcies = false;
+        String checkPoliciesValue = configProps.getProperty(CHECK_POLICIES_PROPERTY_KEY);
+        if (StringUtils.isNotBlank(checkPoliciesValue)) {
+            checkPolcies = Boolean.valueOf(checkPoliciesValue);
+        }
+
+        if (checkPolcies) {
+            boolean success = whitesourceAgent.sendRequest(RequestType.CHECK_POLICIES);
+            if (success) {
+                whitesourceAgent.sendRequest(RequestType.UPDATE);
+            }
+        } else {
+            whitesourceAgent.sendRequest(RequestType.UPDATE);
+        }
     }
 
     /* --- Private methods --- */
@@ -85,6 +101,7 @@ public class Main {
             foundError = true;
             logger.error("Please choose {} or {}", PROJECT_NAME_PROPERTY_KEY, PROJECT_TOKEN_PROPERTY_KEY);
         }
+
         return foundError;
     }
 

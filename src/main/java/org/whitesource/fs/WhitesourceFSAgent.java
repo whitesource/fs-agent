@@ -5,12 +5,15 @@ import org.apache.tools.ant.DirectoryScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.ChecksumUtils;
+import org.whitesource.agent.api.dispatch.CheckPoliciesResult;
+import org.whitesource.agent.api.dispatch.RequestType;
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
+import org.whitesource.agent.report.PolicyCheckReport;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,44 +24,110 @@ import java.util.*;
  */
 public class WhitesourceFSAgent {
 
+    /* --- Static members --- */
+
     private static final Logger logger = LoggerFactory.getLogger(WhitesourceFSAgent.class);
     private static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
 
+    private static final Map<RequestType, String> requestTypeMap;
+
+    static {
+        requestTypeMap = new HashMap<RequestType, String>();
+        requestTypeMap.put(RequestType.UPDATE, "Update");
+        requestTypeMap.put(RequestType.CHECK_POLICIES, "Check Policies");
+    }
+
+    /* --- Members --- */
+
     private final String dependencyDir;
     private final Properties config;
+
+    /* --- Constructors --- */
 
     public WhitesourceFSAgent(String dependencyDir, Properties config) {
         this.dependencyDir = dependencyDir;
         this.config = config;
     }
 
-    public void updateWhitesource() {
-        WhitesourceService service = null;
+    /* --- Public methods --- */
+
+    public boolean sendRequest(RequestType type) {
+        boolean success = true;
+
+        WhitesourceService service = createService();
+        AgentProjectInfo projectInfo = createProjectInfo();
+        String orgToken = config.getProperty(Constants.ORG_TOKEN_PROPERTY_KEY);
+
+        // product properties
+        String productVersion = null;
+        String product = config.getProperty(Constants.PRODUCT_TOKEN_PROPERTY_KEY);
+        if (StringUtils.isBlank(product)) {
+            product = config.getProperty(Constants.PRODUCT_NAME_PROPERTY_KEY);
+            productVersion = config.getProperty(Constants.PRODUCT_VERSION_PROPERTY_KEY);
+        }
+
         try {
-            AgentProjectInfo projectInfo = createProjectInfo();
-            service = createWhitesourceService();
-            String orgToken = config.getProperty(Constants.ORG_TOKEN_PROPERTY_KEY);
-
-            // product properties
-            String productVersion = null;
-            String product = config.getProperty(Constants.PRODUCT_TOKEN_PROPERTY_KEY);
-            if (StringUtils.isBlank(product)) {
-                product = config.getProperty(Constants.PRODUCT_NAME_PROPERTY_KEY);
-                productVersion = config.getProperty(Constants.PRODUCT_VERSION_PROPERTY_KEY);
+            switch (type) {
+                case CHECK_POLICIES:
+                    boolean policyViolation = checkPolicies(service, orgToken, product, productVersion, Arrays.asList(projectInfo));
+                    success = !policyViolation;
+                    break;
+                case UPDATE:
+                    update(service, orgToken, product, productVersion, Arrays.asList(projectInfo));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported request type");
             }
-
-            UpdateInventoryResult updateResult = service.update(orgToken, product, productVersion, Arrays.asList(projectInfo));
-            logResult(updateResult);
         } catch (WssServiceException e) {
-            logger.error("Failed to update White Source server: " + e.getMessage(), e);
+            success = false;
+            logger.error("Failed to send " + requestTypeMap.get(type) + " request to WhiteSource server: " + e.getMessage(), e);
         } finally {
             if (service != null) {
                 service.shutdown();
             }
         }
+
+        return success;
     }
 
-    private WhitesourceService createWhitesourceService() {
+    /* --- Private methods --- */
+
+    private boolean checkPolicies(WhitesourceService service, String orgToken, String product, String productVersion, List<AgentProjectInfo> projects)
+            throws WssServiceException {
+        boolean policyViolation = false;
+
+        logger.info("Checking policies");
+        CheckPoliciesResult checkPoliciesResult = service.checkPolicies(orgToken, product, productVersion, projects);
+        if (checkPoliciesResult.hasRejections()) {
+            logger.info("Some dependencies did not conform with open source policies, review report for details");
+            logger.info("=== UPDATE ABORTED ===");
+            policyViolation = true;
+        } else {
+            logger.info("All dependencies conform with open source policies");
+        }
+
+        try {
+            // generate report
+            PolicyCheckReport report = new PolicyCheckReport(checkPoliciesResult);
+            File outputDir = new File(".");
+            report.generate(outputDir, false);
+            report.generateJson(outputDir);
+            logger.info("Policies report generated successfully");
+        } catch (IOException e) {
+            logger.error("Error generating check policies report: " + e.getMessage(), e);
+        }
+
+        return policyViolation;
+    }
+
+    private void update(WhitesourceService service, String orgToken, String product, String productVersion, List<AgentProjectInfo> projects)
+            throws WssServiceException {
+        logger.info("Sending Update");
+        UpdateInventoryResult updateResult = service.update(orgToken, product, productVersion, projects);
+        logResult(updateResult);
+    }
+
+    private WhitesourceService createService() {
         final WhitesourceService service = new WhitesourceService(Constants.AGENT_TYPE, Constants.AGENT_VERSION, null);
         final String proxyHost = config.getProperty(Constants.PROXY_HOST_PROPERTY_KEY);
         if (StringUtils.isNotBlank(proxyHost)) {

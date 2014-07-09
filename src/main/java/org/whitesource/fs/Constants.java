@@ -4,6 +4,8 @@ package org.whitesource.fs;
  * Author: Itai Marko
  */
 public final class Constants {
+
+    public static final String CHECK_POLICIES_PROPERTY_KEY = "checkPolicies";
     public static final String ORG_TOKEN_PROPERTY_KEY = "apiKey";
     public static final String PRODUCT_TOKEN_PROPERTY_KEY = "productToken"; // optional
     public static final String PRODUCT_NAME_PROPERTY_KEY = "productName"; // optional
@@ -21,4 +23,5 @@ public final class Constants {
 
     public static final String AGENT_TYPE = "generic";//"fs-agent";//
     public static final String AGENT_VERSION = "1.0";
+
 }
