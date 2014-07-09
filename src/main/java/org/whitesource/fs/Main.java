@@ -76,7 +76,7 @@ public class Main {
         String projectToken = configProps.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
         String projectName = configProps.getProperty(PROJECT_NAME_PROPERTY_KEY);
         boolean noProjectToken = StringUtils.isBlank(projectToken);
-        boolean noProjectName = StringUtils.isNotBlank(projectName);
+        boolean noProjectName = StringUtils.isBlank(projectName);
         if (noProjectToken && noProjectName) {
             foundError = true;
             logger.error("Could not retrieve properties {} and {}  from {}",
