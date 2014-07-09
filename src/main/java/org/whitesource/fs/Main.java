@@ -4,7 +4,6 @@ import com.beust.jcommander.JCommander;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.api.dispatch.RequestType;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -34,21 +33,7 @@ public class Main {
 
         Properties configProps = ReadAndValidateConfigFile(commandLineArgs.configFilePath);
         WhitesourceFSAgent whitesourceAgent = new WhitesourceFSAgent(commandLineArgs.dependencyDir, configProps);
-
-        boolean checkPolcies = false;
-        String checkPoliciesValue = configProps.getProperty(CHECK_POLICIES_PROPERTY_KEY);
-        if (StringUtils.isNotBlank(checkPoliciesValue)) {
-            checkPolcies = Boolean.valueOf(checkPoliciesValue);
-        }
-
-        if (checkPolcies) {
-            boolean success = whitesourceAgent.sendRequest(RequestType.CHECK_POLICIES);
-            if (success) {
-                whitesourceAgent.sendRequest(RequestType.UPDATE);
-            }
-        } else {
-            whitesourceAgent.sendRequest(RequestType.UPDATE);
-        }
+        whitesourceAgent.sendRequest();
     }
 
     /* --- Private methods --- */

@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.ChecksumUtils;
 import org.whitesource.agent.api.dispatch.CheckPoliciesResult;
-import org.whitesource.agent.api.dispatch.RequestType;
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
@@ -19,6 +18,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static org.whitesource.fs.Constants.CHECK_POLICIES_PROPERTY_KEY;
+
 /**
  * Author: Itai Marko
  */
@@ -28,14 +29,6 @@ public class WhitesourceFSAgent {
 
     private static final Logger logger = LoggerFactory.getLogger(WhitesourceFSAgent.class);
     private static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
-
-    private static final Map<RequestType, String> requestTypeMap;
-
-    static {
-        requestTypeMap = new HashMap<RequestType, String>();
-        requestTypeMap.put(RequestType.UPDATE, "Update");
-        requestTypeMap.put(RequestType.CHECK_POLICIES, "Check Policies");
-    }
 
     /* --- Members --- */
 
@@ -51,8 +44,12 @@ public class WhitesourceFSAgent {
 
     /* --- Public methods --- */
 
-    public boolean sendRequest(RequestType type) {
-        boolean success = true;
+    public void sendRequest() {
+        boolean checkPolicies = false;
+        String checkPoliciesValue = config.getProperty(CHECK_POLICIES_PROPERTY_KEY);
+        if (StringUtils.isNotBlank(checkPoliciesValue)) {
+            checkPolicies = Boolean.valueOf(checkPoliciesValue);
+        }
 
         WhitesourceService service = createService();
         AgentProjectInfo projectInfo = createProjectInfo();
@@ -67,41 +64,36 @@ public class WhitesourceFSAgent {
         }
 
         try {
-            switch (type) {
-                case CHECK_POLICIES:
-                    boolean policyViolation = checkPolicies(service, orgToken, product, productVersion, Arrays.asList(projectInfo));
-                    success = !policyViolation;
-                    break;
-                case UPDATE:
-                    update(service, orgToken, product, productVersion, Arrays.asList(projectInfo));
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unsupported request type");
+            boolean sendUpdate = true;
+            if (checkPolicies) {
+                boolean policyCompliance = checkPolicies(service, orgToken, product, productVersion, Arrays.asList(projectInfo));
+                sendUpdate = policyCompliance;
+            }
+
+            if (sendUpdate) {
+                update(service, orgToken, product, productVersion, Arrays.asList(projectInfo));
             }
         } catch (WssServiceException e) {
-            success = false;
-            logger.error("Failed to send " + requestTypeMap.get(type) + " request to WhiteSource server: " + e.getMessage(), e);
+            logger.error("Failed to send request to WhiteSource server: " + e.getMessage(), e);
         } finally {
             if (service != null) {
                 service.shutdown();
             }
         }
-
-        return success;
     }
 
     /* --- Private methods --- */
 
     private boolean checkPolicies(WhitesourceService service, String orgToken, String product, String productVersion, List<AgentProjectInfo> projects)
             throws WssServiceException {
-        boolean policyViolation = false;
+        boolean policyCompliance = true;
 
         logger.info("Checking policies");
         CheckPoliciesResult checkPoliciesResult = service.checkPolicies(orgToken, product, productVersion, projects);
         if (checkPoliciesResult.hasRejections()) {
             logger.info("Some dependencies did not conform with open source policies, review report for details");
             logger.info("=== UPDATE ABORTED ===");
-            policyViolation = true;
+            policyCompliance = false;
         } else {
             logger.info("All dependencies conform with open source policies");
         }
@@ -117,7 +109,7 @@ public class WhitesourceFSAgent {
             logger.error("Error generating check policies report: " + e.getMessage(), e);
         }
 
-        return policyViolation;
+        return policyCompliance;
     }
 
     private void update(WhitesourceService service, String orgToken, String product, String productVersion, List<AgentProjectInfo> projects)
