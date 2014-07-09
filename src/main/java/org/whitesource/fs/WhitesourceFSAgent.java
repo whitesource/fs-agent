@@ -38,7 +38,16 @@ public class WhitesourceFSAgent {
             AgentProjectInfo projectInfo = createProjectInfo();
             service = createWhitesourceService();
             String orgToken = config.getProperty(Constants.ORG_TOKEN_PROPERTY_KEY);
-            UpdateInventoryResult updateResult = service.update(orgToken, null, null, Arrays.asList(projectInfo));
+
+            // product properties
+            String productVersion = null;
+            String product = config.getProperty(Constants.PRODUCT_TOKEN_PROPERTY_KEY);
+            if (StringUtils.isBlank(product)) {
+                product = config.getProperty(Constants.PRODUCT_NAME_PROPERTY_KEY);
+                productVersion = config.getProperty(Constants.PRODUCT_VERSION_PROPERTY_KEY);
+            }
+
+            UpdateInventoryResult updateResult = service.update(orgToken, product, productVersion, Arrays.asList(projectInfo));
             logResult(updateResult);
         } catch (WssServiceException e) {
             logger.error("Failed to update White Source server: " + e.getMessage(), e);

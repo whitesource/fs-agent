@@ -5,6 +5,9 @@ package org.whitesource.fs;
  */
 public final class Constants {
     public static final String ORG_TOKEN_PROPERTY_KEY = "apiKey";
+    public static final String PRODUCT_TOKEN_PROPERTY_KEY = "productToken"; // optional
+    public static final String PRODUCT_NAME_PROPERTY_KEY = "productName"; // optional
+    public static final String PRODUCT_VERSION_PROPERTY_KEY = "productVersion"; // optional
     public static final String PROJECT_TOKEN_PROPERTY_KEY = "projectToken";
     public static final String PROJECT_NAME_PROPERTY_KEY = "projectName";
     public static final String PROJECT_VERSION_PROPERTY_KEY = "projectVersion"; // optional
