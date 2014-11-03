@@ -16,6 +16,7 @@ import org.whitesource.agent.report.PolicyCheckReport;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.*;
 
 import static org.whitesource.fs.Constants.CHECK_POLICIES_PROPERTY_KEY;
@@ -173,6 +174,7 @@ public class WhitesourceFSAgent {
         for (String file : files) {
             addNewDependencyInfo(file, basedir, dependencyInfos);
         }
+        logger.info(MessageFormat.format("Total Files Found: {0}", dependencyInfos.size()));
         return dependencyInfos;
     }
 
@@ -187,6 +189,11 @@ public class WhitesourceFSAgent {
         }
         final DependencyInfo dependencyInfo = new DependencyInfo(sha1);
         dependencyInfo.setArtifactId(dependencyFile.getName());
+        try {
+            dependencyInfo.setSystemPath(dependencyFile.getCanonicalPath());
+        } catch (IOException e) {
+            dependencyInfo.setSystemPath(dependencyFile.getAbsolutePath());
+        }
         dependencyInfos.add(dependencyInfo);
     }
 

@@ -31,14 +31,14 @@ public class Main {
         // validate args // TODO use jCommander validators
         // TODO add usage command
 
-        Properties configProps = ReadAndValidateConfigFile(commandLineArgs.configFilePath);
+        Properties configProps = readAndValidateConfigFile(commandLineArgs.configFilePath);
         WhitesourceFSAgent whitesourceAgent = new WhitesourceFSAgent(commandLineArgs.dependencyDir, configProps);
         whitesourceAgent.sendRequest();
     }
 
     /* --- Private methods --- */
 
-    private static Properties ReadAndValidateConfigFile(String configFilePath) {
+    private static Properties readAndValidateConfigFile(String configFilePath) {
         Properties configProps = new Properties();
         InputStream inputStream = null;
         boolean foundError = false;
