@@ -22,6 +22,6 @@ public final class Constants {
     public static final String PROXY_PASS_PROPERTY_KEY = "proxy.pass";
 
     public static final String AGENT_TYPE = "fs-agent";
-    public static final String AGENT_VERSION = "1.0";
+    public static final String AGENT_VERSION = "2.0";
 
 }
