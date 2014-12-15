@@ -1,17 +1,33 @@
+/**
+ * Copyright (C) 2014 WhiteSource Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.whitesource.fs;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.api.ChecksumUtils;
 import org.whitesource.agent.api.dispatch.CheckPoliciesResult;
+import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
+import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 
 import java.io.File;
@@ -19,7 +35,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 
-import static org.whitesource.fs.Constants.CHECK_POLICIES_PROPERTY_KEY;
+import static org.whitesource.fs.Constants.*;
 
 /**
  * Author: Itai Marko
@@ -52,7 +68,6 @@ public class WhitesourceFSAgent {
             checkPolicies = Boolean.valueOf(checkPoliciesValue);
         }
 
-        WhitesourceService service = createService();
         AgentProjectInfo projectInfo = createProjectInfo();
         String orgToken = config.getProperty(Constants.ORG_TOKEN_PROPERTY_KEY);
 
@@ -64,26 +79,50 @@ public class WhitesourceFSAgent {
             productVersion = config.getProperty(Constants.PRODUCT_VERSION_PROPERTY_KEY);
         }
 
-        try {
-            boolean sendUpdate = true;
-            if (checkPolicies) {
-                boolean policyCompliance = checkPolicies(service, orgToken, product, productVersion, Arrays.asList(projectInfo));
-                sendUpdate = policyCompliance;
-            }
+        boolean offline = false;
+        String offlineValue = config.getProperty(OFFLINE_PROPERTY_KEY);
+        if (StringUtils.isNotBlank(offlineValue)) {
+            offline = Boolean.valueOf(offlineValue);
+        }
 
-            if (sendUpdate) {
-                update(service, orgToken, product, productVersion, Arrays.asList(projectInfo));
-            }
-        } catch (WssServiceException e) {
-            logger.error("Failed to send request to WhiteSource server: " + e.getMessage(), e);
-        } finally {
-            if (service != null) {
-                service.shutdown();
+        WhitesourceService service = createService();
+        List<AgentProjectInfo> projects = Arrays.asList(projectInfo);
+        if (offline) {
+            offlineUpdate(service, orgToken, product, productVersion, projects);
+        } else {
+            try {
+                boolean sendUpdate = true;
+                if (checkPolicies) {
+                    boolean policyCompliance = checkPolicies(service, orgToken, product, productVersion, projects);
+                    sendUpdate = policyCompliance;
+                }
+
+                if (sendUpdate) {
+                    update(service, orgToken, product, productVersion, projects);
+                }
+            } catch (WssServiceException e) {
+                logger.error("Failed to send request to WhiteSource server: " + e.getMessage(), e);
+            } finally {
+                if (service != null) {
+                    service.shutdown();
+                }
             }
         }
     }
 
     /* --- Private methods --- */
+
+    private WhitesourceService createService() {
+        final WhitesourceService service = new WhitesourceService(Constants.AGENT_TYPE, Constants.AGENT_VERSION, null);
+        final String proxyHost = config.getProperty(Constants.PROXY_HOST_PROPERTY_KEY);
+        if (StringUtils.isNotBlank(proxyHost)) {
+            final int proxyPort = Integer.parseInt(config.getProperty(Constants.PROXY_PORT_PROPERTY_KEY));
+            final String proxyUser = config.getProperty(Constants.PROXY_USER_PROPERTY_KEY);
+            final String proxyPass = config.getProperty(Constants.PROXY_PASS_PROPERTY_KEY);
+            service.getClient().setProxy(proxyHost, proxyPort, proxyUser, proxyPass);
+        }
+        return service;
+    }
 
     private boolean checkPolicies(WhitesourceService service, String orgToken, String product, String productVersion, List<AgentProjectInfo> projects)
             throws WssServiceException {
@@ -120,16 +159,31 @@ public class WhitesourceFSAgent {
         logResult(updateResult);
     }
 
-    private WhitesourceService createService() {
-        final WhitesourceService service = new WhitesourceService(Constants.AGENT_TYPE, Constants.AGENT_VERSION, null);
-        final String proxyHost = config.getProperty(Constants.PROXY_HOST_PROPERTY_KEY);
-        if (StringUtils.isNotBlank(proxyHost)) {
-            final int proxyPort = Integer.parseInt(config.getProperty(Constants.PROXY_PORT_PROPERTY_KEY));
-            final String proxyUser = config.getProperty(Constants.PROXY_USER_PROPERTY_KEY);
-            final String proxyPass = config.getProperty(Constants.PROXY_PASS_PROPERTY_KEY);
-            service.getClient().setProxy(proxyHost, proxyPort, proxyUser, proxyPass);
+    private void offlineUpdate(WhitesourceService service, String orgToken, String product, String productVersion,
+                               List<AgentProjectInfo> projects) {
+        logger.info("Generating offline update request");
+
+        // zip?
+        String zipValue = config.getProperty(OFFLINE_ZIP_PROPERTY_KEY);
+        boolean zip = false;
+        if (StringUtils.isNotBlank(zipValue)) {
+            zip = Boolean.valueOf(zipValue);
         }
-        return service;
+
+        // generate offline request
+        UpdateInventoryRequest updateRequest = service.offlineUpdate(orgToken, product, productVersion, projects);
+        try {
+            OfflineUpdateRequest offlineUpdateRequest = new OfflineUpdateRequest(updateRequest);
+            File outputDir = new File(".");
+            File file = offlineUpdateRequest.generate(outputDir, zip);
+            logger.info("Offline request generated successfully at {}", file.getPath());
+        } catch (IOException e) {
+            logger.error("Error generating offline update request: " + e.getMessage(), e);
+        } finally {
+            if (service != null) {
+                service.shutdown();
+            }
+        }
     }
 
     private AgentProjectInfo createProjectInfo() {
@@ -168,33 +222,19 @@ public class WhitesourceFSAgent {
             }
         }
         scanner.scan();
-        String[] files = scanner.getIncludedFiles();
-        final File basedir = scanner.getBasedir();
+        String[] fileNames = scanner.getIncludedFiles();
+        File basedir = scanner.getBasedir();
+
+        DependencyInfoFactory factory = new DependencyInfoFactory();
         List<DependencyInfo> dependencyInfos = new ArrayList<DependencyInfo>();
-        for (String file : files) {
-            addNewDependencyInfo(file, basedir, dependencyInfos);
+        for (String fileName : fileNames) {
+            DependencyInfo dependencyInfo = factory.createDependencyInfo(basedir, fileName);
+            if (dependencyInfo != null) {
+                dependencyInfos.add(dependencyInfo);
+            }
         }
         logger.info(MessageFormat.format("Total Files Found: {0}", dependencyInfos.size()));
         return dependencyInfos;
-    }
-
-    private void addNewDependencyInfo(String dependencyFileName, File basedir, List<DependencyInfo> dependencyInfos) {
-        String sha1;
-        File dependencyFile = new File(basedir, dependencyFileName);
-        try {
-            sha1 = ChecksumUtils.calculateSHA1(dependencyFile);
-        } catch (IOException e) {
-            logger.warn("Failed to add dependency " + dependencyFileName + " to dependency list: ", e);
-            return;
-        }
-        final DependencyInfo dependencyInfo = new DependencyInfo(sha1);
-        dependencyInfo.setArtifactId(dependencyFile.getName());
-        try {
-            dependencyInfo.setSystemPath(dependencyFile.getCanonicalPath());
-        } catch (IOException e) {
-            dependencyInfo.setSystemPath(dependencyFile.getAbsolutePath());
-        }
-        dependencyInfos.add(dependencyInfo);
     }
 
     private void logResult(UpdateInventoryResult updateResult) {

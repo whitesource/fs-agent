@@ -6,15 +6,23 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
     <properties>
-        <agent.api.version>2.0.0</agent.api.version>
+        <agent.api.version>2.1.0-SNAPSHOT</agent.api.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <slf4j.version>1.7.7</slf4j.version>
     </properties>
 
-    <dependencies>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
+    <dependencies>
         <!-- White Source -->
         <dependency>
             <groupId>org.whitesource</groupId>
@@ -25,6 +33,11 @@
             <groupId>org.whitesource</groupId>
             <artifactId>wss-agent-report</artifactId>
             <version>${agent.api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.rat</groupId>
+            <artifactId>apache-rat-core</artifactId>
+            <version>0.12-SNAPSHOT</version>
         </dependency>
 
         <!-- CLI library -->
@@ -41,13 +54,23 @@
             <version>1.9.4</version>
         </dependency>
 
-        <!-- Logging SLF4J/java.util.logging -->
+        <!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-jdk14</artifactId>
-            <version>1.7.7</version>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.0.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
     <build>
