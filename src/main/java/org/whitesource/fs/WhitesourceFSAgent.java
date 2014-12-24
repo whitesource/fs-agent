@@ -38,7 +38,8 @@ import java.util.*;
 import static org.whitesource.fs.Constants.*;
 
 /**
- * Author: Itai Marko
+ * @author Itai Marko
+ * @author tom.shapira
  */
 public class WhitesourceFSAgent {
 
@@ -62,16 +63,22 @@ public class WhitesourceFSAgent {
     /* --- Public methods --- */
 
     public void sendRequest() {
+        AgentProjectInfo projectInfo = createProjectInfo();
+        if (projectInfo.getDependencies().isEmpty()) {
+            logger.info("Exiting, nothing to update");
+        } else {
+            sendRequest(projectInfo);
+        }
+    }
+
+    private void sendRequest(AgentProjectInfo projectInfo) {
         boolean checkPolicies = false;
         String checkPoliciesValue = config.getProperty(CHECK_POLICIES_PROPERTY_KEY);
         if (StringUtils.isNotBlank(checkPoliciesValue)) {
             checkPolicies = Boolean.valueOf(checkPoliciesValue);
         }
 
-        AgentProjectInfo projectInfo = createProjectInfo();
         String orgToken = config.getProperty(Constants.ORG_TOKEN_PROPERTY_KEY);
-
-        // product properties
         String productVersion = null;
         String product = config.getProperty(Constants.PRODUCT_TOKEN_PROPERTY_KEY);
         if (StringUtils.isBlank(product)) {
@@ -85,6 +92,7 @@ public class WhitesourceFSAgent {
             offline = Boolean.valueOf(offlineValue);
         }
 
+        // send request
         WhitesourceService service = createService();
         List<AgentProjectInfo> projects = Arrays.asList(projectInfo);
         if (offline) {
