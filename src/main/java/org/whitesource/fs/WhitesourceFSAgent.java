@@ -29,6 +29,7 @@ import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
+import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
 import java.io.IOException;
@@ -212,8 +213,23 @@ public class WhitesourceFSAgent {
     }
 
     private List<DependencyInfo> getDependencyInfos() {
+        String scannerBaseDir = dependencyDir;
+
+        // create scm connector
+        String scmType = config.getProperty(SCM_TYPE_PROPERTY_KEY);
+        String url = config.getProperty(SCM_URL_PROPERTY_KEY);
+        String username = config.getProperty(SCM_USER_PROPERTY_KEY);
+        String password = config.getProperty(SCM_PASS_PROPERTY_KEY);
+        String branch = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
+        String tag = config.getProperty(SCM_TAG_PROPERTY_KEY);
+        ScmConnector scmConnector = ScmConnector.create(scmType, url, username, password, branch, tag);
+        if (scmConnector != null) {
+            scannerBaseDir = scmConnector.cloneRepository().getPath();
+        }
+
+        // scan directory
         DirectoryScanner scanner = new DirectoryScanner();
-        scanner.setBasedir(dependencyDir);
+        scanner.setBasedir(scannerBaseDir);
         String includes = config.getProperty(Constants.INCLUDES_PATTERN_PROPERTY_KEY, "**/*");
         scanner.setIncludes(includes.split(INCLUDES_EXCLUDES_SEPARATOR_REGEX));
         String excludes = config.getProperty(Constants.EXCLUDES_PATTERN_PROPERTY_KEY, "");
@@ -226,6 +242,7 @@ public class WhitesourceFSAgent {
                 scanner.setCaseSensitive(false);
             } else {
                 logger.error("Bad {}. Received {}, required true/false or y/n", Constants.CASE_SENSITIVE_GLOB_PROPERTY_KEY, globCaseSensitive);
+                scmConnector.deleteCloneDirectory();
                 System.exit(-1); // TODO this is within a try frame. Throw an exception instead
             }
         }
@@ -233,15 +250,22 @@ public class WhitesourceFSAgent {
         String[] fileNames = scanner.getIncludedFiles();
         File basedir = scanner.getBasedir();
 
+        // create dependency infos from files
         DependencyInfoFactory factory = new DependencyInfoFactory();
         List<DependencyInfo> dependencyInfos = new ArrayList<DependencyInfo>();
         for (String fileName : fileNames) {
             DependencyInfo dependencyInfo = factory.createDependencyInfo(basedir, fileName);
             if (dependencyInfo != null) {
+                if (scmConnector != null) {
+                    // no need to send system path for file from scm repository
+                    dependencyInfo.setSystemPath(null);
+                }
                 dependencyInfos.add(dependencyInfo);
             }
         }
         logger.info(MessageFormat.format("Total Files Found: {0}", dependencyInfos.size()));
+
+        scmConnector.deleteCloneDirectory();
         return dependencyInfos;
     }
 

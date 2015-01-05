@@ -12,12 +12,12 @@
 	</appender>
 	
 	<logger name="com.wss" level="debug"/>
+	<logger name="org.apache.maven" level="debug"/>
 
 	<logger name="httpclient" level="error"/>
 	<logger name="java" level="error"/>
 	<logger name="org.apache" level="error"/>
-	
-	<logger name="org.apache.maven" level="debug"/>
+	<logger name="com.aragost.javahg.log.JULLogger" level="error"/>
 
 	<root level="debug">
 		<appender-ref ref="console"/>

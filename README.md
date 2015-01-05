@@ -1,4 +1,4 @@
-White Source File System Agent
+WhiteSource File System Agent
 ==============================
 
 An [external update agent][1] for projects.
@@ -15,7 +15,7 @@ You can always create an issue or tell our support team what you think [here][5]
 ### License
 The project is licensed under the [Apache 2.0][6] license.
 <pre>
-Copyright (C) 2012 White Source Ltd.
+Copyright (C) 2015 WhiteSource Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

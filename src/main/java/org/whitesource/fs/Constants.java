@@ -37,6 +37,12 @@ public final class Constants {
     public static final String PROXY_PASS_PROPERTY_KEY = "proxy.pass";
     public static final String OFFLINE_PROPERTY_KEY = "offline";
     public static final String OFFLINE_ZIP_PROPERTY_KEY = "offline.zip";
+    public static final String SCM_TYPE_PROPERTY_KEY = "scm.type";
+    public static final String SCM_URL_PROPERTY_KEY = "scm.url";
+    public static final String SCM_USER_PROPERTY_KEY = "scm.user";
+    public static final String SCM_PASS_PROPERTY_KEY = "scm.pass";
+    public static final String SCM_BRANCH_PROPERTY_KEY = "scm.branch";
+    public static final String SCM_TAG_PROPERTY_KEY = "scm.tag";
 
     public static final String AGENT_TYPE = "fs-agent";
     public static final String AGENT_VERSION = "2.0.1";
