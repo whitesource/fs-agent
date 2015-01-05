@@ -121,7 +121,13 @@ public class DependencyInfoFactory {
                         if (line.startsWith(commentStart)) {
                             if (line.contains(commentEnd)) {
                                 commentBlock = false;
-                                line = line.substring(commentStart.length(), line.indexOf(commentEnd));
+                                int endIndex = line.indexOf(commentEnd);
+                                int commentLength = commentStart.length();
+                                if (endIndex >= commentLength) {
+                                    line = line.substring(commentLength, endIndex);
+                                } else {
+                                    line = "";
+                                }
                             } else {
                                 commentBlock = true;
                             }
