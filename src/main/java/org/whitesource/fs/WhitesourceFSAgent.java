@@ -265,7 +265,9 @@ public class WhitesourceFSAgent {
         }
         logger.info(MessageFormat.format("Total Files Found: {0}", dependencyInfos.size()));
 
-        scmConnector.deleteCloneDirectory();
+        if (scmConnector != null) {
+            scmConnector.deleteCloneDirectory();
+        }
         return dependencyInfos;
     }
 
