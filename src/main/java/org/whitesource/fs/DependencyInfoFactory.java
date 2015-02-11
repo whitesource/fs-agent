@@ -48,6 +48,10 @@ public class DependencyInfoFactory {
     private static final Logger logger = LoggerFactory.getLogger(DependencyInfoFactory.class);
 
     private static final String COPYRIGHT = "copyright";
+    private static final String COPYRIGHT_WITH_SYMBOL = "copyright (c)";
+    private static final String COPYRIGHT_YEARS_ONLY_REGEX = "((\\d)*( )*(,)*(-)*[ ]*)*";
+    private static final String CONTAINS_YEAR_REGEX = ".*(\\d\\d\\d\\d)+.*";
+    private static final String WHITESPACE = " ";
 
     private static final Map<String, String> commentStartEndMap;
     static {
@@ -152,11 +156,48 @@ public class DependencyInfoFactory {
                 // check for one-line comments
                 if ((commentBlock || line.startsWith("//") || line.startsWith("#"))
                         && line.toLowerCase().contains(COPYRIGHT)) {
-                    line = line.replace("/**", "").replace("/*", "")
-                            .replace("*", "").replace("#", "")
-                            .replace("/", "").replace("\\t", "")
-                            .replace("\\n", "").trim();
-                    copyrights.add(new CopyrightInfo(line, lineIndex));
+                    StringBuilder sb = new StringBuilder();
+                    line = cleanLine(line);
+                    sb.append(line);
+
+                    // check if copyright continues to next line
+                    boolean continuedToNextLine = false;
+                    if (iterator.hasNext()) {
+                        String copyrightOwner = null;
+                        String lowerCaseLine = line.toLowerCase();
+                        if (lowerCaseLine.startsWith(COPYRIGHT_WITH_SYMBOL)) {
+                            copyrightOwner = line.substring(COPYRIGHT_WITH_SYMBOL.length()).trim();
+                        } else if (lowerCaseLine.startsWith(COPYRIGHT)) {
+                            copyrightOwner = line.substring(COPYRIGHT.length()).trim();
+                        }
+
+                        if (copyrightOwner != null) {
+                            if (copyrightOwner.matches(COPYRIGHT_YEARS_ONLY_REGEX)) {
+                                // check if line has ending of comment block
+                                for (String commentEnd : commentStartEndMap.values()) {
+                                    if (line.contains(commentEnd)) {
+                                        commentBlock = false;
+                                        break;
+                                    }
+                                }
+
+                                // if still in comment block, read next line
+                                if (commentBlock) {
+                                    String nextLine = cleanLine(iterator.next());
+                                    sb.append(WHITESPACE);
+                                    sb.append(nextLine);
+
+                                    continuedToNextLine = true;
+                                    line = nextLine;
+                                }
+                            }
+                        }
+                    }
+                    copyrights.add(new CopyrightInfo(sb.toString(), lineIndex));
+
+                    if (continuedToNextLine) {
+                        lineIndex++;
+                    }
                 }
 
                 // check if line has ending of comment block
@@ -173,7 +214,44 @@ public class DependencyInfoFactory {
         } catch (IOException e) {
             logger.warn("Error reading file: " + file.getPath());
         }
+
+        removeRedundantCopyrights(copyrights);
+
         return copyrights;
+    }
+
+    private void removeRedundantCopyrights(Collection<CopyrightInfo> copyrights) {
+        if (copyrights.size() > 1) {
+            // check if exists at least one copyright with year
+            boolean hasCopyrightWithYear = false;
+            for (CopyrightInfo copyright : copyrights) {
+                if (copyright.getCopyright().matches(CONTAINS_YEAR_REGEX)) {
+                    hasCopyrightWithYear = true;
+                    break;
+                }
+            }
+
+            if (hasCopyrightWithYear) {
+                Iterator<CopyrightInfo> iterator = copyrights.iterator();
+                while (iterator.hasNext()) {
+                    CopyrightInfo copyrightInfo = iterator.next();
+                    String copyright = copyrightInfo.getCopyright();
+
+                    // remove regular lines found with the word 'copyright' but without year
+                    // don't remove lines without year but have 'Copyright (C)' (probably an actual copyright reference)
+                    if (!copyright.matches(CONTAINS_YEAR_REGEX) && !copyright.toLowerCase().contains(COPYRIGHT_WITH_SYMBOL)) {
+                        iterator.remove();
+                    }
+                }
+            }
+        }
+    }
+
+    private String cleanLine(String line) {
+        return line.replace("/**", "").replace("/*", "")
+                .replace("*", "").replace("#", "")
+                .replace("/", "").replace("\\t", "")
+                .replace("\\n", "").trim();
     }
 
 }
