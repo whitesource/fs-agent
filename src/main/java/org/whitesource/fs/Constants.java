@@ -45,6 +45,6 @@ public final class Constants {
     public static final String SCM_TAG_PROPERTY_KEY = "scm.tag";
 
     public static final String AGENT_TYPE = "fs-agent";
-    public static final String AGENT_VERSION = "2.0.1";
+    public static final String AGENT_VERSION = "2.2.0";
 
 }

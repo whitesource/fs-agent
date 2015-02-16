@@ -79,6 +79,10 @@ public class DependencyInfoFactory {
                 dependencyInfo.setSystemPath(dependencyFile.getAbsolutePath());
             }
 
+            // calculate sha1 for file header and footer (for partial matching)
+            ChecksumUtils.calculateHeaderAndFooterSha1(dependencyFile, dependencyInfo);
+
+            // scan for licenses
             try {
                 Set<String> licenses = scanLicenses(dependencyFile);
                 dependencyInfo.getLicenses().addAll(licenses);
