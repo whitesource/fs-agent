@@ -47,11 +47,17 @@ public class DependencyInfoFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(DependencyInfoFactory.class);
 
+    private static final String LICENSE_PATTERN = ".*license.*|.*redistribution.*|.*licensing.*|.*redistribute.*";
+    private static final String COPYRIGHT_PATTERN = ".*copyright.*";
+
     private static final String COPYRIGHT = "copyright";
     private static final String COPYRIGHT_WITH_SYMBOL = "copyright (c)";
-    private static final String COPYRIGHT_YEARS_ONLY_REGEX = "((\\d)*( )*(,)*(-)*[ ]*)*";
+    private static final String COPYRIGHT_ALPHA_CHAR_REGEX = ".*[a-zA-Z]+.*";
     private static final String CONTAINS_YEAR_REGEX = ".*(\\d\\d\\d\\d)+.*";
     private static final String WHITESPACE = " ";
+    private static final String EMPTY_STRING = "";
+
+    private static final int FIRST_LINES_TO_SCAN = 150;
 
     private static final Map<String, String> commentStartEndMap;
     static {
@@ -61,6 +67,7 @@ public class DependencyInfoFactory {
         commentStartEndMap.put("<!--", "-->");
         commentStartEndMap.put("\"\"\"", "\"\"\"");
         commentStartEndMap.put("=begin", "=end");
+        commentStartEndMap.put("##", "##");
     }
 
     /* --- Public methods --- */
@@ -82,14 +89,40 @@ public class DependencyInfoFactory {
             // calculate sha1 for file header and footer (for partial matching)
             ChecksumUtils.calculateHeaderAndFooterSha1(dependencyFile, dependencyInfo);
 
-            // scan for licenses
+            boolean containsLicense = false;
+            boolean containsCopyright = false;
             try {
-                Set<String> licenses = scanLicenses(dependencyFile);
-                dependencyInfo.getLicenses().addAll(licenses);
-            } catch (Exception e) {
-                logger.debug("Error scanning file for license", e);
+                // only check file headers
+                List<String> lines = FileUtils.readLines(dependencyFile);
+                for (int i = 0; i < lines.size() && i < FIRST_LINES_TO_SCAN; i++) {
+                    String line = lines.get(i).toLowerCase();
+                    if (line.matches(COPYRIGHT_PATTERN)) {
+                        containsCopyright = true;
+                        containsLicense = true;
+                        break;
+                    } else if (line.matches(LICENSE_PATTERN)) {
+                        containsLicense = true;
+                        // continue looking for copyrights
+                    }
+                }
+            } catch (IOException e) {
+                // do nothing
             }
-            dependencyInfo.getCopyrights().addAll(extractCopyrights(dependencyFile));
+
+            // check if file contains one the "license" words before scanning for licenses
+            if (containsLicense) {
+                try {
+                    Set<String> licenses = scanLicenses(dependencyFile);
+                    dependencyInfo.getLicenses().addAll(licenses);
+                } catch (Exception e) {
+                    logger.debug("Error scanning file for license", e);
+                }
+            }
+
+            // check if file contains the word "copyright" before extracting copyright information
+            if (containsCopyright) {
+                dependencyInfo.getCopyrights().addAll(extractCopyrights(dependencyFile));
+            }
         } catch (IOException e) {
             logger.warn("Failed to create dependency " + fileName + " to dependency list: ", e);
         }
@@ -134,7 +167,7 @@ public class DependencyInfoFactory {
                                 if (endIndex >= commentLength) {
                                     line = line.substring(commentLength, endIndex);
                                 } else {
-                                    line = "";
+                                    line = EMPTY_STRING;
                                 }
                             } else {
                                 commentBlock = true;
@@ -176,7 +209,8 @@ public class DependencyInfoFactory {
                         }
 
                         if (copyrightOwner != null) {
-                            if (copyrightOwner.matches(COPYRIGHT_YEARS_ONLY_REGEX)) {
+                            // check if copyright contains an alpha char (not just years)
+                            if (!copyrightOwner.matches(COPYRIGHT_ALPHA_CHAR_REGEX)) {
                                 // check if line has ending of comment block
                                 for (String commentEnd : commentStartEndMap.values()) {
                                     if (line.contains(commentEnd)) {
@@ -252,10 +286,10 @@ public class DependencyInfoFactory {
     }
 
     private String cleanLine(String line) {
-        return line.replace("/**", "").replace("/*", "")
-                .replace("*", "").replace("#", "")
-                .replace("/", "").replace("\\t", "")
-                .replace("\\n", "").trim();
+        return line.replace("/**", EMPTY_STRING).replace("/*", EMPTY_STRING)
+                .replace("*", EMPTY_STRING).replace("#", EMPTY_STRING)
+                .replace("/", EMPTY_STRING).replace("\\t", EMPTY_STRING)
+                .replace("\\n", EMPTY_STRING).trim();
     }
 
 }

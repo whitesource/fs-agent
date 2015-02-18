@@ -48,6 +48,9 @@ public class WhitesourceFSAgent {
 
     private static final Logger logger = LoggerFactory.getLogger(WhitesourceFSAgent.class);
     private static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
+    private static final List<String> progressAnimation = Arrays.asList("|", "/", "-", "\\");
+    private static final int ANIMATION_FRAMES = progressAnimation.size();
+    private static int animationIndex = 0;
 
     /* --- Members --- */
 
@@ -94,6 +97,7 @@ public class WhitesourceFSAgent {
         }
 
         // send request
+        logger.info("Initializing WhiteSource Client");
         WhitesourceService service = createService();
         List<AgentProjectInfo> projects = Arrays.asList(projectInfo);
         if (offline) {
@@ -224,10 +228,12 @@ public class WhitesourceFSAgent {
         String tag = config.getProperty(SCM_TAG_PROPERTY_KEY);
         ScmConnector scmConnector = ScmConnector.create(scmType, url, username, password, branch, tag);
         if (scmConnector != null) {
+            logger.info("Connecting to SCM");
             scannerBaseDir = scmConnector.cloneRepository().getPath();
         }
 
         // scan directory
+        logger.info("Scanning Directory for Matching Files (may take a few minutes)");
         DirectoryScanner scanner = new DirectoryScanner();
         scanner.setBasedir(scannerBaseDir);
         String includes = config.getProperty(Constants.INCLUDES_PATTERN_PROPERTY_KEY, "**/*");
@@ -249,10 +255,15 @@ public class WhitesourceFSAgent {
         scanner.scan();
         String[] fileNames = scanner.getIncludedFiles();
         File basedir = scanner.getBasedir();
+        int totalFiles = fileNames.length;
+        logger.info(MessageFormat.format("Total Files Found: {0}", totalFiles));
 
         // create dependency infos from files
+        logger.info("Starting Analysis");
         DependencyInfoFactory factory = new DependencyInfoFactory();
         List<DependencyInfo> dependencyInfos = new ArrayList<DependencyInfo>();
+        displayProgress(0, totalFiles);
+        int index = 1;
         for (String fileName : fileNames) {
             DependencyInfo dependencyInfo = factory.createDependencyInfo(basedir, fileName);
             if (dependencyInfo != null) {
@@ -262,8 +273,12 @@ public class WhitesourceFSAgent {
                 }
                 dependencyInfos.add(dependencyInfo);
             }
+
+            // print progress
+            displayProgress(index, totalFiles);
+            index++;
         }
-        logger.info(MessageFormat.format("Total Files Found: {0}", dependencyInfos.size()));
+        logger.info("Finished Analyzing Files");
 
         if (scmConnector != null) {
             scmConnector.deleteCloneDirectory();
@@ -297,5 +312,32 @@ public class WhitesourceFSAgent {
         }
 
         logger.info(resultLogMsg.toString());
+    }
+
+    private void displayProgress(int index, int totalFiles) {
+        StringBuilder sb = new StringBuilder("[INFO] ");
+
+        // draw each animation for 4 frames
+        int actualAnimationIndex = animationIndex % (ANIMATION_FRAMES * 4);
+        sb.append(progressAnimation.get((actualAnimationIndex / 4) % ANIMATION_FRAMES));
+        animationIndex++;
+
+        // draw progress bar
+        sb.append(" [");
+        double percentage = ((double) index / totalFiles) * 100;
+        int progressionBlocks = (int) (percentage / 3);
+        for (int i = 0; i < progressionBlocks; i++) {
+            sb.append("#");
+        }
+        for (int i = progressionBlocks; i < 33; i++) {
+            sb.append(" ");
+        }
+        sb.append("] {0}% - {1} of {2} files\r");
+        System.out.print(MessageFormat.format(sb.toString(), (int) percentage, index, totalFiles));
+
+        if (index == totalFiles) {
+            // clear progress animation
+            System.out.print("                                                                                  \r");
+        }
     }
 }
