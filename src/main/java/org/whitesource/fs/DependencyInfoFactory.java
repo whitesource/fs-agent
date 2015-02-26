@@ -50,12 +50,15 @@ public class DependencyInfoFactory {
     private static final String LICENSE_PATTERN = ".*license.*|.*redistribution.*|.*licensing.*|.*redistribute.*";
     private static final String COPYRIGHT_PATTERN = ".*copyright.*";
 
+    private static final String PlATFORM_DEPENDENT_TMP_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator + "WhiteSource-PlatformDependentFiles";
     private static final String COPYRIGHT = "copyright";
     private static final String COPYRIGHT_WITH_SYMBOL = "copyright (c)";
     private static final String COPYRIGHT_ALPHA_CHAR_REGEX = ".*[a-zA-Z]+.*";
     private static final String CONTAINS_YEAR_REGEX = ".*(\\d\\d\\d\\d)+.*";
     private static final String WHITESPACE = " ";
     private static final String EMPTY_STRING = "";
+    public static final String CRLF = "\r\n";
+    public static final String NEW_LINE = "\n";
 
     private static final int FIRST_LINES_TO_SCAN = 150;
 
@@ -80,11 +83,18 @@ public class DependencyInfoFactory {
             dependencyInfo = new DependencyInfo(sha1);
             dependencyInfo.setArtifactId(dependencyFile.getName());
             dependencyInfo.setLastModified(new Date(dependencyFile.lastModified()));
+            File otherPlatformFile = createOtherPlatformFile(dependencyFile);
+            if (otherPlatformFile != null) {
+                String otherPlatformSha1 = ChecksumUtils.calculateSHA1(otherPlatformFile);
+                // change getter to  otherPlatformSha1
+                dependencyInfo.setOtherPlatformSha1(otherPlatformSha1);
+            }
             try {
                 dependencyInfo.setSystemPath(dependencyFile.getCanonicalPath());
             } catch (IOException e) {
                 dependencyInfo.setSystemPath(dependencyFile.getAbsolutePath());
             }
+            deleteFile(otherPlatformFile);
 
             // calculate sha1 for file header and footer (for partial matching)
             ChecksumUtils.calculateHeaderAndFooterSha1(dependencyFile, dependencyInfo);
@@ -285,6 +295,26 @@ public class DependencyInfoFactory {
         }
     }
 
+    private File createOtherPlatformFile(File originalPlatform) {
+        try {
+            byte[] byteArray = FileUtils.readFileToByteArray(originalPlatform);
+
+            String fileText = new String(byteArray);
+            File otherPlatFile = new File(PlATFORM_DEPENDENT_TMP_DIRECTORY, originalPlatform.getName());
+            if (fileText.contains(CRLF)) {
+                FileUtils.write(otherPlatFile, fileText.replaceAll(CRLF, NEW_LINE));
+            } else if (fileText.contains(NEW_LINE)) {
+                FileUtils.write(otherPlatFile, fileText.replaceAll(NEW_LINE, CRLF));
+            }
+            if (otherPlatFile.exists()) {
+                return otherPlatFile;
+            }
+        } catch (IOException e) {
+            logger.warn("Failed to create other platform file " + originalPlatform.getName() + "can't be added to dependency list: ", e);
+        }
+        return null;
+    }
+
     private String cleanLine(String line) {
         return line.replace("/**", EMPTY_STRING).replace("/*", EMPTY_STRING)
                 .replace("*", EMPTY_STRING).replace("#", EMPTY_STRING)
@@ -292,4 +322,13 @@ public class DependencyInfoFactory {
                 .replace("\\n", EMPTY_STRING).trim();
     }
 
+    private void deleteFile(File file) {
+        if (file != null) {
+            try {
+                FileUtils.forceDelete(file);
+            } catch (IOException e) {
+                // do nothing
+            }
+        }
+    }
 }

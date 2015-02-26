@@ -15,6 +15,7 @@
  */
 package org.whitesource.fs;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.slf4j.Logger;
@@ -31,8 +32,7 @@ import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 import org.whitesource.scm.ScmConnector;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -265,13 +265,14 @@ public class WhitesourceFSAgent {
         displayProgress(0, totalFiles);
         int index = 1;
         for (String fileName : fileNames) {
-            DependencyInfo dependencyInfo = factory.createDependencyInfo(basedir, fileName);
-            if (dependencyInfo != null) {
+            // todo check file encoding and create file in other encoding and calculate its sha1
+            DependencyInfo originalDependencyInfo = factory.createDependencyInfo(basedir, fileName);
+            if (originalDependencyInfo != null) {
                 if (scmConnector != null) {
                     // no need to send system path for file from scm repository
-                    dependencyInfo.setSystemPath(null);
+                    originalDependencyInfo.setSystemPath(null);
                 }
-                dependencyInfos.add(dependencyInfo);
+                dependencyInfos.add(originalDependencyInfo);
             }
 
             // print progress
