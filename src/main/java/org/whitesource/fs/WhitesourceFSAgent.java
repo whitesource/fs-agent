@@ -265,7 +265,6 @@ public class WhitesourceFSAgent {
         displayProgress(0, totalFiles);
         int index = 1;
         for (String fileName : fileNames) {
-            // todo check file encoding and create file in other encoding and calculate its sha1
             DependencyInfo originalDependencyInfo = factory.createDependencyInfo(basedir, fileName);
             if (originalDependencyInfo != null) {
                 if (scmConnector != null) {
