@@ -48,15 +48,20 @@ public class DependencyInfoFactory {
     private static final Logger logger = LoggerFactory.getLogger(DependencyInfoFactory.class);
 
     private static final String LICENSE_PATTERN = ".*license.*|.*redistribution.*|.*licensing.*|.*redistribute.*";
-    private static final String COPYRIGHT_PATTERN = ".*copyright.*";
+    private static final String COPYRIGHT_PATTERN = ".*copyright.*|.*\\(c\\).*";
 
     private static final String PlATFORM_DEPENDENT_TMP_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator + "WhiteSource-PlatformDependentFiles";
     private static final String COPYRIGHT = "copyright";
-    private static final String COPYRIGHT_WITH_SYMBOL = "copyright (c)";
+    private static final String COPYRIGHT_SYMBOL = "(c)";
+    private static final List<String> COPYRIGHT_TEXTS = Arrays.asList("copyright (c)", "copyright(c)", "(c) copyright", "(c)copyright", COPYRIGHT, COPYRIGHT_SYMBOL);
+    private static final String ALL_RIGHTS_RESERVED = "all rights reserved";
+
     private static final String COPYRIGHT_ALPHA_CHAR_REGEX = ".*[a-zA-Z]+.*";
     private static final String CONTAINS_YEAR_REGEX = ".*(\\d\\d\\d\\d)+.*";
+
     private static final String WHITESPACE = " ";
     private static final String EMPTY_STRING = "";
+
     public static final String CRLF = "\r\n";
     public static final String NEW_LINE = "\n";
 
@@ -86,7 +91,6 @@ public class DependencyInfoFactory {
             File otherPlatformFile = createOtherPlatformFile(dependencyFile);
             if (otherPlatformFile != null) {
                 String otherPlatformSha1 = ChecksumUtils.calculateSHA1(otherPlatformFile);
-                // change getter to  otherPlatformSha1
                 dependencyInfo.setOtherPlatformSha1(otherPlatformSha1);
             }
             try {
@@ -201,8 +205,9 @@ public class DependencyInfoFactory {
                 }
 
                 // check for one-line comments
+                String lowerCaseLine = line.toLowerCase();
                 if ((commentBlock || line.startsWith("//") || line.startsWith("#"))
-                        && line.toLowerCase().contains(COPYRIGHT)) {
+                        && (lowerCaseLine.contains(COPYRIGHT) || lowerCaseLine.contains(COPYRIGHT_SYMBOL))) {
                     StringBuilder sb = new StringBuilder();
                     line = cleanLine(line);
                     sb.append(line);
@@ -211,11 +216,12 @@ public class DependencyInfoFactory {
                     boolean continuedToNextLine = false;
                     if (iterator.hasNext()) {
                         String copyrightOwner = null;
-                        String lowerCaseLine = line.toLowerCase();
-                        if (lowerCaseLine.startsWith(COPYRIGHT_WITH_SYMBOL)) {
-                            copyrightOwner = line.substring(COPYRIGHT_WITH_SYMBOL.length()).trim();
-                        } else if (lowerCaseLine.startsWith(COPYRIGHT)) {
-                            copyrightOwner = line.substring(COPYRIGHT.length()).trim();
+                        lowerCaseLine = line.toLowerCase();
+                        for (String copyrightText : COPYRIGHT_TEXTS) {
+                            if (lowerCaseLine.startsWith(copyrightText)) {
+                                copyrightOwner = line.substring(copyrightText.length()).trim();
+                                break;
+                            }
                         }
 
                         if (copyrightOwner != null) {
@@ -241,7 +247,20 @@ public class DependencyInfoFactory {
                             }
                         }
                     }
-                    copyrights.add(new CopyrightInfo(sb.toString(), lineIndex));
+
+                    // remove "all rights reserved" if exists
+                    String copyright = sb.toString();
+                    String lowercaseCopyright = copyright.toLowerCase();
+                    if (lowercaseCopyright.contains(ALL_RIGHTS_RESERVED)) {
+                        int startIndex = lowercaseCopyright.indexOf(ALL_RIGHTS_RESERVED);
+                        int endIndex = startIndex + ALL_RIGHTS_RESERVED.length();
+                        if (endIndex == copyright.length()) {
+                            copyright = copyright.substring(0, startIndex).trim();
+                        } else {
+                            copyright = copyright.substring(0, startIndex).trim() + " " + copyright.substring(endIndex).trim();
+                        }
+                    }
+                    copyrights.add(new CopyrightInfo(copyright, lineIndex));
 
                     if (continuedToNextLine) {
                         lineIndex++;
@@ -287,7 +306,7 @@ public class DependencyInfoFactory {
 
                     // remove regular lines found with the word 'copyright' but without year
                     // don't remove lines without year but have 'Copyright (C)' (probably an actual copyright reference)
-                    if (!copyright.matches(CONTAINS_YEAR_REGEX) && !copyright.toLowerCase().contains(COPYRIGHT_WITH_SYMBOL)) {
+                    if (!copyright.matches(CONTAINS_YEAR_REGEX) && !copyright.toLowerCase().contains(COPYRIGHT_SYMBOL)) {
                         iterator.remove();
                     }
                 }
