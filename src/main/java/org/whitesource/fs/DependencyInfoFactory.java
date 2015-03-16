@@ -143,9 +143,7 @@ public class DependencyInfoFactory {
         return dependencyInfo;
     }
 
-    /* --- Private methods --- */
-
-    private Set<String> scanLicenses(File file) throws InterruptedException, TransformerConfigurationException, RatException, IOException {
+    public Set<String> scanLicenses(File file) throws InterruptedException, TransformerConfigurationException, RatException, IOException {
         HeaderMatcherMultiplexer matcherMultiplexer = new HeaderMatcherMultiplexer(Defaults.DEFAULT_MATCHERS);
         ReportConfiguration configuration = new ReportConfiguration();
         configuration.setHeaderMatcher(matcherMultiplexer);
@@ -157,6 +155,8 @@ public class DependencyInfoFactory {
         }
         return licenses;
     }
+
+    /* --- Private methods --- */
 
     private Collection<CopyrightInfo> extractCopyrights(File file) {
         Collection<CopyrightInfo> copyrights = new ArrayList<CopyrightInfo>();
