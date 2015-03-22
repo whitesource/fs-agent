@@ -316,17 +316,22 @@ public class DependencyInfoFactory {
 
     private File createOtherPlatformFile(File originalPlatform) {
         try {
-            byte[] byteArray = FileUtils.readFileToByteArray(originalPlatform);
+//            if (originalPlatform.length() < Runtime.getRuntime().totalMemory()) {
+            if (originalPlatform.length() < Runtime.getRuntime().freeMemory()) {
+                byte[] byteArray = FileUtils.readFileToByteArray(originalPlatform);
 
-            String fileText = new String(byteArray);
-            File otherPlatFile = new File(PlATFORM_DEPENDENT_TMP_DIRECTORY, originalPlatform.getName());
-            if (fileText.contains(CRLF)) {
-                FileUtils.write(otherPlatFile, fileText.replaceAll(CRLF, NEW_LINE));
-            } else if (fileText.contains(NEW_LINE)) {
-                FileUtils.write(otherPlatFile, fileText.replaceAll(NEW_LINE, CRLF));
-            }
-            if (otherPlatFile.exists()) {
-                return otherPlatFile;
+                String fileText = new String(byteArray);
+                File otherPlatFile = new File(PlATFORM_DEPENDENT_TMP_DIRECTORY, originalPlatform.getName());
+                if (fileText.contains(CRLF)) {
+                    FileUtils.write(otherPlatFile, fileText.replaceAll(CRLF, NEW_LINE));
+                } else if (fileText.contains(NEW_LINE)) {
+                    FileUtils.write(otherPlatFile, fileText.replaceAll(NEW_LINE, CRLF));
+                }
+                if (otherPlatFile.exists()) {
+                    return otherPlatFile;
+                }
+            } else {
+                return null;
             }
         } catch (IOException e) {
             logger.warn("Failed to create other platform file " + originalPlatform.getName() + "can't be added to dependency list: ", e);
