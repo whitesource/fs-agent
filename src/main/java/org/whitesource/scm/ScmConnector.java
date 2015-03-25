@@ -30,21 +30,23 @@ public abstract class ScmConnector {
     private final String url;
     private final String branch;
     private final String tag;
+    private final String privateKey;
     private File cloneDirectory;
 
     /* --- Constructors --- */
 
-    public ScmConnector(String username, String password, String url, String branch, String tag) {
+    protected ScmConnector(String username, String password, String url, String branch, String tag, String privateKey) {
         this.username = username;
         this.password = password;
         this.url = url;
         this.branch = branch;
         this.tag = tag;
+        this.privateKey = privateKey;
     }
 
     /* --- Static methods --- */
 
-    public static ScmConnector create(String scmType, String url, String username, String password, String branch, String tag) {
+    public static ScmConnector create(String scmType, String url, String privateKey, String username, String password, String branch, String tag) {
         ScmConnector scmConnector = null;
         if (StringUtils.isNotBlank(scmType)) {
             ScmType type = ScmType.getValue(scmType);
@@ -58,7 +60,7 @@ public abstract class ScmConnector {
 
             switch (type) {
                 case GIT:
-                    scmConnector = new GitConnector(username, password, url, branch, tag);
+                    scmConnector = new GitConnector(privateKey, username, password, url, branch, tag);
                     break;
                 case SVN:
                     scmConnector = new SvnConnector(username, password, url, branch, tag);
@@ -130,5 +132,9 @@ public abstract class ScmConnector {
 
     public String getTag() {
         return tag;
+    }
+
+    public String getPrivateKey() {
+        return privateKey;
     }
 }

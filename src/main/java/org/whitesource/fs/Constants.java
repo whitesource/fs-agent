@@ -39,6 +39,7 @@ public final class Constants {
     public static final String OFFLINE_ZIP_PROPERTY_KEY = "offline.zip";
     public static final String SCM_TYPE_PROPERTY_KEY = "scm.type";
     public static final String SCM_URL_PROPERTY_KEY = "scm.url";
+    public static final String SCM_PPK_PROPERTY_KEY = "scm.ppk";
     public static final String SCM_USER_PROPERTY_KEY = "scm.user";
     public static final String SCM_PASS_PROPERTY_KEY = "scm.pass";
     public static final String SCM_BRANCH_PROPERTY_KEY = "scm.branch";

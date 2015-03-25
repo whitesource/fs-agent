@@ -15,7 +15,6 @@
  */
 package org.whitesource.fs;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.slf4j.Logger;
@@ -32,7 +31,8 @@ import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 import org.whitesource.scm.ScmConnector;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -226,7 +226,8 @@ public class WhitesourceFSAgent {
         String password = config.getProperty(SCM_PASS_PROPERTY_KEY);
         String branch = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
         String tag = config.getProperty(SCM_TAG_PROPERTY_KEY);
-        ScmConnector scmConnector = ScmConnector.create(scmType, url, username, password, branch, tag);
+        String privateKey = config.getProperty(SCM_PPK_PROPERTY_KEY);
+        ScmConnector scmConnector = ScmConnector.create(scmType, url, privateKey, username, password, branch, tag);
         if (scmConnector != null) {
             logger.info("Connecting to SCM");
             scannerBaseDir = scmConnector.cloneRepository().getPath();

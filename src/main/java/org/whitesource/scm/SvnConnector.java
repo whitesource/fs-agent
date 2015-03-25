@@ -34,7 +34,7 @@ public class SvnConnector extends ScmConnector {
     /* --- Constructors --- */
 
     public SvnConnector(String username, String password, String url, String branch, String tag) {
-        super(username, password, url, branch, tag);
+        super(username, password, url, branch, tag, null);
     }
 
     /* --- Overridden methods --- */

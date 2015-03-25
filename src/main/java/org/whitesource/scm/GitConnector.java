@@ -1,10 +1,16 @@
 package org.whitesource.scm;
 
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.dircache.InvalidPathException;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.util.FS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +29,8 @@ public class GitConnector extends ScmConnector {
 
     /* --- Constructors --- */
 
-    public GitConnector(String username, String password, String url, String branch, String tag) {
-        super(username, password, url, branch, tag);
+    public GitConnector(String privateKey, String username, String password, String url, String branch, String tag) {
+        super(username, password, url, branch, tag, privateKey);
     }
 
     /* --- Overridden methods --- */
@@ -44,10 +50,42 @@ public class GitConnector extends ScmConnector {
                 branchName = tag;
             }
 
+            CloneCommand cloneCommand = Git.cloneRepository();
+
+            // use private key if available
+            final String privateKey = getPrivateKey();
+            if (StringUtils.isNotBlank(privateKey)) {
+                final SshSessionFactory sshSessionFactory = new JschConfigSessionFactory() {
+                    @Override
+                    protected void configure(OpenSshConfig.Host host, Session session) {
+                        // set password if available
+                        String password = getPassword();
+                        if (StringUtils.isNotBlank(password)) {
+                            session.setPassword(password);
+                        }
+                    }
+
+                    @Override
+                    protected JSch createDefaultJSch(FS fs) throws JSchException {
+                        JSch defaultJSch = super.createDefaultJSch(fs);
+                        defaultJSch.addIdentity(privateKey);
+                        return defaultJSch;
+                    }
+                };
+                cloneCommand.setTransportConfigCallback(new TransportConfigCallback() {
+                    @Override
+                    public void configure(Transport transport) {
+                        SshTransport sshTransport = (SshTransport) transport;
+                        sshTransport.setSshSessionFactory(sshSessionFactory);
+                    }
+                });
+                cloneCommand.setCredentialsProvider(new PassphraseCredentialsProvider(getPassword()));
+            } else {
+                cloneCommand.setCredentialsProvider(new UsernamePasswordCredentialsProvider(getUsername(), getPassword()));
+            }
+
             // clone repository
-            git = Git.cloneRepository()
-                    .setURI(getUrl())
-                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider(getUsername(), getPassword()))
+            git = cloneCommand.setURI(getUrl())
                     .setBranch(branchName)
                     .setDirectory(dest)
                     .call();
