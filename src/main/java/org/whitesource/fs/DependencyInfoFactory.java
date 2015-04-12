@@ -59,6 +59,12 @@ public class DependencyInfoFactory {
     private static final String COPYRIGHT_ALPHA_CHAR_REGEX = ".*[a-zA-Z]+.*";
     private static final String CONTAINS_YEAR_REGEX = ".*(\\d\\d\\d\\d)+.*";
 
+    private static final List<Character> MATH_SYMBOLS = Arrays.asList('+', '-', '=', '<', '>', '*', '/', '%');
+    private static final String DEFINE = "define";
+    private static final char OPEN_BRACKET = '(';
+    private static final char CLOSE_BRACKET = ')';
+    private static final char WHITESPACE_CHAR = ' ';
+
     private static final String WHITESPACE = " ";
     private static final String EMPTY_STRING = "";
 
@@ -208,6 +214,11 @@ public class DependencyInfoFactory {
                 String lowerCaseLine = line.toLowerCase();
                 if ((commentBlock || line.startsWith("//") || line.startsWith("#"))
                         && (lowerCaseLine.contains(COPYRIGHT) || lowerCaseLine.contains(COPYRIGHT_SYMBOL))) {
+                    // ignore lines that contain (c) and math signs (+, <, etc.) near it
+                    if (lowerCaseLine.contains(COPYRIGHT_SYMBOL) && !isActualCopyrightLine(lowerCaseLine)) {
+                        break;
+                    }
+
                     StringBuilder sb = new StringBuilder();
                     line = cleanLine(line);
                     sb.append(line);
@@ -337,6 +348,45 @@ public class DependencyInfoFactory {
             logger.warn("Failed to create other platform file " + originalPlatform.getName() + "can't be added to dependency list: ", e);
         }
         return null;
+    }
+
+    // check if lines with (c) are actual copyright references of simple code lines
+    private boolean isActualCopyrightLine(String line) {
+        String cleanLine = cleanLine(line).trim();
+        boolean actualCopyrightLine = true;
+        if (cleanLine.startsWith(DEFINE)) {
+            return false;
+        }
+
+        // go forward
+        int index = cleanLine.indexOf(COPYRIGHT_SYMBOL);
+        for (int i = index + 1; i < cleanLine.length(); i++) {
+            char c = cleanLine.charAt(i);
+            if (c == OPEN_BRACKET || c == CLOSE_BRACKET || c == WHITESPACE_CHAR) {
+                continue;
+            } else if (MATH_SYMBOLS.contains(c)) {
+                actualCopyrightLine = false;
+                break;
+            } else {
+                break;
+            }
+        }
+
+        // go backwards
+        if (actualCopyrightLine) {
+            for (int i = index - 1; i >= 0; i--) {
+                char c = cleanLine.charAt(i);
+                if (c == OPEN_BRACKET || c == CLOSE_BRACKET || c == WHITESPACE_CHAR) {
+                    continue;
+                } else if (MATH_SYMBOLS.contains(c)) {
+                    actualCopyrightLine = false;
+                    break;
+                } else {
+                    break;
+                }
+            }
+        }
+        return actualCopyrightLine;
     }
 
     private String cleanLine(String line) {
