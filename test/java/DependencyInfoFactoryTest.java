@@ -1,5 +1,7 @@
 import org.apache.rat.api.RatException;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.fs.DependencyInfoFactory;
 
 import javax.xml.transform.TransformerConfigurationException;
@@ -14,13 +16,22 @@ import java.util.Set;
  */
 public class DependencyInfoFactoryTest {
 
+    @Ignore
     @Test
     public void testRat() throws InterruptedException, RatException, TransformerConfigurationException, IOException {
         DependencyInfoFactory factory = new DependencyInfoFactory();
-        Set<String> licenses = factory.scanLicenses(new File("C:\\WhiteSource\\Support\\Overture\\uip-clock-arch.c"));
+        Set<String> licenses = factory.scanLicenses(new File("C:\\WhiteSource\\FS Agent\\Fake Files\\license.txt"));
 //        Set<String> licenses = factory.scanLicenses(new File("C:\\WhiteSource\\Support\\File System Agent\\aes.h"));
         for (String license : licenses) {
             System.out.println(license);
         }
+    }
+
+    @Test
+    public void testCopyrights() {
+        DependencyInfoFactory factory = new DependencyInfoFactory();
+        DependencyInfo dependencyInfo = factory.createDependencyInfo(new File("C:\\WhiteSource\\FS Agent\\Fake Files"), "test-copyright.txt");
+//        DependencyInfo dependencyInfo = factory.createDependencyInfo(new File("C:\\WhiteSource\\FS Agent\\quirkysoft"), "Wifi9.cpp");
+        dependencyInfo.getCopyrights();
     }
 }

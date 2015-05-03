@@ -53,14 +53,16 @@ public class DependencyInfoFactory {
     private static final String PlATFORM_DEPENDENT_TMP_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator + "WhiteSource-PlatformDependentFiles";
     private static final String COPYRIGHT = "copyright";
     private static final String COPYRIGHT_SYMBOL = "(c)";
-    private static final List<String> COPYRIGHT_TEXTS = Arrays.asList("copyright (c)", "copyright(c)", "(c) copyright", "(c)copyright", COPYRIGHT, COPYRIGHT_SYMBOL);
+    private static final String COPYRIGHT_ASCII_SYMBOL = "©";
+    private static final List<String> COPYRIGHT_TEXTS = Arrays.asList("copyright (c)", "copyright(c)", "(c) copyright", "(c)copyright", COPYRIGHT, COPYRIGHT_SYMBOL, COPYRIGHT_ASCII_SYMBOL);
     private static final String ALL_RIGHTS_RESERVED = "all rights reserved";
 
     private static final String COPYRIGHT_ALPHA_CHAR_REGEX = ".*[a-zA-Z]+.*";
     private static final String CONTAINS_YEAR_REGEX = ".*(\\d\\d\\d\\d)+.*";
 
-    private static final List<Character> MATH_SYMBOLS = Arrays.asList('+', '-', '=', '<', '>', '*', '/', '%');
+    private static final List<Character> MATH_SYMBOLS = Arrays.asList('+', '-', '=', '<', '>', '*', '/', '%', '^');
     private static final String DEFINE = "define";
+    private static final String CODE_LINE_SUFFIX = ".*:|.*;|.*\\{|.*}|.*\\[|.*]|.*>";
     private static final char OPEN_BRACKET = '(';
     private static final char CLOSE_BRACKET = ')';
     private static final char WHITESPACE_CHAR = ' ';
@@ -213,7 +215,7 @@ public class DependencyInfoFactory {
                 // check for one-line comments
                 String lowerCaseLine = line.toLowerCase();
                 if ((commentBlock || line.startsWith("//") || line.startsWith("#"))
-                        && (lowerCaseLine.contains(COPYRIGHT) || lowerCaseLine.contains(COPYRIGHT_SYMBOL))) {
+                        && (lowerCaseLine.contains(COPYRIGHT) || lowerCaseLine.contains(COPYRIGHT_SYMBOL) || lowerCaseLine.contains(COPYRIGHT_ASCII_SYMBOL))) {
                     // ignore lines that contain (c) and math signs (+, <, etc.) near it
                     if (lowerCaseLine.contains(COPYRIGHT_SYMBOL) && !isActualCopyrightLine(lowerCaseLine)) {
                         break;
@@ -355,6 +357,8 @@ public class DependencyInfoFactory {
         String cleanLine = cleanLine(line).trim();
         boolean actualCopyrightLine = true;
         if (cleanLine.startsWith(DEFINE)) {
+            return false;
+        } else if (cleanLine.matches(CODE_LINE_SUFFIX)) {
             return false;
         }
 
