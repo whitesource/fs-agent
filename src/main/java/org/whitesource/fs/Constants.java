@@ -22,6 +22,7 @@ public final class Constants {
 
     public static final String CHECK_POLICIES_PROPERTY_KEY = "checkPolicies";
     public static final String ORG_TOKEN_PROPERTY_KEY = "apiKey";
+    public static final String PARTIAL_SHA1_MATCH_KEY = "partialSha1Match";
     public static final String PRODUCT_TOKEN_PROPERTY_KEY = "productToken"; // optional
     public static final String PRODUCT_NAME_PROPERTY_KEY = "productName"; // optional
     public static final String PRODUCT_VERSION_PROPERTY_KEY = "productVersion"; // optional

@@ -88,7 +88,7 @@ public class DependencyInfoFactory {
 
     /* --- Public methods --- */
 
-    public DependencyInfo createDependencyInfo(File basedir, String fileName) {
+    public DependencyInfo createDependencyInfo(File basedir, String fileName, boolean partialSha1Match) {
         DependencyInfo dependencyInfo = null;
         File dependencyFile = new File(basedir, fileName);
         try {
@@ -109,7 +109,9 @@ public class DependencyInfoFactory {
             deleteFile(otherPlatformFile);
 
             // calculate sha1 for file header and footer (for partial matching)
-            ChecksumUtils.calculateHeaderAndFooterSha1(dependencyFile, dependencyInfo);
+            if (partialSha1Match) {
+                ChecksumUtils.calculateHeaderAndFooterSha1(dependencyFile, dependencyInfo);
+            }
 
             boolean containsLicense = false;
             boolean containsCopyright = false;

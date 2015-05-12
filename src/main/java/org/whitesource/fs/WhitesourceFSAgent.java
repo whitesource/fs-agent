@@ -212,11 +212,17 @@ public class WhitesourceFSAgent {
             projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
         }
 
-        projectInfo.setDependencies(getDependencyInfos());
+        // check scan partial sha1s (false by default)
+        boolean partialSha1Match = false;
+        String partialSha1MatchValue = config.getProperty(Constants.PARTIAL_SHA1_MATCH_KEY);
+        if (StringUtils.isNotBlank(partialSha1MatchValue)) {
+            partialSha1Match = Boolean.valueOf(partialSha1MatchValue);
+        }
+        projectInfo.setDependencies(getDependencyInfos(partialSha1Match));
         return projectInfo;
     }
 
-    private List<DependencyInfo> getDependencyInfos() {
+    private List<DependencyInfo> getDependencyInfos(boolean partialSha1Match) {
         String scannerBaseDir = dependencyDir;
 
         // create scm connector
@@ -266,7 +272,7 @@ public class WhitesourceFSAgent {
         displayProgress(0, totalFiles);
         int index = 1;
         for (String fileName : fileNames) {
-            DependencyInfo originalDependencyInfo = factory.createDependencyInfo(basedir, fileName);
+            DependencyInfo originalDependencyInfo = factory.createDependencyInfo(basedir, fileName, partialSha1Match);
             if (originalDependencyInfo != null) {
                 if (scmConnector != null) {
                     // no need to send system path for file from scm repository

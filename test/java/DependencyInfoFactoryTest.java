@@ -30,7 +30,7 @@ public class DependencyInfoFactoryTest {
     @Test
     public void testCopyrights() {
         DependencyInfoFactory factory = new DependencyInfoFactory();
-        DependencyInfo dependencyInfo = factory.createDependencyInfo(new File("C:\\WhiteSource\\FS Agent\\Fake Files"), "test-copyright.txt");
+        DependencyInfo dependencyInfo = factory.createDependencyInfo(new File("C:\\WhiteSource\\FS Agent\\Fake Files"), "test-copyright.txt", true);
 //        DependencyInfo dependencyInfo = factory.createDependencyInfo(new File("C:\\WhiteSource\\FS Agent\\quirkysoft"), "Wifi9.cpp");
         dependencyInfo.getCopyrights();
     }
