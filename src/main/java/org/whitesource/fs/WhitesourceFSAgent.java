@@ -177,10 +177,16 @@ public class WhitesourceFSAgent {
         logger.info("Generating offline update request");
 
         // zip?
-        String zipValue = config.getProperty(OFFLINE_ZIP_PROPERTY_KEY);
         boolean zip = false;
+        String zipValue = config.getProperty(OFFLINE_ZIP_PROPERTY_KEY);
         if (StringUtils.isNotBlank(zipValue)) {
             zip = Boolean.valueOf(zipValue);
+        }
+
+        boolean prettyJson = false;
+        String prettyJsonValue = config.getProperty(OFFLINE_PRETTY_JSON_KEY);
+        if (StringUtils.isNotBlank(prettyJsonValue)) {
+            prettyJson = Boolean.valueOf(prettyJsonValue);
         }
 
         // generate offline request
@@ -188,7 +194,7 @@ public class WhitesourceFSAgent {
         try {
             OfflineUpdateRequest offlineUpdateRequest = new OfflineUpdateRequest(updateRequest);
             File outputDir = new File(".");
-            File file = offlineUpdateRequest.generate(outputDir, zip);
+            File file = offlineUpdateRequest.generate(outputDir, zip, prettyJson);
             logger.info("Offline request generated successfully at {}", file.getPath());
         } catch (IOException e) {
             logger.error("Error generating offline update request: " + e.getMessage(), e);
