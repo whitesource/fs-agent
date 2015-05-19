@@ -327,6 +327,18 @@ public class DependencyInfoFactory {
                 }
             }
         }
+
+        // remove duplicate copyrights
+        Set<String> copyTexts = new HashSet<String>();
+        Iterator<CopyrightInfo> iterator = copyrights.iterator();
+        while (iterator.hasNext()) {
+            String lowerCaseCopyright = iterator.next().getCopyright().toLowerCase();
+            if (copyTexts.contains(lowerCaseCopyright)) {
+                iterator.remove();
+            } else {
+                copyTexts.add(lowerCaseCopyright);
+            }
+        }
     }
 
     private File createOtherPlatformFile(File originalPlatform) {
