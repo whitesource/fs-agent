@@ -16,18 +16,26 @@
 package org.whitesource.fs;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.converters.CommaParameterSplitter;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Author: Itai Marko
  */
 public class CommandLineArgs {
 
+    /* --- Static members --- */
+
     private static final String CONFIG_FILE_NAME = "whitesource-fs-agent.config";
 
-    //TODO use a File converter for dependencyDir and configFilePath
-    @Parameter(names = "-d", description = "Path to base directory of dependency files to scan")
-    String dependencyDir = "."; // TODO this may be a bad default, consider printing usage instead
+    /* --- Parameters --- */
 
     @Parameter(names = "-c", description = "Config file path")
     String configFilePath = CONFIG_FILE_NAME;
+
+    //TODO use a File converter for dependencyDir and configFilePath
+    @Parameter(names = "-d", splitter = CommaParameterSplitter.class)
+    List<String> dependencyDirs = Arrays.asList("."); // TODO this may be a bad default, consider printing usage instead
 }

@@ -47,7 +47,7 @@ public class Main {
         // TODO add usage command
 
         Properties configProps = readAndValidateConfigFile(commandLineArgs.configFilePath);
-        WhitesourceFSAgent whitesourceAgent = new WhitesourceFSAgent(commandLineArgs.dependencyDir, configProps);
+        WhitesourceFSAgent whitesourceAgent = new WhitesourceFSAgent(configProps, commandLineArgs.dependencyDirs);
         whitesourceAgent.sendRequest();
     }
 

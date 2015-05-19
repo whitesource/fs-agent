@@ -54,14 +54,14 @@ public class WhitesourceFSAgent {
 
     /* --- Members --- */
 
-    private final String dependencyDir;
     private final Properties config;
+    private final List<String> dependencyDirs;
 
     /* --- Constructors --- */
 
-    public WhitesourceFSAgent(String dependencyDir, Properties config) {
-        this.dependencyDir = dependencyDir;
+    public WhitesourceFSAgent(Properties config, List<String> dependencyDirs) {
         this.config = config;
+        this.dependencyDirs = dependencyDirs;
     }
 
     /* --- Public methods --- */
@@ -229,7 +229,7 @@ public class WhitesourceFSAgent {
     }
 
     private List<DependencyInfo> getDependencyInfos(boolean partialSha1Match) {
-        String scannerBaseDir = dependencyDir;
+        List<String> scannerBaseDirs = dependencyDirs;
 
         // create scm connector
         String scmType = config.getProperty(SCM_TYPE_PROPERTY_KEY);
@@ -242,33 +242,39 @@ public class WhitesourceFSAgent {
         ScmConnector scmConnector = ScmConnector.create(scmType, url, privateKey, username, password, branch, tag);
         if (scmConnector != null) {
             logger.info("Connecting to SCM");
-            scannerBaseDir = scmConnector.cloneRepository().getPath();
+            scannerBaseDirs.clear();
+            scannerBaseDirs.add(scmConnector.cloneRepository().getPath());
         }
 
-        // scan directory
-        logger.info("Scanning Directory for Matching Files (may take a few minutes)");
-        DirectoryScanner scanner = new DirectoryScanner();
-        scanner.setBasedir(scannerBaseDir);
-        String includes = config.getProperty(Constants.INCLUDES_PATTERN_PROPERTY_KEY, "**/*");
-        scanner.setIncludes(includes.split(INCLUDES_EXCLUDES_SEPARATOR_REGEX));
-        String excludes = config.getProperty(Constants.EXCLUDES_PATTERN_PROPERTY_KEY, "");
-        scanner.setExcludes(excludes.split(INCLUDES_EXCLUDES_SEPARATOR_REGEX));
-        final String globCaseSensitive = config.getProperty(Constants.CASE_SENSITIVE_GLOB_PROPERTY_KEY);
-        if (StringUtils.isNotBlank(globCaseSensitive)) {
-            if (globCaseSensitive.equalsIgnoreCase("true") || globCaseSensitive.equalsIgnoreCase("y")) {
-                scanner.setCaseSensitive(true);
-            } else if (globCaseSensitive.equalsIgnoreCase("false") || globCaseSensitive.equalsIgnoreCase("n")) {
-                scanner.setCaseSensitive(false);
-            } else {
-                logger.error("Bad {}. Received {}, required true/false or y/n", Constants.CASE_SENSITIVE_GLOB_PROPERTY_KEY, globCaseSensitive);
-                scmConnector.deleteCloneDirectory();
-                System.exit(-1); // TODO this is within a try frame. Throw an exception instead
+        // scan directories
+        int totalFiles = 0;
+        Map<File, String[]> fileMap = new HashMap<File, String[]>();
+        for (String scannerBaseDir : scannerBaseDirs) {
+            logger.info("Scanning Directory {} for Matching Files (may take a few minutes)", scannerBaseDir);
+            DirectoryScanner scanner = new DirectoryScanner();
+            scanner.setBasedir(scannerBaseDir);
+            String includes = config.getProperty(Constants.INCLUDES_PATTERN_PROPERTY_KEY, "**/*");
+            scanner.setIncludes(includes.split(INCLUDES_EXCLUDES_SEPARATOR_REGEX));
+            String excludes = config.getProperty(Constants.EXCLUDES_PATTERN_PROPERTY_KEY, "");
+            scanner.setExcludes(excludes.split(INCLUDES_EXCLUDES_SEPARATOR_REGEX));
+            final String globCaseSensitive = config.getProperty(Constants.CASE_SENSITIVE_GLOB_PROPERTY_KEY);
+            if (StringUtils.isNotBlank(globCaseSensitive)) {
+                if (globCaseSensitive.equalsIgnoreCase("true") || globCaseSensitive.equalsIgnoreCase("y")) {
+                    scanner.setCaseSensitive(true);
+                } else if (globCaseSensitive.equalsIgnoreCase("false") || globCaseSensitive.equalsIgnoreCase("n")) {
+                    scanner.setCaseSensitive(false);
+                } else {
+                    logger.error("Bad {}. Received {}, required true/false or y/n", Constants.CASE_SENSITIVE_GLOB_PROPERTY_KEY, globCaseSensitive);
+                    scmConnector.deleteCloneDirectory();
+                    System.exit(-1); // TODO this is within a try frame. Throw an exception instead
+                }
             }
+            scanner.scan();
+            File basedir = scanner.getBasedir();
+            String[] fileNames = scanner.getIncludedFiles();
+            fileMap.put(basedir, fileNames);
+            totalFiles += fileNames.length;
         }
-        scanner.scan();
-        String[] fileNames = scanner.getIncludedFiles();
-        File basedir = scanner.getBasedir();
-        int totalFiles = fileNames.length;
         logger.info(MessageFormat.format("Total Files Found: {0}", totalFiles));
 
         // create dependency infos from files
@@ -277,19 +283,21 @@ public class WhitesourceFSAgent {
         List<DependencyInfo> dependencyInfos = new ArrayList<DependencyInfo>();
         displayProgress(0, totalFiles);
         int index = 1;
-        for (String fileName : fileNames) {
-            DependencyInfo originalDependencyInfo = factory.createDependencyInfo(basedir, fileName, partialSha1Match);
-            if (originalDependencyInfo != null) {
-                if (scmConnector != null) {
-                    // no need to send system path for file from scm repository
-                    originalDependencyInfo.setSystemPath(null);
+        for (Map.Entry<File, String[]> entry : fileMap.entrySet()) {
+            for (String fileName : entry.getValue()) {
+                DependencyInfo originalDependencyInfo = factory.createDependencyInfo(entry.getKey(), fileName, partialSha1Match);
+                if (originalDependencyInfo != null) {
+                    if (scmConnector != null) {
+                        // no need to send system path for file from scm repository
+                        originalDependencyInfo.setSystemPath(null);
+                    }
+                    dependencyInfos.add(originalDependencyInfo);
                 }
-                dependencyInfos.add(originalDependencyInfo);
-            }
 
-            // print progress
-            displayProgress(index, totalFiles);
-            index++;
+                // print progress
+                displayProgress(index, totalFiles);
+                index++;
+            }
         }
         logger.info("Finished Analyzing Files");
 
