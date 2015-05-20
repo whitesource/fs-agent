@@ -46,6 +46,8 @@ public final class Constants {
     public static final String SCM_PASS_PROPERTY_KEY = "scm.pass";
     public static final String SCM_BRANCH_PROPERTY_KEY = "scm.branch";
     public static final String SCM_TAG_PROPERTY_KEY = "scm.tag";
+    public static final String EXCLUDED_COPYRIGHT_KEY = "copyright.excludes";
+    public static final String LOG_LEVEL_KEY = "log.level";
 
     public static final String AGENT_TYPE = "fs-agent";
     public static final String AGENT_VERSION = "2.2.0";

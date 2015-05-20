@@ -15,6 +15,7 @@
  */
 package org.whitesource.fs;
 
+import ch.qos.logback.classic.Level;
 import com.beust.jcommander.JCommander;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -37,6 +38,8 @@ public class Main {
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private static final CommandLineArgs commandLineArgs = new CommandLineArgs();
+    private static final String INFO = "info";
+
     private static JCommander jCommander;
 
     /* --- Main --- */
@@ -46,7 +49,15 @@ public class Main {
         // validate args // TODO use jCommander validators
         // TODO add usage command
 
+        // read configuration properties
         Properties configProps = readAndValidateConfigFile(commandLineArgs.configFilePath);
+
+        // read log level from configuration file
+        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        String logLevel = configProps.getProperty(LOG_LEVEL_KEY, INFO);
+        root.setLevel(Level.toLevel(logLevel, Level.INFO));
+
+        // run the agent
         WhitesourceFSAgent whitesourceAgent = new WhitesourceFSAgent(configProps, commandLineArgs.dependencyDirs);
         whitesourceAgent.sendRequest();
     }

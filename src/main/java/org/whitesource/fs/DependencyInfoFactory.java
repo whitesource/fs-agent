@@ -86,9 +86,26 @@ public class DependencyInfoFactory {
         commentStartEndMap.put("##", "##");
     }
 
+    /* --- Members --- */
+
+    private final Collection<String> excludedCopyrights;
+    private final boolean partialSha1Match;
+
+    /* --- Constructors --- */
+
+    public DependencyInfoFactory() {
+        excludedCopyrights = new ArrayList<String>();
+        partialSha1Match = false;
+    }
+
+    public DependencyInfoFactory(Collection<String> excludedCopyrights, boolean partialSha1Match) {
+        this.excludedCopyrights = excludedCopyrights;
+        this.partialSha1Match = partialSha1Match;
+    }
+
     /* --- Public methods --- */
 
-    public DependencyInfo createDependencyInfo(File basedir, String fileName, boolean partialSha1Match) {
+    public DependencyInfo createDependencyInfo(File basedir, String fileName) {
         DependencyInfo dependencyInfo = null;
         File dependencyFile = new File(basedir, fileName);
         try {
@@ -146,6 +163,12 @@ public class DependencyInfoFactory {
             // check if file contains the word "copyright" before extracting copyright information
             if (containsCopyright) {
                 dependencyInfo.getCopyrights().addAll(extractCopyrights(dependencyFile));
+
+                // if contains one of the excluded copyrights, don't send it to WhiteSource
+                if (containsExcludedCopyright(dependencyInfo)) {
+                    logger.debug("Found excluded copyright, skipping file {}", dependencyInfo.getSystemPath());
+                    dependencyInfo = null;
+                }
             }
         } catch (IOException e) {
             logger.warn("Failed to create dependency " + fileName + " to dependency list: ", e);
@@ -341,9 +364,20 @@ public class DependencyInfoFactory {
         }
     }
 
+    private boolean containsExcludedCopyright(DependencyInfo dependencyInfo) {
+        for (CopyrightInfo copyrightInfo : dependencyInfo.getCopyrights()) {
+            String lowerCaseCopyright = copyrightInfo.getCopyright().toLowerCase();
+            for (String excludedCopyright : excludedCopyrights) {
+                if (lowerCaseCopyright.contains(excludedCopyright.toLowerCase())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private File createOtherPlatformFile(File originalPlatform) {
         try {
-//            if (originalPlatform.length() < Runtime.getRuntime().totalMemory()) {
             if (originalPlatform.length() < Runtime.getRuntime().freeMemory()) {
                 byte[] byteArray = FileUtils.readFileToByteArray(originalPlatform);
 

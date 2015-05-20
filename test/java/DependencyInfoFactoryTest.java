@@ -21,7 +21,6 @@ public class DependencyInfoFactoryTest {
     public void testRat() throws InterruptedException, RatException, TransformerConfigurationException, IOException {
         DependencyInfoFactory factory = new DependencyInfoFactory();
         Set<String> licenses = factory.scanLicenses(new File("C:\\WhiteSource\\FS Agent\\Fake Files\\license.txt"));
-//        Set<String> licenses = factory.scanLicenses(new File("C:\\WhiteSource\\Support\\File System Agent\\aes.h"));
         for (String license : licenses) {
             System.out.println(license);
         }
@@ -30,8 +29,7 @@ public class DependencyInfoFactoryTest {
     @Test
     public void testCopyrights() {
         DependencyInfoFactory factory = new DependencyInfoFactory();
-        DependencyInfo dependencyInfo = factory.createDependencyInfo(new File("C:\\WhiteSource\\FS Agent\\Fake Files"), "test-copyright.txt", true);
-//        DependencyInfo dependencyInfo = factory.createDependencyInfo(new File("C:\\WhiteSource\\FS Agent\\quirkysoft"), "Wifi9.cpp");
+        DependencyInfo dependencyInfo = factory.createDependencyInfo(new File("C:\\WhiteSource\\FS Agent\\Fake Files"), "test-copyright.txt");
         dependencyInfo.getCopyrights();
     }
 }

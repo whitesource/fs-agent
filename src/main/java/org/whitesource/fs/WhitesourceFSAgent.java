@@ -48,6 +48,7 @@ public class WhitesourceFSAgent {
 
     private static final Logger logger = LoggerFactory.getLogger(WhitesourceFSAgent.class);
     private static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
+    private static final String EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX = ",";
     private static final List<String> progressAnimation = Arrays.asList("|", "/", "-", "\\");
     private static final int ANIMATION_FRAMES = progressAnimation.size();
     private static int animationIndex = 0;
@@ -218,17 +219,11 @@ public class WhitesourceFSAgent {
             projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
         }
 
-        // check scan partial sha1s (false by default)
-        boolean partialSha1Match = false;
-        String partialSha1MatchValue = config.getProperty(Constants.PARTIAL_SHA1_MATCH_KEY);
-        if (StringUtils.isNotBlank(partialSha1MatchValue)) {
-            partialSha1Match = Boolean.valueOf(partialSha1MatchValue);
-        }
-        projectInfo.setDependencies(getDependencyInfos(partialSha1Match));
+        projectInfo.setDependencies(getDependencyInfos());
         return projectInfo;
     }
 
-    private List<DependencyInfo> getDependencyInfos(boolean partialSha1Match) {
+    private List<DependencyInfo> getDependencyInfos() {
         List<String> scannerBaseDirs = dependencyDirs;
 
         // create scm connector
@@ -246,6 +241,11 @@ public class WhitesourceFSAgent {
             scannerBaseDirs.add(scmConnector.cloneRepository().getPath());
         }
 
+        // read properties
+        final String includes = config.getProperty(Constants.INCLUDES_PATTERN_PROPERTY_KEY, "**/*");
+        final String excludes = config.getProperty(Constants.EXCLUDES_PATTERN_PROPERTY_KEY, "");
+        final String globCaseSensitive = config.getProperty(Constants.CASE_SENSITIVE_GLOB_PROPERTY_KEY);
+
         // scan directories
         int totalFiles = 0;
         Map<File, String[]> fileMap = new HashMap<File, String[]>();
@@ -253,11 +253,8 @@ public class WhitesourceFSAgent {
             logger.info("Scanning Directory {} for Matching Files (may take a few minutes)", scannerBaseDir);
             DirectoryScanner scanner = new DirectoryScanner();
             scanner.setBasedir(scannerBaseDir);
-            String includes = config.getProperty(Constants.INCLUDES_PATTERN_PROPERTY_KEY, "**/*");
             scanner.setIncludes(includes.split(INCLUDES_EXCLUDES_SEPARATOR_REGEX));
-            String excludes = config.getProperty(Constants.EXCLUDES_PATTERN_PROPERTY_KEY, "");
             scanner.setExcludes(excludes.split(INCLUDES_EXCLUDES_SEPARATOR_REGEX));
-            final String globCaseSensitive = config.getProperty(Constants.CASE_SENSITIVE_GLOB_PROPERTY_KEY);
             if (StringUtils.isNotBlank(globCaseSensitive)) {
                 if (globCaseSensitive.equalsIgnoreCase("true") || globCaseSensitive.equalsIgnoreCase("y")) {
                     scanner.setCaseSensitive(true);
@@ -277,15 +274,27 @@ public class WhitesourceFSAgent {
         }
         logger.info(MessageFormat.format("Total Files Found: {0}", totalFiles));
 
+        // get excluded copyrights
+        final String excludedCopyrightsValue = config.getProperty(Constants.EXCLUDED_COPYRIGHT_KEY, "");
+        Collection<String> excludedCopyrights = new ArrayList<String>(Arrays.asList(excludedCopyrightsValue.split(EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX)));
+        excludedCopyrights.remove("");
+
+        // check scan partial sha1s (false by default)
+        boolean partialSha1Match = false;
+        final String partialSha1MatchValue = config.getProperty(Constants.PARTIAL_SHA1_MATCH_KEY);
+        if (StringUtils.isNotBlank(partialSha1MatchValue)) {
+            partialSha1Match = Boolean.valueOf(partialSha1MatchValue);
+        }
+        DependencyInfoFactory factory = new DependencyInfoFactory(excludedCopyrights, partialSha1Match);
+
         // create dependency infos from files
         logger.info("Starting Analysis");
-        DependencyInfoFactory factory = new DependencyInfoFactory();
         List<DependencyInfo> dependencyInfos = new ArrayList<DependencyInfo>();
         displayProgress(0, totalFiles);
         int index = 1;
         for (Map.Entry<File, String[]> entry : fileMap.entrySet()) {
             for (String fileName : entry.getValue()) {
-                DependencyInfo originalDependencyInfo = factory.createDependencyInfo(entry.getKey(), fileName, partialSha1Match);
+                DependencyInfo originalDependencyInfo = factory.createDependencyInfo(entry.getKey(), fileName);
                 if (originalDependencyInfo != null) {
                     if (scmConnector != null) {
                         // no need to send system path for file from scm repository
