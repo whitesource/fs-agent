@@ -38,6 +38,8 @@ import java.util.*;
 
 import static org.whitesource.fs.Constants.*;
 
+import org.whitesource.agent.client.ClientConstants;
+
 /**
  * @author Itai Marko
  * @author tom.shapira
@@ -127,7 +129,9 @@ public class WhitesourceFSAgent {
     /* --- Private methods --- */
 
     private WhitesourceService createService() {
-        final WhitesourceService service = new WhitesourceService(Constants.AGENT_TYPE, Constants.AGENT_VERSION, null);
+        String serviceUrl = config.getProperty(ClientConstants.SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
+        logger.info("Service URL is " + serviceUrl);
+        final WhitesourceService service = new WhitesourceService(Constants.AGENT_TYPE, Constants.AGENT_VERSION, serviceUrl);
         final String proxyHost = config.getProperty(Constants.PROXY_HOST_PROPERTY_KEY);
         if (StringUtils.isNotBlank(proxyHost)) {
             final int proxyPort = Integer.parseInt(config.getProperty(Constants.PROXY_PORT_PROPERTY_KEY));
