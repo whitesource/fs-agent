@@ -17,14 +17,14 @@ package org.whitesource.fs;
 
 import ch.qos.logback.classic.Level;
 import com.beust.jcommander.JCommander;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import static org.whitesource.fs.Constants.*;
@@ -57,8 +57,27 @@ public class Main {
         String logLevel = configProps.getProperty(LOG_LEVEL_KEY, INFO);
         root.setLevel(Level.toLevel(logLevel, Level.INFO));
 
+        // read directories and files from list-file
+        List<String> files = new ArrayList<String>();
+        String fileListPath = commandLineArgs.fileListPath;
+        if (StringUtils.isNotBlank(fileListPath)) {
+            try {
+                File listFile = new File(fileListPath);
+                if (listFile.exists()) {
+                    for (String line : FileUtils.readLines(listFile)) {
+                        files.add(line);
+                    }
+                }
+            } catch (IOException e) {
+                logger.warn("Error reading list file");
+            }
+        }
+
+        // read csv directory list
+        files.addAll(commandLineArgs.dependencyDirs);
+
         // run the agent
-        WhitesourceFSAgent whitesourceAgent = new WhitesourceFSAgent(configProps, commandLineArgs.dependencyDirs);
+        WhitesourceFSAgent whitesourceAgent = new WhitesourceFSAgent(configProps, files);
         whitesourceAgent.sendRequest();
     }
 

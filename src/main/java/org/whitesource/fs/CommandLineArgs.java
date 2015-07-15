@@ -36,6 +36,9 @@ public class CommandLineArgs {
     String configFilePath = CONFIG_FILE_NAME;
 
     //TODO use a File converter for dependencyDir and configFilePath
-    @Parameter(names = "-d", splitter = CommaParameterSplitter.class)
+    @Parameter(names = "-d", splitter = CommaParameterSplitter.class, description = "Comma separated list of directories and / or files to scan")
     List<String> dependencyDirs = Arrays.asList("."); // TODO this may be a bad default, consider printing usage instead
+
+    @Parameter(names = "-f", description = "File list path")
+    String fileListPath = "";
 }

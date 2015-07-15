@@ -26,6 +26,7 @@ public class DependencyInfoFactoryTest {
         }
     }
 
+    @Ignore
     @Test
     public void testCopyrights() {
         DependencyInfoFactory factory = new DependencyInfoFactory();
