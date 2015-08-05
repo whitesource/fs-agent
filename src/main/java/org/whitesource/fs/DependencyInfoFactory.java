@@ -61,7 +61,11 @@ public class DependencyInfoFactory {
     private static final String CONTAINS_YEAR_REGEX = ".*(\\d\\d\\d\\d)+.*";
 
     private static final List<Character> MATH_SYMBOLS = Arrays.asList('+', '-', '=', '<', '>', '*', '/', '%', '^');
+    private static final char QUESTION_MARK = '?';
+    private static final int MAX_VALID_CHAR_VALUE = 127;
+    private static final int MAX_INVALID_CHARS = 2;
     private static final String DEFINE = "define";
+    private static final String TODO_PATTERN = "todo:.*|todo .*";
     private static final String CODE_LINE_SUFFIX = ".*:|.*;|.*\\{|.*}|.*\\[|.*]|.*>";
     private static final char OPEN_BRACKET = '(';
     private static final char CLOSE_BRACKET = ')';
@@ -242,12 +246,18 @@ public class DependencyInfoFactory {
                 if ((commentBlock || line.startsWith("//") || line.startsWith("#"))
                         && (lowerCaseLine.contains(COPYRIGHT) || lowerCaseLine.contains(COPYRIGHT_SYMBOL) || lowerCaseLine.contains(COPYRIGHT_ASCII_SYMBOL))) {
                     // ignore lines that contain (c) and math signs (+, <, etc.) near it
-                    if (lowerCaseLine.contains(COPYRIGHT_SYMBOL) && !isActualCopyrightLine(lowerCaseLine)) {
-                        break;
+                    // and ignore lines that contain © and have other invalid ascii symbols
+                    if ((lowerCaseLine.contains(COPYRIGHT_SYMBOL) && isMathExpression(lowerCaseLine)) ||
+                            lowerCaseLine.contains(COPYRIGHT_ASCII_SYMBOL) && hasInvalidAsciiChars(lowerCaseLine)) {
+                        continue;
+                    }
+                    line = cleanLine(line);
+
+                    if (line.toLowerCase().matches(TODO_PATTERN)) {
+                        continue;
                     }
 
                     StringBuilder sb = new StringBuilder();
-                    line = cleanLine(line);
                     sb.append(line);
 
                     // check if copyright continues to next line
@@ -401,13 +411,13 @@ public class DependencyInfoFactory {
     }
 
     // check if lines with (c) are actual copyright references of simple code lines
-    private boolean isActualCopyrightLine(String line) {
+    private boolean isMathExpression(String line) {
         String cleanLine = cleanLine(line).trim();
-        boolean actualCopyrightLine = true;
+        boolean mathExpression = false;
         if (cleanLine.startsWith(DEFINE)) {
-            return false;
+            return true;
         } else if (cleanLine.matches(CODE_LINE_SUFFIX)) {
-            return false;
+            return true;
         }
 
         // go forward
@@ -417,7 +427,7 @@ public class DependencyInfoFactory {
             if (c == OPEN_BRACKET || c == CLOSE_BRACKET || c == WHITESPACE_CHAR) {
                 continue;
             } else if (MATH_SYMBOLS.contains(c)) {
-                actualCopyrightLine = false;
+                mathExpression = true;
                 break;
             } else {
                 break;
@@ -425,20 +435,35 @@ public class DependencyInfoFactory {
         }
 
         // go backwards
-        if (actualCopyrightLine) {
+        if (mathExpression) {
             for (int i = index - 1; i >= 0; i--) {
                 char c = cleanLine.charAt(i);
                 if (c == OPEN_BRACKET || c == CLOSE_BRACKET || c == WHITESPACE_CHAR) {
                     continue;
                 } else if (MATH_SYMBOLS.contains(c)) {
-                    actualCopyrightLine = false;
+                    mathExpression = true;
                     break;
                 } else {
                     break;
                 }
             }
         }
-        return actualCopyrightLine;
+        return mathExpression;
+    }
+
+    private boolean hasInvalidAsciiChars(String line) {
+        String cleanLine = cleanLine(line).trim();
+        int invalidChars = 0;
+        for (int i = 0; i < cleanLine.length(); i++) {
+            char c = cleanLine.charAt(i);
+            if (c > MAX_VALID_CHAR_VALUE || c == QUESTION_MARK) {
+                invalidChars++;
+            }
+            if (invalidChars == MAX_INVALID_CHARS) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String cleanLine(String line) {
