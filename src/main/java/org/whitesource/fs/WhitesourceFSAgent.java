@@ -78,12 +78,6 @@ public class WhitesourceFSAgent {
     }
 
     private void sendRequest(AgentProjectInfo projectInfo) {
-        boolean checkPolicies = false;
-        String checkPoliciesValue = config.getProperty(CHECK_POLICIES_PROPERTY_KEY);
-        if (StringUtils.isNotBlank(checkPoliciesValue)) {
-            checkPolicies = Boolean.valueOf(checkPoliciesValue);
-        }
-
         String orgToken = config.getProperty(Constants.ORG_TOKEN_PROPERTY_KEY);
         String productVersion = null;
         String product = config.getProperty(Constants.PRODUCT_TOKEN_PROPERTY_KEY);
@@ -92,22 +86,16 @@ public class WhitesourceFSAgent {
             productVersion = config.getProperty(Constants.PRODUCT_VERSION_PROPERTY_KEY);
         }
 
-        boolean offline = false;
-        String offlineValue = config.getProperty(OFFLINE_PROPERTY_KEY);
-        if (StringUtils.isNotBlank(offlineValue)) {
-            offline = Boolean.valueOf(offlineValue);
-        }
-
         // send request
         logger.info("Initializing WhiteSource Client");
         WhitesourceService service = createService();
         List<AgentProjectInfo> projects = Arrays.asList(projectInfo);
-        if (offline) {
+        if (getBooleanProperty(OFFLINE_PROPERTY_KEY, false)) {
             offlineUpdate(service, orgToken, product, productVersion, projects);
         } else {
             try {
                 boolean sendUpdate = true;
-                if (checkPolicies) {
+                if (getBooleanProperty(CHECK_POLICIES_PROPERTY_KEY, false)) {
                     boolean policyCompliance = checkPolicies(service, orgToken, product, productVersion, projects);
                     sendUpdate = policyCompliance;
                 }
@@ -180,18 +168,8 @@ public class WhitesourceFSAgent {
                                List<AgentProjectInfo> projects) {
         logger.info("Generating offline update request");
 
-        // zip?
-        boolean zip = false;
-        String zipValue = config.getProperty(OFFLINE_ZIP_PROPERTY_KEY);
-        if (StringUtils.isNotBlank(zipValue)) {
-            zip = Boolean.valueOf(zipValue);
-        }
-
-        boolean prettyJson = false;
-        String prettyJsonValue = config.getProperty(OFFLINE_PRETTY_JSON_KEY);
-        if (StringUtils.isNotBlank(prettyJsonValue)) {
-            prettyJson = Boolean.valueOf(prettyJsonValue);
-        }
+        boolean zip = getBooleanProperty(OFFLINE_ZIP_PROPERTY_KEY, false);
+        boolean prettyJson = getBooleanProperty(OFFLINE_PRETTY_JSON_KEY, false);
 
         // generate offline request
         UpdateInventoryRequest updateRequest = service.offlineUpdate(orgToken, product, productVersion, projects);
@@ -261,6 +239,7 @@ public class WhitesourceFSAgent {
                     scanner.setBasedir(scannerBaseDir);
                     scanner.setIncludes(includes.split(INCLUDES_EXCLUDES_SEPARATOR_REGEX));
                     scanner.setExcludes(excludes.split(INCLUDES_EXCLUDES_SEPARATOR_REGEX));
+                    scanner.setFollowSymlinks(getBooleanProperty(FOLLOW_SYMBOLIC_LINKS, true));
                     if (StringUtils.isNotBlank(globCaseSensitive)) {
                         if (globCaseSensitive.equalsIgnoreCase("true") || globCaseSensitive.equalsIgnoreCase("y")) {
                             scanner.setCaseSensitive(true);
@@ -294,11 +273,8 @@ public class WhitesourceFSAgent {
         excludedCopyrights.remove("");
 
         // check scan partial sha1s (false by default)
-        boolean partialSha1Match = false;
-        final String partialSha1MatchValue = config.getProperty(Constants.PARTIAL_SHA1_MATCH_KEY);
-        if (StringUtils.isNotBlank(partialSha1MatchValue)) {
-            partialSha1Match = Boolean.valueOf(partialSha1MatchValue);
-        }
+        boolean partialSha1Match = getBooleanProperty(PARTIAL_SHA1_MATCH_KEY, false);
+
         DependencyInfoFactory factory = new DependencyInfoFactory(excludedCopyrights, partialSha1Match);
 
         // create dependency infos from files
@@ -328,6 +304,15 @@ public class WhitesourceFSAgent {
             scmConnector.deleteCloneDirectory();
         }
         return dependencyInfos;
+    }
+
+    private boolean getBooleanProperty(String propertyKey, boolean defaultValue) {
+        boolean property = defaultValue;
+        String propertyValue = config.getProperty(propertyKey);
+        if (StringUtils.isNotBlank(propertyValue)) {
+            property = Boolean.valueOf(propertyValue);
+        }
+        return property;
     }
 
     private void logResult(UpdateInventoryResult updateResult) {

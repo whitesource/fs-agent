@@ -154,7 +154,7 @@ public class DependencyInfoFactory {
                 // do nothing
             }
 
-            // check if file contains one the "license" words before scanning for licenses
+            // check if file contains one of the "license" words before scanning for licenses
             if (containsLicense) {
                 try {
                     Set<String> licenses = scanLicenses(dependencyFile);
