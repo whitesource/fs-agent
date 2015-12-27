@@ -30,6 +30,7 @@ import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
+import org.whitesource.archiveReaders.ArchiveExtractor;
 import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
@@ -48,10 +49,13 @@ public class WhitesourceFSAgent {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(WhitesourceFSAgent.class);
+
     private static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
     private static final String EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX = ",";
     private static final List<String> progressAnimation = Arrays.asList("|", "/", "-", "\\");
     private static final int ANIMATION_FRAMES = progressAnimation.size();
+    public static final String GLOB_PATTERN_PREFIX = "**/*";
+    public static final String DEFAULT_ARCHIVE_DEPTH = "0";
     private static int animationIndex = 0;
 
     /* --- Members --- */
@@ -223,13 +227,31 @@ public class WhitesourceFSAgent {
         }
 
         // read properties
-        final String includes = config.getProperty(Constants.INCLUDES_PATTERN_PROPERTY_KEY, "**/*");
-        final String excludes = config.getProperty(Constants.EXCLUDES_PATTERN_PROPERTY_KEY, "");
+        final String[] includes = config.getProperty(Constants.INCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        final String[] excludes = config.getProperty(Constants.EXCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         final String globCaseSensitive = config.getProperty(Constants.CASE_SENSITIVE_GLOB_PROPERTY_KEY);
+        final int archiveExtractionDepth = Integer.parseInt(config.getProperty(Constants.ARCHIVE_EXTRACTION_DEPTH_KEY, DEFAULT_ARCHIVE_DEPTH));
+
+        // validate parameters
+        validateParams(archiveExtractionDepth, includes);
 
         // scan directories
         int totalFiles = 0;
         Map<File, Collection<String>> fileMap = new HashMap<File, Collection<String>>();
+
+        // go over all base directories, look for archives
+        Map<String, String> archiveToBaseDirMap = new HashMap<String, String>();
+        ArchiveExtractor archiveExtractor = null;
+        if (archiveExtractionDepth > 0) {
+            final String[] archiveIncludes = config.getProperty(Constants.ARCHIVE_INCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+            final String[] archiveExcludes = config.getProperty(Constants.ARCHIVE_EXCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+            archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes);
+            for (String scannerBaseDir : scannerBaseDirs) {
+                archiveToBaseDirMap.put(archiveExtractor.extractArchives(scannerBaseDir , archiveExtractionDepth), scannerBaseDir);
+            }
+            scannerBaseDirs.addAll(archiveToBaseDirMap.keySet());
+        }
+
         for (String scannerBaseDir : scannerBaseDirs) {
             File file = new File(scannerBaseDir);
             if (file.exists()) {
@@ -237,8 +259,8 @@ public class WhitesourceFSAgent {
                     logger.info("Scanning Directory {} for Matching Files (may take a few minutes)", scannerBaseDir);
                     DirectoryScanner scanner = new DirectoryScanner();
                     scanner.setBasedir(scannerBaseDir);
-                    scanner.setIncludes(includes.split(INCLUDES_EXCLUDES_SEPARATOR_REGEX));
-                    scanner.setExcludes(excludes.split(INCLUDES_EXCLUDES_SEPARATOR_REGEX));
+                    scanner.setIncludes(includes);
+                    scanner.setExcludes(excludes);
                     scanner.setFollowSymlinks(getBooleanProperty(FOLLOW_SYMBOLIC_LINKS, true));
                     if (StringUtils.isNotBlank(globCaseSensitive)) {
                         if (globCaseSensitive.equalsIgnoreCase("true") || globCaseSensitive.equalsIgnoreCase("y")) {
@@ -298,13 +320,31 @@ public class WhitesourceFSAgent {
                 index++;
             }
         }
-        logger.info("Finished Analyzing Files");
 
+        // replace temp folder name with base dir
+        for (DependencyInfo dependencyInfo : dependencyInfos) {
+            String systemPath = dependencyInfo.getSystemPath();
+            for (String key : archiveToBaseDirMap.keySet()){
+                if (dependencyInfo.getSystemPath().contains(key)){
+                    dependencyInfo.setSystemPath(systemPath.replace(key, archiveToBaseDirMap.get(key)));
+                    break;
+                }
+            }
+        }
+
+        // delete all archive temp folders
+        if (archiveExtractor != null) {
+            archiveExtractor.deleteArchiveDirectory();
+        }
+
+        // delete scm clone directory
         if (scmConnector != null) {
             scmConnector.deleteCloneDirectory();
         }
+        logger.info("Finished Analyzing Files");
         return dependencyInfos;
     }
+
 
     private boolean getBooleanProperty(String propertyKey, boolean defaultValue) {
         boolean property = defaultValue;
@@ -367,6 +407,22 @@ public class WhitesourceFSAgent {
         if (index == totalFiles) {
             // clear progress animation
             System.out.print("                                                                                  \r");
+        }
+    }
+
+    private void validateParams(int archiveExtractionDepth, String[] includes) {
+        boolean isShutDown = false;
+        if (archiveExtractionDepth < 0 || archiveExtractionDepth > 3) {
+            logger.warn("Error: archiveExtractionDepth value should be greater than 0 and less than 4");
+            isShutDown = true;
+        }
+        if (includes.length < 1 ||  StringUtils.isBlank(includes[0]) ){
+            logger.warn("Error: includes parameter must have at list one scanning pattern");
+            isShutDown = true;
+        }
+        if (isShutDown == true){
+            logger.warn("Exiting");
+            System.exit(1);
         }
     }
 }

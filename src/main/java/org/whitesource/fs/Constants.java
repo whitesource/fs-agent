@@ -31,6 +31,9 @@ public final class Constants {
     public static final String PROJECT_VERSION_PROPERTY_KEY = "projectVersion"; // optional
     public static final String INCLUDES_PATTERN_PROPERTY_KEY = "includes";
     public static final String EXCLUDES_PATTERN_PROPERTY_KEY = "excludes";
+    public static final String ARCHIVE_EXTRACTION_DEPTH_KEY = "archiveExtractionDepth";
+    public static final String ARCHIVE_INCLUDES_PATTERN_KEY = "archiveIncludes";
+    public static final String ARCHIVE_EXCLUDES_PATTERN_KEY = "archiveExcludes";
     public static final String CASE_SENSITIVE_GLOB_PROPERTY_KEY = "case.sensitive.glob";
     public static final String PROXY_HOST_PROPERTY_KEY = "proxy.host";
     public static final String PROXY_PORT_PROPERTY_KEY = "proxy.port";
@@ -48,9 +51,9 @@ public final class Constants {
     public static final String SCM_TAG_PROPERTY_KEY = "scm.tag";
     public static final String EXCLUDED_COPYRIGHT_KEY = "copyright.excludes";
     public static final String LOG_LEVEL_KEY = "log.level";
+
     public static final String FOLLOW_SYMBOLIC_LINKS = "followSymbolicLinks";
-
     public static final String AGENT_TYPE = "fs-agent";
-    public static final String AGENT_VERSION = "2.2.0";
 
+    public static final String AGENT_VERSION = "2.2.0";
 }
