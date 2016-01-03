@@ -16,8 +16,8 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- *
  * The class supports recursive deCompression of compressed files (Java, Python & Ruby types).
+ *
  * @author anna.rozin
  */
 public class ArchiveExtractor {
@@ -29,7 +29,7 @@ public class ArchiveExtractor {
     private static final String TEMP_FOLDER = System.getProperty("java.io.tmpdir") + "WhiteSource-ArchiveExtractor";
 
     public static final List<String> ZIP_EXTENSIONS = Arrays.asList("jar", "war", "ear", "egg", "zip", "whl");
-    public static final List<String> RUBY_EXTENSIONS = Arrays.asList("gem");
+    public static final List<String> GEM_EXTENSIONS = Arrays.asList("gem");
     public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar");
 
     public static final String ZIP_EXTENSION_PATTERN ;
@@ -48,7 +48,7 @@ public class ArchiveExtractor {
 
     static {
         ZIP_EXTENSION_PATTERN = initializePattern(ZIP_EXTENSIONS);
-        GEM_EXTENSION_PATTERN = initializePattern(RUBY_EXTENSIONS);
+        GEM_EXTENSION_PATTERN = initializePattern(GEM_EXTENSIONS);
         TAR_EXTENSION_PATTERN = initializePattern(TAR_EXTENSIONS);
     }
 
@@ -113,7 +113,7 @@ public class ArchiveExtractor {
     private String[] createArchivesArray() {
         Collection<String> archiveExtensions = new ArrayList<String>();
         archiveExtensions.addAll(ZIP_EXTENSIONS);
-        archiveExtensions.addAll(RUBY_EXTENSIONS);
+        archiveExtensions.addAll(GEM_EXTENSIONS);
         archiveExtensions.addAll(TAR_EXTENSIONS);
 
         String[] archiveIncludesPattern = new String[archiveExtensions.size()];
