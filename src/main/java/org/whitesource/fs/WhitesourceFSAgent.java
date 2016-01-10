@@ -412,7 +412,7 @@ public class WhitesourceFSAgent {
 
     private void validateParams(int archiveExtractionDepth, String[] includes) {
         boolean isShutDown = false;
-        if (archiveExtractionDepth < 0 || archiveExtractionDepth > 3) {
+        if (archiveExtractionDepth < 0 || archiveExtractionDepth > 5) {
             logger.warn("Error: archiveExtractionDepth value should be greater than 0 and less than 4");
             isShutDown = true;
         }
