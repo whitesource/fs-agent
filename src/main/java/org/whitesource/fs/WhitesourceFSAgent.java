@@ -416,11 +416,11 @@ public class WhitesourceFSAgent {
             logger.warn("Error: archiveExtractionDepth value should be greater than 0 and less than 4");
             isShutDown = true;
         }
-        if (includes.length < 1 ||  StringUtils.isBlank(includes[0]) ){
+        if (includes.length < 1 || StringUtils.isBlank(includes[0])) {
             logger.warn("Error: includes parameter must have at list one scanning pattern");
             isShutDown = true;
         }
-        if (isShutDown == true){
+        if (isShutDown) {
             logger.warn("Exiting");
             System.exit(1);
         }

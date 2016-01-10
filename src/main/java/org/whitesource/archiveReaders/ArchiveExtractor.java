@@ -28,7 +28,7 @@ public class ArchiveExtractor {
 
     private static final String TEMP_FOLDER = System.getProperty("java.io.tmpdir") + "WhiteSource-ArchiveExtractor";
 
-    public static final List<String> ZIP_EXTENSIONS = Arrays.asList("jar", "war", "ear", "egg", "zip", "whl", "SCA");
+    public static final List<String> ZIP_EXTENSIONS = Arrays.asList("jar", "war", "ear", "egg", "zip", "whl", "sca");
     public static final List<String> GEM_EXTENSIONS = Arrays.asList("gem");
     public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar");
 
@@ -139,14 +139,15 @@ public class ArchiveExtractor {
                 for (String fileName : fileNames) {
                     String innerDir = destDirectory + File.separator + fileName.substring(0, fileName.lastIndexOf(DOT));
                     String archiveFile = scannerBaseDir + File.separator + fileName;
-                        if (fileName.matches(ZIP_EXTENSION_PATTERN)) {
+                    String lowerCaseFileName = fileName.toLowerCase();
+                    if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
                             unZip(fileName, innerDir, archiveFile);
-                        } else if (fileName.matches(GEM_EXTENSION_PATTERN)) {
+                        } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
                             unTar(fileName, innerDir, archiveFile);
                             innerDir = innerDir + File.separator + RUBY_DATA_FILE ;
                             unTar(RUBY_DATA_FILE, innerDir.substring(0, innerDir.lastIndexOf(DOT)) , innerDir);
                             innerDir = innerDir.replaceAll(TAR_GZ_SUFFIX, BLANK);
-                        } else if (fileName.matches(TAR_EXTENSION_PATTERN)) {
+                        } else if (lowerCaseFileName.matches(TAR_EXTENSION_PATTERN)) {
                             unTar(fileName, innerDir, archiveFile);
                             innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
                         } else {
