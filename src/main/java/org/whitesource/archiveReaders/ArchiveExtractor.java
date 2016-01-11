@@ -133,6 +133,7 @@ public class ArchiveExtractor {
                 scanner.setBasedir(scannerBaseDir);
                 scanner.setIncludes(archiveIncludesPattern);
                 scanner.setExcludes(archiveExcludesPattern);
+                scanner.setCaseSensitive(false);
                 scanner.scan();
 
                 String[] fileNames = scanner.getIncludedFiles();
