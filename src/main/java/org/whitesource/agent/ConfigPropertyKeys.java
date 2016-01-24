@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.whitesource.fs;
+package org.whitesource.agent;
 
 /**
- * Author: Itai Marko
+ * Property keys for the whitesource-docker-agent.configuration file.
+ *
+ * @author itai.marko
+ * @author tom.shapira
  */
-public final class Constants {
+public final class ConfigPropertyKeys {
 
     public static final String CHECK_POLICIES_PROPERTY_KEY = "checkPolicies";
     public static final String ORG_TOKEN_PROPERTY_KEY = "apiKey";
@@ -51,9 +54,6 @@ public final class Constants {
     public static final String SCM_TAG_PROPERTY_KEY = "scm.tag";
     public static final String EXCLUDED_COPYRIGHT_KEY = "copyright.excludes";
     public static final String LOG_LEVEL_KEY = "log.level";
-
     public static final String FOLLOW_SYMBOLIC_LINKS = "followSymbolicLinks";
-    public static final String AGENT_TYPE = "fs-agent";
 
-    public static final String AGENT_VERSION = "2.2.0";
 }

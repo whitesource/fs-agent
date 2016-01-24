@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import static org.whitesource.fs.Constants.*;
+import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 /**
  * Author: Itai Marko
@@ -77,7 +77,7 @@ public class Main {
         files.addAll(commandLineArgs.dependencyDirs);
 
         // run the agent
-        WhitesourceFSAgent whitesourceAgent = new WhitesourceFSAgent(configProps, files);
+        FileSystemAgent whitesourceAgent = new FileSystemAgent(configProps, files);
         whitesourceAgent.sendRequest();
     }
 

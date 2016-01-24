@@ -2,7 +2,7 @@ import org.apache.rat.api.RatException;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.fs.DependencyInfoFactory;
+import org.whitesource.agent.DependencyInfoFactory;
 
 import javax.xml.transform.TransformerConfigurationException;
 import java.io.File;

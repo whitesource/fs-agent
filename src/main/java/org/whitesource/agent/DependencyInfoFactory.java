@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.whitesource.fs;
+package org.whitesource.agent;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.rat.Defaults;
@@ -39,6 +39,7 @@ import java.util.*;
 
 /**
  * Factory class for {@link org.whitesource.agent.api.model.DependencyInfo}.
+ *
  * @author tom.shapira
  */
 public class DependencyInfoFactory {

@@ -1,4 +1,4 @@
-package org.whitesource.archiveReaders;
+package org.whitesource.agent.archive;
 
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -32,9 +32,9 @@ public class ArchiveExtractor {
     public static final List<String> GEM_EXTENSIONS = Arrays.asList("gem");
     public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar");
 
-    public static final String ZIP_EXTENSION_PATTERN ;
-    public static final String GEM_EXTENSION_PATTERN ;
-    public static final String TAR_EXTENSION_PATTERN ;
+    public static final String ZIP_EXTENSION_PATTERN;
+    public static final String GEM_EXTENSION_PATTERN;
+    public static final String TAR_EXTENSION_PATTERN;
     public static final String RUBY_DATA_FILE = "data.tar.gz";
     public static final String TAR_SUFFIX = ".tar";
     public static final String TAR_GZ_SUFFIX = TAR_SUFFIX + ".gz";
@@ -175,7 +175,7 @@ public class ArchiveExtractor {
     }
 
     // Open and extract data from Tar pattern files
-    private void unTar(String fileName,String innerDir, String archiveFile) {
+    private void unTar(String fileName, String innerDir, String archiveFile) {
         TarUnArchiver unArchiver = new TarUnArchiver();
         try {
             if (fileName.endsWith(TAR_GZ_SUFFIX)) {
