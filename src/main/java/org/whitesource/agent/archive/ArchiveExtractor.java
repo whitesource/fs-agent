@@ -30,7 +30,7 @@ public class ArchiveExtractor {
 
     public static final List<String> ZIP_EXTENSIONS = Arrays.asList("jar", "war", "ear", "egg", "zip", "whl", "sca", "sda");
     public static final List<String> GEM_EXTENSIONS = Arrays.asList("gem");
-    public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar");
+    public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar", "tgz");
 
     public static final String ZIP_EXTENSION_PATTERN;
     public static final String GEM_EXTENSION_PATTERN;
@@ -38,6 +38,7 @@ public class ArchiveExtractor {
     public static final String RUBY_DATA_FILE = "data.tar.gz";
     public static final String TAR_SUFFIX = ".tar";
     public static final String TAR_GZ_SUFFIX = TAR_SUFFIX + ".gz";
+    public static final String TGZ_SUFFIX = ".tgz";
 
     public static final String UN_ARCHIVER_LOGGER = "unArchiverLogger";
     public static final String GLOB_PATTERN_PREFIX =  "**/*.";
@@ -94,7 +95,12 @@ public class ArchiveExtractor {
      * @return the temp directory for the extracted files.
      */
     public String extractArchives(String scannerBaseDir, int archiveExtractionDepth) {
-        String destDirectory = TEMP_FOLDER + scannerBaseDir.substring(scannerBaseDir.lastIndexOf(File.separator), scannerBaseDir.length());
+        logger.debug("Base directory is {}, extraction depth is set to {}", scannerBaseDir, archiveExtractionDepth);
+        String destDirectory = TEMP_FOLDER;
+        int separatorIndex = scannerBaseDir.lastIndexOf(File.separator);
+        if (separatorIndex != -1) {
+            destDirectory = destDirectory + scannerBaseDir.substring(separatorIndex, scannerBaseDir.length());
+        }
         extractArchive(scannerBaseDir, destDirectory, archiveExtractionDepth, 0);
         return destDirectory;
     }
@@ -142,23 +148,23 @@ public class ArchiveExtractor {
                     String archiveFile = scannerBaseDir + File.separator + fileName;
                     String lowerCaseFileName = fileName.toLowerCase();
                     if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
-                            unZip(fileName, innerDir, archiveFile);
-                        } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
-                            unTar(fileName, innerDir, archiveFile);
-                            innerDir = innerDir + File.separator + RUBY_DATA_FILE ;
-                            unTar(RUBY_DATA_FILE, innerDir.substring(0, innerDir.lastIndexOf(DOT)) , innerDir);
-                            innerDir = innerDir.replaceAll(TAR_GZ_SUFFIX, BLANK);
-                        } else if (lowerCaseFileName.matches(TAR_EXTENSION_PATTERN)) {
-                            unTar(fileName, innerDir, archiveFile);
-                            innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
-                        } else {
-                            logger.warn("Error: {} is unsupported archive type", fileName.substring(fileName.lastIndexOf(DOT)));
-                            return;
-                        }
-                        // Extract again if needed according archiveExtractionDepth parameter
-                        if (curLevel < archiveExtractionDepth) {
-                            extractArchive(innerDir, innerDir, archiveExtractionDepth, curLevel + 1);
-                        }
+                        unZip(fileName, innerDir, archiveFile);
+                    } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
+                        unTar(fileName, innerDir, archiveFile);
+                        innerDir = innerDir + File.separator + RUBY_DATA_FILE ;
+                        unTar(RUBY_DATA_FILE, innerDir.substring(0, innerDir.lastIndexOf(DOT)) , innerDir);
+                        innerDir = innerDir.replaceAll(TAR_GZ_SUFFIX, BLANK);
+                    } else if (lowerCaseFileName.matches(TAR_EXTENSION_PATTERN)) {
+                        unTar(fileName, innerDir, archiveFile);
+                        innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
+                    } else {
+                        logger.warn("Error: {} is unsupported archive type", fileName.substring(fileName.lastIndexOf(DOT)));
+                        return;
+                    }
+                    // Extract again if needed according archiveExtractionDepth parameter
+                    if (curLevel < archiveExtractionDepth) {
+                        extractArchive(innerDir, innerDir, archiveExtractionDepth, curLevel + 1);
+                    }
                 }
             }
         }
@@ -183,11 +189,13 @@ public class ArchiveExtractor {
                 unArchiver = new TarGZipUnArchiver();
             } else if (fileName.endsWith(TAR_SUFFIX) || fileName.endsWith(GEM_EXTENSION_PATTERN)) {
                 unArchiver = new TarUnArchiver();
+            } else if (fileName.endsWith(TGZ_SUFFIX)) {
+                unArchiver = new TarGZipUnArchiver();
             }
             unArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
             unArchiver.setSourceFile(new File(archiveFile));
             File destDir = new File(innerDir);
-            if (!destDir.exists()){
+            if (!destDir.exists()) {
                 destDir.mkdirs();
             }
             unArchiver.setDestDirectory(destDir);

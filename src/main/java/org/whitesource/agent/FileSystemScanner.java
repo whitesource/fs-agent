@@ -49,12 +49,12 @@ public class FileSystemScanner {
         ArchiveExtractor archiveExtractor = null;
         if (archiveExtractionDepth > 0) {
             archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes);
+            logger.info("Starting Archive Extraction (may take a few minutes)");
             for (String scannerBaseDir : pathsToScan) {
                 archiveToBaseDirMap.put(archiveExtractor.extractArchives(scannerBaseDir , archiveExtractionDepth), scannerBaseDir);
             }
             pathsToScan.addAll(archiveToBaseDirMap.keySet());
         }
-
         for (String scannerBaseDir : pathsToScan) {
             File file = new File(scannerBaseDir);
             if (file.exists()) {
