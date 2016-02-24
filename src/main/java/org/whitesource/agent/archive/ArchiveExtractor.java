@@ -4,6 +4,7 @@ import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.codehaus.plexus.archiver.tar.TarGZipUnArchiver;
 import org.codehaus.plexus.archiver.tar.TarUnArchiver;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -34,10 +36,11 @@ public class ArchiveExtractor {
 
     public static final String ZIP_EXTENSION_PATTERN;
     public static final String GEM_EXTENSION_PATTERN;
-    public static final String TAR_EXTENSION_PATTERN;
+    public static final String  TAR_EXTENSION_PATTERN;
     public static final String RUBY_DATA_FILE = "data.tar.gz";
     public static final String TAR_SUFFIX = ".tar";
-    public static final String TAR_GZ_SUFFIX = TAR_SUFFIX + ".gz";
+    public static final String GZ_SUFFIX = ".gz";
+    public static final String TAR_GZ_SUFFIX = TAR_SUFFIX + GZ_SUFFIX;
     public static final String TGZ_SUFFIX = ".tgz";
 
     public static final String UN_ARCHIVER_LOGGER = "unArchiverLogger";
@@ -46,6 +49,8 @@ public class ArchiveExtractor {
     public static final String BLANK = "";
     public static final String PATTERN_PREFIX = ".*\\.";
     public static final String OR = "|";
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
+    public static final String RANDOM_STRING = "wss" + RandomStringUtils.random(10, true, false) + DATE_FORMAT.format(new Date());
 
     static {
         ZIP_EXTENSION_PATTERN = initializePattern(ZIP_EXTENSIONS);
@@ -78,6 +83,10 @@ public class ArchiveExtractor {
             this.archiveIncludesPattern = createArchivesArray();
         }
         this.archiveExcludesPattern = archiveExcludes;
+    }
+
+    public String getRandomString(){
+        return RANDOM_STRING;
     }
 
     /* --- Public methods --- */
@@ -144,7 +153,7 @@ public class ArchiveExtractor {
 
                 String[] fileNames = scanner.getIncludedFiles();
                 for (String fileName : fileNames) {
-                    String innerDir = destDirectory + File.separator + fileName.substring(0, fileName.lastIndexOf(DOT));
+                    String innerDir = destDirectory + File.separator + fileName + RANDOM_STRING;
                     String archiveFile = scannerBaseDir + File.separator + fileName;
                     String lowerCaseFileName = fileName.toLowerCase();
                     if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
@@ -152,11 +161,11 @@ public class ArchiveExtractor {
                     } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
                         unTar(fileName, innerDir, archiveFile);
                         innerDir = innerDir + File.separator + RUBY_DATA_FILE ;
-                        unTar(RUBY_DATA_FILE, innerDir.substring(0, innerDir.lastIndexOf(DOT)) , innerDir);
-                        innerDir = innerDir.replaceAll(TAR_GZ_SUFFIX, BLANK);
+                        unTar(RUBY_DATA_FILE, innerDir + RANDOM_STRING, innerDir);
+                        innerDir = innerDir + RANDOM_STRING;
                     } else if (lowerCaseFileName.matches(TAR_EXTENSION_PATTERN)) {
                         unTar(fileName, innerDir, archiveFile);
-                        innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
+//                        innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
                     } else {
                         logger.warn("Error: {} is unsupported archive type", fileName.substring(fileName.lastIndexOf(DOT)));
                         return;
@@ -185,9 +194,9 @@ public class ArchiveExtractor {
         TarUnArchiver unArchiver = new TarUnArchiver();
         try {
             if (fileName.endsWith(TAR_GZ_SUFFIX)) {
-                innerDir = innerDir.substring(0, innerDir.lastIndexOf(DOT));
+//                innerDir = innerDir.substring(0, innerDir.lastIndexOf(DOT));
                 unArchiver = new TarGZipUnArchiver();
-            } else if (fileName.endsWith(TAR_SUFFIX) || fileName.endsWith(GEM_EXTENSION_PATTERN)) {
+            } else if (fileName.endsWith(TAR_SUFFIX) || fileName.endsWith(GEM_EXTENSION_PATTERN.substring(GEM_EXTENSION_PATTERN.lastIndexOf(".")))) {
                 unArchiver = new TarUnArchiver();
             } else if (fileName.endsWith(TGZ_SUFFIX)) {
                 unArchiver = new TarGZipUnArchiver();

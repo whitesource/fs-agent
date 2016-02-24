@@ -27,6 +27,7 @@ public class FileSystemScanner {
 
     private static final List<String> progressAnimation = Arrays.asList("|", "/", "-", "\\");
     private static final int ANIMATION_FRAMES = progressAnimation.size();
+    private static final String EMPTY_STRING = "";
     private static int animationIndex = 0;
 
     /* --- Public methods --- */
@@ -111,7 +112,7 @@ public class FileSystemScanner {
             String systemPath = dependencyInfo.getSystemPath();
             for (String key : archiveToBaseDirMap.keySet()){
                 if (dependencyInfo.getSystemPath().contains(key)){
-                    dependencyInfo.setSystemPath(systemPath.replace(key, archiveToBaseDirMap.get(key)));
+                    dependencyInfo.setSystemPath(systemPath.replace(key, archiveToBaseDirMap.get(key)).replaceAll(archiveExtractor.getRandomString(), EMPTY_STRING));
                     break;
                 }
             }

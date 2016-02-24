@@ -6,12 +6,12 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>1.6.8</version>
+    <version>1.6.9</version>
     <packaging>jar</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <agent.api.version>2.2.6</agent.api.version>
+        <agent.api.version>2.2.7</agent.api.version>
         <slf4j.version>1.7.7</slf4j.version>
     </properties>
 
@@ -119,6 +119,13 @@
             <version>4.11</version>
             <scope>test</scope>
         </dependency>
+        <!-- random String -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.4</version>
+        </dependency>
+
     </dependencies>
 
     <build>

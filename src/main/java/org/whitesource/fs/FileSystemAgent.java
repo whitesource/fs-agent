@@ -47,7 +47,7 @@ public class FileSystemAgent extends CommandLineAgent {
     private static final String DEFAULT_ARCHIVE_DEPTH = "0";
 
     private static final String AGENT_TYPE = "fs-agent";
-    private static final String AGENT_VERSION = "2.2.6";
+    private static final String AGENT_VERSION = "2.2.7";
 
     /* --- Members --- */
 
@@ -65,7 +65,6 @@ public class FileSystemAgent extends CommandLineAgent {
     @Override
     protected Collection<AgentProjectInfo> createProjects() {
         AgentProjectInfo projectInfo = new AgentProjectInfo();
-
         // use token or name + version
         String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
         if (StringUtils.isNotBlank(projectToken)) {
@@ -77,7 +76,11 @@ public class FileSystemAgent extends CommandLineAgent {
         }
 
         projectInfo.setDependencies(getDependencyInfos());
-        return Arrays.asList(projectInfo);
+
+        Collection<AgentProjectInfo> projects = new ArrayList<AgentProjectInfo>();
+        // don't use Arrays.asList, might be removed later if no dependencies
+        projects.add(projectInfo);
+        return projects;
     }
 
     @Override

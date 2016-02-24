@@ -18,7 +18,7 @@ package org.whitesource.agent;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.api.dispatch.CheckPoliciesResult;
+import org.whitesource.agent.api.dispatch.CheckPolicyComplianceResult;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.model.AgentProjectInfo;
@@ -141,9 +141,9 @@ public abstract class CommandLineAgent {
     private boolean checkPolicies(WhitesourceService service, String orgToken, String product, String productVersion,
                                   Collection<AgentProjectInfo> projects) throws WssServiceException {
         boolean policyCompliance = true;
-
+        boolean forceCheckAllDependencies = getBooleanProperty(FORCE_CHECK_ALL_DEPENDENCIES, false);
         logger.info("Checking policies");
-        CheckPoliciesResult checkPoliciesResult = service.checkPolicies(orgToken, product, productVersion, projects);
+        CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(orgToken, product, productVersion, projects, forceCheckAllDependencies);
         if (checkPoliciesResult.hasRejections()) {
             logger.info("Some dependencies did not conform with open source policies, review report for details");
             logger.info("=== UPDATE ABORTED ===");
