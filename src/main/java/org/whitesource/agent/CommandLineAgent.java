@@ -31,9 +31,7 @@ import org.whitesource.agent.report.PolicyCheckReport;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Properties;
+import java.util.*;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
