@@ -126,8 +126,12 @@ public abstract class CommandLineAgent {
     private WhitesourceService createService() {
         String serviceUrl = config.getProperty(ClientConstants.SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
         logger.info("Service URL is " + serviceUrl);
-        final WhitesourceService service = new WhitesourceService(getAgentType(), getAgentVersion(), serviceUrl);
+        boolean setProxy = false;
         final String proxyHost = config.getProperty(PROXY_HOST_PROPERTY_KEY);
+        if (StringUtils.isNotBlank(proxyHost) || !getBooleanProperty(OFFLINE_PROPERTY_KEY, false)) {
+            setProxy = true;
+        }
+        final WhitesourceService service = new WhitesourceService(getAgentType(), getAgentVersion(), serviceUrl,setProxy);
         if (StringUtils.isNotBlank(proxyHost)) {
             final int proxyPort = Integer.parseInt(config.getProperty(PROXY_PORT_PROPERTY_KEY));
             final String proxyUser = config.getProperty(PROXY_USER_PROPERTY_KEY);
