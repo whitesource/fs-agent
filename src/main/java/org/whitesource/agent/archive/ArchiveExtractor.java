@@ -28,7 +28,9 @@ public class ArchiveExtractor {
 
     private static final Logger logger = LoggerFactory.getLogger(ArchiveExtractor.class);
 
-    private static final String TEMP_FOLDER = System.getProperty("java.io.tmpdir") + "WhiteSource-ArchiveExtractor";
+    private static final String TEMP_FOLDER;
+    private static final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
+    private static final String WHITESOURCE_TEMP_FOLDER = "WhiteSource-ArchiveExtractor";
 
     public static final List<String> ZIP_EXTENSIONS = Arrays.asList("jar", "war", "ear", "egg", "zip", "whl", "sca", "sda");
     public static final List<String> GEM_EXTENSIONS = Arrays.asList("gem");
@@ -56,6 +58,8 @@ public class ArchiveExtractor {
         ZIP_EXTENSION_PATTERN = initializePattern(ZIP_EXTENSIONS);
         GEM_EXTENSION_PATTERN = initializePattern(GEM_EXTENSIONS);
         TAR_EXTENSION_PATTERN = initializePattern(TAR_EXTENSIONS);
+        TEMP_FOLDER = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + WHITESOURCE_TEMP_FOLDER :
+                                                        JAVA_TEMP_DIR + File.separator + WHITESOURCE_TEMP_FOLDER;
     }
 
     private static String initializePattern(List<String> archiveExtensions) {
