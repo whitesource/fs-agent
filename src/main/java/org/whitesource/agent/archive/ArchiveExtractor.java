@@ -171,7 +171,7 @@ public class ArchiveExtractor {
                         unTar(fileName, innerDir, archiveFile);
 //                        innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
                     } else {
-                        logger.warn("Error: {} is unsupported archive type", fileName.substring(fileName.lastIndexOf(DOT)));
+                        logger.warn("Error: {} is unsupported archive type", fileName);
                         return;
                     }
                     // Extract again if needed according archiveExtractionDepth parameter
