@@ -6,6 +6,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.tools.ant.DirectoryScanner;
+import org.codehaus.plexus.archiver.tar.TarBZip2UnArchiver;
 import org.codehaus.plexus.archiver.tar.TarGZipUnArchiver;
 import org.codehaus.plexus.archiver.tar.TarUnArchiver;
 import org.codehaus.plexus.logging.console.ConsoleLogger;
@@ -34,7 +35,7 @@ public class ArchiveExtractor {
 
     public static final List<String> ZIP_EXTENSIONS = Arrays.asList("jar", "war", "ear", "egg", "zip", "whl", "sca", "sda");
     public static final List<String> GEM_EXTENSIONS = Arrays.asList("gem");
-    public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar", "tgz");
+    public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar", "tgz", "tar.bz2");
 
     public static final String ZIP_EXTENSION_PATTERN;
     public static final String GEM_EXTENSION_PATTERN;
@@ -42,8 +43,10 @@ public class ArchiveExtractor {
     public static final String RUBY_DATA_FILE = "data.tar.gz";
     public static final String TAR_SUFFIX = ".tar";
     public static final String GZ_SUFFIX = ".gz";
-    public static final String TAR_GZ_SUFFIX = TAR_SUFFIX + GZ_SUFFIX;
+    public static final String BZ_SUFFIX = ".bz2";
     public static final String TGZ_SUFFIX = ".tgz";
+    public static final String TAR_GZ_SUFFIX = TAR_SUFFIX + GZ_SUFFIX;
+    public static final String TAR_BZ2_SUFFIX = TAR_SUFFIX + BZ_SUFFIX;
 
     public static final String UN_ARCHIVER_LOGGER = "unArchiverLogger";
     public static final String GLOB_PATTERN_PREFIX =  "**/*.";
@@ -203,7 +206,9 @@ public class ArchiveExtractor {
             } else if (fileName.endsWith(TAR_SUFFIX) || fileName.endsWith(GEM_EXTENSION_PATTERN.substring(GEM_EXTENSION_PATTERN.lastIndexOf(".")))) {
                 unArchiver = new TarUnArchiver();
             } else if (fileName.endsWith(TGZ_SUFFIX)) {
-                unArchiver = new TarGZipUnArchiver();
+                unArchiver = new TarUnArchiver();
+            } else if (fileName.endsWith(TAR_BZ2_SUFFIX)) {
+                unArchiver = new TarBZip2UnArchiver();
             }
             unArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
             unArchiver.setSourceFile(new File(archiveFile));
