@@ -191,8 +191,9 @@ public class ArchiveExtractor {
         try {
             ZipFile zipFile = new ZipFile(archiveFile);
             zipFile.extractAll(innerDir);
-        } catch (ZipException e) {
+        } catch (Exception e) {
             logger.warn("Error extracting file {}: {}", fileName, e.getMessage());
+            logger.debug("Error extracting file {}: {}", fileName, e.getStackTrace());
         }
     }
 

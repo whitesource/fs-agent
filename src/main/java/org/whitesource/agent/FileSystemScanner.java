@@ -74,7 +74,12 @@ public class FileSystemScanner {
                     totalFiles += fileNames.length;
                 } else {
                     // handle file
-                    fileMap.put(file.getParentFile(), Arrays.asList(file.getName()));
+                    Collection<String> files = fileMap.get(file.getParentFile());
+                    if (files == null) {
+                        files = new ArrayList<String>();
+                    }
+                    files.add(file.getName());
+                    fileMap.put(file.getParentFile(), files);
                     totalFiles++;
                 }
             } else {
