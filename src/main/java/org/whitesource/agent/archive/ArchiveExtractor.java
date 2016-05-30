@@ -1,10 +1,7 @@
 package org.whitesource.agent.archive;
 
 import net.lingala.zip4j.core.ZipFile;
-import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
-import org.apache.commons.compress.archivers.cpio.CpioArchiveInputStream;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.tools.ant.DirectoryScanner;
@@ -12,21 +9,26 @@ import org.codehaus.plexus.archiver.tar.TarBZip2UnArchiver;
 import org.codehaus.plexus.archiver.tar.TarGZipUnArchiver;
 import org.codehaus.plexus.archiver.tar.TarUnArchiver;
 import org.codehaus.plexus.logging.console.ConsoleLogger;
-import org.redline_rpm.*;
-import org.redline_rpm.header.Format;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
+import org.apache.commons.compress.archivers.cpio.CpioArchiveInputStream;
 import org.apache.commons.compress.compressors.lzma.LZMACompressorInputStream;
+import org.apache.commons.io.IOUtils;
+import org.redline_rpm.*;
+import org.redline_rpm.header.Format;
 import org.redline_rpm.header.AbstractHeader;
 import org.redline_rpm.header.Header;
 
 import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * The class supports recursive deCompression of compressed files (Java, Python & Ruby types).
@@ -66,8 +68,6 @@ public class ArchiveExtractor {
 
     public static final String UN_ARCHIVER_LOGGER = "unArchiverLogger";
     public static final String GLOB_PATTERN_PREFIX =  "**/*.";
-    public static final String DOT = ".";
-    public static final String BLANK = "";
     public static final String PATTERN_PREFIX = ".*\\.";
     public static final String OR = "|";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
