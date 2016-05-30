@@ -131,7 +131,10 @@ public abstract class CommandLineAgent {
         if (StringUtils.isNotBlank(proxyHost) || !getBooleanProperty(OFFLINE_PROPERTY_KEY, false)) {
             setProxy = true;
         }
-        final WhitesourceService service = new WhitesourceService(getAgentType(), getAgentVersion(), serviceUrl,setProxy);
+        int connectionTimeoutMinutes = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
+                                        String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
+        final WhitesourceService service = new WhitesourceService(getAgentType(), getAgentVersion(), serviceUrl,
+                setProxy, connectionTimeoutMinutes);
         if (StringUtils.isNotBlank(proxyHost)) {
             final int proxyPort = Integer.parseInt(config.getProperty(PROXY_PORT_PROPERTY_KEY));
             final String proxyUser = config.getProperty(PROXY_USER_PROPERTY_KEY);
