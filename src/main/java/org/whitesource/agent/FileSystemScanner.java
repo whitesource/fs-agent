@@ -29,6 +29,8 @@ public class FileSystemScanner {
     private static final int ANIMATION_FRAMES = progressAnimation.size();
     private static final String EMPTY_STRING = "";
     private static int animationIndex = 0;
+    private static String BACK_SLASH = "\\";
+    private static String FORWARD_SLASH = "/";
 
     /* --- Public methods --- */
 
@@ -100,8 +102,7 @@ public class FileSystemScanner {
                 DependencyInfo originalDependencyInfo = factory.createDependencyInfo(entry.getKey(), fileName);
                 if (originalDependencyInfo != null) {
                     if (scmConnector != null) {
-                        // no need to send system path for file from scm repository
-                        originalDependencyInfo.setSystemPath(null);
+                        originalDependencyInfo.setSystemPath(fileName.replace(BACK_SLASH, FORWARD_SLASH));
                     }
                     dependencyInfos.add(originalDependencyInfo);
                 }
