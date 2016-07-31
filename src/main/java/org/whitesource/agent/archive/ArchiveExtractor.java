@@ -63,6 +63,7 @@ public class ArchiveExtractor {
 
     public static final String TAR_GZ_SUFFIX = TAR_SUFFIX + GZ_SUFFIX;
     public static final String TAR_BZ2_SUFFIX = TAR_SUFFIX + BZ_SUFFIX;
+    public static final String TGZ_SUFFIX = ".tgz";
     public static final String UNIX_FILE_SEPARATOR = "/";
     public static final String WINDOWS_FILE_SEPARATOR = "\\";
 
@@ -220,7 +221,7 @@ public class ArchiveExtractor {
     private void unTar(String fileName, String innerDir, String archiveFile) {
         TarUnArchiver unArchiver = new TarUnArchiver();
         try {
-            if (fileName.endsWith(TAR_GZ_SUFFIX)) {
+            if (fileName.endsWith(TAR_GZ_SUFFIX) || fileName.endsWith(TGZ_SUFFIX)) {
                 unArchiver = new TarGZipUnArchiver();
             } else if (fileName.endsWith(TAR_BZ2_SUFFIX)) {
                 unArchiver = new TarBZip2UnArchiver();
