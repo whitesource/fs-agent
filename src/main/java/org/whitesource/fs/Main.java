@@ -78,7 +78,8 @@ public class Main {
 
         // run the agent
         FileSystemAgent whitesourceAgent = new FileSystemAgent(configProps, files);
-        whitesourceAgent.sendRequest();
+        boolean processSuccess = whitesourceAgent.sendRequest();
+        logger.info("Process finished with exit code {}", processSuccess == true ? 0 : -1);
     }
 
     /* --- Private methods --- */

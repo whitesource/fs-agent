@@ -61,7 +61,7 @@ public abstract class CommandLineAgent {
 
     /* --- Public methods --- */
 
-    public void sendRequest() {
+    public boolean sendRequest() {
         Collection<AgentProjectInfo> projects = createProjects();
         Iterator<AgentProjectInfo> iterator = projects.iterator();
         while (iterator.hasNext()) {
@@ -75,8 +75,9 @@ public abstract class CommandLineAgent {
         if (projects.isEmpty()) {
             logger.info("Exiting, nothing to update");
         } else {
-            sendRequest(projects);
+            return sendRequest(projects);
         }
+        return false;
     }
 
     /* --- Abstract methods --- */
@@ -89,7 +90,7 @@ public abstract class CommandLineAgent {
 
     /* --- Private methods --- */
 
-    protected void sendRequest(Collection<AgentProjectInfo> projects) {
+    protected boolean sendRequest(Collection<AgentProjectInfo> projects) {
         String orgToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
         String productVersion = null;
         String product = config.getProperty(PRODUCT_TOKEN_PROPERTY_KEY);
@@ -103,24 +104,26 @@ public abstract class CommandLineAgent {
         WhitesourceService service = createService();
         if (getBooleanProperty(OFFLINE_PROPERTY_KEY, false)) {
             offlineUpdate(service, orgToken, product, productVersion, projects);
+            return true;
         } else {
+            boolean sendUpdate = true;
             try {
-                boolean sendUpdate = true;
                 if (getBooleanProperty(CHECK_POLICIES_PROPERTY_KEY, false)) {
                     boolean policyCompliance = checkPolicies(service, orgToken, product, productVersion, projects);
                     sendUpdate = policyCompliance;
                 }
-
                 if (sendUpdate) {
                     update(service, orgToken, product, productVersion, projects);
                 }
             } catch (WssServiceException e) {
                 logger.error("Failed to send request to WhiteSource server: " + e.getMessage(), e);
+                sendUpdate = false;
             } finally {
                 if (service != null) {
                     service.shutdown();
                 }
             }
+            return sendUpdate;
         }
     }
 
