@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.ConfigPropertyKeys;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -49,8 +50,18 @@ public class Main {
         // validate args // TODO use jCommander validators
         // TODO add usage command
 
+        String productName = commandLineArgs.product;
+        String projectName = commandLineArgs.project;
         // read configuration properties
-        Properties configProps = readAndValidateConfigFile(commandLineArgs.configFilePath);
+        Properties configProps = readAndValidateConfigFile(commandLineArgs.configFilePath, projectName);
+
+        // Check whether the user inserted project OR/AND product via command line
+        if (productName != null) {
+            configProps.put(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY,productName);
+        }
+        if (projectName != null) {
+            configProps.put(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, projectName);
+        }
 
         // read log level from configuration file
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
@@ -86,14 +97,14 @@ public class Main {
 
     /* --- Private methods --- */
 
-    private static Properties readAndValidateConfigFile(String configFilePath) {
+    private static Properties readAndValidateConfigFile(String configFilePath, String projectName) {
         Properties configProps = new Properties();
         InputStream inputStream = null;
         boolean foundError = false;
         try {
             inputStream = new FileInputStream(configFilePath);
             configProps.load(inputStream);
-            foundError = validateConfigProps(configProps, configFilePath);
+            foundError = validateConfigProps(configProps, configFilePath, projectName);
         } catch (FileNotFoundException e) {
             logger.error("Failed to open " + configFilePath + " for reading", e);
             foundError = true;
@@ -115,7 +126,7 @@ public class Main {
         return configProps;
     }
 
-    private static boolean validateConfigProps(Properties configProps, String configFilePath) {
+    private static boolean validateConfigProps(Properties configProps, String configFilePath, String project) {
         boolean foundError = false;
         if (StringUtils.isBlank(configProps.getProperty(ORG_TOKEN_PROPERTY_KEY))) {
             foundError = true;
@@ -123,7 +134,7 @@ public class Main {
         }
 
         String projectToken = configProps.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
-        String projectName = configProps.getProperty(PROJECT_NAME_PROPERTY_KEY);
+        String projectName = project != null ? project : configProps.getProperty(PROJECT_NAME_PROPERTY_KEY);
         boolean noProjectToken = StringUtils.isBlank(projectToken);
         boolean noProjectName = StringUtils.isBlank(projectName);
         if (noProjectToken && noProjectName) {
