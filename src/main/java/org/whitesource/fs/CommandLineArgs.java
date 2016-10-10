@@ -41,4 +41,10 @@ public class CommandLineArgs {
 
     @Parameter(names = "-f", description = "File list path")
     String fileListPath = "";
+
+    @Parameter(names = "-product", description = "Product to update")
+    String product = null;
+
+    @Parameter(names = "-project", description = "Project to update")
+    String project = null;
 }
