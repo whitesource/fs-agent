@@ -1,5 +1,6 @@
 package org.whitesource.agent.archive;
 
+import com.github.junrar.testutil.ExtractArchive;
 import net.lingala.zip4j.core.ZipFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -49,17 +50,20 @@ public class ArchiveExtractor {
     public static final List<String> GEM_EXTENSIONS = Arrays.asList("gem");
     public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar", "tgz", "tar.bz2");
     public static final List<String> RPM_EXTENSIONS = Arrays.asList("rpm");
+    public static final List<String> RAR_EXTENSIONS = Arrays.asList("rar");
 
     public static final String ZIP_EXTENSION_PATTERN;
     public static final String GEM_EXTENSION_PATTERN;
     public static final String TAR_EXTENSION_PATTERN;
     public static final String RPM_EXTENSION_PATTERN;
+    public static final String RAR_EXTENSION_PATTERN;
     public static final String RUBY_DATA_FILE = "data.tar.gz";
     public static final String TAR_SUFFIX = ".tar";
     public static final String GZ_SUFFIX = ".gz";
     public static final String BZ_SUFFIX = ".bz2";
     public static final String LZMA = "lzma";
     public static final String CPIO = ".cpio";
+    public static final String RAR = ".rar";
 
     public static final String TAR_GZ_SUFFIX = TAR_SUFFIX + GZ_SUFFIX;
     public static final String TAR_BZ2_SUFFIX = TAR_SUFFIX + BZ_SUFFIX;
@@ -79,6 +83,7 @@ public class ArchiveExtractor {
         GEM_EXTENSION_PATTERN = initializePattern(GEM_EXTENSIONS);
         TAR_EXTENSION_PATTERN = initializePattern(TAR_EXTENSIONS);
         RPM_EXTENSION_PATTERN = initializePattern(RPM_EXTENSIONS);
+        RAR_EXTENSION_PATTERN = initializePattern(RAR_EXTENSIONS);
         TEMP_FOLDER = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + WHITESOURCE_TEMP_FOLDER :
                                                         JAVA_TEMP_DIR + File.separator + WHITESOURCE_TEMP_FOLDER;
     }
@@ -193,6 +198,12 @@ public class ArchiveExtractor {
 //                        innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
                     } else if (lowerCaseFileName.matches(RPM_EXTENSION_PATTERN)){
                         handleRpmFile(fileName, innerDir, archiveFile);
+                    } else if (lowerCaseFileName.matches(RAR_EXTENSION_PATTERN)) {
+                        File destDir = new File(innerDir);
+                        if (!destDir.exists()) {
+                            destDir.mkdirs();
+                        }
+                        ExtractArchive.extractArchive(archiveFile, innerDir);
                     } else {
                         logger.warn("Error: {} is unsupported archive type", fileName);
                         return;
