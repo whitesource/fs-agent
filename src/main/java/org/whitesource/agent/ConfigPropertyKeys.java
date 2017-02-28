@@ -24,6 +24,7 @@ package org.whitesource.agent;
 public final class ConfigPropertyKeys {
 
     public static final String CHECK_POLICIES_PROPERTY_KEY = "checkPolicies";
+    public static final String FORCE_UPDATE = "forceUpdate";
     public static final String FORCE_CHECK_ALL_DEPENDENCIES = "forceCheckAllDependencies"; // optional
     public static final String ORG_TOKEN_PROPERTY_KEY = "apiKey";
     public static final String PARTIAL_SHA1_MATCH_KEY = "partialSha1Match";

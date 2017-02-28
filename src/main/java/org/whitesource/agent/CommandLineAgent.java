@@ -154,12 +154,16 @@ public abstract class CommandLineAgent {
         boolean forceCheckAllDependencies = getBooleanProperty(FORCE_CHECK_ALL_DEPENDENCIES, false);
         logger.info("Checking policies");
         CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(orgToken, product, productVersion, projects, forceCheckAllDependencies);
-        if (checkPoliciesResult.hasRejections()) {
+        boolean hasRejections = checkPoliciesResult.hasRejections();
+        if (hasRejections && !getBooleanProperty(FORCE_UPDATE, false)) {
             logger.info("Some dependencies did not conform with open source policies, review report for details");
             logger.info("=== UPDATE ABORTED ===");
             policyCompliance = false;
         } else {
-            logger.info("All dependencies conform with open source policies");
+            String message = hasRejections ? "Some dependencies violate open source policies, however all were force " +
+                    "updated to organization inventory." :
+                    "All dependencies conform with open source policies.";
+            logger.info(message);
         }
 
         try {
