@@ -31,13 +31,17 @@ public class FileSystemScanner {
     private static int animationIndex = 0;
     private static String BACK_SLASH = "\\";
     private static String FORWARD_SLASH = "/";
+    private static String BOWER_JSON = "bower.json";
+    private static String PACKAGE_JSON = "package.json";
+    private static String BOWER_FOLDER = "\\bower_components\\";
+    private static String NPM_FOLDER = "\\node_modules\\";
 
     /* --- Public methods --- */
 
     public List<DependencyInfo> createDependencyInfos(List<String> scannerBaseDirs, ScmConnector scmConnector,
-                  String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
-                  String[] archiveIncludes, String[] archiveExcludes, boolean followSymlinks, Collection<String> excludedCopyrights,
-                  boolean partialSha1Match) {
+                                                      String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
+                                                      String[] archiveIncludes, String[] archiveExcludes, boolean followSymlinks, Collection<String> excludedCopyrights,
+                                                      boolean partialSha1Match) {
         Collection<String> pathsToScan = new ArrayList<String>(scannerBaseDirs);
 
         // validate parameters
@@ -54,7 +58,7 @@ public class FileSystemScanner {
             archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes);
             logger.info("Starting Archive Extraction (may take a few minutes)");
             for (String scannerBaseDir : pathsToScan) {
-                archiveToBaseDirMap.put(archiveExtractor.extractArchives(scannerBaseDir , archiveExtractionDepth), scannerBaseDir);
+                archiveToBaseDirMap.put(archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth), scannerBaseDir);
             }
             pathsToScan.addAll(archiveToBaseDirMap.keySet());
         }
@@ -72,6 +76,7 @@ public class FileSystemScanner {
                     scanner.scan();
                     File basedir = scanner.getBasedir();
                     String[] fileNames = scanner.getIncludedFiles();
+                    checkUnsupportedFileTypes(fileNames);
                     fileMap.put(basedir, Arrays.asList(fileNames));
                     totalFiles += fileNames.length;
                 } else {
@@ -116,8 +121,8 @@ public class FileSystemScanner {
         // replace temp folder name with base dir
         for (DependencyInfo dependencyInfo : dependencyInfos) {
             String systemPath = dependencyInfo.getSystemPath();
-            for (String key : archiveToBaseDirMap.keySet()){
-                if (dependencyInfo.getSystemPath().contains(key)){
+            for (String key : archiveToBaseDirMap.keySet()) {
+                if (dependencyInfo.getSystemPath().contains(key)) {
                     dependencyInfo.setSystemPath(systemPath.replace(key, archiveToBaseDirMap.get(key)).replaceAll(archiveExtractor.getRandomString(), EMPTY_STRING));
                     break;
                 }
@@ -177,6 +182,31 @@ public class FileSystemScanner {
         if (isShutDown) {
             logger.warn("Exiting");
             System.exit(1);
+        }
+    }
+
+    private void checkUnsupportedFileTypes(String[] fileNames) {
+        boolean bowerPrintedOnce = false;
+        boolean packagePrintedOnce = false;
+        boolean nodePrintedOnce = false;
+        boolean comPrintedOnce = false;
+        for (String file : fileNames) {
+            if (file.endsWith(BOWER_JSON) && !bowerPrintedOnce) {
+                bowerPrintedOnce = true;
+                logger.info("Found {} file, please consider using Bower-Plugin", BOWER_JSON);
+            } else if (file.endsWith(PACKAGE_JSON) && !packagePrintedOnce) {
+                packagePrintedOnce = true;
+                logger.info("Found {} file, please consider using Npm-Plugin", PACKAGE_JSON);
+            } else if (file.contains(NPM_FOLDER) && !nodePrintedOnce) {
+                nodePrintedOnce = true;
+                logger.info("Found {} folder, suspect presence of NPM packages. Please consider using NPM-Plugin", NPM_FOLDER);
+            } else if (file.contains(BOWER_FOLDER) && !nodePrintedOnce) {
+                comPrintedOnce = true;
+                logger.info("Found {} folder, suspect presence of Bower packages. Please consider using Bower-Plugin", BOWER_FOLDER);
+            }
+            if (bowerPrintedOnce && packagePrintedOnce && nodePrintedOnce && comPrintedOnce) {
+                return;
+            }
         }
     }
 }
