@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2014 WhiteSource Ltd.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,12 +75,15 @@ public class DependencyInfoFactory {
     private static final String WHITESPACE = " ";
     private static final String EMPTY_STRING = "";
 
+    private static final int MAX_FILE_SIZE = 10 * 1024; // 10mb
+
     public static final String CRLF = "\r\n";
     public static final String NEW_LINE = "\n";
 
     private static final int FIRST_LINES_TO_SCAN = 150;
 
     private static final Map<String, String> commentStartEndMap;
+
     static {
         commentStartEndMap = new HashMap<String, String>();
         commentStartEndMap.put("/*", "*/");
@@ -135,46 +138,8 @@ public class DependencyInfoFactory {
                 ChecksumUtils.calculateHeaderAndFooterSha1(dependencyFile, dependencyInfo);
             }
 
-            boolean containsLicense = false;
-            boolean containsCopyright = false;
-            try {
-                // only check file headers
-                List<String> lines = FileUtils.readLines(dependencyFile);
-                for (int i = 0; i < lines.size() && i < FIRST_LINES_TO_SCAN; i++) {
-                    String line = lines.get(i).toLowerCase();
-                    if (line.matches(COPYRIGHT_PATTERN)) {
-                        containsCopyright = true;
-                        containsLicense = true;
-                        break;
-                    } else if (line.matches(LICENSE_PATTERN)) {
-                        containsLicense = true;
-                        // continue looking for copyrights
-                    }
-                }
-            } catch (IOException e) {
-                // do nothing
-            }
+            // removed finding license & copyrights in headers
 
-            // check if file contains one of the "license" words before scanning for licenses
-            if (containsLicense) {
-                try {
-                    Set<String> licenses = scanLicenses(dependencyFile);
-                    dependencyInfo.getLicenses().addAll(licenses);
-                } catch (Exception e) {
-                    logger.debug("Error scanning file for license", e);
-                }
-            }
-
-            // check if file contains the word "copyright" before extracting copyright information
-            if (containsCopyright) {
-                dependencyInfo.getCopyrights().addAll(extractCopyrights(dependencyFile));
-
-                // if contains one of the excluded copyrights, don't send it to WhiteSource
-                if (containsExcludedCopyright(dependencyInfo)) {
-                    logger.debug("Found excluded copyright, skipping file {}", dependencyInfo.getSystemPath());
-                    dependencyInfo = null;
-                }
-            }
         } catch (IOException e) {
             logger.warn("Failed to create dependency " + fileName + " to dependency list: ", e);
         }
@@ -389,7 +354,9 @@ public class DependencyInfoFactory {
 
     private File createOtherPlatformFile(File originalPlatform) {
         try {
-            if (originalPlatform.length() < Runtime.getRuntime().freeMemory()) {
+            long length = originalPlatform.length();
+            // calculate other platform sha1 for files larger than MAX_FILE_SIZE
+            if (length < MAX_FILE_SIZE && length < Runtime.getRuntime().freeMemory()) {
                 byte[] byteArray = FileUtils.readFileToByteArray(originalPlatform);
 
                 String fileText = new String(byteArray);

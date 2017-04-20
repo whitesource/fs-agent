@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2014 WhiteSource Ltd.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class Main {
 
         // Check whether the user inserted project OR/AND product via command line
         if (productName != null) {
-            configProps.put(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY,productName);
+            configProps.put(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, productName);
         }
         if (projectName != null) {
             configProps.put(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, projectName);
@@ -75,9 +75,7 @@ public class Main {
             try {
                 File listFile = new File(fileListPath);
                 if (listFile.exists()) {
-                    for (String line : FileUtils.readLines(listFile)) {
-                        files.add(line);
-                    }
+                    files.addAll(FileUtils.readLines(listFile));
                 }
             } catch (IOException e) {
                 logger.warn("Error reading list file");
@@ -90,7 +88,7 @@ public class Main {
         // run the agent
         FileSystemAgent whitesourceAgent = new FileSystemAgent(configProps, files);
         boolean processSuccess = whitesourceAgent.sendRequest();
-        int processExitCode = processSuccess == true ? 0 : -1;
+        int processExitCode = processSuccess ? 0 : -1;
         logger.info("Process finished with exit code {}", processExitCode);
         System.exit(processExitCode);
     }
@@ -109,7 +107,7 @@ public class Main {
             logger.error("Failed to open " + configFilePath + " for reading", e);
             foundError = true;
         } catch (IOException e) {
-            logger.error("Error occurred when reading from " + configFilePath , e);
+            logger.error("Error occurred when reading from " + configFilePath, e);
             foundError = true;
         } finally {
             if (inputStream != null) {
@@ -148,6 +146,5 @@ public class Main {
 
         return foundError;
     }
-
 
 }

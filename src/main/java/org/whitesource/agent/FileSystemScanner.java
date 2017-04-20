@@ -36,6 +36,16 @@ public class FileSystemScanner {
     private static String BOWER_FOLDER = "\\bower_components\\";
     private static String NPM_FOLDER = "\\node_modules\\";
 
+    /* --- Members --- */
+
+    private boolean showProgressBar;
+
+    /* --- Constructors --- */
+
+    public FileSystemScanner(boolean showProgressBar) {
+        this.showProgressBar = showProgressBar;
+    }
+
     /* --- Public methods --- */
 
     public List<DependencyInfo> createDependencyInfos(List<String> scannerBaseDirs, ScmConnector scmConnector,
@@ -100,7 +110,9 @@ public class FileSystemScanner {
         // create dependency infos from files
         logger.info("Starting Analysis");
         List<DependencyInfo> dependencyInfos = new ArrayList<DependencyInfo>();
-        displayProgress(0, totalFiles);
+        if (showProgressBar) {
+            displayProgress(0, totalFiles);
+        }
         int index = 1;
         for (Map.Entry<File, Collection<String>> entry : fileMap.entrySet()) {
             for (String fileName : entry.getValue()) {
@@ -113,16 +125,17 @@ public class FileSystemScanner {
                 }
 
                 // print progress
-                displayProgress(index, totalFiles);
+                if (showProgressBar) {
+                    displayProgress(index, totalFiles);
+                }
                 index++;
             }
         }
-
         // replace temp folder name with base dir
         for (DependencyInfo dependencyInfo : dependencyInfos) {
             String systemPath = dependencyInfo.getSystemPath();
             for (String key : archiveToBaseDirMap.keySet()) {
-                if (dependencyInfo.getSystemPath().contains(key)) {
+                if (dependencyInfo.getSystemPath().contains(key) && archiveExtractor != null) {
                     dependencyInfo.setSystemPath(systemPath.replace(key, archiveToBaseDirMap.get(key)).replaceAll(archiveExtractor.getRandomString(), EMPTY_STRING));
                     break;
                 }

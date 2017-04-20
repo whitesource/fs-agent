@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2014 WhiteSource Ltd.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -133,7 +133,9 @@ public class FileSystemAgent extends CommandLineAgent {
                 globCaseSensitive = false;
             } else {
                 logger.error("Bad {}. Received {}, required true/false or y/n", CASE_SENSITIVE_GLOB_PROPERTY_KEY, globCaseSensitiveValue);
-                scmConnector.deleteCloneDirectory();
+                if (scmConnector != null) {
+                    scmConnector.deleteCloneDirectory();
+                }
                 System.exit(-1); // TODO this is within a try frame. Throw an exception instead
             }
         }
@@ -143,7 +145,8 @@ public class FileSystemAgent extends CommandLineAgent {
         Collection<String> excludedCopyrights = new ArrayList<String>(Arrays.asList(excludedCopyrightsValue.split(EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX)));
         excludedCopyrights.remove("");
 
-        return new FileSystemScanner().createDependencyInfos(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive,
+        boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
+        return new FileSystemScanner(showProgressBar).createDependencyInfos(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive,
                 archiveExtractionDepth, archiveIncludes, archiveExcludes, followSymlinks, excludedCopyrights, partialSha1Match);
     }
 }
