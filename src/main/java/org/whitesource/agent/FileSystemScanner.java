@@ -35,6 +35,7 @@ public class FileSystemScanner {
     private static String PACKAGE_JSON = "package.json";
     private static String BOWER_FOLDER = "\\bower_components\\";
     private static String NPM_FOLDER = "\\node_modules\\";
+    private static String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
 
     /* --- Members --- */
 
@@ -80,12 +81,13 @@ public class FileSystemScanner {
                     DirectoryScanner scanner = new DirectoryScanner();
                     scanner.setBasedir(scannerBaseDir);
                     scanner.setIncludes(includes);
-                    scanner.setExcludes(excludes);
+                    scanner.setExcludes(excludeFileSystemAgent(excludes));
                     scanner.setFollowSymlinks(followSymlinks);
                     scanner.setCaseSensitive(globCaseSensitive);
                     scanner.scan();
                     File basedir = scanner.getBasedir();
                     String[] fileNames = scanner.getIncludedFiles();
+                    scanner.setIncludes(scanner.getIncludedFiles());
                     checkUnsupportedFileTypes(fileNames);
                     fileMap.put(basedir, Arrays.asList(fileNames));
                     totalFiles += fileNames.length;
@@ -221,5 +223,12 @@ public class FileSystemScanner {
                 return;
             }
         }
+    }
+
+    private String[] excludeFileSystemAgent(String[] excludes){
+        String[] excludesFSA = new String[excludes.length+1];
+        System.arraycopy(excludes,0,excludesFSA,0,excludes.length);
+        excludesFSA[excludes.length] = FSA_FILE;
+        return excludesFSA;
     }
 }
