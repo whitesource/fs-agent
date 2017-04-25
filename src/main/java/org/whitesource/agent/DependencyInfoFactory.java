@@ -75,7 +75,7 @@ public class DependencyInfoFactory {
     private static final String WHITESPACE = " ";
     private static final String EMPTY_STRING = "";
 
-    private static final int MAX_FILE_SIZE = 10 * 1024; // 10mb
+    private static final int MAX_FILE_SIZE = 10 * 1024 * 1024; // 10mb
 
     public static final String CRLF = "\r\n";
     public static final String NEW_LINE = "\n";
