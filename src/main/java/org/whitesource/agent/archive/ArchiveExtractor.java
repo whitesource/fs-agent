@@ -144,7 +144,7 @@ public class ArchiveExtractor {
 
     public void deleteArchiveDirectory() {
         File directory = new File(TEMP_FOLDER);
-        if (!directory.exists()) {
+        if (directory.exists()) {
             try {
                 FileUtils.deleteDirectory(directory);
             } catch (IOException e) {
