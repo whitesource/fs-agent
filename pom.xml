@@ -40,11 +40,6 @@
             <artifactId>wss-agent-report</artifactId>
             <version>${agent.api.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.rat</groupId>
-            <artifactId>apache-rat-core</artifactId>
-            <version>0.12.4-WSS</version>
-        </dependency>
 
         <!-- CLI library -->
         <dependency>
@@ -137,7 +132,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.0.13</version>
+            <version>1.2.3</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -150,7 +145,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

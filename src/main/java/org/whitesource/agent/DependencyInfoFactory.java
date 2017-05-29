@@ -16,25 +16,15 @@
 package org.whitesource.agent;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.rat.Defaults;
-import org.apache.rat.Report;
-import org.apache.rat.ReportConfiguration;
-import org.apache.rat.analysis.util.HeaderMatcherMultiplexer;
-import org.apache.rat.api.MetaData;
-import org.apache.rat.api.RatException;
-import org.apache.rat.report.claim.ClaimStatistic;
-import org.apache.rat.walker.FileReportable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.ChecksumUtils;
 import org.whitesource.agent.api.model.CopyrightInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 
-import javax.xml.transform.TransformerConfigurationException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.*;
 
 /**
@@ -48,7 +38,6 @@ public class DependencyInfoFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(DependencyInfoFactory.class);
 
-    private static final String LICENSE_PATTERN = ".*license.*|.*redistribution.*|.*licensing.*|.*redistribute.*";
     private static final String COPYRIGHT_PATTERN = ".*copyright.*|.*\\(c\\).*";
 
     private static final String PlATFORM_DEPENDENT_TMP_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator + "WhiteSource-PlatformDependentFiles";
@@ -79,8 +68,6 @@ public class DependencyInfoFactory {
 
     public static final String CRLF = "\r\n";
     public static final String NEW_LINE = "\n";
-
-    private static final int FIRST_LINES_TO_SCAN = 150;
 
     private static final Map<String, String> commentStartEndMap;
 
@@ -144,19 +131,6 @@ public class DependencyInfoFactory {
             logger.warn("Failed to create dependency " + fileName + " to dependency list: ", e);
         }
         return dependencyInfo;
-    }
-
-    public Set<String> scanLicenses(File file) throws InterruptedException, TransformerConfigurationException, RatException, IOException {
-        HeaderMatcherMultiplexer matcherMultiplexer = new HeaderMatcherMultiplexer(Defaults.DEFAULT_MATCHERS);
-        ReportConfiguration configuration = new ReportConfiguration();
-        configuration.setHeaderMatcher(matcherMultiplexer);
-
-        ClaimStatistic report = Report.report(new StringWriter(), new FileReportable(file), Defaults.getPlainStyleSheet(), configuration);
-        Set<String> licenses = report.getLicenseFileNameMap().keySet();
-        if (licenses != null) {
-            licenses.remove(MetaData.RAT_LICENSE_FAMILY_CATEGORY_VALUE_UNKNOWN);
-        }
-        return licenses;
     }
 
     /* --- Private methods --- */
