@@ -195,6 +195,7 @@
                     <version>3.2.5</version>
                     <configuration>
                         <orgToken>${whitesource.orgToken}</orgToken>
+                        <product>File System Agent</product>
                     </configuration>
                 </plugin>
             </plugins>
