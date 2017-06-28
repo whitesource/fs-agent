@@ -101,28 +101,28 @@ public class DependencyInfoFactory {
     /* --- Public methods --- */
 
     public DependencyInfo createDependencyInfo(File basedir, String fileName) {
-        DependencyInfo dependencyInfo = null;
+        DependencyInfo dependency = null;
         File dependencyFile = new File(basedir, fileName);
         try {
             String sha1 = ChecksumUtils.calculateSHA1(dependencyFile);
-            dependencyInfo = new DependencyInfo(sha1);
-            dependencyInfo.setArtifactId(dependencyFile.getName());
-            dependencyInfo.setLastModified(new Date(dependencyFile.lastModified()));
+            dependency = new DependencyInfo(sha1);
+            dependency.setArtifactId(dependencyFile.getName());
+            dependency.setLastModified(new Date(dependencyFile.lastModified()));
             File otherPlatformFile = createOtherPlatformFile(dependencyFile);
             if (otherPlatformFile != null) {
                 String otherPlatformSha1 = ChecksumUtils.calculateSHA1(otherPlatformFile);
-                dependencyInfo.setOtherPlatformSha1(otherPlatformSha1);
+                dependency.setOtherPlatformSha1(otherPlatformSha1);
             }
             try {
-                dependencyInfo.setSystemPath(dependencyFile.getCanonicalPath());
+                dependency.setSystemPath(dependencyFile.getCanonicalPath());
             } catch (IOException e) {
-                dependencyInfo.setSystemPath(dependencyFile.getAbsolutePath());
+                dependency.setSystemPath(dependencyFile.getAbsolutePath());
             }
             deleteFile(otherPlatformFile);
 
             // calculate sha1 for file header and footer (for partial matching)
             if (partialSha1Match) {
-                ChecksumUtils.calculateHeaderAndFooterSha1(dependencyFile, dependencyInfo);
+                ChecksumUtils.calculateHeaderAndFooterSha1(dependencyFile, dependency);
             }
 
             // removed finding license & copyrights in headers
@@ -130,7 +130,7 @@ public class DependencyInfoFactory {
         } catch (IOException e) {
             logger.warn("Failed to create dependency " + fileName + " to dependency list: ", e);
         }
-        return dependencyInfo;
+        return dependency;
     }
 
     /* --- Private methods --- */
@@ -302,7 +302,7 @@ public class DependencyInfoFactory {
         }
 
         // remove duplicate copyrights
-        Set<String> copyTexts = new HashSet<String>();
+        Set<String> copyTexts = new HashSet<>();
         Iterator<CopyrightInfo> iterator = copyrights.iterator();
         while (iterator.hasNext()) {
             String lowerCaseCopyright = iterator.next().getCopyright().toLowerCase();
