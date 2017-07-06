@@ -108,20 +108,20 @@ public abstract class CommandLineAgent {
             offlineUpdate(service, orgToken, product, productVersion, projects);
             return StatusCode.SUCCESS;
         } else {
-            StatusCode sendUpdate = StatusCode.SUCCESS;
+            StatusCode statusCode = StatusCode.SUCCESS;
             try {
                 if (getBooleanProperty(CHECK_POLICIES_PROPERTY_KEY, false)) {
                     boolean policyCompliance = checkPolicies(service, orgToken, product, productVersion, projects);
-                    sendUpdate = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
+                    statusCode = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
                 }
-                if (sendUpdate == StatusCode.SUCCESS) {
+                if (statusCode == StatusCode.SUCCESS) {
                     update(service, orgToken, product, productVersion, projects);
                 }
             } catch (WssServiceException e) {
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {
-                    sendUpdate = StatusCode.CONNECTION_FAILURE;
+                    statusCode = StatusCode.CONNECTION_FAILURE;
                 } else {
-                    sendUpdate = StatusCode.SERVER_FAILURE;
+                    statusCode = StatusCode.SERVER_FAILURE;
                 }
                 logger.error("Failed to send request to WhiteSource server: " + e.getMessage(), e);
             } finally {
@@ -129,7 +129,7 @@ public abstract class CommandLineAgent {
                     service.shutdown();
                 }
             }
-            return sendUpdate;
+            return statusCode;
         }
     }
 
@@ -241,6 +241,12 @@ public abstract class CommandLineAgent {
             for (String projectName : updatedProjects) {
                 resultLogMsg.append(projectName).append("\n");
             }
+        }
+
+        // support token
+        String requestToken = updateResult.getRequestToken();
+        if (StringUtils.isNotBlank(requestToken)) {
+            resultLogMsg.append("Support Token: ").append(requestToken).append("\n");
         }
         logger.info(resultLogMsg.toString());
     }
