@@ -11,7 +11,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <agent.api.version>2.3.3</agent.api.version>
+        <agent.api.version>2.3.7</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
     </properties>
 
@@ -116,6 +116,13 @@
             <version>2.4</version>
         </dependency>
 
+        <!-- JSON Reader -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20170516</version>
+        </dependency>
+
         <!-- Random String Utils -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -157,8 +164,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
             <plugin>
