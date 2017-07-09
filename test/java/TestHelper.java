@@ -1,56 +1,45 @@
 import org.junit.Assert;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 
 import java.io.*;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * Created by eugen.horovitz on 6/29/2017.
  */
 public class TestHelper {
+    //all tests runs on the this sample project : https://github.com/punkave/apostrophe
     /* --- Static Members --- */
+    public static final String SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES_UBUNTU = "apostrophe-master/node_modules/chokidar/package.json";
+    public static String FOLDER_TO_TEST_UBUNTU = "/home/eugen/Documents/Repositories/fs-agent/toScan/apostrophe-master/";
+    public static String FOLDER_WITH_NPN_PROJECTS_UBUNTU = "/home/eugen/Documents/Repositories/fs-agent/toScan/";
 
-    public static String FOLDER_TO_TEST = "C:\\Users\\eugen\\Downloads\\apostrophe-master\\";
-    public static String FOLDER_WITH_NPN_PROJECTS = "C:\\Users\\eugen\\WebstormProjects\\good\\";
+    public static final String SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES = "apostrophe-master\\node_modules\\chokidar\\package.json";
+    public static String FOLDER_TO_TEST = "C:\\Users\\eugen\\WebstormProjects\\toScan\\apostrophe-master";
+    public static String FOLDER_WITH_NPN_PROJECTS = "C:\\Users\\eugen\\WebstormProjects\\toScan\\";
 
     /* --- Static Methods --- */
 
-    public static Stream<String> getDependenciesWithNpm(List<String> dirs) {
-        String[] cmd = {
-                "npm.cmd",
-                "ls"};
+    public static Stream<String> getDependenciesWithNpm(String dir) {
+        NpmLsJsonDependencyCollector collector = new NpmLsJsonDependencyCollector();
+        Collection<DependencyInfo> dependencyInfos = collector.collectDependencies(dir);
+        return dependencyInfos.stream().map(dep->getShortNameByTgz(dep)).sorted();
+    }
 
-        Stream<String> distinctLines = null;
-
-        try {
-            Process process;
-            ProcessBuilder pb = new ProcessBuilder(cmd);
-            pb.directory(new File(dirs.get(0)));
-            process = pb.start();
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-            Stream<String> lines = reader.lines();
-            distinctLines = lines.map(s ->
-                    s.replace("|", "")
-                            .replace(" ", "")
-                            .replace("+", "")
-                            .replace("-", "")
-                            .replace("`", "")
-                            .replace("UNMETPEERDEPENDENCY", "")//this if for unmet dependencies
-            ).distinct().filter(x ->
-                    !x.contains("\\")
-                            && !x.equals("")
-                            && !x.contains("OPTIONAL")
-            );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return distinctLines.sorted();
+    private static Set<String> getAllDependenciesNames(DependencyInfo dep) {
+        Set deps = new HashSet();
+        deps.add(TestHelper.getShortNameByTgz(dep));
+        dep.getChildren().forEach(child->
+        {
+            Set<String> depsChild = getAllDependenciesNames(child);
+            deps.addAll(depsChild);
+        });
+        return deps;
     }
 
     public static void assertListEquals(List<String> results1, List<String> results2) {
@@ -60,15 +49,15 @@ public class TestHelper {
         assert !iterator1.hasNext() && !iterator2.hasNext();
     }
 
-    public static String getShortNameByTgz(DependencyInfo s) {
-        String result = s.getArtifactId()
-                .replace(s.getVersion(), "")
+    public static String getShortNameByTgz(DependencyInfo dep) {
+        String result = dep.getArtifactId()
+                .replace(dep.getVersion(), "")
                 .replace("|", "")
                 .replace(" ", "")
                 .replace("+", "")
                 .replace("-", "")
                 .replace(".tgz", "")
-                + "@" + s.getVersion().replace("-", "");
+                + "@" + dep.getVersion().replace("-", "");
 
         return result;
     }
@@ -76,7 +65,8 @@ public class TestHelper {
     public static Properties getPropertiesFromFile() {
         Properties p = new Properties();
         try {
-            InputStream input1 = new FileInputStream("C:\\Users\\eugen\\Repositories\\fs-agent\\whitesource-fs-agent.config");
+            String currentDir = System.getProperty("user.dir");
+            InputStream input1 = new FileInputStream(Paths.get(currentDir, "whitesource-fs-agent.config").toString());
             p.load(input1);
         } catch (FileNotFoundException e) {
             e.printStackTrace();

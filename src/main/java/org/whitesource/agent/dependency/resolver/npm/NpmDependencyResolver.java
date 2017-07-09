@@ -35,18 +35,18 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     private static final Logger logger = LoggerFactory.getLogger(NpmDependencyResolver.class);
 
-    public static final String JS_PATTERN = "/**/*.js";
+    public static final String JS_PATTERN = "**/*.js";
 
     private static String PACKAGE_JSON = "package.json";
 
     /* --- Members --- */
 
-    private final NpmLsDependencyCollector npmLsDependencyCollector;
+    private final NpmLsJsonDependencyCollector npmLsJsonDependencyCollector;
 
     /* --- Constructor --- */
 
     public NpmDependencyResolver() {
-        npmLsDependencyCollector = new NpmLsDependencyCollector();
+        npmLsJsonDependencyCollector = new NpmLsJsonDependencyCollector();
     }
 
     /* --- Public methods --- */
@@ -57,7 +57,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         bomFiles.forEach(bomFile -> packageJsonFiles.add(NpmPackageJsonFile.parseNpmPackageJsonFile(bomFile)));
 
         // try to collect dependencies via 'npm ls'
-        Collection<DependencyInfo> dependencies = npmLsDependencyCollector.collectDependencies(projectFolder);
+        Collection<DependencyInfo> dependencies = npmLsJsonDependencyCollector.collectDependencies(topLevelFolder);
         boolean npmLsSuccess = dependencies.size() > 0;
         if (npmLsSuccess) {
             handleNpmLsSuccess(packageJsonFiles, dependencies);

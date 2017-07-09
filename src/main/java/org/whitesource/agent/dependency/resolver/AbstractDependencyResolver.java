@@ -43,20 +43,21 @@ public abstract class AbstractDependencyResolver {
    /* --- Protected methods --- */
 
    protected List<String> normalizeLocalPath(String parentFolder, String topFolderFound, Collection<String> excludes) {
-      String result = topFolderFound;
-
       String normalizedRoot = new File(parentFolder).getPath();
       if (normalizedRoot.equals(topFolderFound)) {
-         result = result
+         topFolderFound = topFolderFound
                  .replace(normalizedRoot, "")
                  .replace(BACK_SLASH, FORWARD_SLASH);
       } else {
-         result = result
+         topFolderFound = topFolderFound
                  .replace(parentFolder, "")
                  .replace(BACK_SLASH, FORWARD_SLASH);
       }
 
-      String finalRes = result;
+      if (topFolderFound.length() > 0)
+         topFolderFound = topFolderFound.substring(1, topFolderFound.length()) + FORWARD_SLASH;
+
+      String finalRes = topFolderFound;
       return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
    }
 }

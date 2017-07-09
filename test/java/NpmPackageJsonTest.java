@@ -8,7 +8,9 @@ public class NpmPackageJsonTest {
 
     @Test
     public void shouldLoadOptionalDependencies() {
-        NpmPackageJsonFile file = NpmPackageJsonFile.parseNpmPackageJsonFile("C:\\Users\\eugen\\WebstormProjects\\apostrophe-master\\node_modules\\chokidar\\package.json");
+        NpmPackageJsonFile file = NpmPackageJsonFile
+                .parseNpmPackageJsonFile(TestHelper.FOLDER_WITH_NPN_PROJECTS + "apostrophe-master/node_modules/chokidar/package.json");
+                //"C:\\Users\\eugen\\WebstormProjects\\apostrophe-master\\node_modules\\chokidar\\package.json");
         Assert.assertTrue(file.getOptionalDependencies().keySet().size() > 0);
         Assert.assertTrue(file.getDependencies().keySet().size() > 0);
     }

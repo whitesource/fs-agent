@@ -20,7 +20,7 @@ public class NpmDependencyResolverTest {
     public void shouldReturnDependenciesTree() {
         NpmDependencyResolver npmLsFileResolver = new NpmDependencyResolver();
 
-        String folderParent = "C:\\Users\\eugen\\WebstormProjects\\good3\\";
+        String folderParent = TestHelper.FOLDER_WITH_NPN_PROJECTS;
         FilesScanner fs = new FilesScanner();
 
         Map<String, String[]> map = fs.findAllFiles(Arrays.asList(folderParent), new NpmDependencyResolver().getBomPattern(), new String[0]);

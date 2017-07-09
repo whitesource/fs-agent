@@ -45,7 +45,7 @@ public class FilesScanner {
         Map pathToIncludedFilesMap = new HashMap();
         pathsToScan.stream().forEach(scanFolder -> {
             String[] includedFiles = getFileNames(new File(scanFolder).getPath(), new String[] { includesPattern }, excludes, false, false);
-            pathToIncludedFilesMap.put(scanFolder, includedFiles);
+            pathToIncludedFilesMap.put(new File(scanFolder).getAbsolutePath(), includedFiles);
         });
         return pathToIncludedFilesMap;
     }
@@ -53,7 +53,7 @@ public class FilesScanner {
     public Map<String, List<String>> getTopFoldersWithIncludedFiles(String rootFolder, String[] includedFiles) {
         // collect all full paths
         List<String> fullPaths = Arrays.stream(includedFiles)
-                .map(file -> Paths.get(rootFolder, file).toString())
+                .map(file -> Paths.get(new File(rootFolder).getAbsolutePath(), file).toString())
                 .collect(Collectors.toList());
 
         // get top folders

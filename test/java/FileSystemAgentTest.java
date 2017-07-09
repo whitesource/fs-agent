@@ -2,6 +2,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
@@ -47,15 +48,15 @@ public class FileSystemAgentTest {
     @Test
     public void shouldBeTheSameResultsAsNpmLs() {
         Properties props = TestHelper.getPropertiesFromFile();
-        File dir = new File("C:\\Users\\eugen\\WebstormProjects\\good2");
-        Arrays.stream(dir.listFiles()).forEach((startDirectory) ->
+        File dir = new File(TestHelper.FOLDER_WITH_NPN_PROJECTS);
+        Arrays.stream(dir.listFiles()).filter(child-> child.isDirectory()).forEach((startDirectory) ->
         {
             List<String> dirs = Arrays.asList(startDirectory.getPath());
             Stream<DependencyInfo> dependenciesOrig = getDependenciesWithFilter(dirs, props);
 
-            Stream<String> dependencies = dependenciesOrig.map(dependency -> TestHelper.getShortNameByTgz(dependency));
+            Stream<String> dependencies = dependenciesOrig.filter(x->x.getDependencyType() == DependencyType.NPM).map(dependency -> TestHelper.getShortNameByTgz(dependency));
             Stream<String> distinctDependenciesAutoResolver = dependencies.distinct().sorted();
-            Stream<String> distinctDependenciesNpmLs = TestHelper.getDependenciesWithNpm(dirs);
+            Stream<String> distinctDependenciesNpmLs = TestHelper.getDependenciesWithNpm(startDirectory.getAbsolutePath());
 
             List<String> autoResolverResults = distinctDependenciesAutoResolver.collect(Collectors.toList());
             List<String> npmLsResults = distinctDependenciesNpmLs.collect(Collectors.toList());
@@ -84,7 +85,7 @@ public class FileSystemAgentTest {
 
     @Test
     public void testPackageJsonOnly() {
-        File dir10 = new File("C:\\Users\\eugen\\WebstormProjects\\top10\\");
+        File dir10 = new File(TestHelper.FOLDER_WITH_NPN_PROJECTS);
 
         Arrays.stream(dir10.listFiles()).forEach(directory -> {
             FilesScanner fs = new FilesScanner();
@@ -100,8 +101,8 @@ public class FileSystemAgentTest {
     public void shouldRunMainOnFolder() {
         //File directory = new File("C:\\Users\\eugen\\WebstormProjects\\cody_with_multi_changed");
         //runMainOnDir(directory);
-        File directory = new File("C:\\Users\\eugen\\WebstormProjects\\good");
-        Arrays.stream(directory.listFiles()).forEach(dir -> runMainOnDir(dir));
+        File directory = new File(TestHelper.FOLDER_WITH_NPN_PROJECTS);
+        Arrays.stream(directory.listFiles()).filter(dir->dir.isDirectory()).forEach(dir -> runMainOnDir(dir));
     }
 
     /* --- Private methods --- */
