@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Created by eugen.horovitz on 7/3/2017.
+ *@author eugen.horovitz
  */
 public class FilesScanner {
 
@@ -41,10 +41,11 @@ public class FilesScanner {
         return fileNames;
     }
 
-    public Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String includesPattern, String[] excludes) {
+    public Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
         Map pathToIncludedFilesMap = new HashMap();
         pathsToScan.stream().forEach(scanFolder -> {
-            String[] includedFiles = getFileNames(new File(scanFolder).getPath(), new String[] { includesPattern }, excludes, false, false);
+            String[] includedFiles = getFileNames(new File(scanFolder).getPath(), new String[]{includesPattern},
+                    excludes.toArray(new String[excludes.size()]), false, false);
             pathToIncludedFilesMap.put(new File(scanFolder).getAbsolutePath(), includedFiles);
         });
         return pathToIncludedFilesMap;
@@ -68,9 +69,7 @@ public class FilesScanner {
             List<String> topFolders = foldersGroupedByLengthMap.get(length).stream()
                     .map(file -> new File(file).getParent()).collect(Collectors.toList());
 
-            topFolders.forEach(topFolder -> {
-                resultMap.put(topFolder, fullPaths.stream().filter(fileName -> fileName.contains(topFolder)).collect(Collectors.toList()));
-            });
+            topFolders.forEach(folder -> resultMap.put(folder, fullPaths.stream().filter(fileName -> fileName.contains(folder)).collect(Collectors.toList())));
         }
         return resultMap;
     }

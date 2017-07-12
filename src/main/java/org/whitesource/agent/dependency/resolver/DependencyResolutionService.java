@@ -15,13 +15,14 @@
  */
 package org.whitesource.agent.dependency.resolver;
 
+import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.whitesource.agent.ConfigPropertyKeys.NPM_INCLUDE_DEV_DEPENDENCIES;
+import static org.whitesource.agent.ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES;
 
 /**
  * Holds and initiates all {@link AbstractDependencyResolver}s.
@@ -37,11 +38,14 @@ public class DependencyResolutionService {
 
     /* --- Constructors --- */
 
-    public DependencyResolutionService(boolean resolveNpmDependencies) {
+    public DependencyResolutionService(Properties config) {
+        final boolean npmResolveDependencies = getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
+        final boolean npmIncludeDevDependencies = getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
+
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
-        if (resolveNpmDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver());
+        if (npmResolveDependencies) {
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies));
         }
     }
 
@@ -54,8 +58,15 @@ public class DependencyResolutionService {
     public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes) {
         List<ResolutionResult> resolutionResults = new ArrayList<>();
         dependencyResolvers.forEach(dependencyResolver -> {
+            // add resolver excludes
+            Collection<String> combinedExcludes = new LinkedList<>(Arrays.asList(excludes));
+            Collection<String> resolverExcludes = dependencyResolver.getExcludes();
+            for (String exclude : resolverExcludes) {
+                combinedExcludes.add(exclude);
+            }
+
             // get folders containing bom files
-            Map<String, String[]> pathToBomFilesMap = fileScanner.findAllFiles(pathsToScan, dependencyResolver.getBomPattern(), excludes);
+            Map<String, String[]> pathToBomFilesMap = fileScanner.findAllFiles(pathsToScan, dependencyResolver.getBomPattern(), combinedExcludes);
 
             // resolve dependencies
             pathToBomFilesMap.forEach((folder, bomFile) -> {
@@ -70,5 +81,16 @@ public class DependencyResolutionService {
             });
         });
         return resolutionResults;
+    }
+
+    /* --- Private Methods --- */
+
+    private boolean getBooleanProperty(Properties config, String propertyKey, boolean defaultValue) {
+        boolean property = defaultValue;
+        String propertyValue = config.getProperty(propertyKey);
+        if (StringUtils.isNotBlank(propertyValue)) {
+            property = Boolean.valueOf(propertyValue);
+        }
+        return property;
     }
 }

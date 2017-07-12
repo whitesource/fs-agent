@@ -17,12 +17,14 @@ package org.whitesource.agent.dependency.resolver.npm;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -62,16 +64,16 @@ public class NpmPackageJsonFile {
         JSONObject json = new JSONObject(jsonText);
         name = json.getString(NAME);
         version = json.getString(VERSION);
-        optionalDependencies = getDependenciesFromJson(json, OPTIONAL_DEPENDENCIES);
         dependencies = getDependenciesFromJson(json, DEPENDENCIES);
+        optionalDependencies = getDependenciesFromJson(json, OPTIONAL_DEPENDENCIES);
         this.localFileName = localFileName;
         fileName = getNpmArtifactId(name, version);
 
         // optional fields for packageJson parser
-        try {
+        if (json.has(SHA1)) {
             sha1 = json.getString(SHA1);
-        } catch (JSONException e) {
-            logger.debug("Sha1 has not been found in file {}", localFileName);
+        } else {
+            logger.debug("shasum not found in file {}", localFileName);
         }
     }
 
@@ -97,7 +99,7 @@ public class NpmPackageJsonFile {
             try {
                 packageJsonFile = new NpmPackageJsonFile(json, fileName);
             } catch (Exception e) {
-                logger.debug("could not parse npm file {}", fileName);
+                logger.debug("Invalid NPM package.json file {}", fileName);
             }
         }
         return packageJsonFile;
@@ -113,15 +115,13 @@ public class NpmPackageJsonFile {
 
     private Map<String, String> getDependenciesFromJson(JSONObject json, String keyJson) {
         Map<String, String> nameVersionMap = new HashMap<>();
-        try {
+        if (json.has(keyJson)) {
             JSONObject optionals = json.getJSONObject(keyJson);
             Iterator<String> keys = optionals.keys();
             while (keys.hasNext()) {
                 String key = keys.next();
                 nameVersionMap.put(key, optionals.getString(key));
             }
-        } catch (Exception ex) {
-            logger.debug("Error reading package.json file: " + ex.getMessage(), ex);
         }
         return nameVersionMap;
     }

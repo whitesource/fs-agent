@@ -16,7 +16,7 @@
 package org.whitesource.fs;
 
 /**
- * Created by eugen.horovitz on 7/4/2017.
+ *@author eugen.horovitz
  */
 public enum StatusCode {
 

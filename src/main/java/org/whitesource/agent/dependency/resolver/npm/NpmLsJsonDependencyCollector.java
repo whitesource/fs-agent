@@ -15,16 +15,19 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 
-import java.io.*;
-import java.util.*;
-
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
 /**
  * Collect dependencies using 'npm ls' command.
  *
@@ -38,26 +41,40 @@ public class NpmLsJsonDependencyCollector {
 
     private static final String npm = isWindows() ? "npm.cmd" : "npm";
     private static final String lsArgument = "ls";
-    private static final String jsonArgument="--json";
+    private static final String jsonArgument = "--json";
     private static final String OS_NAME = "os.name";
     private static final String WINDOWS = "win";
-    public static final String DEPENDENCIES = "dependencies";
-    public static final String VERSION = "version";
+    private static final String DEPENDENCIES = "dependencies";
+    private static final String VERSION = "version";
+    private static final String lsOnlyProdArgument = "--only=prod";
+    private final String[] npmArguments;
 
+    /* --- Constructors --- */
+
+    public NpmLsJsonDependencyCollector(boolean includeDevDependencies) {
+        if (includeDevDependencies) {
+            npmArguments = new String[]{npm, lsArgument, jsonArgument};
+        } else {
+            npmArguments = new String[]{npm, lsArgument, lsOnlyProdArgument, jsonArgument};
+        }
+    }
+
+    public NpmLsJsonDependencyCollector() {
+        this(false);
+    }
 
     /* --- Public methods --- */
 
     public Collection<DependencyInfo> collectDependencies(String rootDirectory) {
         Collection<DependencyInfo> dependencies = new LinkedList<>();
-
         try {
-            // execute 'npm ls --json'
-            ProcessBuilder pb = new ProcessBuilder(npm, lsArgument,jsonArgument);
+            // execute 'npm ls'
+            ProcessBuilder pb = new ProcessBuilder(npmArguments);
+
             pb.directory(new File(rootDirectory));
             Process process = pb.start();
 
-            // parse 'npm ls --json' output
-
+            // parse 'npm ls' output
             String json = null;
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 json = reader.lines().reduce("", String::concat);
@@ -66,58 +83,53 @@ public class NpmLsJsonDependencyCollector {
                 logger.error("error parsing output : {}", e.getMessage());
             }
 
-            HashMap<String, DependencyInfo> dependenciesMap = new HashMap<>();
-            dependencies = getDependencies(new JSONObject(json) , dependenciesMap);
-
+            dependencies.addAll(getDependencies(new JSONObject(json)));
         } catch (IOException e) {
-            logger.info("Error getting dependencies after running 'npm ls'", e);
+            logger.info("Error getting dependencies after running 'npm ls --json' on {}", rootDirectory);
         }
 
-        if (dependencies.size() == 0){
-            logger.warn("Failed getting dependencies after running 'npm ls -json' Please run 'npm install' on the folder {0}", rootDirectory);
-            dependencies.clear();
+        if (dependencies.isEmpty()) {
+            logger.warn("Failed getting dependencies after running 'npm ls --json' Please run 'npm install' on the folder {}", rootDirectory);
         }
         return dependencies;
     }
 
     /* --- Private methods --- */
 
-    private DependencyInfo getDependencyInfo(String name, JSONObject pack, HashMap<String, DependencyInfo> alreadyAdded) {
-        DependencyInfo dependency = new DependencyInfo();
-        String version = pack.getString(VERSION);
-        dependency.setGroupId(name);
+    private Collection<DependencyInfo> getDependencies(JSONObject jsonObject) {
+        Collection<DependencyInfo> dependencies = new ArrayList<>();
+        if (jsonObject.has(DEPENDENCIES)) {
+            JSONObject dependenciesJsonObject = jsonObject.getJSONObject(DEPENDENCIES);
+            if (dependenciesJsonObject != null) {
+                for (String dependencyName : dependenciesJsonObject.keySet()) {
+                    JSONObject dependencyJsonObject = dependenciesJsonObject.getJSONObject(dependencyName);
+                    if (dependencyJsonObject.keySet().isEmpty()) {
+                        logger.debug("Dependency {} has no JSON content", dependencyName);
+                    } else {
+                        DependencyInfo dependency = getDependency(dependencyName, dependencyJsonObject);
+                        dependencies.add(dependency);
+
+                        // collect child dependencies
+                        Collection<DependencyInfo> childDependencies = getDependencies(dependencyJsonObject);
+                        dependency.getChildren().addAll(childDependencies);
+                    }
+                }
+            }
+        }
+        return dependencies;
+    }
+
+    private DependencyInfo getDependency(String name, JSONObject jsonObject) {
+        String version = jsonObject.getString(VERSION);
         String filename = NpmPackageJsonFile.getNpmArtifactId(name, version);
+
+        DependencyInfo dependency = new DependencyInfo();
+        dependency.setGroupId(name);
         dependency.setArtifactId(filename);
         dependency.setVersion(version);
         dependency.setFilename(filename);
         dependency.setDependencyType(DependencyType.NPM);
-
-        Collection<DependencyInfo> dependencies = getDependencies(pack, alreadyAdded);
-        dependency.getChildren().addAll(dependencies);
         return dependency;
-    }
-
-    private Collection<DependencyInfo> getDependencies(JSONObject pack,HashMap<String, DependencyInfo> alreadyAdded) {
-        Collection<DependencyInfo> dependencyInfos = new ArrayList<>();
-        try {
-            JSONObject jsonObj = pack.getJSONObject(DEPENDENCIES);
-
-            if (jsonObj != null) {
-                for (String key : jsonObj.keySet()) {
-                    DependencyInfo dependencyInfo = getDependencyInfo(key, jsonObj.getJSONObject(key),alreadyAdded);
-                    if (!alreadyAdded.containsKey(key)) {
-                        alreadyAdded.put(dependencyInfo.getArtifactId(), dependencyInfo);
-                        dependencyInfos.add(dependencyInfo);
-                    }
-                    else{
-                        String s ="";
-                    }
-                }
-            }
-        }catch (JSONException je) {
-            //logger.debug("no child dependencies for {}", pack.toString());
-        }
-        return dependencyInfos;
     }
 
     /* --- Static methods --- */

@@ -10,7 +10,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 /**
- * Created by eugen.horovitz on 7/2/2017.
+ *@author eugen.horovitz
  */
 public class FileSystemScannerTest {
 

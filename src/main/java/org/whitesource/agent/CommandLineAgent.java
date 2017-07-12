@@ -51,6 +51,8 @@ public abstract class CommandLineAgent {
 
     private static final Logger logger = LoggerFactory.getLogger(CommandLineAgent.class);
 
+    public static final String NEW_LINE = "\n";
+
     /* --- Members --- */
 
     protected final Properties config;
@@ -143,8 +145,8 @@ public abstract class CommandLineAgent {
         }
         int connectionTimeoutMinutes = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
                 String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
-        final WhitesourceService service = new WhitesourceService(getAgentType(), getAgentVersion(), getPluginVersion(), serviceUrl,
-                setProxy, connectionTimeoutMinutes);
+        final WhitesourceService service = new WhitesourceService(getAgentType(), getAgentVersion(), getPluginVersion(),
+                serviceUrl, setProxy, connectionTimeoutMinutes);
         if (StringUtils.isNotBlank(proxyHost)) {
             final int proxyPort = Integer.parseInt(config.getProperty(PROXY_PORT_PROPERTY_KEY));
             final String proxyUser = config.getProperty(PROXY_USER_PROPERTY_KEY);
@@ -219,34 +221,34 @@ public abstract class CommandLineAgent {
     }
 
     private void logResult(UpdateInventoryResult updateResult) {
-        StringBuilder resultLogMsg = new StringBuilder("Inventory update results for ").append(updateResult.getOrganization()).append("\n");
+        StringBuilder resultLogMsg = new StringBuilder("Inventory update results for ").append(updateResult.getOrganization()).append(NEW_LINE);
 
         // newly created projects
         Collection<String> createdProjects = updateResult.getCreatedProjects();
         if (createdProjects.isEmpty()) {
-            resultLogMsg.append("No new projects found.").append("\n");
+            resultLogMsg.append("No new projects found.").append(NEW_LINE);
         } else {
-            resultLogMsg.append("Newly created projects:").append("\n");
+            resultLogMsg.append("Newly created projects:").append(NEW_LINE);
             for (String projectName : createdProjects) {
-                resultLogMsg.append(projectName).append("\n");
+                resultLogMsg.append(projectName).append(NEW_LINE);
             }
         }
 
         // updated projects
         Collection<String> updatedProjects = updateResult.getUpdatedProjects();
         if (updatedProjects.isEmpty()) {
-            resultLogMsg.append("No projects were updated.").append("\n");
+            resultLogMsg.append("No projects were updated.").append(NEW_LINE);
         } else {
-            resultLogMsg.append("Updated projects:").append("\n");
+            resultLogMsg.append("Updated projects:").append(NEW_LINE);
             for (String projectName : updatedProjects) {
-                resultLogMsg.append(projectName).append("\n");
+                resultLogMsg.append(projectName).append(NEW_LINE);
             }
         }
 
         // support token
         String requestToken = updateResult.getRequestToken();
         if (StringUtils.isNotBlank(requestToken)) {
-            resultLogMsg.append("Support Token: ").append(requestToken).append("\n");
+            resultLogMsg.append(NEW_LINE).append("Support Token: ").append(requestToken).append(NEW_LINE);
         }
         logger.info(resultLogMsg.toString());
     }

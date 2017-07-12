@@ -23,41 +23,43 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Created by eugen.horovitz on 6/26/2017.
+ * @author eugen.horovitz
  */
 public abstract class AbstractDependencyResolver {
 
-   /* --- Static members --- */
+    /* --- Static members --- */
 
-   private static String BACK_SLASH = "\\";
-   private static String FORWARD_SLASH = "/";
+    private static String BACK_SLASH = "\\";
+    private static String FORWARD_SLASH = "/";
 
-   /* --- Abstract methods --- */
+    /* --- Abstract methods --- */
 
-   protected abstract ResolutionResult resolveDependencies(String parentScanFolder, String suspectedFolder, List<String> fullPathIndicators);
+    protected abstract ResolutionResult resolveDependencies(String parentScanFolder, String suspectedFolder, List<String> fullPathIndicators);
 
-   protected abstract String getBomPattern();
+    protected abstract String getBomPattern();
 
-   protected abstract DependencyType getDependencyType();
+    public abstract Collection<String> getExcludes();
 
-   /* --- Protected methods --- */
+    protected abstract DependencyType getDependencyType();
 
-   protected List<String> normalizeLocalPath(String parentFolder, String topFolderFound, Collection<String> excludes) {
-      String normalizedRoot = new File(parentFolder).getPath();
-      if (normalizedRoot.equals(topFolderFound)) {
-         topFolderFound = topFolderFound
-                 .replace(normalizedRoot, "")
-                 .replace(BACK_SLASH, FORWARD_SLASH);
-      } else {
-         topFolderFound = topFolderFound
-                 .replace(parentFolder, "")
-                 .replace(BACK_SLASH, FORWARD_SLASH);
-      }
+    /* --- Protected methods --- */
 
-      if (topFolderFound.length() > 0)
-         topFolderFound = topFolderFound.substring(1, topFolderFound.length()) + FORWARD_SLASH;
+    protected List<String> normalizeLocalPath(String parentFolder, String topFolderFound, Collection<String> excludes) {
+        String normalizedRoot = new File(parentFolder).getPath();
+        if (normalizedRoot.equals(topFolderFound)) {
+            topFolderFound = topFolderFound
+                    .replace(normalizedRoot, "")
+                    .replace(BACK_SLASH, FORWARD_SLASH);
+        } else {
+            topFolderFound = topFolderFound
+                    .replace(parentFolder, "")
+                    .replace(BACK_SLASH, FORWARD_SLASH);
+        }
 
-      String finalRes = topFolderFound;
-      return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
-   }
+        if (topFolderFound.length() > 0)
+            topFolderFound = topFolderFound.substring(1, topFolderFound.length()) + FORWARD_SLASH;
+
+        String finalRes = topFolderFound;
+        return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
+    }
 }

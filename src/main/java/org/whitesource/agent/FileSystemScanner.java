@@ -91,7 +91,13 @@ public class FileSystemScanner {
             Collection<ResolutionResult> resolutionResults = dependencyResolutionService.resolveDependencies(pathsToScan, excludes);
 
             // add all resolved dependencies
-            resolutionResults.stream().map(dependency -> dependency.getResolvedDependencies()).forEach(dependencies -> allDependencies.addAll(dependencies));
+            final int[] totalDependencies = {0};
+            resolutionResults.stream().map(dependency -> dependency.getResolvedDependencies()).forEach(dependencies -> {
+                allDependencies.addAll(dependencies);
+                totalDependencies[0] += dependencies.size();
+                dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies));
+            });
+            logger.info(MessageFormat.format("Total dependencies Found: {0}", totalDependencies[0]));
 
             // merge additional excludes
             Set<String> allExcludes = resolutionResults.stream().flatMap(resolution -> resolution.getExcludes().stream()).collect(Collectors.toSet());
@@ -174,6 +180,11 @@ public class FileSystemScanner {
         }
         logger.info("Finished Analyzing Files");
         return allDependencies;
+    }
+
+    private void increaseCount(DependencyInfo dependency, int[] totalDependencies) {
+        totalDependencies[0] += dependency.getChildren().size();
+        dependency.getChildren().forEach(dependencyInfo -> increaseCount(dependencyInfo, totalDependencies));
     }
 
     private void displayProgress(int index, int totalFiles) {

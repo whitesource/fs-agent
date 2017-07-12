@@ -23,6 +23,10 @@ import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Dependency Resolver for NPM projects.
@@ -36,6 +40,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private static final Logger logger = LoggerFactory.getLogger(NpmDependencyResolver.class);
 
     public static final String JS_PATTERN = "**/*.js";
+    public static final String EXAMPLE = "**/example/**/";
+    public static final String EXAMPLES = "**/examples/**/";
+    public static final String TEST = "**/test/**/";
 
     private static String PACKAGE_JSON = "package.json";
 
@@ -45,8 +52,13 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Constructor --- */
 
+    public NpmDependencyResolver(boolean includeDevDependencies) {
+        super();
+        npmLsJsonDependencyCollector = new NpmLsJsonDependencyCollector(includeDevDependencies);
+    }
+
     public NpmDependencyResolver() {
-        npmLsJsonDependencyCollector = new NpmLsJsonDependencyCollector();
+        this(false);
     }
 
     /* --- Public methods --- */
@@ -81,6 +93,16 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
+    public Collection<String> getExcludes() {
+        Collection<String> excludes = new LinkedList<>();
+        String bomPattern = getBomPattern();
+        excludes.add(EXAMPLE + bomPattern);
+        excludes.add(EXAMPLES + bomPattern);
+        excludes.add(TEST + bomPattern);
+        return excludes;
+    }
+
+    @Override
     protected DependencyType getDependencyType() {
         return DependencyType.NPM;
     }
@@ -107,18 +129,33 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         return dependencies;
     }
 
+    public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+        return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+    }
+
     private void handleNpmLsSuccess(Collection<NpmPackageJsonFile> packageJsonFiles, Collection<DependencyInfo> dependencies) {
-        for (NpmPackageJsonFile packageJson : packageJsonFiles) {
-            if (packageJson != null && packageJson.isValid()) {
-                // enrich original dependency with data
-                for (DependencyInfo dependency : dependencies) {
-                    if (dependency.getVersion().equals(packageJson.getVersion()) &&
-                            dependency.getFilename().equals(packageJson.getFileName())) {
-                        enrichDependency(dependency, packageJson);
-                    }
-                }
-            }
+        Map<String, NpmPackageJsonFile> resultFiles = packageJsonFiles.stream()
+                .filter(packageJson -> packageJson != null && packageJson.isValid())
+                .filter(distinctByKey(file -> file.getFileName()))
+                .collect(Collectors.toMap(NpmPackageJsonFile::getFileName, Function.identity()));
+
+        dependencies.forEach(dependency -> handleNpmLsSuccessDependency(dependency, resultFiles));
+    }
+
+    private void handleNpmLsSuccessDependency(DependencyInfo dependency, Map<String, NpmPackageJsonFile> resultFiles) {
+        NpmPackageJsonFile packageJson = getPackageJsonFile(resultFiles, dependency.getArtifactId());
+        if (packageJson != null) {
+            enrichDependency(dependency, packageJson);
+        } else {
+            logger.debug("Dependency {} could not be enriched.'package.json' could not be found", dependency.getArtifactId());
         }
+
+        dependency.getChildren().forEach(childDependency -> handleNpmLsSuccessDependency(childDependency, resultFiles));
+    }
+
+    private NpmPackageJsonFile getPackageJsonFile(Map<String, NpmPackageJsonFile> resultFiles, String artifactId) {
+        return resultFiles.get(artifactId);
     }
 
     private void enrichDependency(DependencyInfo dependency, NpmPackageJsonFile packageJson) {
@@ -128,6 +165,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         dependency.setVersion(packageJson.getVersion());
         dependency.setSystemPath(packageJson.getLocalFileName());
         dependency.setFilename(packageJson.getFileName());
+        dependency.setFilename(packageJson.getLocalFileName());
         dependency.setDependencyType(getDependencyType());
     }
 

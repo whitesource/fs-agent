@@ -1,16 +1,18 @@
 import org.junit.Assert;
 import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.npm.NpmPackageJsonFile;
+
+import java.nio.file.Paths;
+
 /**
- * Created by eugen.horovitz on 6/26/2017.
+ *@author eugen.horovitz
  */
 public class NpmPackageJsonTest {
 
     @Test
     public void shouldLoadOptionalDependencies() {
-        NpmPackageJsonFile file = NpmPackageJsonFile
-                .parseNpmPackageJsonFile(TestHelper.FOLDER_WITH_NPN_PROJECTS + "apostrophe-master/node_modules/chokidar/package.json");
-                //"C:\\Users\\eugen\\WebstormProjects\\apostrophe-master\\node_modules\\chokidar\\package.json");
+        String path = Paths.get(TestHelper.FOLDER_TO_TEST, TestHelper.SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES).toString();
+        NpmPackageJsonFile file = NpmPackageJsonFile.parseNpmPackageJsonFile(path);
         Assert.assertTrue(file.getOptionalDependencies().keySet().size() > 0);
         Assert.assertTrue(file.getDependencies().keySet().size() > 0);
     }
