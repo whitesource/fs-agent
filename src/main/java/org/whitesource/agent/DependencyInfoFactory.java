@@ -15,12 +15,15 @@
  */
 package org.whitesource.agent;
 
+import com.wss.hash.HashCalculationResult;
+import com.wss.hash.HashCalculator;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.ChecksumUtils;
 import org.whitesource.agent.api.model.CopyrightInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.fs.FileExtensions;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -106,6 +109,7 @@ public class DependencyInfoFactory {
         try {
             String sha1 = ChecksumUtils.calculateSHA1(dependencyFile);
             dependencyInfo = new DependencyInfo(sha1);
+            calculateSuperHash(dependencyInfo, dependencyFile);
             dependencyInfo.setArtifactId(dependencyFile.getName());
             dependencyInfo.setLastModified(new Date(dependencyFile.lastModified()));
             File otherPlatformFile = createOtherPlatformFile(dependencyFile);
@@ -131,6 +135,24 @@ public class DependencyInfoFactory {
             logger.warn("Failed to create dependency " + fileName + " to dependency list: ", e);
         }
         return dependencyInfo;
+    }
+
+    private void calculateSuperHash(DependencyInfo dependencyInfo, File dependencyFile) {
+        StringBuilder superHash = new StringBuilder("");
+        HashCalculator superHashCalculator = new HashCalculator();
+        if (!dependencyFile.getName().toLowerCase().matches(FileExtensions.BINARY_FILE_EXTENSION_REGEX)) {
+            try {
+                HashCalculationResult superHashResult = superHashCalculator.calculateSuperHash(dependencyFile);
+                if (superHashResult != null) {
+                    dependencyInfo.setFullHash(superHashResult.getFullHash());
+                    dependencyInfo.setMostSigBitsHash(superHashResult.getMostSigBitsHash());
+                    dependencyInfo.setLeastSigBitsHash(superHashResult.getLeastSigBitsHash());
+                    superHash.append(superHashResult.getFullHash());
+                }
+            } catch (IOException e) {
+                logger.warn("Error calculating fullHash for {}, Error - ", dependencyFile.getName(), e.getMessage());
+            }
+        }
     }
 
     /* --- Private methods --- */
