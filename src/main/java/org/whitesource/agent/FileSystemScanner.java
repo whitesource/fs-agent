@@ -1,17 +1,20 @@
 package org.whitesource.agent;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.DirectoryScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.archive.ArchiveExtractor;
+import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
+import org.whitesource.agent.dependency.resolver.ResolutionResult;
+import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.FileSystemAgent;
 import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class does the actual directory scanning, creates {@link DependencyInfo}s.
@@ -37,33 +40,38 @@ public class FileSystemScanner {
     private static String NPM_FOLDER = "\\node_modules\\";
     private static String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
 
+    private final DependencyResolutionService dependencyResolutionService;
+    private final FilesScanner filesScanner;
+
     /* --- Members --- */
 
     private boolean showProgressBar;
 
     /* --- Constructors --- */
 
-    public FileSystemScanner(boolean showProgressBar) {
+    public FileSystemScanner(boolean showProgressBar, DependencyResolutionService dependencyResolutionService) {
         this.showProgressBar = showProgressBar;
+        this.dependencyResolutionService = dependencyResolutionService;
+        filesScanner = new FilesScanner();
     }
 
     /* --- Public methods --- */
 
-    public List<DependencyInfo> createDependencyInfos(List<String> scannerBaseDirs, ScmConnector scmConnector,
-                                                      String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
-                                                      String[] archiveIncludes, String[] archiveExcludes, boolean followSymlinks, Collection<String> excludedCopyrights,
-                                                      boolean partialSha1Match) {
-        Collection<String> pathsToScan = new ArrayList<String>(scannerBaseDirs);
+    public List<DependencyInfo> createDependencies(List<String> scannerBaseDirs, ScmConnector scmConnector,
+                                                   String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
+                                                   String[] archiveIncludes, String[] archiveExcludes, boolean followSymlinks,
+                                                   Collection<String> excludedCopyrights, boolean partialSha1Match) {
+        Collection<String> pathsToScan = new ArrayList<>(scannerBaseDirs);
 
         // validate parameters
         validateParams(archiveExtractionDepth, includes);
 
         // scan directories
         int totalFiles = 0;
-        Map<File, Collection<String>> fileMap = new HashMap<File, Collection<String>>();
+        Map<File, Collection<String>> fileMap = new HashMap<>();
 
         // go over all base directories, look for archives
-        Map<String, String> archiveToBaseDirMap = new HashMap<String, String>();
+        Map<String, String> archiveToBaseDirMap = new HashMap<>();
         ArchiveExtractor archiveExtractor = null;
         if (archiveExtractionDepth > 0) {
             archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes);
@@ -73,21 +81,42 @@ public class FileSystemScanner {
             }
             pathsToScan.addAll(archiveToBaseDirMap.keySet());
         }
+
+        // create dependencies from files
+        logger.info("Starting Analysis");
+        List<DependencyInfo> allDependencies = new ArrayList<>();
+
+        if (dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies()) {
+            // get all resolution results
+            Collection<ResolutionResult> resolutionResults = dependencyResolutionService.resolveDependencies(pathsToScan, excludes);
+
+            // add all resolved dependencies
+            final int[] totalDependencies = {0};
+            resolutionResults.stream().map(dependency -> dependency.getResolvedDependencies()).forEach(dependencies -> {
+                allDependencies.addAll(dependencies);
+                totalDependencies[0] += dependencies.size();
+                dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies));
+            });
+            logger.info(MessageFormat.format("Total dependencies Found: {0}", totalDependencies[0]));
+
+            // merge additional excludes
+            Set<String> allExcludes = resolutionResults.stream().flatMap(resolution -> resolution.getExcludes().stream()).collect(Collectors.toSet());
+            allExcludes.addAll(Arrays.stream(excludes).collect(Collectors.toList()));
+
+            // change the original excludes with the merged values
+            excludes = new String[allExcludes.size()];
+            excludes = allExcludes.toArray(excludes);
+        }
+
         for (String scannerBaseDir : pathsToScan) {
             File file = new File(scannerBaseDir);
             if (file.exists()) {
                 if (file.isDirectory()) {
                     logger.info("Scanning Directory {} for Matching Files (may take a few minutes)", scannerBaseDir);
-                    DirectoryScanner scanner = new DirectoryScanner();
-                    scanner.setBasedir(scannerBaseDir);
-                    scanner.setIncludes(includes);
-                    scanner.setExcludes(excludeFileSystemAgent(excludes));
-                    scanner.setFollowSymlinks(followSymlinks);
-                    scanner.setCaseSensitive(globCaseSensitive);
-                    scanner.scan();
-                    File basedir = scanner.getBasedir();
-                    String[] fileNames = scanner.getIncludedFiles();
-                    scanner.setIncludes(scanner.getIncludedFiles());
+
+                    File basedir = new File(scannerBaseDir);
+                    String[] fileNames = filesScanner.getFileNames(scannerBaseDir, includes, excludes, followSymlinks, globCaseSensitive);
+
                     checkUnsupportedFileTypes(fileNames);
                     fileMap.put(basedir, Arrays.asList(fileNames));
                     totalFiles += fileNames.length;
@@ -95,7 +124,7 @@ public class FileSystemScanner {
                     // handle file
                     Collection<String> files = fileMap.get(file.getParentFile());
                     if (files == null) {
-                        files = new ArrayList<String>();
+                        files = new ArrayList<>();
                     }
                     files.add(file.getName());
                     fileMap.put(file.getParentFile(), files);
@@ -108,10 +137,6 @@ public class FileSystemScanner {
         logger.info(MessageFormat.format("Total Files Found: {0}", totalFiles));
 
         DependencyInfoFactory factory = new DependencyInfoFactory(excludedCopyrights, partialSha1Match);
-
-        // create dependency infos from files
-        logger.info("Starting Analysis");
-        List<DependencyInfo> dependencyInfos = new ArrayList<DependencyInfo>();
         if (showProgressBar) {
             displayProgress(0, totalFiles);
         }
@@ -123,7 +148,7 @@ public class FileSystemScanner {
                     if (scmConnector != null) {
                         originalDependencyInfo.setSystemPath(fileName.replace(BACK_SLASH, FORWARD_SLASH));
                     }
-                    dependencyInfos.add(originalDependencyInfo);
+                    allDependencies.add(originalDependencyInfo);
                 }
 
                 // print progress
@@ -134,7 +159,7 @@ public class FileSystemScanner {
             }
         }
         // replace temp folder name with base dir
-        for (DependencyInfo dependencyInfo : dependencyInfos) {
+        for (DependencyInfo dependencyInfo : allDependencies) {
             String systemPath = dependencyInfo.getSystemPath();
             for (String key : archiveToBaseDirMap.keySet()) {
                 if (dependencyInfo.getSystemPath().contains(key) && archiveExtractor != null) {
@@ -154,7 +179,12 @@ public class FileSystemScanner {
             scmConnector.deleteCloneDirectory();
         }
         logger.info("Finished Analyzing Files");
-        return dependencyInfos;
+        return allDependencies;
+    }
+
+    private void increaseCount(DependencyInfo dependency, int[] totalDependencies) {
+        totalDependencies[0] += dependency.getChildren().size();
+        dependency.getChildren().forEach(dependencyInfo -> increaseCount(dependencyInfo, totalDependencies));
     }
 
     private void displayProgress(int index, int totalFiles) {
@@ -225,9 +255,9 @@ public class FileSystemScanner {
         }
     }
 
-    private String[] excludeFileSystemAgent(String[] excludes){
-        String[] excludesFSA = new String[excludes.length+1];
-        System.arraycopy(excludes,0,excludesFSA,0,excludes.length);
+    private String[] excludeFileSystemAgent(String[] excludes) {
+        String[] excludesFSA = new String[excludes.length + 1];
+        System.arraycopy(excludes, 0, excludesFSA, 0, excludes.length);
         excludesFSA[excludes.length] = FSA_FILE;
         return excludesFSA;
     }

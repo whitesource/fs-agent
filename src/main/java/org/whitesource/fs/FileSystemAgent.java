@@ -23,6 +23,7 @@ import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.scm.ScmConnector;
 
 import java.util.*;
@@ -47,7 +48,8 @@ public class FileSystemAgent extends CommandLineAgent {
     private static final String DEFAULT_ARCHIVE_DEPTH = "0";
 
     private static final String AGENT_TYPE = "fs-agent";
-    private static final String AGENT_VERSION = "2.2.7";
+    private static final String AGENT_VERSION = "2.3.7";
+    private static final String PLUGIN_VERSION = "1.8.0";
 
     /* --- Members --- */
 
@@ -91,6 +93,11 @@ public class FileSystemAgent extends CommandLineAgent {
     @Override
     protected String getAgentVersion() {
         return AGENT_VERSION;
+    }
+
+    @Override
+    protected String getPluginVersion() {
+        return PLUGIN_VERSION;
     }
 
     /* --- Private methods --- */
@@ -146,7 +153,7 @@ public class FileSystemAgent extends CommandLineAgent {
         excludedCopyrights.remove("");
 
         boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
-        return new FileSystemScanner(showProgressBar).createDependencyInfos(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive,
+        return new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createDependencies(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive,
                 archiveExtractionDepth, archiveIncludes, archiveExcludes, followSymlinks, excludedCopyrights, partialSha1Match);
     }
 }

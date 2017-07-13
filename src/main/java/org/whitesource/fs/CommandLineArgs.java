@@ -37,7 +37,7 @@ public class CommandLineArgs {
 
     //TODO use a File converter for dependencyDir and configFilePath
     @Parameter(names = "-d", splitter = CommaParameterSplitter.class, description = "Comma separated list of directories and / or files to scan")
-    List<String> dependencyDirs = new ArrayList<String>(); // TODO this may be a bad default, consider printing usage instead
+    List<String> dependencyDirs = new ArrayList<>(); // TODO this may be a bad default, consider printing usage instead
 
     @Parameter(names = "-f", description = "File list path")
     String fileListPath = "";
@@ -47,4 +47,17 @@ public class CommandLineArgs {
 
     @Parameter(names = "-project", description = "Project to update")
     String project = null;
+
+    @Parameter(names = "-proxy.host", description = "Proxy Host")
+    String proxyHost = null;
+
+    @Parameter(names = "-proxy.port", description = "Proxy Port")
+    String proxyPort = null;
+
+    @Parameter(names = "-proxy.user", description = "Proxy User")
+    String proxyUser = null;
+
+    @Parameter(names = "-proxy.pass", description = "Proxy Password")
+    String proxyPass = null;
+
 }

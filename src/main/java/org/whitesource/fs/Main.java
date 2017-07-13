@@ -41,27 +41,38 @@ public class Main {
     private static final CommandLineArgs commandLineArgs = new CommandLineArgs();
     private static final String INFO = "info";
 
-    private static JCommander jCommander;
-
     /* --- Main --- */
 
     public static void main(String[] args) {
-        jCommander = new JCommander(commandLineArgs, args);
+        int processExitCode;
+        try {
+            processExitCode = execute(args);
+        } catch (Exception e) {
+            // catch any exception that may be thrown, return error code
+            logger.warn("Process encountered an error: {}" + e.getMessage(), e);
+            processExitCode = StatusCode.ERROR.getValue();
+        }
+        System.exit(processExitCode);
+    }
+
+    public static int execute(String[] args) {
+        new JCommander(commandLineArgs, args);
         // validate args // TODO use jCommander validators
         // TODO add usage command
 
-        String productName = commandLineArgs.product;
-        String projectName = commandLineArgs.project;
         // read configuration properties
+        String projectName = commandLineArgs.project;
         Properties configProps = readAndValidateConfigFile(commandLineArgs.configFilePath, projectName);
 
         // Check whether the user inserted project OR/AND product via command line
-        if (productName != null) {
-            configProps.put(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, productName);
-        }
-        if (projectName != null) {
-            configProps.put(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, projectName);
-        }
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, commandLineArgs.product);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, projectName);
+
+        // proxy
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PORT_PROPERTY_KEY, commandLineArgs.proxyPass);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_USER_PROPERTY_KEY, commandLineArgs.proxyPort);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY, commandLineArgs.proxyUser);
 
         // read log level from configuration file
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
@@ -69,7 +80,7 @@ public class Main {
         root.setLevel(Level.toLevel(logLevel, Level.INFO));
 
         // read directories and files from list-file
-        List<String> files = new ArrayList<String>();
+        List<String> files = new ArrayList<>();
         String fileListPath = commandLineArgs.fileListPath;
         if (StringUtils.isNotBlank(fileListPath)) {
             try {
@@ -86,14 +97,19 @@ public class Main {
         files.addAll(commandLineArgs.dependencyDirs);
 
         // run the agent
-        FileSystemAgent whitesourceAgent = new FileSystemAgent(configProps, files);
-        boolean processSuccess = whitesourceAgent.sendRequest();
-        int processExitCode = processSuccess ? 0 : -1;
-        logger.info("Process finished with exit code {}", processExitCode);
-        System.exit(processExitCode);
+        FileSystemAgent agent = new FileSystemAgent(configProps, files);
+        StatusCode processExitCode = agent.sendRequest();
+        logger.info("Process finished with exit code {} ({})", processExitCode, processExitCode.getValue());
+        return processExitCode.getValue();
     }
 
     /* --- Private methods --- */
+
+    private static void readPropertyFromCommandLine(Properties configProps, String propertyKey, String propertyValue) {
+        if (StringUtils.isNotBlank(propertyValue)) {
+            configProps.put(propertyKey, propertyValue);
+        }
+    }
 
     private static Properties readAndValidateConfigFile(String configFilePath, String projectName) {
         Properties configProps = new Properties();
@@ -143,8 +159,6 @@ public class Main {
             foundError = true;
             logger.error("Please choose {} or {}", PROJECT_NAME_PROPERTY_KEY, PROJECT_TOKEN_PROPERTY_KEY);
         }
-
         return foundError;
     }
-
 }
