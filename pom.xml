@@ -6,7 +6,7 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>1.8.0</version>
+    <version>1.8.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -39,6 +39,11 @@
             <groupId>org.whitesource</groupId>
             <artifactId>wss-agent-report</artifactId>
             <version>${agent.api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wss</groupId>
+            <artifactId>hash-calculator</artifactId>
+            <version>1.0.1</version>
         </dependency>
 
         <!-- CLI library -->
