@@ -8,10 +8,12 @@ import org.junit.Test;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
+import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.fs.FileSystemAgent;
 import org.whitesource.fs.Main;
+import org.whitesource.fs.StatusCode;
 
 import java.io.*;
 import java.net.URI;
@@ -21,6 +23,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.whitesource.agent.ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY;
+import static org.whitesource.agent.ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY;
+
 /**
  * Test class for npm-filter
  *
@@ -29,16 +34,6 @@ import java.util.stream.Stream;
 public class FileSystemAgentTest {
 
     /* --- Tests --- */
-
-    @Test
-    public void shouldFilterOutJsFiles() {
-        Properties props = TestHelper.getPropertiesFromFile();
-        List<String> dirs = Arrays.asList(TestHelper.FOLDER_TO_TEST);
-
-        Stream<DependencyInfo> distinctDependencies = getDependenciesWithFilter(dirs, props);
-        List<String> jsFiles = distinctDependencies.filter(x -> x.getArtifactId() != null && x.getArtifactId().endsWith(".js")).map(x -> x.getArtifactId()).collect(Collectors.toList());
-        Assert.assertEquals(0, jsFiles.size());
-    }
 
     @Test
     public void shouldEnrichAllDependenciesWithSha1() {
@@ -81,19 +76,35 @@ public class FileSystemAgentTest {
         Arrays.stream(dir10.listFiles()).filter(dir -> dir.isDirectory()).forEach(directory -> {
             FilesScanner fs = new FilesScanner();
 
-            Map<String, String[]> map = fs.findAllFiles(Arrays.asList(directory.getPath()), new NpmDependencyResolver().getBomPattern(), new LinkedList<>());
-            map.forEach((folder, fileFiltered) -> {
-                Assert.assertTrue(fileFiltered.length > 0);
-            });
+            Collection<ResolvedFolder> map = fs.findTopFolders(Arrays.asList(directory.getPath()), new NpmDependencyResolver().getBomPattern(), new LinkedList<>());
+            map.forEach((folder) -> Assert.assertTrue(folder.getTopFoldersFound().size() > 0));
         });
     }
 
     @Test
-    public void shouldRunMainOnFolder() {
-        //File directory = new File("C:\\Users\\eugen\\WebstormProjects\\cody_with_multi_changed");
-        //runMainOnDir(directory);
-        File directory = new File(TestHelper.FOLDER_WITH_NPN_PROJECTS);
+    public void shouldRunMixedMainOnFolder() {
+        File directory = new File(TestHelper.FOLDER_WITH_MIX_FOLDERS);
         Arrays.stream(directory.listFiles()).filter(dir -> dir.isDirectory()).forEach(dir -> runMainOnDir(dir));
+    }
+
+    @Test
+    public void shouldReturnTheSameNumberOfDependenciesAsBowerPlugin() {
+        File directory = new File(TestHelper.FOLDER_WITH_BOWER_PROJECTS);
+        Properties props = TestHelper.getPropertiesFromFile();
+
+        Arrays.stream(directory.listFiles()).filter(dir -> dir.isDirectory()).forEach(dir -> {
+            // send to server via fs-agent
+            //runMainOnDir(dir);
+
+            // send to server via npm-plugin
+            RunNpmPluginOnFolder(dir, new String[]{"node", "C:\\Users\\eugenh\\Application Data\\npm\\node_modules\\ws-bower\\bin\\ws-bower.js", "run"});
+
+            // collect number of dependencies via npm-plugin
+            Collection<DependencyInfo> bowerPluginDependencies = readNpmPluginFile(dir, "ws-log-bower-report-post.json");
+
+            // collect number of dependencies via npm-fs-agent
+            testResults(props, dir, bowerPluginDependencies);
+        });
     }
 
     @Test
@@ -103,22 +114,32 @@ public class FileSystemAgentTest {
 
         Arrays.stream(directory.listFiles()).filter(dir -> dir.isDirectory()).forEach(dir -> {
             // send to server via fs-agent
-            runMainOnDir(dir);
+            //runMainOnDir(dir);
 
             // send to server via npm-plugin
-            RunNpmPluginOnFolder(dir);
+            RunNpmPluginOnFolder(dir, new String[]{"node", "C:\\Users\\eugenh\\Application Data\\npm\\node_modules\\whitesource\\bin\\whitesource.js", "run"});
 
             // collect number of dependencies via npm-plugin
-            Collection<DependencyInfo> dependencyInfosNPMPLugin = readNpmPluginFile(dir);
-
-            // collect number of dependencies via npm-fs-agent
-            FileSystemAgentTesting f = new FileSystemAgentTesting(props, Arrays.asList(dir.getAbsolutePath()));
-            Collection<DependencyInfo> fsAgentDeps = f.createProjects().stream().findFirst().get().getDependencies();
-
-            int npmPluginCount = getCount(dependencyInfosNPMPLugin);
-            int fsAgentCount = getCount(fsAgentDeps);
-            Assert.assertTrue(npmPluginCount < fsAgentCount);
+            Collection<DependencyInfo> dependencyInfosNPMPLugin = readNpmPluginFile(dir, "ws-log-report-post.json");
+            testResults(props, dir, dependencyInfosNPMPLugin);
         });
+    }
+
+    private void testResults(Properties props, File dir, Collection<DependencyInfo> dependencyInfosNPMPLugin) {
+        // collect number of dependencies via npm-fs-agent
+        props.setProperty(PROJECT_NAME_PROPERTY_KEY, dir.getName());
+        props.setProperty(PRODUCT_NAME_PROPERTY_KEY, "bower_plugin_01");
+        FileSystemAgentTesting f = new FileSystemAgentTesting(props, Arrays.asList(dir.getAbsolutePath()));
+        Collection<AgentProjectInfo> projects = f.createProjects();
+        Collection<DependencyInfo> fsAgentDeps = projects.stream().findFirst().get().getDependencies();
+        f.sendRequest(projects);
+
+        int npmPluginCount = getCount(dependencyInfosNPMPLugin);
+        int fsAgentCount = getCount(fsAgentDeps);
+
+        Assert.assertTrue(npmPluginCount != 0);
+        Assert.assertTrue(fsAgentCount != 0);
+        Assert.assertTrue(npmPluginCount <= fsAgentCount);
     }
 
     private int getCount(Collection<DependencyInfo> dependencies) {
@@ -133,8 +154,8 @@ public class FileSystemAgentTest {
         dependency.getChildren().forEach(dependencyInfo -> increaseCount(dependencyInfo, totalDependencies));
     }
 
-    private void RunNpmPluginOnFolder(File dir) {
-        ProcessBuilder pb = new ProcessBuilder("node", "C:\\Users\\eugen\\Application Data\\npm\\node_modules\\whitesource\\bin\\whitesource.js", "run");
+    private void RunNpmPluginOnFolder(File dir, String[] args) {
+        ProcessBuilder pb = new ProcessBuilder(args);
         pb.directory(dir);
         try {
             Process process = pb.start();
@@ -142,8 +163,8 @@ public class FileSystemAgentTest {
             String output;
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 output = reader.lines().reduce("", String::concat);
-                if (StringUtils.isNotBlank(output))
-                    throw new IOException(output);
+                //if (StringUtils.isNotBlank(output))
+                //    throw new IOException(output);
                 reader.close();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -153,9 +174,9 @@ public class FileSystemAgentTest {
         }
     }
 
-    private Collection<DependencyInfo> readNpmPluginFile(File dir) {
+    private Collection<DependencyInfo> readNpmPluginFile(File dir, String fileLog) {
         Collection<DependencyInfo> dependenciesInfo = new ArrayList<>();
-        String fileName = Paths.get(dir.getAbsolutePath(), "ws-log-report-post.json").toString();
+        String fileName = Paths.get(dir.getAbsolutePath(), fileLog).toString();
         String json;
         try (InputStream is = new FileInputStream(fileName)) {
             json = IOUtils.toString(is);
@@ -181,6 +202,8 @@ public class FileSystemAgentTest {
             JSONObject obj = (JSONObject) childDependency;
             DependencyInfo d = new DependencyInfo();
             String artifact = obj.getString("artifactId");
+            String version = obj.getString("version");
+            String groupId = obj.getString("groupId");
             if (obj.has("dependencies")) {
                 JSONObject child = obj.getJSONObject("dependencies");
                 addDependencies(dependenciesInfo, child);
@@ -196,6 +219,8 @@ public class FileSystemAgentTest {
             String idStr = path.substring(path.lastIndexOf('/') + 1);
 
             d.setArtifactId(idStr);
+            d.setGroupId(groupId);
+            d.setVersion(version);
             dependenciesInfo.add(d);
         });
     }
@@ -203,7 +228,7 @@ public class FileSystemAgentTest {
     /* --- Private methods --- */
 
     private void runMainOnDir(File directory) {
-        String[] args = ("-d " + directory.getPath() + " -project " + directory.getName()).split(" ");
+        String[] args = ("-d " + directory.getPath() + " -product " + "fsAgentMain" + " -project " + directory.getName()).split(" ");
         int result = Main.execute(args);
         Assert.assertEquals(result, 0);
     }
@@ -226,6 +251,11 @@ public class FileSystemAgentTest {
         @Override
         public Collection<AgentProjectInfo> createProjects() {
             return super.createProjects();
+        }
+
+        @Override
+        public StatusCode sendRequest(Collection<AgentProjectInfo> projects) {
+            return super.sendRequest(projects);
         }
     }
 }

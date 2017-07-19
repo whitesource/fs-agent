@@ -16,6 +16,7 @@
 package org.whitesource.agent.utils;
 
 import org.apache.tools.ant.DirectoryScanner;
+import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -41,7 +42,21 @@ public class FilesScanner {
         return fileNames;
     }
 
-    public Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
+    public Collection<ResolvedFolder> findTopFolders(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
+        Collection<ResolvedFolder> resolvedFolders = new ArrayList<>();
+        // get folders containing bom files
+        Map<String, String[]> pathToBomFilesMap = findAllFiles(pathsToScan, includesPattern, excludes);
+
+        // resolve dependencies
+        pathToBomFilesMap.forEach((folder, bomFile) -> {
+            // get top folders with boms (the parent of each project)
+            Map<String, List<String>> topFolders = getTopFoldersWithIncludedFiles(folder, bomFile);
+            resolvedFolders.add(new ResolvedFolder(folder, topFolders));
+        });
+        return resolvedFolders;
+    }
+
+    private Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
         Map pathToIncludedFilesMap = new HashMap();
         pathsToScan.stream().forEach(scanFolder -> {
             String[] includedFiles = getFileNames(new File(scanFolder).getPath(), new String[]{includesPattern},
@@ -51,7 +66,7 @@ public class FilesScanner {
         return pathToIncludedFilesMap;
     }
 
-    public Map<String, List<String>> getTopFoldersWithIncludedFiles(String rootFolder, String[] includedFiles) {
+    private Map<String, List<String>> getTopFoldersWithIncludedFiles(String rootFolder, String[] includedFiles) {
         // collect all full paths
         List<String> fullPaths = Arrays.stream(includedFiles)
                 .map(file -> Paths.get(new File(rootFolder).getAbsolutePath(), file).toString())

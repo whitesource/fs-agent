@@ -16,11 +16,12 @@
 package org.whitesource.agent.dependency.resolver;
 
 import org.apache.commons.lang.StringUtils;
+import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 
 import java.util.*;
-
+import static org.whitesource.agent.ConfigPropertyKeys.BOWER_RESOLVE_DEPENDENCIES;
 import static org.whitesource.agent.ConfigPropertyKeys.NPM_INCLUDE_DEV_DEPENDENCIES;
 import static org.whitesource.agent.ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES;
 
@@ -41,11 +42,15 @@ public class DependencyResolutionService {
     public DependencyResolutionService(Properties config) {
         final boolean npmResolveDependencies = getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
         final boolean npmIncludeDevDependencies = getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
+        final boolean bowerResolveDependencies = getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
 
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
             dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies));
+        }
+        if (bowerResolveDependencies) {
+            dependencyResolvers.add(new BowerDependencyResolver());
         }
     }
 
@@ -57,6 +62,8 @@ public class DependencyResolutionService {
 
     public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes) {
         List<ResolutionResult> resolutionResults = new ArrayList<>();
+        Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap = new HashMap<>();
+
         dependencyResolvers.forEach(dependencyResolver -> {
             // add resolver excludes
             Collection<String> combinedExcludes = new LinkedList<>(Arrays.asList(excludes));
@@ -65,22 +72,38 @@ public class DependencyResolutionService {
                 combinedExcludes.add(exclude);
             }
 
-            // get folders containing bom files
-            Map<String, String[]> pathToBomFilesMap = fileScanner.findAllFiles(pathsToScan, dependencyResolver.getBomPattern(), combinedExcludes);
+            Collection<ResolvedFolder> topFolders = fileScanner.findTopFolders(pathsToScan, dependencyResolver.getBomPattern(), combinedExcludes);
+            topFolders.forEach(topFolder -> topFolderResolverMap.put(topFolder, dependencyResolver));
+        });
 
-            // resolve dependencies
-            pathToBomFilesMap.forEach((folder, bomFile) -> {
-                // get top folders with boms (the parent of each project)
-                Map<String, List<String>> topFolders = fileScanner.getTopFoldersWithIncludedFiles(folder, bomFile);
+        //reduce the dependencies and duplicates files
+        reduceDependencies(topFolderResolverMap);
 
-                // for each top folder, resolve dependencies
-                topFolders.forEach((topFolder, bomFiles) -> {
-                    ResolutionResult result = dependencyResolver.resolveDependencies(folder, topFolder, bomFiles);
-                    resolutionResults.add(result);
-                });
+        topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
+            resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
+                ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
+                resolutionResults.add(result);
             });
         });
+
         return resolutionResults;
+    }
+
+    private void reduceDependencies(Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap) {
+        //reduce the dependencies and duplicates files
+        Set<String> topFolders = new HashSet<>();
+        topFolderResolverMap.entrySet().forEach((resolverEntry) -> topFolders.addAll(resolverEntry.getKey().getTopFoldersFound().keySet()));
+        //remove all folders that have a parent already mapped
+        topFolders.stream().sorted().forEach(topFolderParent -> {
+            topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
+                resolvedFolder.getTopFoldersFound().entrySet().removeIf(topFolderChild -> isChildFolder(topFolderChild.getKey(), topFolderParent));
+            });
+        });
+    }
+
+    private boolean isChildFolder(String childFolder, String topFolderParent) {
+        boolean result = childFolder.contains(topFolderParent) && !childFolder.equals(topFolderParent);
+        return result;
     }
 
     /* --- Private Methods --- */

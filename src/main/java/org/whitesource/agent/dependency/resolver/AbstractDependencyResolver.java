@@ -15,11 +15,16 @@
  */
 package org.whitesource.agent.dependency.resolver;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -27,24 +32,106 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractDependencyResolver {
 
-    /* --- Static members --- */
+    /* --- Static Members --- */
 
+    private static final Logger logger = LoggerFactory.getLogger(AbstractDependencyResolver.class);
+
+    private static final String JS_PATTERN = "**/*.js";
+    private static final String EXAMPLE = "**/example/**/";
+    private static final String EXAMPLES = "**/examples/**/";
+    private static final String WS_BOWER_FOLDER = "**/.ws_bower/**/";
+    private static final String TEST = "**/test/**/";
     private static String BACK_SLASH = "\\";
     private static String FORWARD_SLASH = "/";
 
+    /* --- Public methods --- */
+
+    public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, List<String> bomFiles) {
+        // parse package.json files
+        Collection<BomFile> packageJsonFiles = new LinkedList<>();
+
+        Map<File, List<File>> mapBomFiles = bomFiles.stream().map(file -> new File(file)).collect(Collectors.groupingBy(File::getParentFile));
+
+        List<File> files = mapBomFiles.entrySet().stream().map(entry -> {
+            if (entry.getValue().size() > 1) {
+                return entry.getValue().stream().filter(file -> fileShouldBeParsed(file)).findFirst().get();
+            } else {
+                return entry.getValue().stream().findFirst().get();
+            }
+        }).collect(Collectors.toList());
+
+        files.forEach(bomFile -> packageJsonFiles.add(getBomParser().parseBomFile(bomFile.getAbsolutePath())));
+
+        // try to collect dependencies via 'npm ls'
+        Collection<DependencyInfo> dependencies = getDependencyCollector().collectDependencies(topLevelFolder);
+        boolean lsSuccess = dependencies.size() > 0;
+        if (lsSuccess) {
+            handleLsSuccess(packageJsonFiles, dependencies);
+        } else {
+            dependencies.addAll(collectPackageJsonDependencies(packageJsonFiles));
+        }
+
+        // create excludes for .js files upon finding NPM dependencies
+        List<String> excludes = new LinkedList<>();
+        if (!dependencies.isEmpty()) {
+            excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN)));
+        }
+        return new ResolutionResult(dependencies, excludes);
+    }
+
+    public Collection<String> getExcludes() {
+        Set<String> excludes = new HashSet<>();
+        String bomPattern = getBomPattern();
+        excludes.add(EXAMPLE + bomPattern);
+        excludes.add(EXAMPLES + bomPattern);
+        excludes.add(WS_BOWER_FOLDER + bomPattern);
+        excludes.add(TEST + bomPattern);
+
+        excludes.addAll(getLanguageExcludes());
+        return excludes;
+    }
+
     /* --- Abstract methods --- */
-
-    protected abstract ResolutionResult resolveDependencies(String parentScanFolder, String suspectedFolder, List<String> fullPathIndicators);
-
-    protected abstract String getBomPattern();
-
-    public abstract Collection<String> getExcludes();
 
     protected abstract DependencyType getDependencyType();
 
-    /* --- Protected methods --- */
+    protected abstract String getBomPattern();
 
-    protected List<String> normalizeLocalPath(String parentFolder, String topFolderFound, Collection<String> excludes) {
+    protected abstract String getPreferredFileName();
+
+    protected abstract BomParser getBomParser();
+
+    protected abstract DependencyCollector getDependencyCollector();
+
+    protected abstract boolean isMatchChildDependency(DependencyInfo childDependency, String name, String version);
+
+    protected abstract void enrichDependency(DependencyInfo dependency, BomFile packageJson);
+
+    protected abstract Collection<String> getLanguageExcludes();
+
+    /* --- Private methods --- */
+
+    /**
+     * Collect dependencies from package.json files - without 'npm ls'
+     */
+    private Collection<DependencyInfo> collectPackageJsonDependencies(Collection<BomFile> packageJsons) {
+        Collection<DependencyInfo> dependencies = new LinkedList<>();
+        Map<DependencyInfo, BomFile> dependencyPackageJsonMap = new HashMap<>();
+        for (BomFile packageJson : packageJsons) {
+            if (packageJson != null && packageJson.isValid()) {
+                // do not add new dependencies if 'npm ls' already returned all
+                DependencyInfo dependency = new DependencyInfo();
+                dependencies.add(dependency);
+                enrichDependency(dependency, packageJson);
+                dependencyPackageJsonMap.put(dependency, packageJson);
+            }
+        }
+        // set hierarchy in case the 'npm ls' did not run or it did not return results
+        setHierarchy(dependencyPackageJsonMap);
+        return dependencies;
+    }
+
+    private List<String> normalizeLocalPath(String parentFolder, String topFolderFound, Collection<String> excludes) {
         String normalizedRoot = new File(parentFolder).getPath();
         if (normalizedRoot.equals(topFolderFound)) {
             topFolderFound = topFolderFound
@@ -61,5 +148,48 @@ public abstract class AbstractDependencyResolver {
 
         String finalRes = topFolderFound;
         return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
+    }
+
+    private boolean fileShouldBeParsed(File file) {
+        return (file.getAbsolutePath().endsWith(getPreferredFileName()));
+    }
+
+    private void handleLsSuccess(Collection<BomFile> packageJsonFiles, Collection<DependencyInfo> dependencies) {
+        Map<String, BomFile> resultFiles = packageJsonFiles.stream()
+                .filter(packageJson -> packageJson != null && packageJson.isValid())
+                .filter(distinctByKey(file -> file.getFileName()))
+                .collect(Collectors.toMap(BomFile::getUniqueDependencyName, Function.identity()));
+
+        dependencies.forEach(dependency -> handleLSDependencyRecursivelyImpl(dependency, resultFiles));
+    }
+
+    private void handleLSDependencyRecursivelyImpl(DependencyInfo dependency, Map<String, BomFile> resultFiles) {
+        String uniqueName = BomFile.getUniqueDependencyName(dependency.getGroupId(), dependency.getVersion());
+        BomFile packageJson = resultFiles.get(uniqueName);
+        if (packageJson != null) {
+            enrichDependency(dependency, packageJson);
+        } else {
+            logger.debug("Dependency {} could not be enriched.'package.json' could not be found", dependency.getArtifactId());
+        }
+        dependency.getChildren().forEach(childDependency -> handleLSDependencyRecursivelyImpl(childDependency, resultFiles));
+    }
+
+    private void setHierarchy(Map<DependencyInfo, BomFile> dependencyPackageJsonMap) {
+        dependencyPackageJsonMap.forEach((dependency, packageJson) -> {
+            packageJson.getDependencies().forEach((name, version) -> {
+                Optional<DependencyInfo> childDep = dependencyPackageJsonMap.keySet().stream()
+                        .filter(childDependency -> isMatchChildDependency(childDependency, name, version))
+                        .findFirst();
+
+                if (childDep.isPresent()) {
+                    dependency.getChildren().add(childDep.get());
+                }
+            });
+        });
+    }
+
+    private <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+        Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+        return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
 }

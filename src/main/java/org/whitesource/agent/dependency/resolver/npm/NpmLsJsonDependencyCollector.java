@@ -15,11 +15,13 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
+import org.eclipse.jgit.util.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
+import org.whitesource.agent.dependency.resolver.DependencyCollector;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -29,47 +31,44 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 /**
- * Collect dependencies using 'npm ls' command.
+ * Collect dependencies using 'npm ls' or bower command.
  *
  * @author eugen.horovitz
  */
-public class NpmLsJsonDependencyCollector {
+public class NpmLsJsonDependencyCollector implements DependencyCollector {
 
     /* --- Statics Members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(NpmLsJsonDependencyCollector.class);
 
-    private static final String npm = isWindows() ? "npm.cmd" : "npm";
-    private static final String lsArgument = "ls";
-    private static final String jsonArgument = "--json";
+    public static final String LS_COMMAND = "ls";
+    public static final String LS_PARAMETER_JSON = "--json";
+
+    private static final String NPM_COMMAND = isWindows() ? "npm.cmd" : "npm";
     private static final String OS_NAME = "os.name";
     private static final String WINDOWS = "win";
     private static final String DEPENDENCIES = "dependencies";
     private static final String VERSION = "version";
     private static final String lsOnlyProdArgument = "--only=prod";
-    private final String[] npmArguments;
+
+    /* --- Members --- */
+
+    protected final boolean includeDevDependencies;
 
     /* --- Constructors --- */
 
     public NpmLsJsonDependencyCollector(boolean includeDevDependencies) {
-        if (includeDevDependencies) {
-            npmArguments = new String[]{npm, lsArgument, jsonArgument};
-        } else {
-            npmArguments = new String[]{npm, lsArgument, lsOnlyProdArgument, jsonArgument};
-        }
-    }
-
-    public NpmLsJsonDependencyCollector() {
-        this(false);
+        this.includeDevDependencies = includeDevDependencies;
     }
 
     /* --- Public methods --- */
 
+    @Override
     public Collection<DependencyInfo> collectDependencies(String rootDirectory) {
         Collection<DependencyInfo> dependencies = new LinkedList<>();
         try {
             // execute 'npm ls'
-            ProcessBuilder pb = new ProcessBuilder(npmArguments);
+            ProcessBuilder pb = new ProcessBuilder(getLsCommandParams());
 
             pb.directory(new File(rootDirectory));
             Process process = pb.start();
@@ -83,7 +82,9 @@ public class NpmLsJsonDependencyCollector {
                 logger.error("error parsing output : {}", e.getMessage());
             }
 
-            dependencies.addAll(getDependencies(new JSONObject(json)));
+            if (!StringUtils.isEmptyOrNull(json)) {
+                dependencies.addAll(getDependencies(new JSONObject(json)));
+            }
         } catch (IOException e) {
             logger.info("Error getting dependencies after running 'npm ls --json' on {}", rootDirectory);
         }
@@ -119,9 +120,19 @@ public class NpmLsJsonDependencyCollector {
         return dependencies;
     }
 
-    private DependencyInfo getDependency(String name, JSONObject jsonObject) {
+    /* --- Protected methods --- */
+
+    protected String[] getLsCommandParams() {
+        if (includeDevDependencies) {
+            return new String[]{NPM_COMMAND, LS_COMMAND, LS_PARAMETER_JSON};
+        } else {
+            return new String[]{NPM_COMMAND, LS_COMMAND, lsOnlyProdArgument, LS_PARAMETER_JSON};
+        }
+    }
+
+    protected DependencyInfo getDependency(String name, JSONObject jsonObject) {
         String version = jsonObject.getString(VERSION);
-        String filename = NpmPackageJsonFile.getNpmArtifactId(name, version);
+        String filename = NpmBomParser.getNpmArtifactId(name, version);
 
         DependencyInfo dependency = new DependencyInfo();
         dependency.setGroupId(name);
@@ -134,7 +145,7 @@ public class NpmLsJsonDependencyCollector {
 
     /* --- Static methods --- */
 
-    private static boolean isWindows() {
+    public static boolean isWindows() {
         return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
     }
 }
