@@ -1,3 +1,5 @@
+package org.whitesource.agent;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;

@@ -1,3 +1,5 @@
+package org.whitesource.agent;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.whitesource.agent.api.model.DependencyInfo;

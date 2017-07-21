@@ -1,3 +1,5 @@
+package org.whitesource.agent;
+
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;

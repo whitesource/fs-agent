@@ -1,6 +1,7 @@
+package org.whitesource.agent;
+
 import org.junit.Assert;
 import org.junit.Test;
-import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
