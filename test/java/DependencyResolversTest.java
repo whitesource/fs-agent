@@ -1,18 +1,16 @@
+import java.util.*;
+import java.util.stream.Collectors;
+
 import org.junit.Assert;
 import org.junit.Test;
+
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 
-import java.lang.annotation.Repeatable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
-import java.util.stream.Collectors;
-
 /**
- *@author eugen.horovitz
+ * @author eugen.horovitz
  */
 public class DependencyResolversTest {
     @Test
@@ -68,16 +66,5 @@ public class DependencyResolversTest {
         List<ResolutionResult> results = dependencyResolutionService.resolveDependencies(Arrays.asList(folderParent), new String[0]);
 
         testDependencyResult(checkChildren, results);
-    }
-
-    @Repeatable(TestCases.class)
-    @interface TestCase {
-        int param();
-
-        boolean expected();
-    }
-
-    @interface TestCases {
-        TestCase[] value();
     }
 }

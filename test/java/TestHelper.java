@@ -19,10 +19,8 @@ public class TestHelper {
     /* --- Static Members --- */
     public static final String SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES = "\\node_modules\\chokidar\\package.json";
 
-    public static final String FOLDER_WITH_MIX_FOLDERS = "C:\\Dev\\ws_mix\\ws_mix2_seperated";
-    //C:\Dev\ws_mix\ws_mix2_seperated
-    //C:\Dev\ws_mix
-    public static String FOLDER_WITH_BOWER_PROJECTS = "C:\\Dev\\ws_bower10";
+    public static final String FOLDER_WITH_MIX_FOLDERS = "C:\\Dev\\ws_mix\\ws_mix3\\ws_mix2_separated";
+    public static String FOLDER_WITH_BOWER_PROJECTS = "C:\\Dev\\ws_mix\\ws_mix1\\bower_samples";
     public static String FOLDER_WITH_NPN_PROJECTS = "C:\\Dev\\ws_mix\\ws_mix1\\npm_samples";
     //public static String FOLDER_WITH_NPN_PROJECTS_UBUNTU = "/home/eugen/Documents/Repositories/fs-agent/toScan/";
 

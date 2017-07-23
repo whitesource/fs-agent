@@ -36,7 +36,7 @@ public abstract class AbstractDependencyResolver {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractDependencyResolver.class);
 
-    private static final String JS_PATTERN = "**/*.js";
+    public static final String JS_PATTERN = "**/*.js";
     private static final String EXAMPLE = "**/example/**/";
     private static final String EXAMPLES = "**/examples/**/";
     private static final String WS_BOWER_FOLDER = "**/.ws_bower/**/";
@@ -48,7 +48,7 @@ public abstract class AbstractDependencyResolver {
 
     public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, List<String> bomFiles) {
         // parse package.json files
-        Collection<BomFile> packageJsonFiles = new LinkedList<>();
+        Collection<BomFile> parsedBomFiles = new LinkedList<>();
 
         Map<File, List<File>> mapBomFiles = bomFiles.stream().map(file -> new File(file)).collect(Collectors.groupingBy(File::getParentFile));
 
@@ -60,15 +60,20 @@ public abstract class AbstractDependencyResolver {
             }
         }).collect(Collectors.toList());
 
-        files.forEach(bomFile -> packageJsonFiles.add(getBomParser().parseBomFile(bomFile.getAbsolutePath())));
+        files.forEach(bomFile -> {
+            BomFile parsedBomFile = getBomParser().parseBomFile(bomFile.getAbsolutePath());
+            if (parsedBomFile.isValid()) {
+                parsedBomFiles.add(parsedBomFile);
+            }
+        });
 
         // try to collect dependencies via 'npm ls'
         Collection<DependencyInfo> dependencies = getDependencyCollector().collectDependencies(topLevelFolder);
         boolean lsSuccess = dependencies.size() > 0;
         if (lsSuccess) {
-            handleLsSuccess(packageJsonFiles, dependencies);
+            handleLsSuccess(parsedBomFiles, dependencies);
         } else {
-            dependencies.addAll(collectPackageJsonDependencies(packageJsonFiles));
+            dependencies.addAll(collectPackageJsonDependencies(parsedBomFiles));
         }
 
         // create excludes for .js files upon finding NPM dependencies
@@ -92,6 +97,8 @@ public abstract class AbstractDependencyResolver {
     }
 
     /* --- Abstract methods --- */
+
+    protected abstract Collection<String> getSourceFileExtensions();
 
     protected abstract DependencyType getDependencyType();
 

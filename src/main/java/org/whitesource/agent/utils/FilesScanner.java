@@ -75,16 +75,30 @@ public class FilesScanner {
         // get top folders
         Map<Integer, List<String>> foldersGroupedByLengthMap = fullPaths.stream()
                 .collect(Collectors.groupingBy(filename -> new File(filename).getParentFile().getParent().length()));
-        Optional<Integer> shortestPathLength = foldersGroupedByLengthMap.keySet().stream().min(Integer::compareTo);
 
-        // create result map
+        // create result map with only the top folder and the corresponding bom files
         Map<String, List<String>> resultMap = new HashMap<>();
-        if (shortestPathLength.isPresent()) {
-            Integer length = shortestPathLength.get();
-            List<String> topFolders = foldersGroupedByLengthMap.get(length).stream()
-                    .map(file -> new File(file).getParent()).collect(Collectors.toList());
+        while (foldersGroupedByLengthMap.entrySet().size() > 0) {
+            Optional<Integer> shortestPathLength = foldersGroupedByLengthMap.keySet().stream().min(Integer::compareTo);
+            if (shortestPathLength.isPresent()) {
+                Integer length = shortestPathLength.get();
 
-            topFolders.forEach(folder -> resultMap.put(folder, fullPaths.stream().filter(fileName -> fileName.contains(folder)).collect(Collectors.toList())));
+                List<String> foundShortestFolder = foldersGroupedByLengthMap.get(length);
+                List<String> topFolders = foundShortestFolder.stream()
+                        .map(file -> new File(file).getParent()).collect(Collectors.toList());
+
+                topFolders.forEach(folder -> {
+                    resultMap.put(folder, fullPaths.stream().filter(fileName -> fileName.contains(folder)).collect(Collectors.toList()));
+
+                    // remove from list folders that are children of the one found so they will not be calculated twice
+                    foldersGroupedByLengthMap.entrySet().removeIf(otherFolder -> {
+                        if (otherFolder.getValue().get(0).contains(folder)) {
+                            return true;
+                        }
+                        return false;
+                    });
+                });
+            }
         }
         return resultMap;
     }

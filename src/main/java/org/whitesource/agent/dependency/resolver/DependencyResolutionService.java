@@ -21,6 +21,7 @@ import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 
 import java.util.*;
+
 import static org.whitesource.agent.ConfigPropertyKeys.BOWER_RESOLVE_DEPENDENCIES;
 import static org.whitesource.agent.ConfigPropertyKeys.NPM_INCLUDE_DEV_DEPENDENCIES;
 import static org.whitesource.agent.ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES;
@@ -56,8 +57,16 @@ public class DependencyResolutionService {
 
     /* --- Public methods --- */
 
-    public boolean shouldResolveDependencies() {
-        return dependencyResolvers.size() > 0;
+    public boolean shouldResolveDependencies(Set<String> allFoundFiles) {
+        for (AbstractDependencyResolver dependencyResolver : dependencyResolvers) {
+            for (String fileExtension : dependencyResolver.getSourceFileExtensions()) {
+                boolean shouldResolve = allFoundFiles.stream().filter(file -> file.endsWith(fileExtension)).findAny().isPresent();
+                if (shouldResolve) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes) {

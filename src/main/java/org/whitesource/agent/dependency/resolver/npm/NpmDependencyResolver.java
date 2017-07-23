@@ -20,6 +20,7 @@ import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -31,7 +32,13 @@ import java.util.Set;
  */
 public class NpmDependencyResolver extends AbstractDependencyResolver {
 
+    /* --- Static members --- */
+
     private static String PACKAGE_JSON = "package.json";
+    private static final String JAVA_SCRIPT_EXTENSION = ".js";
+
+    /* --- Members --- */
+
     private final NpmLsJsonDependencyCollector bomCollector;
     private final NpmBomParser bomParser;
 
@@ -48,6 +55,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     /* --- Overridden methods --- */
+
     @Override
     protected boolean isMatchChildDependency(DependencyInfo childDependency, String name, String version) {
         return childDependency.getFilename().equals(NpmBomParser.getNpmArtifactId(name, version));
@@ -96,5 +104,10 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected NpmLsJsonDependencyCollector getDependencyCollector() {
         return bomCollector;
+    }
+
+    @Override
+    protected Collection<String> getSourceFileExtensions() {
+        return Arrays.asList(JAVA_SCRIPT_EXTENSION);
     }
 }
