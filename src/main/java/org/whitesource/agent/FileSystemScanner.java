@@ -34,10 +34,6 @@ public class FileSystemScanner {
     private static int animationIndex = 0;
     private static String BACK_SLASH = "\\";
     private static String FORWARD_SLASH = "/";
-    private static String BOWER_JSON = "bower.json";
-    private static String PACKAGE_JSON = "package.json";
-    private static String BOWER_FOLDER = "\\bower_components\\";
-    private static String NPM_FOLDER = "\\node_modules\\";
     private static String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
 
     private final DependencyResolutionService dependencyResolutionService;
@@ -86,8 +82,7 @@ public class FileSystemScanner {
         logger.info("Starting Analysis");
         List<DependencyInfo> allDependencies = new ArrayList<>();
 
-        Set<String> includesSet = Arrays.stream(includes).collect(Collectors.toSet());
-
+        logger.info("Scanning Directory {} for Matching Files (may take a few minutes)", pathsToScan);
         Map<File, Collection<String>> fileMapBeforeResolve = fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
         Set<String> allFiles = fileMapBeforeResolve.entrySet().stream().flatMap(folder -> folder.getValue().stream()).collect(Collectors.toSet());
 
@@ -179,12 +174,8 @@ public class FileSystemScanner {
             File file = new File(scannerBaseDir);
             if (file.exists()) {
                 if (file.isDirectory()) {
-                    logger.info("Scanning Directory {} for Matching Files (may take a few minutes)", scannerBaseDir);
-
                     File basedir = new File(scannerBaseDir);
                     String[] fileNames = filesScanner.getFileNames(scannerBaseDir, includes, excludesExtended, followSymlinks, globCaseSensitive);
-
-                    checkUnsupportedFileTypes(fileNames);
                     fileMap.put(basedir, Arrays.asList(fileNames));
                 } else {
                     // handle file
@@ -247,31 +238,6 @@ public class FileSystemScanner {
         if (isShutDown) {
             logger.warn("Exiting");
             System.exit(1);
-        }
-    }
-
-    private void checkUnsupportedFileTypes(String[] fileNames) {
-        boolean bowerPrintedOnce = false;
-        boolean packagePrintedOnce = false;
-        boolean nodePrintedOnce = false;
-        boolean comPrintedOnce = false;
-        for (String file : fileNames) {
-            if (file.endsWith(BOWER_JSON) && !bowerPrintedOnce) {
-                bowerPrintedOnce = true;
-                logger.info("Found {} file, please consider using Bower-Plugin", BOWER_JSON);
-            } else if (file.endsWith(PACKAGE_JSON) && !packagePrintedOnce) {
-                packagePrintedOnce = true;
-                logger.info("Found {} file, please consider using Npm-Plugin", PACKAGE_JSON);
-            } else if (file.contains(NPM_FOLDER) && !nodePrintedOnce) {
-                nodePrintedOnce = true;
-                logger.info("Found {} folder, suspect presence of NPM packages. Please consider using NPM-Plugin", NPM_FOLDER);
-            } else if (file.contains(BOWER_FOLDER) && !nodePrintedOnce) {
-                comPrintedOnce = true;
-                logger.info("Found {} folder, suspect presence of Bower packages. Please consider using Bower-Plugin", BOWER_FOLDER);
-            }
-            if (bowerPrintedOnce && packagePrintedOnce && nodePrintedOnce && comPrintedOnce) {
-                return;
-            }
         }
     }
 
