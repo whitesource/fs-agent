@@ -21,8 +21,8 @@ import java.util.Set;
 
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
-import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.BomFile;
+import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 
 
 /**
@@ -30,7 +30,7 @@ import org.whitesource.agent.dependency.resolver.BomFile;
  *
  * @author eugen.horovitz
  */
-public class BowerDependencyResolver extends AbstractDependencyResolver {
+public class BowerDependencyResolver extends NpmDependencyResolver {
 
     /* --- Static Members --- */
 

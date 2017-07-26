@@ -156,20 +156,21 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
         String version;
         if (jsonObject.has(VERSION)) {
             version = jsonObject.getString(VERSION);
-        } else if (jsonObject.has(RESOLVED)) {
-            version = getVersionFromLink(jsonObject.getString(RESOLVED));
-        } else if (jsonObject.has(MISSING) && jsonObject.getBoolean(MISSING)) {
-            logger.warn("Unmet dependency --> {}", name);
-            return null;
-        } else if (jsonObject.has(PEER_MISSING) && jsonObject.getBoolean(PEER_MISSING)) {
-            logger.warn("Unmet dependency --> peer missing {}", name);
-            return null;
         } else {
-            // we still should return null since this is a non valid dependency
-            logger.warn("Unknown error. 'version' tag could not be found for {}", name);
-            return null;
+            if (jsonObject.has(RESOLVED)) {
+                version = getVersionFromLink(jsonObject.getString(RESOLVED));
+            } else if (jsonObject.has(MISSING) && jsonObject.getBoolean(MISSING)) {
+                logger.warn("Unmet dependency --> {}", name);
+                return null;
+            } else if (jsonObject.has(PEER_MISSING) && jsonObject.getBoolean(PEER_MISSING)) {
+                logger.warn("Unmet dependency --> peer missing {}", name);
+                return null;
+            } else {
+                // we still should return null since this is a non valid dependency
+                logger.warn("Unknown error. 'version' tag could not be found for {}", name);
+                return null;
+            }
         }
-
 
         String filename = NpmBomParser.getNpmArtifactId(name, version);
         DependencyInfo dependency = new DependencyInfo();
