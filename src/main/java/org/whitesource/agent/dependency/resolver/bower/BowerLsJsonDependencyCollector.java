@@ -48,8 +48,14 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
 
     @Override
     protected DependencyInfo getDependency(String name, JSONObject jsonObject) {
-        JSONObject metaData = jsonObject.getJSONObject(PKG_META);
-        String version = metaData.getString(VERSION);
+        String version = "";
+        if (jsonObject.has(PKG_META)) {
+            JSONObject metaData = jsonObject.getJSONObject(PKG_META);
+            if (metaData.has(VERSION)) {
+                version = metaData.getString(VERSION);
+            }
+        }
+
         DependencyInfo dependency = new DependencyInfo();
         dependency.setGroupId(name);
         dependency.setArtifactId(name);

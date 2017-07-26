@@ -34,10 +34,6 @@ public class FileSystemScanner {
     private static int animationIndex = 0;
     private static String BACK_SLASH = "\\";
     private static String FORWARD_SLASH = "/";
-    private static String BOWER_JSON = "bower.json";
-    private static String PACKAGE_JSON = "package.json";
-    private static String BOWER_FOLDER = "\\bower_components\\";
-    private static String NPM_FOLDER = "\\node_modules\\";
     private static String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
 
     private final DependencyResolutionService dependencyResolutionService;
@@ -68,7 +64,7 @@ public class FileSystemScanner {
 
         // scan directories
         int totalFiles = 0;
-        Map<File, Collection<String>> fileMap = new HashMap<>();
+
 
         // go over all base directories, look for archives
         Map<String, String> archiveToBaseDirMap = new HashMap<>();
@@ -86,7 +82,11 @@ public class FileSystemScanner {
         logger.info("Starting Analysis");
         List<DependencyInfo> allDependencies = new ArrayList<>();
 
-        if (dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies()) {
+        logger.info("Scanning Directory {} for Matching Files (may take a few minutes)", pathsToScan);
+        Map<File, Collection<String>> fileMapBeforeResolve = fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
+        Set<String> allFiles = fileMapBeforeResolve.entrySet().stream().flatMap(folder -> folder.getValue().stream()).collect(Collectors.toSet());
+
+        if (dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies(allFiles)) {
             // get all resolution results
             Collection<ResolutionResult> resolutionResults = dependencyResolutionService.resolveDependencies(pathsToScan, excludes);
 
@@ -108,56 +108,16 @@ public class FileSystemScanner {
             excludes = allExcludes.toArray(excludes);
         }
 
-        for (String scannerBaseDir : pathsToScan) {
-            File file = new File(scannerBaseDir);
-            if (file.exists()) {
-                if (file.isDirectory()) {
-                    logger.info("Scanning Directory {} for Matching Files (may take a few minutes)", scannerBaseDir);
-
-                    File basedir = new File(scannerBaseDir);
-                    String[] fileNames = filesScanner.getFileNames(scannerBaseDir, includes, excludes, followSymlinks, globCaseSensitive);
-
-                    checkUnsupportedFileTypes(fileNames);
-                    fileMap.put(basedir, Arrays.asList(fileNames));
-                    totalFiles += fileNames.length;
-                } else {
-                    // handle file
-                    Collection<String> files = fileMap.get(file.getParentFile());
-                    if (files == null) {
-                        files = new ArrayList<>();
-                    }
-                    files.add(file.getName());
-                    fileMap.put(file.getParentFile(), files);
-                    totalFiles++;
-                }
-            } else {
-                logger.info(MessageFormat.format("File {0} doesn't exist", scannerBaseDir));
-            }
-        }
+        String[] excludesExtended = excludeFileSystemAgent(excludes);
+        Map<File, Collection<String>> fileMap = fillFilesMap(pathsToScan, includes, excludesExtended, followSymlinks, globCaseSensitive);
+        long filesCount = fileMap.entrySet().stream().flatMap(folder -> folder.getValue().stream()).count();
+        totalFiles += filesCount;
         logger.info(MessageFormat.format("Total Files Found: {0}", totalFiles));
 
         DependencyInfoFactory factory = new DependencyInfoFactory(excludedCopyrights, partialSha1Match);
-        if (showProgressBar) {
-            displayProgress(0, totalFiles);
-        }
-        int index = 1;
-        for (Map.Entry<File, Collection<String>> entry : fileMap.entrySet()) {
-            for (String fileName : entry.getValue()) {
-                DependencyInfo originalDependencyInfo = factory.createDependencyInfo(entry.getKey(), fileName);
-                if (originalDependencyInfo != null) {
-                    if (scmConnector != null) {
-                        originalDependencyInfo.setSystemPath(fileName.replace(BACK_SLASH, FORWARD_SLASH));
-                    }
-                    allDependencies.add(originalDependencyInfo);
-                }
+        Collection<DependencyInfo> filesDependencies = createDependencies(scmConnector, totalFiles, fileMap, factory);
+        allDependencies.addAll(filesDependencies);
 
-                // print progress
-                if (showProgressBar) {
-                    displayProgress(index, totalFiles);
-                }
-                index++;
-            }
-        }
         // replace temp folder name with base dir
         for (DependencyInfo dependencyInfo : allDependencies) {
             String systemPath = dependencyInfo.getSystemPath();
@@ -180,6 +140,57 @@ public class FileSystemScanner {
         }
         logger.info("Finished Analyzing Files");
         return allDependencies;
+    }
+
+    private Collection<DependencyInfo> createDependencies(ScmConnector scmConnector, int totalFiles, Map<File, Collection<String>> fileMap, DependencyInfoFactory factory) {
+        List<DependencyInfo> allDependencies = new ArrayList<>();
+        if (showProgressBar) {
+            displayProgress(0, totalFiles);
+        }
+        int index = 1;
+        for (Map.Entry<File, Collection<String>> entry : fileMap.entrySet()) {
+            for (String fileName : entry.getValue()) {
+                DependencyInfo originalDependencyInfo = factory.createDependencyInfo(entry.getKey(), fileName);
+                if (originalDependencyInfo != null) {
+                    if (scmConnector != null) {
+                        originalDependencyInfo.setSystemPath(fileName.replace(BACK_SLASH, FORWARD_SLASH));
+                    }
+                    allDependencies.add(originalDependencyInfo);
+                }
+
+                // print progress
+                if (showProgressBar) {
+                    displayProgress(index, totalFiles);
+                }
+                index++;
+            }
+        }
+        return allDependencies;
+    }
+
+    private Map<File, Collection<String>> fillFilesMap(Collection<String> pathsToScan, String[] includes, String[] excludesExtended, boolean followSymlinks, boolean globCaseSensitive) {
+        Map<File, Collection<String>> fileMap = new HashMap<>();
+        for (String scannerBaseDir : pathsToScan) {
+            File file = new File(scannerBaseDir);
+            if (file.exists()) {
+                if (file.isDirectory()) {
+                    File basedir = new File(scannerBaseDir);
+                    String[] fileNames = filesScanner.getFileNames(scannerBaseDir, includes, excludesExtended, followSymlinks, globCaseSensitive);
+                    fileMap.put(basedir, Arrays.asList(fileNames));
+                } else {
+                    // handle file
+                    Collection<String> files = fileMap.get(file.getParentFile());
+                    if (files == null) {
+                        files = new ArrayList<>();
+                    }
+                    files.add(file.getName());
+                    fileMap.put(file.getParentFile(), files);
+                }
+            } else {
+                logger.info(MessageFormat.format("File {0} doesn't exist", scannerBaseDir));
+            }
+        }
+        return fileMap;
     }
 
     private void increaseCount(DependencyInfo dependency, int[] totalDependencies) {
@@ -227,31 +238,6 @@ public class FileSystemScanner {
         if (isShutDown) {
             logger.warn("Exiting");
             System.exit(1);
-        }
-    }
-
-    private void checkUnsupportedFileTypes(String[] fileNames) {
-        boolean bowerPrintedOnce = false;
-        boolean packagePrintedOnce = false;
-        boolean nodePrintedOnce = false;
-        boolean comPrintedOnce = false;
-        for (String file : fileNames) {
-            if (file.endsWith(BOWER_JSON) && !bowerPrintedOnce) {
-                bowerPrintedOnce = true;
-                logger.info("Found {} file, please consider using Bower-Plugin", BOWER_JSON);
-            } else if (file.endsWith(PACKAGE_JSON) && !packagePrintedOnce) {
-                packagePrintedOnce = true;
-                logger.info("Found {} file, please consider using Npm-Plugin", PACKAGE_JSON);
-            } else if (file.contains(NPM_FOLDER) && !nodePrintedOnce) {
-                nodePrintedOnce = true;
-                logger.info("Found {} folder, suspect presence of NPM packages. Please consider using NPM-Plugin", NPM_FOLDER);
-            } else if (file.contains(BOWER_FOLDER) && !nodePrintedOnce) {
-                comPrintedOnce = true;
-                logger.info("Found {} folder, suspect presence of Bower packages. Please consider using Bower-Plugin", BOWER_FOLDER);
-            }
-            if (bowerPrintedOnce && packagePrintedOnce && nodePrintedOnce && comPrintedOnce) {
-                return;
-            }
         }
     }
 

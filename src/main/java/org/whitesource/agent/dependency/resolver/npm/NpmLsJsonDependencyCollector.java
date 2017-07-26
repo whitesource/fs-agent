@@ -15,7 +15,7 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
-import org.eclipse.jgit.util.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +27,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -49,7 +51,10 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
     private static final String WINDOWS = "win";
     private static final String DEPENDENCIES = "dependencies";
     private static final String VERSION = "version";
-    private static final String lsOnlyProdArgument = "--only=prod";
+    private static final String RESOLVED = "resolved";
+    private static final String LS_ONLY_PROD_ARGUMENT = "--only=prod";
+    private static final String MISSING = "missing";
+    public static final String PEER_MISSING = "peerMissing";
 
     /* --- Members --- */
 
@@ -82,7 +87,7 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
                 logger.error("error parsing output : {}", e.getMessage());
             }
 
-            if (!StringUtils.isEmptyOrNull(json)) {
+            if (StringUtils.isNotBlank(json)) {
                 dependencies.addAll(getDependencies(new JSONObject(json)));
             }
         } catch (IOException e) {
@@ -90,7 +95,7 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
         }
 
         if (dependencies.isEmpty()) {
-            logger.warn("Failed getting dependencies after running 'npm ls --json' Please run 'npm install' on the folder {}", rootDirectory);
+            logger.warn("Failed getting dependencies after running '{}' Please run 'npm install' on the folder {}", getLsCommandParams(), rootDirectory);
         }
         return dependencies;
     }
@@ -108,16 +113,33 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
                         logger.debug("Dependency {} has no JSON content", dependencyName);
                     } else {
                         DependencyInfo dependency = getDependency(dependencyName, dependencyJsonObject);
-                        dependencies.add(dependency);
+                        if (dependency != null) {
+                            dependencies.add(dependency);
 
-                        // collect child dependencies
-                        Collection<DependencyInfo> childDependencies = getDependencies(dependencyJsonObject);
-                        dependency.getChildren().addAll(childDependencies);
+                            // collect child dependencies
+                            Collection<DependencyInfo> childDependencies = getDependencies(dependencyJsonObject);
+                            dependency.getChildren().addAll(childDependencies);
+                        }
                     }
                 }
             }
         }
         return dependencies;
+    }
+
+    private String getVersionFromLink(String linkResolved) {
+        URI uri = null;
+        try {
+            uri = new URI(linkResolved);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        String path = uri.getPath();
+        String idStr = path.substring(path.lastIndexOf('/') + 1);
+        int lastIndexOfDash = idStr.lastIndexOf("-");
+        int lastIndexOfDot = idStr.lastIndexOf(".");
+        String resultVersion = idStr.substring(lastIndexOfDash + 1, lastIndexOfDot);
+        return resultVersion;
     }
 
     /* --- Protected methods --- */
@@ -126,14 +148,31 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
         if (includeDevDependencies) {
             return new String[]{NPM_COMMAND, LS_COMMAND, LS_PARAMETER_JSON};
         } else {
-            return new String[]{NPM_COMMAND, LS_COMMAND, lsOnlyProdArgument, LS_PARAMETER_JSON};
+            return new String[]{NPM_COMMAND, LS_COMMAND, LS_ONLY_PROD_ARGUMENT, LS_PARAMETER_JSON};
         }
     }
 
     protected DependencyInfo getDependency(String name, JSONObject jsonObject) {
-        String version = jsonObject.getString(VERSION);
-        String filename = NpmBomParser.getNpmArtifactId(name, version);
+        String version;
+        if (jsonObject.has(VERSION)) {
+            version = jsonObject.getString(VERSION);
+        } else {
+            if (jsonObject.has(RESOLVED)) {
+                version = getVersionFromLink(jsonObject.getString(RESOLVED));
+            } else if (jsonObject.has(MISSING) && jsonObject.getBoolean(MISSING)) {
+                logger.warn("Unmet dependency --> {}", name);
+                return null;
+            } else if (jsonObject.has(PEER_MISSING) && jsonObject.getBoolean(PEER_MISSING)) {
+                logger.warn("Unmet dependency --> peer missing {}", name);
+                return null;
+            } else {
+                // we still should return null since this is a non valid dependency
+                logger.warn("Unknown error. 'version' tag could not be found for {}", name);
+                return null;
+            }
+        }
 
+        String filename = NpmBomParser.getNpmArtifactId(name, version);
         DependencyInfo dependency = new DependencyInfo();
         dependency.setGroupId(name);
         dependency.setArtifactId(filename);

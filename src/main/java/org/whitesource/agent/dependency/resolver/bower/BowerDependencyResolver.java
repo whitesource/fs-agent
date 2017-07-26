@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver.bower;
-
-import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.agent.api.model.DependencyType;
-import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
-import org.whitesource.agent.dependency.resolver.BomFile;
-import org.whitesource.agent.dependency.resolver.npm.NpmBomParser;
-import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
-
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.api.model.DependencyType;
+import org.whitesource.agent.dependency.resolver.BomFile;
+import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
+
 
 /**
  * Dependency Resolver for BOWER projects.
  *
  * @author eugen.horovitz
  */
-public class BowerDependencyResolver extends AbstractDependencyResolver {
+public class BowerDependencyResolver extends NpmDependencyResolver {
 
     /* --- Static Members --- */
 
@@ -39,6 +38,7 @@ public class BowerDependencyResolver extends AbstractDependencyResolver {
 
     public static final String WS_BOWER_FILE2 = "**/*" + "ws_bower.json";
     public static final String WS_BOWER_FILE1 = "**/*" + "ws-log-response-bower.json";
+    private static final String JAVA_SCRIPT_EXTENSION = ".js";
 
     /* --- Members --- */
 
@@ -92,6 +92,11 @@ public class BowerDependencyResolver extends AbstractDependencyResolver {
         excludes.add(WS_BOWER_FILE2);
         excludes.add(WS_BOWER_FILE1);
         return excludes;
+    }
+
+    @Override
+    protected Collection<String> getSourceFileExtensions() {
+        return Arrays.asList(JAVA_SCRIPT_EXTENSION);
     }
 
     @Override

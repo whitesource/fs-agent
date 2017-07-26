@@ -51,8 +51,12 @@ public class NpmBomParser extends BomParser {
 
     /* --- Protected methods --- */
 
-    protected String getVersion(JSONObject json) {
-        return json.getString(VERSION);
+    protected String getVersion(JSONObject json, String fileName) {
+        if (json.has(VERSION)) {
+            return json.getString(VERSION);
+        }
+        logger.debug("version not found in file {}", fileName);
+        return "";
     }
 
     /* --- Static methods --- */
@@ -67,7 +71,7 @@ public class NpmBomParser extends BomParser {
     protected BomFile parseBomFile(String jsonText, String localFileName) {
         JSONObject json = new JSONObject(jsonText);
         String name = json.getString(NAME);
-        String version = getVersion(json);
+        String version = getVersion(json, localFileName);
         Map dependencies = getDependenciesFromJson(json, DEPENDENCIES);
         Map optionalDependencies = getDependenciesFromJson(json, OPTIONAL_DEPENDENCIES);
         String fileName = getFilename(name, version);
