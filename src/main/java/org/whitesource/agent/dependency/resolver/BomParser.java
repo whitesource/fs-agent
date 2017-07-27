@@ -51,7 +51,7 @@ public abstract class BomParser {
             try {
                 bomFile = parseBomFile(json, bomPath);
             } catch (Exception e) {
-                logger.debug("Invalid NPM package.json file {}", bomPath);
+                logger.debug("Invalid file {}", bomPath);
             }
         }
         return bomFile;

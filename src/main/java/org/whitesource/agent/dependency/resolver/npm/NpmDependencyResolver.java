@@ -102,7 +102,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
         files.forEach(bomFile -> {
             BomFile parsedBomFile = getBomParser().parseBomFile(bomFile.getAbsolutePath());
-            if (parsedBomFile.isValid()) {
+            if (parsedBomFile != null && parsedBomFile.isValid()) {
                 parsedBomFiles.add(parsedBomFile);
             }
         });
