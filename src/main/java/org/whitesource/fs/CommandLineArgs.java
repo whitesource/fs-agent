@@ -42,11 +42,17 @@ public class CommandLineArgs {
     @Parameter(names = "-f", description = "File list path")
     String fileListPath = "";
 
-    @Parameter(names = "-product", description = "Product to update")
+    @Parameter(names = "-product", description = "Product name or token")
     String product = null;
 
-    @Parameter(names = "-project", description = "Project to update")
+    @Parameter(names = "-productVersion", description = "Product version")
+    String productVersion = null;
+
+    @Parameter(names = "-project", description = "Project name or token")
     String project = null;
+
+    @Parameter(names = "-projectVersion", description = "Project version")
+    String projectVersion = null;
 
     @Parameter(names = "-proxy.host", description = "Proxy Host")
     String proxyHost = null;
