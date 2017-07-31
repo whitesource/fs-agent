@@ -49,7 +49,7 @@ public class FileSystemAgent extends CommandLineAgent {
 
     private static final String AGENT_TYPE = "fs-agent";
     private static final String AGENT_VERSION = "2.3.7";
-    private static final String PLUGIN_VERSION = "1.8.3-SNAPSHOT";
+    private static final String PLUGIN_VERSION = "1.8.3";
 
     /* --- Members --- */
 
