@@ -95,9 +95,12 @@ public abstract class CommandLineAgent {
     /* --- Private methods --- */
 
     protected StatusCode sendRequest(Collection<AgentProjectInfo> projects) {
+        // org token
         String orgToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
-        String productVersion = null;
+
+        // product token or name (and version)
         String product = config.getProperty(PRODUCT_TOKEN_PROPERTY_KEY);
+        String productVersion = null;
         if (StringUtils.isBlank(product)) {
             product = config.getProperty(PRODUCT_NAME_PROPERTY_KEY);
             productVersion = config.getProperty(PRODUCT_VERSION_PROPERTY_KEY);
