@@ -31,6 +31,7 @@ public class FileSystemScanner {
     private static final List<String> progressAnimation = Arrays.asList("|", "/", "-", "\\");
     private static final int ANIMATION_FRAMES = progressAnimation.size();
     private static final String EMPTY_STRING = "";
+    public static final int MAX_EXTRACTION_DEPTH = 7;
     private static int animationIndex = 0;
     private static String BACK_SLASH = "\\";
     private static String FORWARD_SLASH = "/";
@@ -227,7 +228,7 @@ public class FileSystemScanner {
 
     private void validateParams(int archiveExtractionDepth, String[] includes) {
         boolean isShutDown = false;
-        if (archiveExtractionDepth < 0 || archiveExtractionDepth > 5) {
+        if (archiveExtractionDepth < 0 || archiveExtractionDepth > MAX_EXTRACTION_DEPTH) {
             logger.warn("Error: archiveExtractionDepth value should be greater than 0 and less than 4");
             isShutDown = true;
         }

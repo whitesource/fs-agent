@@ -108,24 +108,29 @@ public class DependencyInfoFactory {
             dependency = new DependencyInfo(sha1);
             dependency.setArtifactId(dependencyFile.getName());
             dependency.setLastModified(new Date(dependencyFile.lastModified()));
-            File otherPlatformFile = createOtherPlatformFile(dependencyFile);
-            if (otherPlatformFile != null) {
-                String otherPlatformSha1 = ChecksumUtils.calculateSHA1(otherPlatformFile);
-                dependency.setOtherPlatformSha1(otherPlatformSha1);
-            }
-            try {
-                dependency.setSystemPath(dependencyFile.getCanonicalPath());
-            } catch (IOException e) {
-                dependency.setSystemPath(dependencyFile.getAbsolutePath());
-            }
-            deleteFile(otherPlatformFile);
 
-            // calculate sha1 for file header and footer (for partial matching)
-            if (partialSha1Match) {
-                ChecksumUtils.calculateHeaderAndFooterSha1(dependencyFile, dependency);
-            }
+            if (dependencyFile.length() <= MAX_FILE_SIZE) {
+                File otherPlatformFile = createOtherPlatformFile(dependencyFile);
+                if (otherPlatformFile != null) {
+                    String otherPlatformSha1 = ChecksumUtils.calculateSHA1(otherPlatformFile);
+                    dependency.setOtherPlatformSha1(otherPlatformSha1);
+                }
+                try {
+                    dependency.setSystemPath(dependencyFile.getCanonicalPath());
+                } catch (IOException e) {
+                    dependency.setSystemPath(dependencyFile.getAbsolutePath());
+                }
+                deleteFile(otherPlatformFile);
 
-            // removed finding license & copyrights in headers
+                // calculate sha1 for file header and footer (for partial matching)
+                if (partialSha1Match) {
+                    ChecksumUtils.calculateHeaderAndFooterSha1(dependencyFile, dependency);
+                }
+
+                // removed finding license & copyrights in headers
+            } else {
+                logger.debug("File {} size is too big for scanning other platform sha1, skipping it.", dependencyFile.getName());
+            }
 
         } catch (IOException e) {
             logger.warn("Failed to create dependency " + fileName + " to dependency list: ", e);
