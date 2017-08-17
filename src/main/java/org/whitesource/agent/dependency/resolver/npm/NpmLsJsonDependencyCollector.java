@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -55,6 +54,7 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
     private static final String LS_ONLY_PROD_ARGUMENT = "--only=prod";
     private static final String MISSING = "missing";
     public static final String PEER_MISSING = "peerMissing";
+    private static final String NAME = "name";
 
     /* --- Members --- */
 
@@ -107,12 +107,12 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
         if (jsonObject.has(DEPENDENCIES)) {
             JSONObject dependenciesJsonObject = jsonObject.getJSONObject(DEPENDENCIES);
             if (dependenciesJsonObject != null) {
-                for (String dependencyName : dependenciesJsonObject.keySet()) {
-                    JSONObject dependencyJsonObject = dependenciesJsonObject.getJSONObject(dependencyName);
+                for (String dependencyAlias : dependenciesJsonObject.keySet()) {
+                    JSONObject dependencyJsonObject = dependenciesJsonObject.getJSONObject(dependencyAlias);
                     if (dependencyJsonObject.keySet().isEmpty()) {
-                        logger.debug("Dependency {} has no JSON content", dependencyName);
+                        logger.debug("Dependency {} has no JSON content", dependencyAlias);
                     } else {
-                        DependencyInfo dependency = getDependency(dependencyName, dependencyJsonObject);
+                        DependencyInfo dependency = getDependency(dependencyAlias, dependencyJsonObject);
                         if (dependency != null) {
                             dependencies.add(dependency);
 
@@ -152,7 +152,8 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
         }
     }
 
-    protected DependencyInfo getDependency(String name, JSONObject jsonObject) {
+    protected DependencyInfo getDependency(String dependencyAlias, JSONObject jsonObject) {
+        String name = dependencyAlias;
         String version;
         if (jsonObject.has(VERSION)) {
             version = jsonObject.getString(VERSION);
