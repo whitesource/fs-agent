@@ -122,10 +122,12 @@ public class FileSystemScanner {
         // replace temp folder name with base dir
         for (DependencyInfo dependencyInfo : allDependencies) {
             String systemPath = dependencyInfo.getSystemPath();
-            for (String key : archiveToBaseDirMap.keySet()) {
-                if (dependencyInfo.getSystemPath().contains(key) && archiveExtractor != null) {
-                    dependencyInfo.setSystemPath(systemPath.replace(key, archiveToBaseDirMap.get(key)).replaceAll(archiveExtractor.getRandomString(), EMPTY_STRING));
-                    break;
+            if (systemPath != null) {
+                for (String key : archiveToBaseDirMap.keySet()) {
+                    if (systemPath.contains(key) && archiveExtractor != null) {
+                        dependencyInfo.setSystemPath(systemPath.replace(key, archiveToBaseDirMap.get(key)).replaceAll(archiveExtractor.getRandomString(), EMPTY_STRING));
+                        break;
+                    }
                 }
             }
         }

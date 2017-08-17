@@ -15,17 +15,11 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
-import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.dependency.resolver.BomParser;
 import org.whitesource.agent.dependency.resolver.BomFile;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -41,8 +35,8 @@ public class NpmBomParser extends BomParser {
     /* --- Static members --- */
 
     private static String OPTIONAL_DEPENDENCIES = "optionalDependencies";
-    private static String NAME = "name";
-    private static String VERSION = "version";
+    public static String NAME = "name";
+    public static String VERSION = "version";
     private static String SHA1 = "_shasum";
     private static String DEPENDENCIES = "dependencies";
     private static String NPM_PACKAGE_FORMAT = "{0}-{1}.tgz";

@@ -32,6 +32,7 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
     private static final String BOWER_COMMAND = NpmLsJsonDependencyCollector.isWindows() ? "bower.cmd" : "bower";
     private static final String VERSION = "version";
     private static final String PKG_META = "pkgMeta";
+    public static final String NAME = "name";
 
     /* --- Constructors --- */
 
@@ -47,12 +48,17 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
     }
 
     @Override
-    protected DependencyInfo getDependency(String name, JSONObject jsonObject) {
+    protected DependencyInfo getDependency(String dependencyAlias, JSONObject jsonObject) {
         String version = "";
+        String name = "";
+
         if (jsonObject.has(PKG_META)) {
             JSONObject metaData = jsonObject.getJSONObject(PKG_META);
             if (metaData.has(VERSION)) {
                 version = metaData.getString(VERSION);
+            }
+            if (metaData.has(NAME)) {
+                name = metaData.getString(NAME);
             }
         }
 

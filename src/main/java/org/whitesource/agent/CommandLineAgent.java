@@ -31,7 +31,6 @@ import org.whitesource.fs.StatusCode;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.ConnectException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Properties;
@@ -52,6 +51,8 @@ public abstract class CommandLineAgent {
     private static final Logger logger = LoggerFactory.getLogger(CommandLineAgent.class);
 
     public static final String NEW_LINE = "\n";
+    public static final String DOT = ".";
+    public static final String JAVA_NETWORKING = "java.net";
 
     /* --- Members --- */
 
@@ -123,7 +124,8 @@ public abstract class CommandLineAgent {
                     update(service, orgToken, product, productVersion, projects);
                 }
             } catch (WssServiceException e) {
-                if (e.getCause() != null && e.getCause() instanceof ConnectException) {
+                if (e.getCause() != null &&
+                        e.getCause().getClass().getCanonicalName().substring(0, e.getCause().getClass().getCanonicalName().lastIndexOf(DOT)).equals(JAVA_NETWORKING)) {
                     statusCode = StatusCode.CONNECTION_FAILURE;
                 } else {
                     statusCode = StatusCode.SERVER_FAILURE;
