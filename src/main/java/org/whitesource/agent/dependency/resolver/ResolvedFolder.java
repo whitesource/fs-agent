@@ -14,25 +14,34 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver;
-import org.whitesource.agent.api.model.DependencyType;
-import java.util.*;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author eugen.horovitz
  */
-public abstract class AbstractDependencyResolver {
+public class ResolvedFolder {
 
-    /* --- Abstract methods --- */
+    /* --- Members --- */
 
-    protected abstract ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, List<String> bomFiles);
+    private final String originalScanFolder;
+    private final Map<String, List<String>> topFoldersFound;
 
-    protected abstract Collection<String> getExcludes();
+    /* --- Constructors --- */
 
-    protected abstract Collection<String> getSourceFileExtensions();
+    public ResolvedFolder(String originalScanFolder, Map<String, List<String>> topFoldersFound) {
+        this.originalScanFolder = originalScanFolder;
+        this.topFoldersFound = topFoldersFound;
+    }
 
-    protected abstract DependencyType getDependencyType();
+    /* --- Getters --- */
 
-    protected abstract String getBomPattern();
+    public String getOriginalScanFolder() {
+        return originalScanFolder;
+    }
 
-    protected abstract Collection<String> getLanguageExcludes();
+    public Map<String, List<String>> getTopFoldersFound() {
+        return topFoldersFound;
+    }
 }

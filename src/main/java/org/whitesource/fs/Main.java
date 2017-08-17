@@ -61,12 +61,14 @@ public class Main {
         // TODO add usage command
 
         // read configuration properties
-        String projectName = commandLineArgs.project;
-        Properties configProps = readAndValidateConfigFile(commandLineArgs.configFilePath, projectName);
+        String project = commandLineArgs.project;
+        Properties configProps = readAndValidateConfigFile(commandLineArgs.configFilePath, project);
 
         // Check whether the user inserted project OR/AND product via command line
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, commandLineArgs.product);
-        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, projectName);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY, commandLineArgs.productVersion);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, project);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_VERSION_PROPERTY_KEY, commandLineArgs.projectVersion);
 
         // proxy
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);

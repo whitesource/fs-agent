@@ -16,6 +16,7 @@
 package org.whitesource.agent.utils;
 
 import org.apache.tools.ant.DirectoryScanner;
+import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -41,7 +42,21 @@ public class FilesScanner {
         return fileNames;
     }
 
-    public Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
+    public Collection<ResolvedFolder> findTopFolders(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
+        Collection<ResolvedFolder> resolvedFolders = new ArrayList<>();
+        // get folders containing bom files
+        Map<String, String[]> pathToBomFilesMap = findAllFiles(pathsToScan, includesPattern, excludes);
+
+        // resolve dependencies
+        pathToBomFilesMap.forEach((folder, bomFile) -> {
+            // get top folders with boms (the parent of each project)
+            Map<String, List<String>> topFolders = getTopFoldersWithIncludedFiles(folder, bomFile);
+            resolvedFolders.add(new ResolvedFolder(folder, topFolders));
+        });
+        return resolvedFolders;
+    }
+
+    private Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
         Map pathToIncludedFilesMap = new HashMap();
         pathsToScan.stream().forEach(scanFolder -> {
             String[] includedFiles = getFileNames(new File(scanFolder).getPath(), new String[]{includesPattern},
@@ -51,7 +66,7 @@ public class FilesScanner {
         return pathToIncludedFilesMap;
     }
 
-    public Map<String, List<String>> getTopFoldersWithIncludedFiles(String rootFolder, String[] includedFiles) {
+    private Map<String, List<String>> getTopFoldersWithIncludedFiles(String rootFolder, String[] includedFiles) {
         // collect all full paths
         List<String> fullPaths = Arrays.stream(includedFiles)
                 .map(file -> Paths.get(new File(rootFolder).getAbsolutePath(), file).toString())
@@ -60,16 +75,30 @@ public class FilesScanner {
         // get top folders
         Map<Integer, List<String>> foldersGroupedByLengthMap = fullPaths.stream()
                 .collect(Collectors.groupingBy(filename -> new File(filename).getParentFile().getParent().length()));
-        Optional<Integer> shortestPathLength = foldersGroupedByLengthMap.keySet().stream().min(Integer::compareTo);
 
-        // create result map
+        // create result map with only the top folder and the corresponding bom files
         Map<String, List<String>> resultMap = new HashMap<>();
-        if (shortestPathLength.isPresent()) {
-            Integer length = shortestPathLength.get();
-            List<String> topFolders = foldersGroupedByLengthMap.get(length).stream()
-                    .map(file -> new File(file).getParent()).collect(Collectors.toList());
+        while (foldersGroupedByLengthMap.entrySet().size() > 0) {
+            Optional<Integer> shortestPathLength = foldersGroupedByLengthMap.keySet().stream().min(Integer::compareTo);
+            if (shortestPathLength.isPresent()) {
+                Integer length = shortestPathLength.get();
 
-            topFolders.forEach(folder -> resultMap.put(folder, fullPaths.stream().filter(fileName -> fileName.contains(folder)).collect(Collectors.toList())));
+                List<String> foundShortestFolder = foldersGroupedByLengthMap.get(length);
+                List<String> topFolders = foundShortestFolder.stream()
+                        .map(file -> new File(file).getParent()).collect(Collectors.toList());
+
+                topFolders.forEach(folder -> {
+                    resultMap.put(folder, fullPaths.stream().filter(fileName -> fileName.contains(folder)).collect(Collectors.toList()));
+
+                    // remove from list folders that are children of the one found so they will not be calculated twice
+                    foldersGroupedByLengthMap.entrySet().removeIf(otherFolder -> {
+                        if (otherFolder.getValue().get(0).contains(folder)) {
+                            return true;
+                        }
+                        return false;
+                    });
+                });
+            }
         }
         return resultMap;
     }

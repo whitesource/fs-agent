@@ -14,25 +14,13 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver;
-import org.whitesource.agent.api.model.DependencyType;
-import java.util.*;
 
+import org.whitesource.agent.api.model.DependencyInfo;
+import java.util.Collection;
 /**
  * @author eugen.horovitz
  */
-public abstract class AbstractDependencyResolver {
+public interface DependencyCollector {
 
-    /* --- Abstract methods --- */
-
-    protected abstract ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, List<String> bomFiles);
-
-    protected abstract Collection<String> getExcludes();
-
-    protected abstract Collection<String> getSourceFileExtensions();
-
-    protected abstract DependencyType getDependencyType();
-
-    protected abstract String getBomPattern();
-
-    protected abstract Collection<String> getLanguageExcludes();
+    Collection<DependencyInfo> collectDependencies(String folder);
 }

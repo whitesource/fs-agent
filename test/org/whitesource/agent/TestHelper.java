@@ -1,12 +1,12 @@
+package org.whitesource.agent;
+
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.stream.Stream;
@@ -19,19 +19,23 @@ import java.util.stream.Stream;
 public class TestHelper {
 
     /* --- Static Members --- */
-
-    public static final String SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES_UBUNTU = "apostrophe-master/node_modules/chokidar/package.json";
-    public static String FOLDER_TO_TEST_UBUNTU = "/home/eugen/Documents/Repositories/fs-agent/toScan/apostrophe-master/";
-    public static String FOLDER_WITH_NPN_PROJECTS_UBUNTU = "/home/eugen/Documents/Repositories/fs-agent/toScan/";
-
     public static final String SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES = "\\node_modules\\chokidar\\package.json";
-    public static String FOLDER_TO_TEST = "C:\\Users\\eugen\\Downloads\\newstuff\\apostrophe-master";
-    public static String FOLDER_WITH_NPN_PROJECTS = "C:\\Users\\eugen\\Downloads\\newstuff\\";
+
+    public static final String FOLDER_WITH_MIX_FOLDERS = "C:\\Dev\\ws_mix\\ws_mix3\\ws_mix2_separated";
+    public static String FOLDER_WITH_BOWER_PROJECTS = "C:\\Dev\\ws_mix\\ws_mix1\\bower_samples";
+    public static String FOLDER_WITH_NPN_PROJECTS = "C:\\Dev\\ws_mix\\ws_mix1\\npm_samples";
+    //public static String FOLDER_WITH_NPN_PROJECTS_UBUNTU = "/home/eugen/Documents/Repositories/fs-agent/toScan/";
 
     /* --- Static Methods --- */
 
+    public static String getFirstFolder(String dir) {
+        File file = new File(dir);
+        String files = Arrays.stream(file.listFiles()).filter(f -> f.isDirectory()).findFirst().get().getAbsolutePath();
+        return files.toString();
+    }
+
     public static Stream<String> getDependenciesWithNpm(String dir) {
-        NpmLsJsonDependencyCollector collector = new NpmLsJsonDependencyCollector();
+        NpmLsJsonDependencyCollector collector = new NpmLsJsonDependencyCollector(false);
         Collection<DependencyInfo> dependencyInfos = collector.collectDependencies(dir);
         return dependencyInfos.stream().map(dep -> getShortNameByTgz(dep)).sorted();
     }
