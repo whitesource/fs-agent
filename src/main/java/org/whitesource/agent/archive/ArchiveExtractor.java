@@ -138,8 +138,13 @@ public class ArchiveExtractor {
         if (separatorIndex != -1) {
             destDirectory = destDirectory + scannerBaseDir.substring(separatorIndex, scannerBaseDir.length());
         }
-        extractArchive(scannerBaseDir, destDirectory, archiveExtractionDepth, 0);
-        return destDirectory;
+
+        if (extractArchive(scannerBaseDir, destDirectory, archiveExtractionDepth, 0)) {
+            return destDirectory;
+        } else {
+            // if unable to extract, return null
+            return null;
+        }
     }
 
     public void deleteArchiveDirectory() {
@@ -169,7 +174,8 @@ public class ArchiveExtractor {
         return archiveIncludesPattern;
     }
 
-    private void extractArchive(String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel) {
+    private boolean extractArchive(String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel) {
+        boolean foundArchives = false;
         File file = new File(scannerBaseDir);
         if (file.exists()) {
             if (file.isDirectory()) {
@@ -182,6 +188,8 @@ public class ArchiveExtractor {
                 scanner.scan();
 
                 String[] fileNames = scanner.getIncludedFiles();
+                foundArchives = fileNames.length > 0;
+
                 for (String fileName : fileNames) {
                     String innerDir = destDirectory + File.separator + fileName + RANDOM_STRING;
                     String archiveFile = scannerBaseDir + File.separator + fileName;
@@ -206,7 +214,7 @@ public class ArchiveExtractor {
                         ExtractArchive.extractArchive(archiveFile, innerDir);
                     } else {
                         logger.warn("Error: {} is unsupported archive type", fileName);
-                        return;
+                        return foundArchives;
                     }
                     // Extract again if needed according archiveExtractionDepth parameter
                     if (curLevel < archiveExtractionDepth) {
@@ -215,6 +223,7 @@ public class ArchiveExtractor {
                 }
             }
         }
+        return foundArchives;
     }
 
     // Open and extract data from zip pattern files

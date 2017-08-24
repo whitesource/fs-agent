@@ -75,9 +75,12 @@ public class FileSystemScanner {
             archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes);
             logger.info("Starting Archive Extraction (may take a few minutes)");
             for (String scannerBaseDir : pathsToScan) {
-                archiveToBaseDirMap.put(archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth), scannerBaseDir);
+                String destDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth);
+                if (destDirectory != null) {
+                    archiveToBaseDirMap.put(destDirectory, scannerBaseDir);
+                    pathsToScan.add(destDirectory);
+                }
             }
-            pathsToScan.addAll(archiveToBaseDirMap.keySet());
         }
 
         // create dependencies from files
@@ -210,7 +213,7 @@ public class FileSystemScanner {
                     fileMap.put(file.getParentFile(), files);
                 }
             } else {
-                logger.info(MessageFormat.format("File {0} doesn't exist", scannerBaseDir));
+                logger.info(MessageFormat.format("File {0} doesn\'t exist", scannerBaseDir));
             }
         }
         return fileMap;
