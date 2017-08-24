@@ -1,12 +1,12 @@
 package org.whitesource.agent.dependency.resolver.nuget.packagesConfig;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by yossi.weinberg on 7/21/2017.
@@ -14,6 +14,8 @@ import java.util.List;
 public class NugetPackagesConfigXmlParser {
 
     /* --- Static members --- */
+
+    private static final Logger logger = LoggerFactory.getLogger(NugetPackagesConfigXmlParser.class);
 
     private static final JAXBContext jaxbContext;
 
@@ -44,8 +46,8 @@ public class NugetPackagesConfigXmlParser {
         try {
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             packages = (NugetPackages) unmarshaller.unmarshal(xml);
-        } catch (JAXBException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            logger.warn("Unable to parse suspected Nuget package config file {}", xml);
         }
         return packages;
     }

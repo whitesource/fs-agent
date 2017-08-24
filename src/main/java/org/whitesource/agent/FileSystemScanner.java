@@ -122,7 +122,9 @@ public class FileSystemScanner {
         // replace temp folder name with base dir
         for (DependencyInfo dependencyInfo : allDependencies) {
             String systemPath = dependencyInfo.getSystemPath();
-            if (systemPath != null) {
+            if (systemPath == null) {
+                logger.debug("Dependency {} has no system path", dependencyInfo.getFilename());
+            } else {
                 for (String key : archiveToBaseDirMap.keySet()) {
                     if (systemPath.contains(key) && archiveExtractor != null) {
                         dependencyInfo.setSystemPath(systemPath.replace(key, archiveToBaseDirMap.get(key)).replaceAll(archiveExtractor.getRandomString(), EMPTY_STRING));

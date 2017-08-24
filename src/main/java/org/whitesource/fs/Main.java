@@ -38,8 +38,9 @@ public class Main {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-    private static final CommandLineArgs commandLineArgs = new CommandLineArgs();
     private static final String INFO = "info";
+
+    public static final CommandLineArgs commandLineArgs = new CommandLineArgs();
 
     /* --- Main --- */
 

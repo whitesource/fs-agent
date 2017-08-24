@@ -28,7 +28,7 @@ public class CommandLineArgs {
 
     /* --- Static members --- */
 
-    private static final String CONFIG_FILE_NAME = "whitesource-fs-agent.config";
+    public static final String CONFIG_FILE_NAME = "whitesource-fs-agent.config";
 
     /* --- Parameters --- */
 
@@ -66,4 +66,9 @@ public class CommandLineArgs {
     @Parameter(names = "-proxy.pass", description = "Proxy Password")
     String proxyPass = null;
 
+    /* --- Public methods --- */
+
+    public String getConfigFilePath() {
+        return configFilePath;
+    }
 }

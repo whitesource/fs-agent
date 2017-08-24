@@ -10,6 +10,8 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackage;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackages;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackagesConfigXmlParser;
+import org.whitesource.fs.CommandLineArgs;
+import org.whitesource.fs.Main;
 
 import java.io.File;
 import java.util.*;
@@ -65,16 +67,22 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     /* --- Private methods --- */
 
     private Collection<NugetPackages> parseNugetPackageFiles(List<String> configFilesPath) {
+        // get configuration file path
+        String whitesourceConfigurationPath = new File(Main.commandLineArgs.getConfigFilePath()).getAbsolutePath();
+
         Collection<NugetPackages> nugetPackages = new ArrayList<>();
-        NugetPackagesConfigXmlParser parser;
-
         for (String configFilePath : configFilesPath) {
-            File configFile = new File(configFilePath);
-            parser = new NugetPackagesConfigXmlParser(configFile);
-            NugetPackages packagesFromSingleFile = parser.parsePackagesConfigFile();
-
-            if (packagesFromSingleFile != null) {
-                nugetPackages.add(packagesFromSingleFile);
+            // don't scan the whitesource configuration file
+            if (!whitesourceConfigurationPath.equals(configFilePath)) {
+                File configFile = new File(configFilePath);
+                // check filename again (just in case)
+                if (!configFile.getName().equals(CommandLineArgs.CONFIG_FILE_NAME)) {
+                    NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(configFile);
+                    NugetPackages packagesFromSingleFile = parser.parsePackagesConfigFile();
+                    if (packagesFromSingleFile != null) {
+                        nugetPackages.add(packagesFromSingleFile);
+                    }
+                }
             }
         }
         return nugetPackages;
