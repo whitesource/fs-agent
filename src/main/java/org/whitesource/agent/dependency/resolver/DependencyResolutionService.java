@@ -17,9 +17,9 @@ package org.whitesource.agent.dependency.resolver;
 
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
+import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
-import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 
 import java.util.*;
 
@@ -73,9 +73,7 @@ public class DependencyResolutionService {
     }
 
     public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes) {
-        List<ResolutionResult> resolutionResults = new ArrayList<>();
         Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap = new HashMap<>();
-
         dependencyResolvers.forEach(dependencyResolver -> {
             // add resolver excludes
             Collection<String> combinedExcludes = new LinkedList<>(Arrays.asList(excludes));
@@ -88,9 +86,10 @@ public class DependencyResolutionService {
             topFolders.forEach(topFolder -> topFolderResolverMap.put(topFolder, dependencyResolver));
         });
 
-        //reduce the dependencies and duplicates files
+        // reduce the dependencies and duplicates files
         reduceDependencies(topFolderResolverMap);
 
+        List<ResolutionResult> resolutionResults = new ArrayList<>();
         topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
                 ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);

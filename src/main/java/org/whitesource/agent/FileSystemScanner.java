@@ -12,6 +12,7 @@ import org.whitesource.fs.FileSystemAgent;
 import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -58,14 +59,14 @@ public class FileSystemScanner {
                                                    String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                    String[] archiveIncludes, String[] archiveExcludes, boolean followSymlinks,
                                                    Collection<String> excludedCopyrights, boolean partialSha1Match) {
-        Collection<String> pathsToScan = new ArrayList<>(scannerBaseDirs);
+        // get canonical paths
+        Set<String> pathsToScan = getCanonicalPaths(scannerBaseDirs);
 
         // validate parameters
         validateParams(archiveExtractionDepth, includes);
 
         // scan directories
         int totalFiles = 0;
-
 
         // go over all base directories, look for archives
         Map<String, String> archiveToBaseDirMap = new HashMap<>();
@@ -145,6 +146,23 @@ public class FileSystemScanner {
         }
         logger.info("Finished Analyzing Files");
         return allDependencies;
+    }
+
+    /* --- Private methods --- */
+
+    private Set<String> getCanonicalPaths(List<String> scannerBaseDirs) {
+        // use canonical paths to resolve '.' in path
+        Set<String> pathsToScan = new HashSet<>();
+        for (String path : scannerBaseDirs) {
+            try {
+                pathsToScan.add(new File(path).getCanonicalPath());
+            } catch (IOException e) {
+                // use the given path as-is
+                logger.debug("Error finding the canonical path of {}", path);
+                pathsToScan.add(path);
+            }
+        }
+        return pathsToScan;
     }
 
     private Collection<DependencyInfo> createDependencies(ScmConnector scmConnector, int totalFiles, Map<File, Collection<String>> fileMap, DependencyInfoFactory factory) {
