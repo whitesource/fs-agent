@@ -74,7 +74,7 @@ public class FileSystemScanner {
         if (archiveExtractionDepth > 0) {
             archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes);
             logger.info("Starting Archive Extraction (may take a few minutes)");
-            for (String scannerBaseDir : pathsToScan) {
+            for (String scannerBaseDir : new LinkedHashSet<>(pathsToScan)) {
                 String destDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth);
                 if (destDirectory != null) {
                     archiveToBaseDirMap.put(destDirectory, scannerBaseDir);
@@ -204,13 +204,16 @@ public class FileSystemScanner {
                     String[] fileNames = filesScanner.getFileNames(scannerBaseDir, includes, excludesExtended, followSymlinks, globCaseSensitive);
                     fileMap.put(basedir, Arrays.asList(fileNames));
                 } else {
-                    // handle file
-                    Collection<String> files = fileMap.get(file.getParentFile());
-                    if (files == null) {
-                        files = new ArrayList<>();
+                    // handle single file
+                    boolean included = filesScanner.isIncluded(file, includes, excludesExtended, followSymlinks, globCaseSensitive);
+                    if (included) {
+                        Collection<String> files = fileMap.get(file.getParentFile());
+                        if (files == null) {
+                            files = new ArrayList<>();
+                        }
+                        files.add(file.getName());
+                        fileMap.put(file.getParentFile(), files);
                     }
-                    files.add(file.getName());
-                    fileMap.put(file.getParentFile(), files);
                 }
             } else {
                 logger.info(MessageFormat.format("File {0} doesn\'t exist", scannerBaseDir));

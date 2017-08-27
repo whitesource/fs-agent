@@ -21,6 +21,7 @@ import org.redline_rpm.header.Format;
 import org.redline_rpm.header.Header;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.SingleFileScanner;
 
 import java.io.*;
 import java.nio.channels.Channels;
@@ -188,39 +189,61 @@ public class ArchiveExtractor {
                 scanner.scan();
 
                 String[] fileNames = scanner.getIncludedFiles();
-                foundArchives = fileNames.length > 0;
-
-                for (String fileName : fileNames) {
-                    String innerDir = destDirectory + File.separator + fileName + RANDOM_STRING;
-                    String archiveFile = scannerBaseDir + File.separator + fileName;
-                    String lowerCaseFileName = fileName.toLowerCase();
-                    if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
-                        unZip(lowerCaseFileName, innerDir, archiveFile);
-                    } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
-                        unTar(lowerCaseFileName, innerDir, archiveFile);
-                        innerDir = innerDir + File.separator + RUBY_DATA_FILE;
-                        unTar(RUBY_DATA_FILE, innerDir + RANDOM_STRING, innerDir);
-                        innerDir = innerDir + RANDOM_STRING;
-                    } else if (lowerCaseFileName.matches(TAR_EXTENSION_PATTERN)) {
-                        unTar(lowerCaseFileName, innerDir, archiveFile);
-//                        innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
-                    } else if (lowerCaseFileName.matches(RPM_EXTENSION_PATTERN)) {
-                        handleRpmFile(fileName, innerDir, archiveFile);
-                    } else if (lowerCaseFileName.matches(RAR_EXTENSION_PATTERN)) {
-                        File destDir = new File(innerDir);
-                        if (!destDir.exists()) {
-                            destDir.mkdirs();
-                        }
-                        ExtractArchive.extractArchive(archiveFile, innerDir);
-                    } else {
-                        logger.warn("Error: {} is unsupported archive type", fileName);
-                        return foundArchives;
-                    }
-                    // Extract again if needed according archiveExtractionDepth parameter
-                    if (curLevel < archiveExtractionDepth) {
-                        extractArchive(innerDir, innerDir, archiveExtractionDepth, curLevel + 1);
-                    }
+                if (fileNames.length > 0) {
+                    foundArchives = handleArchiveFiles(scannerBaseDir, destDirectory, archiveExtractionDepth, curLevel, fileNames);
                 }
+            } else {
+                // handle file passed in -d parameter
+                SingleFileScanner scanner = new SingleFileScanner();
+                scanner.setIncludes(archiveIncludesPattern);
+                scanner.setExcludes(archiveExcludesPattern);
+                scanner.setCaseSensitive(false);
+                // check if file matches archive GLOB patterns
+                boolean included = scanner.isIncluded(file);
+                if (included) {
+                    foundArchives = handleArchiveFiles(file.getParent(), destDirectory, archiveExtractionDepth, curLevel, new String[] { file.getName() });
+                }
+            }
+        }
+        return foundArchives;
+    }
+
+    private boolean handleArchiveFiles(String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel, String[] fileNames) {
+        boolean foundArchives = false;
+        for (String fileName : fileNames) {
+            String innerDir = destDirectory + File.separator + fileName + RANDOM_STRING;
+            String archiveFile = scannerBaseDir + File.separator + fileName;
+            String lowerCaseFileName = fileName.toLowerCase();
+            if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
+                unZip(lowerCaseFileName, innerDir, archiveFile);
+                foundArchives = true;
+            } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
+                unTar(lowerCaseFileName, innerDir, archiveFile);
+                innerDir = innerDir + File.separator + RUBY_DATA_FILE;
+                unTar(RUBY_DATA_FILE, innerDir + RANDOM_STRING, innerDir);
+                innerDir = innerDir + RANDOM_STRING;
+                foundArchives = true;
+            } else if (lowerCaseFileName.matches(TAR_EXTENSION_PATTERN)) {
+                unTar(lowerCaseFileName, innerDir, archiveFile);
+//                        innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
+                foundArchives = true;
+            } else if (lowerCaseFileName.matches(RPM_EXTENSION_PATTERN)) {
+                handleRpmFile(fileName, innerDir, archiveFile);
+                foundArchives = true;
+            } else if (lowerCaseFileName.matches(RAR_EXTENSION_PATTERN)) {
+                File destDir = new File(innerDir);
+                if (!destDir.exists()) {
+                    destDir.mkdirs();
+                }
+                ExtractArchive.extractArchive(archiveFile, innerDir);
+                foundArchives = true;
+            } else {
+                logger.warn("Error: {} is unsupported archive type", fileName);
+            }
+
+            // Extract again if needed according archiveExtractionDepth parameter
+            if (curLevel < archiveExtractionDepth) {
+                foundArchives |= extractArchive(innerDir, innerDir, archiveExtractionDepth, curLevel + 1);
             }
         }
         return foundArchives;

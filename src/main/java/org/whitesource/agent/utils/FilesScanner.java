@@ -16,6 +16,7 @@
 package org.whitesource.agent.utils;
 
 import org.apache.tools.ant.DirectoryScanner;
+import org.whitesource.agent.SingleFileScanner;
 import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 
 import java.io.File;
@@ -101,5 +102,14 @@ public class FilesScanner {
             }
         }
         return resultMap;
+    }
+
+    public boolean isIncluded(File file, String[] includes, String[] excludes, boolean followSymlinks, boolean globCaseSensitive) {
+        SingleFileScanner scanner = new SingleFileScanner();
+        scanner.setIncludes(includes);
+        scanner.setExcludes(excludes);
+        scanner.setFollowSymlinks(followSymlinks);
+        scanner.setCaseSensitive(globCaseSensitive);
+        return scanner.isIncluded(file);
     }
 }
