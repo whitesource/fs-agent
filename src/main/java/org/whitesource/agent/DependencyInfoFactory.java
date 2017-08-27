@@ -101,24 +101,27 @@ public class DependencyInfoFactory {
     /* --- Public methods --- */
 
     public DependencyInfo createDependencyInfo(File basedir, String fileName) {
-        DependencyInfo dependency = null;
-        File dependencyFile = new File(basedir, fileName);
+        DependencyInfo dependency;
         try {
+            File dependencyFile = new File(basedir, fileName);
             String sha1 = ChecksumUtils.calculateSHA1(dependencyFile);
             dependency = new DependencyInfo(sha1);
             dependency.setArtifactId(dependencyFile.getName());
             dependency.setLastModified(new Date(dependencyFile.lastModified()));
 
+            // system path
+            try {
+                dependency.setSystemPath(dependencyFile.getCanonicalPath());
+            } catch (IOException e) {
+                dependency.setSystemPath(dependencyFile.getAbsolutePath());
+            }
+
+            // other platform SHA1
             if (dependencyFile.length() <= MAX_FILE_SIZE) {
                 File otherPlatformFile = createOtherPlatformFile(dependencyFile);
                 if (otherPlatformFile != null) {
                     String otherPlatformSha1 = ChecksumUtils.calculateSHA1(otherPlatformFile);
                     dependency.setOtherPlatformSha1(otherPlatformSha1);
-                }
-                try {
-                    dependency.setSystemPath(dependencyFile.getCanonicalPath());
-                } catch (IOException e) {
-                    dependency.setSystemPath(dependencyFile.getAbsolutePath());
                 }
                 deleteFile(otherPlatformFile);
 
@@ -127,13 +130,13 @@ public class DependencyInfoFactory {
                     ChecksumUtils.calculateHeaderAndFooterSha1(dependencyFile, dependency);
                 }
 
-                // removed finding license & copyrights in headers
+                // NOTICE: removed finding license & copyrights in headers
             } else {
                 logger.debug("File {} size is too big for scanning other platform sha1, skipping it.", dependencyFile.getName());
             }
-
         } catch (IOException e) {
             logger.warn("Failed to create dependency " + fileName + " to dependency list: ", e);
+            dependency = null;
         }
         return dependency;
     }
