@@ -45,7 +45,7 @@ public class FileSystemAgent extends CommandLineAgent {
 
     private static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
     private static final String EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX = ",";
-    private static final String DEFAULT_ARCHIVE_DEPTH = "0";
+    private static final int DEFAULT_ARCHIVE_DEPTH = 0;
 
     private static final String AGENT_TYPE = "fs-agent";
     private static final String AGENT_VERSION = "2.3.7";
@@ -123,7 +123,7 @@ public class FileSystemAgent extends CommandLineAgent {
         // read all properties
         final String[] includes = config.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         final String[] excludes = config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        final int archiveExtractionDepth = Integer.parseInt(config.getProperty(ARCHIVE_EXTRACTION_DEPTH_KEY, DEFAULT_ARCHIVE_DEPTH));
+        final int archiveExtractionDepth = getIntProperty(ARCHIVE_EXTRACTION_DEPTH_KEY, DEFAULT_ARCHIVE_DEPTH);
         final String[] archiveIncludes = config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         final String[] archiveExcludes = config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         boolean followSymlinks = getBooleanProperty(FOLLOW_SYMBOLIC_LINKS, true);

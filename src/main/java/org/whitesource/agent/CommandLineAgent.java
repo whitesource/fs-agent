@@ -269,5 +269,18 @@ public abstract class CommandLineAgent {
         return property;
     }
 
+    protected int getIntProperty(String propertyKey, int defaultValue) {
+        int value = defaultValue;
+        String propertyValue = config.getProperty(propertyKey);
+        if (StringUtils.isNotBlank(propertyValue)) {
+            try {
+                value = Integer.valueOf(propertyValue);
+            } catch (NumberFormatException e) {
+                // do nothing
+            }
+        }
+        return value;
+    }
+
     protected abstract String getPluginVersion();
 }
