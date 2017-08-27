@@ -22,6 +22,7 @@ import org.whitesource.agent.api.dispatch.CheckPolicyComplianceResult;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
@@ -73,7 +74,16 @@ public abstract class CommandLineAgent {
             AgentProjectInfo project = iterator.next();
             if (project.getDependencies().isEmpty()) {
                 iterator.remove();
-                logger.info("Removing empty project {} from update (found 0 matching files)", project.getCoordinates().getArtifactId());
+
+                // if coordinates are null, then use token
+                String projectIdentifier;
+                Coordinates coordinates = project.getCoordinates();
+                if (coordinates == null) {
+                    projectIdentifier = project.getProjectToken();
+                } else {
+                    projectIdentifier = coordinates.getArtifactId();
+                }
+                logger.info("Removing empty project {} from update (found 0 matching files)", projectIdentifier);
             }
         }
 

@@ -156,7 +156,7 @@ public class Main {
         boolean noProjectName = StringUtils.isBlank(projectName);
         if (noProjectToken && noProjectName) {
             foundError = true;
-            logger.error("Could not retrieve properties {} and {}  from {}",
+            logger.error("Could not retrieve properties {} and {} from {}",
                     PROJECT_NAME_PROPERTY_KEY, PROJECT_TOKEN_PROPERTY_KEY, configFilePath);
         } else if (!noProjectToken && !noProjectName) {
             foundError = true;
