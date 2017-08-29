@@ -89,7 +89,7 @@ public class DependencyInfoFactory {
     /* --- Constructors --- */
 
     public DependencyInfoFactory() {
-        excludedCopyrights = new ArrayList<String>();
+        excludedCopyrights = new ArrayList<>();
         partialSha1Match = false;
     }
 
@@ -118,12 +118,18 @@ public class DependencyInfoFactory {
 
             // other platform SHA1
             if (dependencyFile.length() <= MAX_FILE_SIZE) {
-                File otherPlatformFile = createOtherPlatformFile(dependencyFile);
-                if (otherPlatformFile != null) {
-                    String otherPlatformSha1 = ChecksumUtils.calculateSHA1(otherPlatformFile);
-                    dependency.setOtherPlatformSha1(otherPlatformSha1);
+                File otherPlatformFile = null;
+                try {
+                    otherPlatformFile = createOtherPlatformFile(dependencyFile);
+                    if (otherPlatformFile != null) {
+                        String otherPlatformSha1 = ChecksumUtils.calculateSHA1(otherPlatformFile);
+                        dependency.setOtherPlatformSha1(otherPlatformSha1);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Unable to create other platform file for {}: {}", dependencyFile.getPath(), e.getMessage());
+                } finally {
+                    deleteFile(otherPlatformFile);
                 }
-                deleteFile(otherPlatformFile);
 
                 // calculate sha1 for file header and footer (for partial matching)
                 if (partialSha1Match) {
@@ -334,28 +340,23 @@ public class DependencyInfoFactory {
         return false;
     }
 
-    private File createOtherPlatformFile(File originalPlatform) {
-        try {
-            long length = originalPlatform.length();
-            // calculate other platform sha1 for files larger than MAX_FILE_SIZE
-            if (length < MAX_FILE_SIZE && length < Runtime.getRuntime().freeMemory()) {
-                byte[] byteArray = FileUtils.readFileToByteArray(originalPlatform);
+    private File createOtherPlatformFile(File originalPlatform) throws IOException {
+        // calculate other platform sha1 for files larger than MAX_FILE_SIZE
+        long length = originalPlatform.length();
+        if (length < MAX_FILE_SIZE && length < Runtime.getRuntime().freeMemory()) {
+            byte[] byteArray = FileUtils.readFileToByteArray(originalPlatform);
 
-                String fileText = new String(byteArray);
-                File otherPlatFile = new File(PlATFORM_DEPENDENT_TMP_DIRECTORY, originalPlatform.getName());
-                if (fileText.contains(CRLF)) {
-                    FileUtils.write(otherPlatFile, fileText.replaceAll(CRLF, NEW_LINE));
-                } else if (fileText.contains(NEW_LINE)) {
-                    FileUtils.write(otherPlatFile, fileText.replaceAll(NEW_LINE, CRLF));
-                }
-                if (otherPlatFile.exists()) {
-                    return otherPlatFile;
-                }
-            } else {
-                return null;
+            String fileText = new String(byteArray);
+            File otherPlatformFile = new File(PlATFORM_DEPENDENT_TMP_DIRECTORY, originalPlatform.getName());
+            if (fileText.contains(CRLF)) {
+                FileUtils.write(otherPlatformFile, fileText.replaceAll(CRLF, NEW_LINE));
+            } else if (fileText.contains(NEW_LINE)) {
+                FileUtils.write(otherPlatformFile, fileText.replaceAll(NEW_LINE, CRLF));
             }
-        } catch (IOException e) {
-            logger.warn("Failed to create other platform file " + originalPlatform.getName() + "can't be added to dependency list: ", e);
+
+            if (otherPlatformFile.exists()) {
+                return otherPlatformFile;
+            }
         }
         return null;
     }
