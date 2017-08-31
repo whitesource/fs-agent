@@ -202,7 +202,9 @@ public class FileSystemScanner {
                 if (file.isDirectory()) {
                     File basedir = new File(scannerBaseDir);
                     String[] fileNames = filesScanner.getFileNames(scannerBaseDir, includes, excludesExtended, followSymlinks, globCaseSensitive);
-                    fileMap.put(basedir, Arrays.asList(fileNames));
+                    // convert array to list (don't use Arrays.asList, might be added to later)
+                    List<String> fileNameList = Arrays.stream(fileNames).collect(Collectors.toList());
+                    fileMap.put(basedir, fileNameList);
                 } else {
                     // handle single file
                     boolean included = filesScanner.isIncluded(file, includes, excludesExtended, followSymlinks, globCaseSensitive);
