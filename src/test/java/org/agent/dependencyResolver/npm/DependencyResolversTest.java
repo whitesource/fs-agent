@@ -1,4 +1,4 @@
-package org.whitesource.agent;
+package org.agent.dependencyResolver.npm;
 
 import java.util.*;
 import java.util.stream.Collectors;
