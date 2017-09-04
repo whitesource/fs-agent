@@ -138,6 +138,12 @@ public class ArchiveExtractor {
         int separatorIndex = scannerBaseDir.lastIndexOf(File.separator);
         if (separatorIndex != -1) {
             destDirectory = destDirectory + scannerBaseDir.substring(separatorIndex, scannerBaseDir.length());
+            try {
+                // this solves the tilda issue in filepath in windows (mangled Windows filenames)
+                destDirectory = new File(destDirectory).getCanonicalPath().toString();
+            } catch (IOException e) {
+                logger.warn("Error getting the absolute file name ", e);
+            }
         }
 
         if (extractArchive(scannerBaseDir, destDirectory, archiveExtractionDepth, 0)) {
