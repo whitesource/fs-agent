@@ -26,6 +26,7 @@ import org.whitesource.agent.SingleFileScanner;
 import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -99,8 +100,8 @@ public class ArchiveExtractor {
 
     /* --- Private members --- */
 
-    private String[] archiveIncludesPattern;
-    private String[] archiveExcludesPattern;
+    private final String[] archiveIncludesPattern;
+    private final String[] archiveExcludesPattern;
 
     /* --- Constructors --- */
 
@@ -112,6 +113,21 @@ public class ArchiveExtractor {
             this.archiveIncludesPattern = createArchivesArray();
         }
         this.archiveExcludesPattern = archiveExcludes;
+    }
+
+    private String getDestinationDirectory(String scannerBaseDir) {
+        String destDirectory = TEMP_FOLDER;
+        int separatorIndex = scannerBaseDir.lastIndexOf(File.separator);
+        if (separatorIndex != -1) {
+            destDirectory = destDirectory + scannerBaseDir.substring(separatorIndex, scannerBaseDir.length());
+            try {
+                // this solves the tilda issue in filepath in windows (mangled Windows filenames)
+                destDirectory = new File(destDirectory).getCanonicalPath().toString();
+            } catch (IOException e) {
+                logger.warn("Error getting the absolute file name ", e);
+            }
+        }
+        return destDirectory;
     }
 
     public String getRandomString() {
@@ -133,20 +149,11 @@ public class ArchiveExtractor {
      * @return the temp directory for the extracted files.
      */
     public String extractArchives(String scannerBaseDir, int archiveExtractionDepth) {
+        String baseDestinationDirectory = getDestinationDirectory(scannerBaseDir);
+        String destDirectory = baseDestinationDirectory;
         logger.debug("Base directory is {}, extraction depth is set to {}", scannerBaseDir, archiveExtractionDepth);
-        String destDirectory = TEMP_FOLDER;
-        int separatorIndex = scannerBaseDir.lastIndexOf(File.separator);
-        if (separatorIndex != -1) {
-            destDirectory = destDirectory + scannerBaseDir.substring(separatorIndex, scannerBaseDir.length());
-            try {
-                // this solves the tilda issue in filepath in windows (mangled Windows filenames)
-                destDirectory = new File(destDirectory).getCanonicalPath().toString();
-            } catch (IOException e) {
-                logger.warn("Error getting the absolute file name ", e);
-            }
-        }
 
-        if (extractArchive(scannerBaseDir, destDirectory, archiveExtractionDepth, 0)) {
+        if (extractArchive(baseDestinationDirectory, scannerBaseDir, destDirectory, archiveExtractionDepth, 0)) {
             return destDirectory;
         } else {
             // if unable to extract, return null
@@ -181,14 +188,19 @@ public class ArchiveExtractor {
         return archiveIncludesPattern;
     }
 
-    private boolean extractArchive(String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel) {
+    private boolean extractArchive(String baseDestinationDirectory, String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel) {
         boolean foundArchives = false;
         File file = new File(scannerBaseDir);
         if (file.exists()) {
             if (file.isDirectory()) {
                 // scan directory
                 DirectoryScanner scanner = new DirectoryScanner();
-                scanner.setBasedir(scannerBaseDir);
+                if (curLevel == 0) {
+                    scanner.setBasedir(scannerBaseDir);
+                }
+                else{
+                    scanner.setBasedir(baseDestinationDirectory);
+                }
                 scanner.setIncludes(archiveIncludesPattern);
                 scanner.setExcludes(archiveExcludesPattern);
                 scanner.setCaseSensitive(false);
@@ -196,7 +208,7 @@ public class ArchiveExtractor {
 
                 String[] fileNames = scanner.getIncludedFiles();
                 if (fileNames.length > 0) {
-                    foundArchives = handleArchiveFiles(scannerBaseDir, destDirectory, archiveExtractionDepth, curLevel, fileNames);
+                    foundArchives = handleArchiveFiles(baseDestinationDirectory, scannerBaseDir, destDirectory, archiveExtractionDepth, curLevel, fileNames);
                 }
             } else {
                 // handle file passed in -d parameter
@@ -207,18 +219,20 @@ public class ArchiveExtractor {
                 // check if file matches archive GLOB patterns
                 boolean included = scanner.isIncluded(file);
                 if (included) {
-                    foundArchives = handleArchiveFiles(file.getParent(), destDirectory, archiveExtractionDepth, curLevel, new String[] { file.getName() });
+                    foundArchives = handleArchiveFiles(baseDestinationDirectory, file.getParent(), destDirectory, archiveExtractionDepth, curLevel, new String[] { file.getName() });
                 }
             }
         }
         return foundArchives;
     }
 
-    private boolean handleArchiveFiles(String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel, String[] fileNames) {
+    private boolean handleArchiveFiles(String baseDestinationDirectory, String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel, String[] fileNames) {
         boolean foundArchives = false;
         for (String fileName : fileNames) {
-            String innerDir = destDirectory + File.separator + fileName + RANDOM_STRING;
+            String innerDir = baseDestinationDirectory + File.separator + new File(fileName).getParent();
             String archiveFile = scannerBaseDir + File.separator + fileName;
+            if (curLevel != 0)
+                archiveFile = baseDestinationDirectory + File.separator + fileName;
             String lowerCaseFileName = fileName.toLowerCase();
             if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
                 foundArchives |= unZip(lowerCaseFileName, innerDir, archiveFile);
@@ -245,7 +259,14 @@ public class ArchiveExtractor {
 
             // Extract again if needed according archiveExtractionDepth parameter
             if (curLevel < archiveExtractionDepth) {
-                foundArchives |= extractArchive(innerDir, innerDir, archiveExtractionDepth, curLevel + 1);
+                if (curLevel != 0) {
+                    try {
+                        FileUtils.forceDelete(new File(Paths.get(baseDestinationDirectory, lowerCaseFileName).toString()));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                foundArchives |= extractArchive(baseDestinationDirectory, destDirectory, innerDir, archiveExtractionDepth, curLevel + 1);
             }
         }
         return foundArchives;
