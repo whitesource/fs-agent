@@ -1,4 +1,4 @@
-package org.whitesource.agent;
+package org.agent.dependencyResolver.npm;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;

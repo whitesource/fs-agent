@@ -227,7 +227,7 @@ public abstract class CommandLineAgent {
             File file = offlineUpdateRequest.generate(outputDir, zip, prettyJson);
             logger.info("Offline request generated successfully at {}", file.getPath());
         } catch (IOException e) {
-            logger.error("Error generating offline update request: " + e.getMessage(), e);
+            logger.error("Error generating offline update request: " + e.getMessage());
         } finally {
             if (service != null) {
                 service.shutdown();

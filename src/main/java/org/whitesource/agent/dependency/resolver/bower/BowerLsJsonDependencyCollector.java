@@ -16,6 +16,8 @@
 package org.whitesource.agent.dependency.resolver.bower;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
@@ -28,11 +30,12 @@ import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollecto
 public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector {
 
     /* --- Statics Members --- */
-
+    private static final Logger logger = LoggerFactory.getLogger(BowerLsJsonDependencyCollector.class);
     private static final String BOWER_COMMAND = NpmLsJsonDependencyCollector.isWindows() ? "bower.cmd" : "bower";
     private static final String VERSION = "version";
     private static final String PKG_META = "pkgMeta";
     public static final String NAME = "name";
+    public static final String MISSING = "missing";
 
     /* --- Constructors --- */
 
@@ -52,6 +55,10 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
         String version = "";
         String name = "";
 
+       if (jsonObject.has(MISSING) && jsonObject.getBoolean(MISSING)) {
+           logger.warn("Unmet dependency --> {}", name);
+           return null;
+       }
         if (jsonObject.has(PKG_META)) {
             JSONObject metaData = jsonObject.getJSONObject(PKG_META);
             if (metaData.has(VERSION)) {

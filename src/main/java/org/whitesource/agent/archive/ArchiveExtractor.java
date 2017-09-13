@@ -8,7 +8,6 @@ import org.apache.commons.compress.compressors.lzma.LZMACompressorInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.codehaus.plexus.archiver.tar.TarBZip2UnArchiver;
 import org.codehaus.plexus.archiver.tar.TarGZipUnArchiver;
@@ -26,8 +25,10 @@ import org.whitesource.agent.SingleFileScanner;
 import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * The class supports recursive deCompression of compressed files (Java, Python & Ruby types).
@@ -39,10 +40,10 @@ public class ArchiveExtractor {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(ArchiveExtractor.class);
+    public static final int LONG_BOUND = 100000;
 
-    private static final String TEMP_FOLDER;
-    private static final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
-    private static final String WHITESOURCE_TEMP_FOLDER = "WhiteSource-ArchiveExtractor";
+    private final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
+    private final String WHITESOURCE_TEMP_FOLDER = "WhiteSource-ArchiveExtractor";
 
     public static final List<String> ZIP_EXTENSIONS = Arrays.asList("jar", "war", "ear", "egg", "zip", "whl", "sca", "sda");
     public static final List<String> GEM_EXTENSIONS = Collections.singletonList("gem");
@@ -74,8 +75,6 @@ public class ArchiveExtractor {
     public static final String PATTERN_PREFIX = ".*\\.";
     public static final String OR = "|";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
-    private static final String CREATION_TIME = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-    public static final String RANDOM_STRING = "wss" + RandomStringUtils.random(10, true, false) + DATE_FORMAT.format(new Date());
 
     static {
         ZIP_EXTENSION_PATTERN = initializePattern(ZIP_EXTENSIONS);
@@ -83,8 +82,6 @@ public class ArchiveExtractor {
         TAR_EXTENSION_PATTERN = initializePattern(TAR_EXTENSIONS);
         RPM_EXTENSION_PATTERN = initializePattern(RPM_EXTENSIONS);
         RAR_EXTENSION_PATTERN = initializePattern(RAR_EXTENSIONS);
-        TEMP_FOLDER = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + WHITESOURCE_TEMP_FOLDER + File.separator + CREATION_TIME :
-                JAVA_TEMP_DIR + File.separator + WHITESOURCE_TEMP_FOLDER + File.separator + CREATION_TIME;
     }
 
     private static String initializePattern(List<String> archiveExtensions) {
@@ -99,8 +96,11 @@ public class ArchiveExtractor {
 
     /* --- Private members --- */
 
-    private String[] archiveIncludesPattern;
-    private String[] archiveExcludesPattern;
+    private final String[] archiveIncludesPattern;
+    private final String[] archiveExcludesPattern;
+
+    private String randomString;
+    private String tempFolder;
 
     /* --- Constructors --- */
 
@@ -114,8 +114,28 @@ public class ArchiveExtractor {
         this.archiveExcludesPattern = archiveExcludes;
     }
 
+    private String getDestinationDirectory(String scannerBaseDir) {
+        String creationDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+        this.tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + WHITESOURCE_TEMP_FOLDER + File.separator + creationDate :
+                JAVA_TEMP_DIR + File.separator + WHITESOURCE_TEMP_FOLDER + File.separator + creationDate;
+
+        String destDirectory = tempFolder + "_" +this.randomString ;
+
+        int separatorIndex = scannerBaseDir.lastIndexOf(File.separator);
+        if (separatorIndex != -1) {
+            destDirectory = destDirectory + scannerBaseDir.substring(separatorIndex, scannerBaseDir.length());
+            try {
+                // this solves the tilda issue in filepath in windows (mangled Windows filenames)
+                destDirectory = new File(destDirectory).getCanonicalPath().toString();
+            } catch (IOException e) {
+                logger.warn("Error getting the absolute file name ", e);
+            }
+        }
+        return destDirectory;
+    }
+
     public String getRandomString() {
-        return RANDOM_STRING;
+        return this.randomString;
     }
 
     /* --- Public methods --- */
@@ -133,14 +153,12 @@ public class ArchiveExtractor {
      * @return the temp directory for the extracted files.
      */
     public String extractArchives(String scannerBaseDir, int archiveExtractionDepth) {
+        this.randomString = String.valueOf(ThreadLocalRandom.current().nextLong(0, LONG_BOUND));
+        String baseDestinationDirectory = getDestinationDirectory(scannerBaseDir);
+        String destDirectory = baseDestinationDirectory;
         logger.debug("Base directory is {}, extraction depth is set to {}", scannerBaseDir, archiveExtractionDepth);
-        String destDirectory = TEMP_FOLDER;
-        int separatorIndex = scannerBaseDir.lastIndexOf(File.separator);
-        if (separatorIndex != -1) {
-            destDirectory = destDirectory + scannerBaseDir.substring(separatorIndex, scannerBaseDir.length());
-        }
 
-        if (extractArchive(scannerBaseDir, destDirectory, archiveExtractionDepth, 0)) {
+        if (extractArchive(baseDestinationDirectory, scannerBaseDir, destDirectory, archiveExtractionDepth, 0)) {
             return destDirectory;
         } else {
             // if unable to extract, return null
@@ -149,7 +167,7 @@ public class ArchiveExtractor {
     }
 
     public void deleteArchiveDirectory() {
-        File directory = new File(TEMP_FOLDER);
+        File directory = new File(this.tempFolder);
         if (directory.exists()) {
             try {
                 FileUtils.deleteDirectory(directory);
@@ -175,14 +193,19 @@ public class ArchiveExtractor {
         return archiveIncludesPattern;
     }
 
-    private boolean extractArchive(String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel) {
+    private boolean extractArchive(String baseDestinationDirectory, String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel) {
         boolean foundArchives = false;
         File file = new File(scannerBaseDir);
         if (file.exists()) {
             if (file.isDirectory()) {
                 // scan directory
                 DirectoryScanner scanner = new DirectoryScanner();
-                scanner.setBasedir(scannerBaseDir);
+                if (curLevel == 0) {
+                    scanner.setBasedir(scannerBaseDir);
+                }
+                else{
+                    scanner.setBasedir(baseDestinationDirectory);
+                }
                 scanner.setIncludes(archiveIncludesPattern);
                 scanner.setExcludes(archiveExcludesPattern);
                 scanner.setCaseSensitive(false);
@@ -190,7 +213,7 @@ public class ArchiveExtractor {
 
                 String[] fileNames = scanner.getIncludedFiles();
                 if (fileNames.length > 0) {
-                    foundArchives = handleArchiveFiles(scannerBaseDir, destDirectory, archiveExtractionDepth, curLevel, fileNames);
+                    foundArchives = handleArchiveFiles(baseDestinationDirectory, scannerBaseDir, destDirectory, archiveExtractionDepth, curLevel, fileNames);
                 }
             } else {
                 // handle file passed in -d parameter
@@ -201,35 +224,33 @@ public class ArchiveExtractor {
                 // check if file matches archive GLOB patterns
                 boolean included = scanner.isIncluded(file);
                 if (included) {
-                    foundArchives = handleArchiveFiles(file.getParent(), destDirectory, archiveExtractionDepth, curLevel, new String[] { file.getName() });
+                    foundArchives = handleArchiveFiles(baseDestinationDirectory, file.getParent(), destDirectory, archiveExtractionDepth, curLevel, new String[] { file.getName() });
                 }
             }
         }
         return foundArchives;
     }
 
-    private boolean handleArchiveFiles(String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel, String[] fileNames) {
+    private boolean handleArchiveFiles(String baseDestinationDirectory, String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel, String[] fileNames) {
         boolean foundArchives = false;
         for (String fileName : fileNames) {
-            String innerDir = destDirectory + File.separator + fileName + RANDOM_STRING;
+            String innerDir = baseDestinationDirectory + File.separator + new File(fileName).getParent();
             String archiveFile = scannerBaseDir + File.separator + fileName;
+            if (curLevel != 0)
+                archiveFile = baseDestinationDirectory + File.separator + fileName;
             String lowerCaseFileName = fileName.toLowerCase();
             if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
-                unZip(lowerCaseFileName, innerDir, archiveFile);
-                foundArchives = true;
+                foundArchives |= unZip(lowerCaseFileName, innerDir, archiveFile);
             } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
-                unTar(lowerCaseFileName, innerDir, archiveFile);
+                foundArchives |= unTar(lowerCaseFileName, innerDir, archiveFile);
                 innerDir = innerDir + File.separator + RUBY_DATA_FILE;
-                unTar(RUBY_DATA_FILE, innerDir + RANDOM_STRING, innerDir);
-                innerDir = innerDir + RANDOM_STRING;
-                foundArchives = true;
+                foundArchives |= unTar(RUBY_DATA_FILE, innerDir + this.randomString, innerDir);
+                innerDir = innerDir + this.randomString;
             } else if (lowerCaseFileName.matches(TAR_EXTENSION_PATTERN)) {
-                unTar(lowerCaseFileName, innerDir, archiveFile);
+                foundArchives |= unTar(lowerCaseFileName, innerDir, archiveFile);
 //                        innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
-                foundArchives = true;
             } else if (lowerCaseFileName.matches(RPM_EXTENSION_PATTERN)) {
-                handleRpmFile(fileName, innerDir, archiveFile);
-                foundArchives = true;
+                foundArchives |= handleRpmFile(innerDir, archiveFile);
             } else if (lowerCaseFileName.matches(RAR_EXTENSION_PATTERN)) {
                 File destDir = new File(innerDir);
                 if (!destDir.exists()) {
@@ -243,25 +264,36 @@ public class ArchiveExtractor {
 
             // Extract again if needed according archiveExtractionDepth parameter
             if (curLevel < archiveExtractionDepth) {
-                foundArchives |= extractArchive(innerDir, innerDir, archiveExtractionDepth, curLevel + 1);
+                if (curLevel != 0) {
+                    try {
+                        FileUtils.forceDelete(new File(Paths.get(baseDestinationDirectory, lowerCaseFileName).toString()));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                foundArchives |= extractArchive(baseDestinationDirectory, destDirectory, innerDir, archiveExtractionDepth, curLevel + 1);
             }
         }
         return foundArchives;
     }
 
     // Open and extract data from zip pattern files
-    private void unZip(String fileName, String innerDir, String archiveFile) {
+    private boolean unZip(String fileName, String innerDir, String archiveFile) {
+        boolean success = true;
         try {
             ZipFile zipFile = new ZipFile(archiveFile);
             zipFile.extractAll(innerDir);
         } catch (Exception e) {
+            success = false;
             logger.warn("Error extracting file {}: {}", fileName, e.getMessage());
             logger.debug("Error extracting file {}: {}", fileName, e.getStackTrace());
         }
+        return success;
     }
 
     // Open and extract data from Tar pattern files
-    private void unTar(String fileName, String innerDir, String archiveFile) {
+    private boolean unTar(String fileName, String innerDir, String archiveFile) {
+        boolean success = true;
         TarUnArchiver unArchiver = new TarUnArchiver();
         try {
             if (fileName.endsWith(TAR_GZ_SUFFIX) || fileName.endsWith(TGZ_SUFFIX)) {
@@ -278,80 +310,92 @@ public class ArchiveExtractor {
             unArchiver.setDestDirectory(destDir);
             unArchiver.extract();
         } catch (Exception e) {
+            success = false;
             logger.warn("Error extracting file {}: {}", fileName, e.getMessage());
         }
+        return success;
     }
 
     // Open and extract data from rpm files
-    private void handleRpmFile(String fileName, String innerDir, String archiveFile) {
+    private boolean handleRpmFile(String innerDir, String archiveFile) {
+        boolean success = true;
         File rpmFile = new File(archiveFile);
         FileInputStream rpmFIS = null;
         try {
             rpmFIS = new FileInputStream(rpmFile.getPath());
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            success = false;
+            logger.warn("File not found: {}", archiveFile);
         }
+
         Format format = null;
         ReadableByteChannel channel = Channels.newChannel(rpmFIS);
         ReadableChannelWrapper channelWrapper = new ReadableChannelWrapper(channel);
         try {
             format = new org.redline_rpm.Scanner().run(channelWrapper);
         } catch (IOException e) {
-            e.printStackTrace();
+            success = false;
+            logger.warn("Error reading RPM file {}: {}", archiveFile, e.getCause());
         }
-        Header header = format.getHeader();
-        FileOutputStream cpioOS = null;
-        FileOutputStream cpioEntryOutputStream = null;
-        CpioArchiveInputStream cpioIn = null;
-        File cpioFile = null;
-        try {
-            // extract all .cpio file
-            // get input stream according to payload compressor type
-            InputStream inputStream;
-            AbstractHeader.Entry pcEntry = header.getEntry(Header.HeaderTag.PAYLOADCOMPRESSOR);
-            String[] pc = (String[]) pcEntry.getValues();
-            if (pc[0].equals(LZMA)) {
-                try {
-                    inputStream = new LZMACompressorInputStream(rpmFIS);
-                } catch (Exception e) {
-                    throw new IOException("Failed to load LZMA compression stream", e);
+
+        if (format != null) {
+            Header header = format.getHeader();
+            FileOutputStream cpioOS = null;
+            FileOutputStream cpioEntryOutputStream = null;
+            CpioArchiveInputStream cpioIn = null;
+            File cpioFile = null;
+            try {
+                // extract all .cpio file
+                // get input stream according to payload compressor type
+                InputStream inputStream;
+                AbstractHeader.Entry pcEntry = header.getEntry(Header.HeaderTag.PAYLOADCOMPRESSOR);
+                String[] pc = (String[]) pcEntry.getValues();
+                if (pc[0].equals(LZMA)) {
+                    try {
+                        inputStream = new LZMACompressorInputStream(rpmFIS);
+                    } catch (Exception e) {
+                        throw new IOException("Failed to load LZMA compression stream", e);
+                    }
+                } else {
+                    inputStream = Util.openPayloadStream(header, rpmFIS);
                 }
-            } else {
-                inputStream = Util.openPayloadStream(header, rpmFIS);
-            }
-            cpioFile = new File(rpmFile.getPath() + CPIO);
-            cpioOS = new FileOutputStream(cpioFile);
-            IOUtils.copy(inputStream, cpioOS);
-            // extract files from .cpio
-            File extractDestination = new File(innerDir);
-            extractDestination.mkdirs();
-            cpioIn = new CpioArchiveInputStream(new FileInputStream(cpioFile));
-            CpioArchiveEntry cpioEntry;
-            while ((cpioEntry = (CpioArchiveEntry) cpioIn.getNextEntry()) != null) {
-                String entryName = cpioEntry.getName();
-                String lowercaseName = entryName.toLowerCase();
-                File file = new File(extractDestination, getFileName(entryName));
-                cpioEntryOutputStream = new FileOutputStream(file);
-                IOUtils.copy(cpioIn, cpioEntryOutputStream);
-                String innerExtractionDir;
-                if (lowercaseName.matches(TAR_EXTENSION_PATTERN)) {
-                    innerExtractionDir = innerDir + File.separator + entryName + RANDOM_STRING;
-                    unTar(file.getName(), innerExtractionDir, file.getPath());
-                } else if (lowercaseName.matches(ZIP_EXTENSION_PATTERN)) {
-                    innerExtractionDir = innerDir + File.separator + entryName + RANDOM_STRING;
-                    unZip(file.getName(), innerExtractionDir, file.getPath());
+
+                cpioFile = new File(rpmFile.getPath() + CPIO);
+                cpioOS = new FileOutputStream(cpioFile);
+                IOUtils.copy(inputStream, cpioOS);
+                // extract files from .cpio
+                File extractDestination = new File(innerDir);
+                extractDestination.mkdirs();
+                cpioIn = new CpioArchiveInputStream(new FileInputStream(cpioFile));
+
+                CpioArchiveEntry cpioEntry;
+                while ((cpioEntry = (CpioArchiveEntry) cpioIn.getNextEntry()) != null) {
+                    String entryName = cpioEntry.getName();
+                    String lowercaseName = entryName.toLowerCase();
+                    File file = new File(extractDestination, getFileName(entryName));
+                    cpioEntryOutputStream = new FileOutputStream(file);
+                    IOUtils.copy(cpioIn, cpioEntryOutputStream);
+                    String innerExtractionDir;
+                    if (lowercaseName.matches(TAR_EXTENSION_PATTERN)) {
+                        innerExtractionDir = innerDir + File.separator + entryName + this.randomString;
+                        unTar(file.getName(), innerExtractionDir, file.getPath());
+                    } else if (lowercaseName.matches(ZIP_EXTENSION_PATTERN)) {
+                        innerExtractionDir = innerDir + File.separator + entryName + this.randomString;
+                        unZip(file.getName(), innerExtractionDir, file.getPath());
+                    }
+                    // close
+                    closeResource(cpioEntryOutputStream);
                 }
-                // close
+            } catch (IOException e) {
+                logger.error("Error unpacking rpm file {}: {}", rpmFile.getName(), e.getMessage());
+            } finally {
                 closeResource(cpioEntryOutputStream);
+                closeResource(cpioIn);
+                closeResource(cpioOS);
+                deleteFile(cpioFile);
             }
-        } catch (IOException e) {
-            logger.error("Error unpacking rpm file {}: {}", rpmFile.getName(), e.getMessage());
-        } finally {
-            closeResource(cpioEntryOutputStream);
-            closeResource(cpioIn);
-            closeResource(cpioOS);
-            deleteFile(cpioFile);
         }
+        return success;
     }
 
     private void deleteFile(File cpioFile) {

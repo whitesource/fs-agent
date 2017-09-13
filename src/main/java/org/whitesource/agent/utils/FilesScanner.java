@@ -16,6 +16,8 @@
 package org.whitesource.agent.utils;
 
 import org.apache.tools.ant.DirectoryScanner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.whitesource.agent.SingleFileScanner;
 import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 
@@ -25,22 +27,32 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- *@author eugen.horovitz
+ * @author eugen.horovitz
  */
 public class FilesScanner {
+
+    /* --- Static members --- */
+
+    private static final Logger logger = LoggerFactory.getLogger(FilesScanner.class);
 
     /* --- Public methods --- */
 
     public String[] getFileNames(String scannerBaseDir, String[] includes, String[] excludes, boolean followSymlinks, boolean globCaseSensitive) {
-        DirectoryScanner scanner = new DirectoryScanner();
-        scanner.setBasedir(scannerBaseDir);
-        scanner.setIncludes(includes);
-        scanner.setExcludes(excludes);
-        scanner.setFollowSymlinks(followSymlinks);
-        scanner.setCaseSensitive(globCaseSensitive);
-        scanner.scan();
-        String[] fileNames = scanner.getIncludedFiles();
-        return fileNames;
+        File file = new File(scannerBaseDir);
+        if (file.exists() && file.isDirectory()) {
+            DirectoryScanner scanner = new DirectoryScanner();
+            scanner.setBasedir(scannerBaseDir);
+            scanner.setIncludes(includes);
+            scanner.setExcludes(excludes);
+            scanner.setFollowSymlinks(followSymlinks);
+            scanner.setCaseSensitive(globCaseSensitive);
+            scanner.scan();
+            String[] fileNames = scanner.getIncludedFiles();
+            return fileNames;
+        } else {
+            logger.debug("{} is not a folder", scannerBaseDir);
+            return new String[0];
+        }
     }
 
     public Collection<ResolvedFolder> findTopFolders(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
@@ -60,7 +72,7 @@ public class FilesScanner {
     private Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
         Map pathToIncludedFilesMap = new HashMap();
         pathsToScan.stream().forEach(scanFolder -> {
-            String[] includedFiles = getFileNames(new File(scanFolder).getPath(), new String[]{includesPattern},
+            String[] includedFiles = getFileNames(new File(scanFolder).getPath(), new String[]{ includesPattern },
                     excludes.toArray(new String[excludes.size()]), false, false);
             pathToIncludedFilesMap.put(new File(scanFolder).getAbsolutePath(), includedFiles);
         });

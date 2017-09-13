@@ -1,7 +1,8 @@
-package org.whitesource.agent;
+package org.agent.dependencyResolver.npm;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.utils.FilesScanner;
 
 import java.io.File;
