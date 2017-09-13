@@ -19,7 +19,9 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.ChecksumUtils;
+import org.whitesource.agent.api.HintUtils;
 import org.whitesource.agent.api.model.CopyrightInfo;
+import org.whitesource.agent.api.model.DependencyHintsInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 
 import java.io.File;
@@ -115,6 +117,10 @@ public class DependencyInfoFactory {
             } catch (IOException e) {
                 dependency.setSystemPath(dependencyFile.getAbsolutePath());
             }
+
+            // populate hints
+            DependencyHintsInfo hints = HintUtils.getHints(dependencyFile.getPath());
+            dependency.setHints(hints);
 
             // other platform SHA1
             if (dependencyFile.length() <= MAX_FILE_SIZE) {

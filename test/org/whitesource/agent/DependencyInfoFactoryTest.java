@@ -2,7 +2,6 @@ package org.whitesource.agent;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.whitesource.agent.DependencyInfoFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
 
 import java.io.File;
@@ -18,7 +17,7 @@ public class DependencyInfoFactoryTest {
     @Test
     public void testCopyrights() {
         DependencyInfoFactory factory = new DependencyInfoFactory();
-        DependencyInfo dependencyInfo = factory.createDependencyInfo(new File("C:\\WhiteSource\\FS Agent\\Fake Files"), "test-copyright.txt");
+        DependencyInfo dependencyInfo = factory.createDependencyInfo(new File("C:\\Users\\Chen\\Desktop\\test2"), "ZedGraph.dll");
         dependencyInfo.getCopyrights();
     }
 }
