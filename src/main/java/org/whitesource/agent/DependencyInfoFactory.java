@@ -15,11 +15,13 @@
  */
 package org.whitesource.agent;
 
+import com.wss.hash.HashAlgorithm;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.ChecksumUtils;
 import org.whitesource.agent.api.HintUtils;
+import org.whitesource.agent.api.model.ChecksumType;
 import org.whitesource.agent.api.model.CopyrightInfo;
 import org.whitesource.agent.api.model.DependencyHintsInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -42,7 +44,7 @@ public class DependencyInfoFactory {
 
     private static final String COPYRIGHT_PATTERN = ".*copyright.*|.*\\(c\\).*";
 
-    private static final String PlATFORM_DEPENDENT_TMP_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator + "WhiteSource-PlatformDependentFiles";
+    private static final String PLATFORM_DEPENDENT_TMP_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator + "WhiteSource-PlatformDependentFiles";
     private static final String COPYRIGHT = "copyright";
     private static final String COPYRIGHT_SYMBOL = "(c)";
     private static final String COPYRIGHT_ASCII_SYMBOL = "©";
@@ -51,6 +53,8 @@ public class DependencyInfoFactory {
 
     private static final String COPYRIGHT_ALPHA_CHAR_REGEX = ".*[a-zA-Z]+.*";
     private static final String CONTAINS_YEAR_REGEX = ".*(\\d\\d\\d\\d)+.*";
+
+    private static final String JAVA_SCRIPT_REGEX = ".*\\.js";
 
     private static final List<Character> MATH_SYMBOLS = Arrays.asList('+', '-', '=', '<', '>', '*', '/', '%', '^');
     private static final char QUESTION_MARK = '?';
@@ -74,7 +78,7 @@ public class DependencyInfoFactory {
     private static final Map<String, String> commentStartEndMap;
 
     static {
-        commentStartEndMap = new HashMap<String, String>();
+        commentStartEndMap = new HashMap<>();
         commentStartEndMap.put("/*", "*/");
         commentStartEndMap.put("/**", "*/");
         commentStartEndMap.put("<!--", "-->");
@@ -102,10 +106,10 @@ public class DependencyInfoFactory {
 
     /* --- Public methods --- */
 
-    public DependencyInfo createDependencyInfo(File basedir, String fileName) {
+    public DependencyInfo createDependencyInfo(File basedir, String filename) {
         DependencyInfo dependency;
         try {
-            File dependencyFile = new File(basedir, fileName);
+            File dependencyFile = new File(basedir, filename);
             String sha1 = ChecksumUtils.calculateSHA1(dependencyFile);
             dependency = new DependencyInfo(sha1);
             dependency.setArtifactId(dependencyFile.getName());
@@ -122,7 +126,18 @@ public class DependencyInfoFactory {
             DependencyHintsInfo hints = HintUtils.getHints(dependencyFile.getPath());
             dependency.setHints(hints);
 
+            // additional sha1s
+            // MD5
+            String md5 = ChecksumUtils.calculateHash(dependencyFile, HashAlgorithm.MD5);
+            dependency.getChecksumMap().put(ChecksumType.MD5_STANDARD, md5);
+
+            // handle JavaScript files
+            if (filename.toLowerCase().matches(JAVA_SCRIPT_REGEX)) {
+
+            }
+
             // other platform SHA1
+
             if (dependencyFile.length() <= MAX_FILE_SIZE) {
                 File otherPlatformFile = null;
                 try {
@@ -147,7 +162,7 @@ public class DependencyInfoFactory {
                 logger.debug("File {} size is too big for scanning other platform sha1, skipping it.", dependencyFile.getName());
             }
         } catch (IOException e) {
-            logger.warn("Failed to create dependency " + fileName + " to dependency list: ", e);
+            logger.warn("Failed to create dependency " + filename + " to dependency list: ", e);
             dependency = null;
         }
         return dependency;
@@ -156,7 +171,7 @@ public class DependencyInfoFactory {
     /* --- Private methods --- */
 
     private Collection<CopyrightInfo> extractCopyrights(File file) {
-        Collection<CopyrightInfo> copyrights = new ArrayList<CopyrightInfo>();
+        Collection<CopyrightInfo> copyrights = new ArrayList<>();
         try {
             boolean commentBlock = false;
             Iterator<String> iterator = FileUtils.readLines(file).iterator();
@@ -353,7 +368,7 @@ public class DependencyInfoFactory {
             byte[] byteArray = FileUtils.readFileToByteArray(originalPlatform);
 
             String fileText = new String(byteArray);
-            File otherPlatformFile = new File(PlATFORM_DEPENDENT_TMP_DIRECTORY, originalPlatform.getName());
+            File otherPlatformFile = new File(PLATFORM_DEPENDENT_TMP_DIRECTORY, originalPlatform.getName());
             if (fileText.contains(CRLF)) {
                 FileUtils.write(otherPlatformFile, fileText.replaceAll(CRLF, NEW_LINE));
             } else if (fileText.contains(NEW_LINE)) {
