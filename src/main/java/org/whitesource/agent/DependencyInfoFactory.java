@@ -15,16 +15,14 @@
  */
 package org.whitesource.agent;
 
-import com.wss.hash.HashAlgorithm;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.api.ChecksumUtils;
-import org.whitesource.agent.api.HintUtils;
 import org.whitesource.agent.api.model.ChecksumType;
 import org.whitesource.agent.api.model.CopyrightInfo;
 import org.whitesource.agent.api.model.DependencyHintsInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.hash.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -44,7 +42,6 @@ public class DependencyInfoFactory {
 
     private static final String COPYRIGHT_PATTERN = ".*copyright.*|.*\\(c\\).*";
 
-    private static final String PLATFORM_DEPENDENT_TMP_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator + "WhiteSource-PlatformDependentFiles";
     private static final String COPYRIGHT = "copyright";
     private static final String COPYRIGHT_SYMBOL = "(c)";
     private static final String COPYRIGHT_ASCII_SYMBOL = "©";
@@ -69,11 +66,6 @@ public class DependencyInfoFactory {
 
     private static final String WHITESPACE = " ";
     private static final String EMPTY_STRING = "";
-
-    private static final int MAX_FILE_SIZE = 10 * 1024 * 1024; // 10mb
-
-    public static final String CRLF = "\r\n";
-    public static final String NEW_LINE = "\n";
 
     private static final Map<String, String> commentStartEndMap;
 
@@ -129,38 +121,30 @@ public class DependencyInfoFactory {
             // additional sha1s
             // MD5
             String md5 = ChecksumUtils.calculateHash(dependencyFile, HashAlgorithm.MD5);
-            dependency.getChecksumMap().put(ChecksumType.MD5_STANDARD, md5);
+            dependency.addChecksum(ChecksumType.MD5, md5);
 
             // handle JavaScript files
             if (filename.toLowerCase().matches(JAVA_SCRIPT_REGEX)) {
+                try {
+                    String headerlessSha1 = new HashCalculator().calculateJavaScriptHeaderlessHash(dependencyFile, HashAlgorithm.SHA1);
+                    dependency.addChecksum(ChecksumType.SHA1_NO_HEADER, headerlessSha1);
+                } catch (Exception e) {
+                    logger.debug("Error calculating JavaScript headerless SHA-1");
+                }
 
+                try {
+                    HashCalculationResult hashCalculationResult = new HashCalculator().calculateJavaScriptHeaderlessSuperHash(dependencyFile);
+                    dependency.addChecksum(ChecksumType.SHA1_NO_HEADER_SUPER_HASH, hashCalculationResult.getFullHash());
+                } catch (Exception e) {
+                    logger.debug("Error calculating JavaScript headerless Super Hash");
+                }
             }
 
             // other platform SHA1
+            ChecksumUtils.calculateOtherPlatformSha1(dependency, dependencyFile);
 
-            if (dependencyFile.length() <= MAX_FILE_SIZE) {
-                File otherPlatformFile = null;
-                try {
-                    otherPlatformFile = createOtherPlatformFile(dependencyFile);
-                    if (otherPlatformFile != null) {
-                        String otherPlatformSha1 = ChecksumUtils.calculateSHA1(otherPlatformFile);
-                        dependency.setOtherPlatformSha1(otherPlatformSha1);
-                    }
-                } catch (Exception e) {
-                    logger.warn("Unable to create other platform file for {}: {}", dependencyFile.getPath(), e.getMessage());
-                } finally {
-                    deleteFile(otherPlatformFile);
-                }
-
-                // calculate sha1 for file header and footer (for partial matching)
-                if (partialSha1Match) {
-                    ChecksumUtils.calculateHeaderAndFooterSha1(dependencyFile, dependency);
-                }
-
-                // NOTICE: removed finding license & copyrights in headers
-            } else {
-                logger.debug("File {} size is too big for scanning other platform sha1, skipping it.", dependencyFile.getName());
-            }
+            // super hash
+            ChecksumUtils.calculateSuperHash(dependency, dependencyFile);
         } catch (IOException e) {
             logger.warn("Failed to create dependency " + filename + " to dependency list: ", e);
             dependency = null;
@@ -359,27 +343,6 @@ public class DependencyInfoFactory {
             }
         }
         return false;
-    }
-
-    private File createOtherPlatformFile(File originalPlatform) throws IOException {
-        // calculate other platform sha1 for files larger than MAX_FILE_SIZE
-        long length = originalPlatform.length();
-        if (length < MAX_FILE_SIZE && length < Runtime.getRuntime().freeMemory()) {
-            byte[] byteArray = FileUtils.readFileToByteArray(originalPlatform);
-
-            String fileText = new String(byteArray);
-            File otherPlatformFile = new File(PLATFORM_DEPENDENT_TMP_DIRECTORY, originalPlatform.getName());
-            if (fileText.contains(CRLF)) {
-                FileUtils.write(otherPlatformFile, fileText.replaceAll(CRLF, NEW_LINE));
-            } else if (fileText.contains(NEW_LINE)) {
-                FileUtils.write(otherPlatformFile, fileText.replaceAll(NEW_LINE, CRLF));
-            }
-
-            if (otherPlatformFile.exists()) {
-                return otherPlatformFile;
-            }
-        }
-        return null;
     }
 
     // check if lines with (c) are actual copyright references of simple code lines
