@@ -125,18 +125,9 @@ public class DependencyInfoFactory {
 
             // handle JavaScript files
             if (filename.toLowerCase().matches(JAVA_SCRIPT_REGEX)) {
-                try {
-                    String headerlessSha1 = new HashCalculator().calculateJavaScriptHeaderlessHash(dependencyFile, HashAlgorithm.SHA1);
-                    dependency.addChecksum(ChecksumType.SHA1_NO_HEADER, headerlessSha1);
-                } catch (Exception e) {
-                    logger.debug("Error calculating JavaScript headerless SHA-1");
-                }
-
-                try {
-                    HashCalculationResult hashCalculationResult = new HashCalculator().calculateJavaScriptHeaderlessSuperHash(dependencyFile);
-                    dependency.addChecksum(ChecksumType.SHA1_NO_HEADER_SUPER_HASH, hashCalculationResult.getFullHash());
-                } catch (Exception e) {
-                    logger.debug("Error calculating JavaScript headerless Super Hash");
+                Map<ChecksumType, String> javaScriptChecksums = new HashCalculator().calculateJavaScriptHashes(dependencyFile);
+                for (Map.Entry<ChecksumType, String> entry : javaScriptChecksums.entrySet()) {
+                    dependency.addChecksum(entry.getKey(), entry.getValue());
                 }
             }
 
