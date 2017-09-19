@@ -1,14 +1,15 @@
 package org.whitesource.agent.archive;
 
 import com.github.junrar.testutil.ExtractArchive;
+import javafx.util.Pair;
 import net.lingala.zip4j.core.ZipFile;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveInputStream;
 import org.apache.commons.compress.compressors.lzma.LZMACompressorInputStream;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.DirectoryScanner;
 import org.codehaus.plexus.archiver.tar.TarBZip2UnArchiver;
 import org.codehaus.plexus.archiver.tar.TarGZipUnArchiver;
 import org.codehaus.plexus.archiver.tar.TarUnArchiver;
@@ -20,7 +21,7 @@ import org.redline_rpm.header.Format;
 import org.redline_rpm.header.Header;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.SingleFileScanner;
+import org.whitesource.agent.utils.FilesScanner;
 
 import java.io.*;
 import java.nio.channels.Channels;
@@ -28,7 +29,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * The class supports recursive deCompression of compressed files (Java, Python & Ruby types).
@@ -41,6 +43,8 @@ public class ArchiveExtractor {
 
     private static final Logger logger = LoggerFactory.getLogger(ArchiveExtractor.class);
     public static final int LONG_BOUND = 100000;
+    public static final String DEPTH = "_depth_";
+    public static final String DEPTH_REGEX = DEPTH + "[0-9]";
 
     private final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
     private final String WHITESOURCE_TEMP_FOLDER = "WhiteSource-ArchiveExtractor";
@@ -98,11 +102,16 @@ public class ArchiveExtractor {
 
     private final String[] archiveIncludesPattern;
     private final String[] archiveExcludesPattern;
-
     private String randomString;
-    private String tempFolder;
+    private String tempFolderNoDepth;
+    private boolean fastUnpack = false;
 
     /* --- Constructors --- */
+
+    public ArchiveExtractor(String[] archiveIncludes, String[] archiveExcludes, boolean fastUnpack) {
+        this(archiveIncludes,archiveExcludes);
+        this.fastUnpack = fastUnpack;
+    }
 
     public ArchiveExtractor(String[] archiveIncludes, String[] archiveExcludes) {
         if (archiveIncludes.length > 0 && StringUtils.isNotBlank(archiveIncludes[0])) {
@@ -114,12 +123,12 @@ public class ArchiveExtractor {
         this.archiveExcludesPattern = archiveExcludes;
     }
 
-    private String getDestinationDirectory(String scannerBaseDir) {
+    private String getTempFolder(String scannerBaseDir) {
         String creationDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-        this.tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + WHITESOURCE_TEMP_FOLDER + File.separator + creationDate :
+        String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + WHITESOURCE_TEMP_FOLDER + File.separator + creationDate :
                 JAVA_TEMP_DIR + File.separator + WHITESOURCE_TEMP_FOLDER + File.separator + creationDate;
 
-        String destDirectory = tempFolder + "_" +this.randomString ;
+        String destDirectory = tempFolder + "_" + this.randomString;
 
         int separatorIndex = scannerBaseDir.lastIndexOf(File.separator);
         if (separatorIndex != -1) {
@@ -132,10 +141,6 @@ public class ArchiveExtractor {
             }
         }
         return destDirectory;
-    }
-
-    public String getRandomString() {
-        return this.randomString;
     }
 
     /* --- Public methods --- */
@@ -154,27 +159,47 @@ public class ArchiveExtractor {
      */
     public String extractArchives(String scannerBaseDir, int archiveExtractionDepth) {
         this.randomString = String.valueOf(ThreadLocalRandom.current().nextLong(0, LONG_BOUND));
-        String baseDestinationDirectory = getDestinationDirectory(scannerBaseDir);
-        String destDirectory = baseDestinationDirectory;
+        this.tempFolderNoDepth = getTempFolder(scannerBaseDir);
         logger.debug("Base directory is {}, extraction depth is set to {}", scannerBaseDir, archiveExtractionDepth);
 
-        if (extractArchive(baseDestinationDirectory, scannerBaseDir, destDirectory, archiveExtractionDepth, 0)) {
-            return destDirectory;
+        Map<String, Map<String, String>> allFiles = new HashMap<>();
+        // Extract again if needed according archiveExtractionDepth parameter
+        for (int curLevel = 0; curLevel < archiveExtractionDepth; curLevel++) {
+            String folderToScan;
+            String folderToExtract;
+            if (curLevel == 0) {
+                folderToScan = scannerBaseDir;
+            } else {
+                folderToScan = getDepthFolder(curLevel-1);
+            }
+            folderToExtract = getDepthFolder(curLevel);
+
+            String[] fileNames = getSearchedFileNames(folderToScan);
+            if (fileNames.length > 0) {
+                Pair<String,Collection<String>> filesFound = new Pair<>(folderToScan,Arrays.stream(fileNames).collect(Collectors.toList()));
+                Map<String, String> foundFiles;
+                if (fastUnpack){
+                    foundFiles = handleArchiveFilesFast(folderToExtract, curLevel, filesFound);
+                }
+                else {
+                    foundFiles = handleArchiveFiles(folderToExtract, curLevel, filesFound);
+                }
+                allFiles.put(String.valueOf(curLevel), foundFiles);
+            } else {
+                break;
+            }
+        }
+
+        if (!allFiles.isEmpty()) {
+            return new File(this.tempFolderNoDepth).getParent();
         } else {
             // if unable to extract, return null
             return null;
         }
     }
 
-    public void deleteArchiveDirectory() {
-        File directory = new File(this.tempFolder);
-        if (directory.exists()) {
-            try {
-                FileUtils.deleteDirectory(directory);
-            } catch (IOException e) {
-                logger.warn("Error deleting archive directory", e);
-            }
-        }
+    private String getDepthFolder(int depth) {
+        return this.tempFolderNoDepth + DEPTH + depth;
     }
 
     /* --- Private methods --- */
@@ -193,101 +218,135 @@ public class ArchiveExtractor {
         return archiveIncludesPattern;
     }
 
-    private boolean extractArchive(String baseDestinationDirectory, String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel) {
-        boolean foundArchives = false;
-        File file = new File(scannerBaseDir);
+    private String[] getSearchedFileNames(String folderToScan) {
+        String[] foundFiles = null;
+        File file = new File(folderToScan);
         if (file.exists()) {
+            FilesScanner filesScanner = new FilesScanner();
             if (file.isDirectory()) {
                 // scan directory
-                DirectoryScanner scanner = new DirectoryScanner();
-                if (curLevel == 0) {
-                    scanner.setBasedir(scannerBaseDir);
-                }
-                else{
-                    scanner.setBasedir(baseDestinationDirectory);
-                }
-                scanner.setIncludes(archiveIncludesPattern);
-                scanner.setExcludes(archiveExcludesPattern);
-                scanner.setCaseSensitive(false);
-                scanner.scan();
-
-                String[] fileNames = scanner.getIncludedFiles();
-                if (fileNames.length > 0) {
-                    foundArchives = handleArchiveFiles(baseDestinationDirectory, scannerBaseDir, destDirectory, archiveExtractionDepth, curLevel, fileNames);
-                }
+                foundFiles = filesScanner.getFileNames(folderToScan, archiveIncludesPattern, archiveExcludesPattern, false, false);
             } else {
-                // handle file passed in -d parameter
-                SingleFileScanner scanner = new SingleFileScanner();
-                scanner.setIncludes(archiveIncludesPattern);
-                scanner.setExcludes(archiveExcludesPattern);
-                scanner.setCaseSensitive(false);
-                // check if file matches archive GLOB patterns
-                boolean included = scanner.isIncluded(file);
+                //// handle file passed in -d parameter
+                //// check if file matches archive GLOB patterns
+                boolean included = filesScanner.isIncluded(file, archiveIncludesPattern, archiveExcludesPattern, false, false);
                 if (included) {
-                    foundArchives = handleArchiveFiles(baseDestinationDirectory, file.getParent(), destDirectory, archiveExtractionDepth, curLevel, new String[] { file.getName() });
+                    foundFiles = new String[]{file.getParent()};
                 }
             }
+            filesScanner = null;
         }
-        return foundArchives;
+        if (foundFiles == null) {
+            return new String[0];
+        } else {
+            return foundFiles;
+        }
     }
 
-    private boolean handleArchiveFiles(String baseDestinationDirectory, String scannerBaseDir, String destDirectory, int archiveExtractionDepth, int curLevel, String[] fileNames) {
-        boolean foundArchives = false;
-        for (String fileName : fileNames) {
-            String innerDir = baseDestinationDirectory + File.separator + new File(fileName).getParent();
-            String archiveFile = scannerBaseDir + File.separator + fileName;
-            if (curLevel != 0)
-                archiveFile = baseDestinationDirectory + File.separator + fileName;
-            String lowerCaseFileName = fileName.toLowerCase();
-            if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
-                foundArchives |= unZip(lowerCaseFileName, innerDir, archiveFile);
-            } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
-                foundArchives |= unTar(lowerCaseFileName, innerDir, archiveFile);
-                innerDir = innerDir + File.separator + RUBY_DATA_FILE;
-                foundArchives |= unTar(RUBY_DATA_FILE, innerDir + this.randomString, innerDir);
-                innerDir = innerDir + this.randomString;
-            } else if (lowerCaseFileName.matches(TAR_EXTENSION_PATTERN)) {
-                foundArchives |= unTar(lowerCaseFileName, innerDir, archiveFile);
-//                        innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
-            } else if (lowerCaseFileName.matches(RPM_EXTENSION_PATTERN)) {
-                foundArchives |= handleRpmFile(innerDir, archiveFile);
-            } else if (lowerCaseFileName.matches(RAR_EXTENSION_PATTERN)) {
-                File destDir = new File(innerDir);
-                if (!destDir.exists()) {
-                    destDir.mkdirs();
-                }
-                ExtractArchive.extractArchive(archiveFile, innerDir);
-                foundArchives = true;
-            } else {
-                logger.warn("Error: {} is unsupported archive type", fileName);
-            }
+    private Map<String,String> handleArchiveFiles(String baseFolderToExtract, int curLevel,Pair<String, Collection<String>> fileNames) {
+        Map<String,String> founded = new HashMap<>();
+        for (String fileName : fileNames.getValue()) {
 
-            // Extract again if needed according archiveExtractionDepth parameter
-            if (curLevel < archiveExtractionDepth) {
-                if (curLevel != 0) {
-                    try {
-                        FileUtils.forceDelete(new File(Paths.get(baseDestinationDirectory, lowerCaseFileName).toString()));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                foundArchives |= extractArchive(baseDestinationDirectory, destDirectory, innerDir, archiveExtractionDepth, curLevel + 1);
+            String archivePath = Paths.get(fileNames.getKey(), fileName).toString();
+            String unpackFolder = Paths.get(baseFolderToExtract,FilenameUtils.removeExtension(fileName)).toString();
+            DataToUnpack dataToUnpack = new DataToUnpack( archivePath,unpackFolder);
+
+            DataToUnpack foundArchive = getUnpackedResult(dataToUnpack);
+            if (foundArchive!= null) {
+                founded.put(foundArchive.getFullArchivePath(), foundArchive.getFolderToExtract());
             }
         }
-        return foundArchives;
+        return founded;
+    }
+
+    private Map<String,String> handleArchiveFilesFast(String baseFolderToExtract, int curLevel,Pair<String, Collection<String>> fileNames) {
+        Collection<DataToUnpack> dataToUnpack = fileNames.getValue().stream().map(fileName -> {
+            String archivePath = Paths.get(fileNames.getKey(), fileName).toString();
+            String unpackFolder = Paths.get(baseFolderToExtract,FilenameUtils.removeExtension(fileName)).toString();
+            return new DataToUnpack( archivePath,unpackFolder);
+        }).collect(Collectors.toList());
+
+        return processCollections(dataToUnpack);
+    }
+
+    public Map<String,String> processCollections(Collection<DataToUnpack> unitsOfWork) {
+        int numberOfThreads = Runtime.getRuntime().availableProcessors();
+        ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
+        List<Future<DataToUnpack>> handles = new ArrayList<>();
+
+        List<Callable<DataToUnpack>> callableList = new ArrayList<>();
+        unitsOfWork.stream().forEach(unitOfWork -> callableList.add(() -> getUnpackedResult(unitOfWork)));
+
+        for (Callable<DataToUnpack> callable : callableList) {
+            Future<DataToUnpack> handle = executorService.submit(callable);
+            handles.add(handle);
+        }
+
+        Map<String, String> results = new HashMap<>();
+        for (Future<DataToUnpack> h : handles) {
+            try {
+                DataToUnpack dataToUnpack = h.get();
+                results.put(dataToUnpack.getFullArchivePath(), dataToUnpack.getFolderToExtract());
+            } catch (InterruptedException e) {
+                logger.warn("Error: {}", e);
+            } catch (ExecutionException e) {
+                logger.warn("Error: {}", e);
+            }
+        }
+
+        executorService.shutdownNow();
+        return results;
+    }
+
+    private DataToUnpack getUnpackedResult(DataToUnpack dataToUnpack) {
+        boolean foundArchive = false;
+        String innerDir = dataToUnpack.folderToExtract ;
+        String lowerCaseFileName = dataToUnpack.fullArchivePath.toLowerCase();
+
+        if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
+            foundArchive = unZip(innerDir,dataToUnpack.fullArchivePath);
+        } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
+            foundArchive = unTar(lowerCaseFileName, innerDir, dataToUnpack.fullArchivePath);
+            innerDir = innerDir + File.separator + RUBY_DATA_FILE;
+            foundArchive = unTar(RUBY_DATA_FILE, innerDir + this.randomString, innerDir);
+            innerDir = innerDir + this.randomString;
+        } else if (lowerCaseFileName.matches(TAR_EXTENSION_PATTERN)) {
+            foundArchive = unTar(lowerCaseFileName, innerDir, dataToUnpack.fullArchivePath);
+//                        innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
+        } else if (lowerCaseFileName.matches(RPM_EXTENSION_PATTERN)) {
+            foundArchive = handleRpmFile(innerDir, dataToUnpack.fullArchivePath);
+        } else if (lowerCaseFileName.matches(RAR_EXTENSION_PATTERN)) {
+            File destDir = new File(innerDir);
+            if (!destDir.exists()) {
+                destDir.mkdirs();
+            }
+            ExtractArchive.extractArchive(dataToUnpack.fullArchivePath, innerDir);
+            foundArchive = true;
+        } else {
+            logger.warn("Error: {} is unsupported archive type", dataToUnpack.fullArchivePath);
+        }
+        if (foundArchive) {
+            DataToUnpack resultArchive = new DataToUnpack(lowerCaseFileName, innerDir);
+            return resultArchive;
+        } else
+            return null;
     }
 
     // Open and extract data from zip pattern files
-    private boolean unZip(String fileName, String innerDir, String archiveFile) {
+    private boolean unZip(String innerDir, String archiveFile) {
         boolean success = true;
+        ZipFile zipFile;
         try {
-            ZipFile zipFile = new ZipFile(archiveFile);
+            zipFile = new ZipFile(archiveFile);
             zipFile.extractAll(innerDir);
         } catch (Exception e) {
             success = false;
-            logger.warn("Error extracting file {}: {}", fileName, e.getMessage());
-            logger.debug("Error extracting file {}: {}", fileName, e.getStackTrace());
+            logger.warn("Error extracting file {}: {}", archiveFile, e.getMessage());
+            logger.debug("Error extracting file {}: {}", archiveFile, e.getStackTrace());
+        }finally {
+            zipFile = null;
         }
+
         return success;
     }
 
@@ -381,7 +440,7 @@ public class ArchiveExtractor {
                         unTar(file.getName(), innerExtractionDir, file.getPath());
                     } else if (lowercaseName.matches(ZIP_EXTENSION_PATTERN)) {
                         innerExtractionDir = innerDir + File.separator + entryName + this.randomString;
-                        unZip(file.getName(), innerExtractionDir, file.getPath());
+                        unZip(innerExtractionDir, file.getPath());
                     }
                     // close
                     closeResource(cpioEntryOutputStream);
@@ -426,4 +485,25 @@ public class ArchiveExtractor {
         return name;
     }
 
+    /* --- Nested Class --- */
+
+    private class DataToUnpack {
+        /* --- Private members --- */
+        private final String fullArchivePath;
+        private final String folderToExtract;
+
+        /* --- Constructor --- */
+        public DataToUnpack(String fullArchivePath, String folderToExtract) {
+            this.fullArchivePath = fullArchivePath;
+            this.folderToExtract = folderToExtract;
+        }
+
+        /* --- Getters --- */
+        public String getFullArchivePath() {
+            return fullArchivePath;
+        }
+        public String getFolderToExtract() {
+            return folderToExtract;
+        }
+    }
 }

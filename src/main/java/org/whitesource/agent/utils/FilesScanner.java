@@ -22,7 +22,7 @@ import org.whitesource.agent.SingleFileScanner;
 import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 
 import java.io.File;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -68,6 +68,8 @@ public class FilesScanner {
         });
         return resolvedFolders;
     }
+
+   /* --- Private methods --- */
 
     private Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
         Map pathToIncludedFilesMap = new HashMap();

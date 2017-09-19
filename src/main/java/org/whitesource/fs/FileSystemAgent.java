@@ -126,6 +126,7 @@ public class FileSystemAgent extends CommandLineAgent {
         final int archiveExtractionDepth = getIntProperty(ARCHIVE_EXTRACTION_DEPTH_KEY, DEFAULT_ARCHIVE_DEPTH);
         final String[] archiveIncludes = config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         final String[] archiveExcludes = config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        final boolean archiveFastUnpack = getBooleanProperty(ARCHIVE_FAST_UNPACK_KEY, false);
         boolean followSymlinks = getBooleanProperty(FOLLOW_SYMBOLIC_LINKS, true);
         // check scan partial sha1s (false by default)
         boolean partialSha1Match = getBooleanProperty(PARTIAL_SHA1_MATCH_KEY, false);
@@ -154,6 +155,6 @@ public class FileSystemAgent extends CommandLineAgent {
 
         boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
         return new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createDependencies(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive,
-                archiveExtractionDepth, archiveIncludes, archiveExcludes, followSymlinks, excludedCopyrights, partialSha1Match);
+                archiveExtractionDepth, archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match);
     }
 }

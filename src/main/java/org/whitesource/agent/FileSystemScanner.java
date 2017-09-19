@@ -1,5 +1,6 @@
 package org.whitesource.agent;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,35 +30,29 @@ public class FileSystemScanner {
 
     private static final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
 
-    private static final List<String> progressAnimation = Arrays.asList("|", "/", "-", "\\");
-    private static final int ANIMATION_FRAMES = progressAnimation.size();
     private static final String EMPTY_STRING = "";
     public static final int MAX_EXTRACTION_DEPTH = 7;
-    private static int animationIndex = 0;
-    private static String BACK_SLASH = "\\";
-    private static String FORWARD_SLASH = "/";
     private static String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
+    private final boolean showProgressBar;
 
-    private final DependencyResolutionService dependencyResolutionService;
-    private final FilesScanner filesScanner;
+    private DependencyResolutionService dependencyResolutionService;
 
     /* --- Members --- */
 
-    private boolean showProgressBar;
+
 
     /* --- Constructors --- */
 
     public FileSystemScanner(boolean showProgressBar, DependencyResolutionService dependencyResolutionService) {
         this.showProgressBar = showProgressBar;
         this.dependencyResolutionService = dependencyResolutionService;
-        filesScanner = new FilesScanner();
     }
 
     /* --- Public methods --- */
 
     public List<DependencyInfo> createDependencies(List<String> scannerBaseDirs, ScmConnector scmConnector,
                                                    String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
-                                                   String[] archiveIncludes, String[] archiveExcludes, boolean followSymlinks,
+                                                   String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
                                                    Collection<String> excludedCopyrights, boolean partialSha1Match) {
         // get canonical paths
         Set<String> pathsToScan = getCanonicalPaths(scannerBaseDirs);
@@ -68,17 +63,17 @@ public class FileSystemScanner {
         // scan directories
         int totalFiles = 0;
 
+        String unpackDirectory = null;
         // go over all base directories, look for archives
         Map<String, String> archiveToBaseDirMap = new HashMap<>();
-        ArchiveExtractor archiveExtractor = null;
         if (archiveExtractionDepth > 0) {
-            archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes);
+            ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes ,archiveFastUnpack);
             logger.info("Starting Archive Extraction (may take a few minutes)");
             for (String scannerBaseDir : new LinkedHashSet<>(pathsToScan)) {
-                String destDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth);
-                if (destDirectory != null) {
-                    archiveToBaseDirMap.put(destDirectory, scannerBaseDir);
-                    pathsToScan.add(destDirectory);
+                unpackDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth);
+                if (unpackDirectory != null) {
+                    archiveToBaseDirMap.put(unpackDirectory, new File(scannerBaseDir).getParent());
+                    pathsToScan.add(unpackDirectory);
                 }
             }
         }
@@ -111,6 +106,7 @@ public class FileSystemScanner {
             // change the original excludes with the merged values
             excludes = new String[allExcludes.size()];
             excludes = allExcludes.toArray(excludes);
+            dependencyResolutionService = null;
         }
 
         String[] excludesExtended = excludeFileSystemAgent(excludes);
@@ -119,8 +115,8 @@ public class FileSystemScanner {
         totalFiles += filesCount;
         logger.info(MessageFormat.format("Total Files Found: {0}", totalFiles));
 
-        DependencyInfoFactory factory = new DependencyInfoFactory(excludedCopyrights, partialSha1Match);
-        Collection<DependencyInfo> filesDependencies = createDependencies(scmConnector, totalFiles, fileMap, factory);
+        DependencyCalculator dependencyCalculator = new DependencyCalculator(showProgressBar);
+        Collection<DependencyInfo> filesDependencies = dependencyCalculator.createDependencies(scmConnector, totalFiles, fileMap, excludedCopyrights, partialSha1Match);
         allDependencies.addAll(filesDependencies);
 
         // replace temp folder name with base dir
@@ -130,8 +126,9 @@ public class FileSystemScanner {
                 logger.debug("Dependency {} has no system path", dependencyInfo.getFilename());
             } else {
                 for (String key : archiveToBaseDirMap.keySet()) {
-                    if (systemPath.contains(key) && archiveExtractor != null) {
-                        dependencyInfo.setSystemPath(systemPath.replace(key, archiveToBaseDirMap.get(key)).replaceAll(archiveExtractor.getRandomString(), EMPTY_STRING));
+                    if (systemPath.contains(key) && unpackDirectory != null) {
+                        String newSystemPath = systemPath.replace(key, archiveToBaseDirMap.get(key)).replaceAll(ArchiveExtractor.DEPTH_REGEX,"");
+                        dependencyInfo.setSystemPath(newSystemPath);
                         break;
                     }
                 }
@@ -139,8 +136,15 @@ public class FileSystemScanner {
         }
 
         // delete all archive temp folders
-        if (archiveExtractor != null) {
-            archiveExtractor.deleteArchiveDirectory();
+        if (unpackDirectory != null) {
+           File directory = new File(unpackDirectory);
+           if (directory.exists()) {
+               try {
+                   FileUtils.deleteDirectory(directory);
+               } catch (IOException e) {
+                   logger.warn("Error deleting archive directory", e);
+               }
+           }
         }
 
         // delete scm clone directory
@@ -168,37 +172,14 @@ public class FileSystemScanner {
         return pathsToScan;
     }
 
-    private Collection<DependencyInfo> createDependencies(ScmConnector scmConnector, int totalFiles, Map<File, Collection<String>> fileMap, DependencyInfoFactory factory) {
-        List<DependencyInfo> allDependencies = new ArrayList<>();
-        if (showProgressBar) {
-            displayProgress(0, totalFiles);
-        }
-        int index = 1;
-        for (Map.Entry<File, Collection<String>> entry : fileMap.entrySet()) {
-            for (String fileName : entry.getValue()) {
-                DependencyInfo originalDependencyInfo = factory.createDependencyInfo(entry.getKey(), fileName);
-                if (originalDependencyInfo != null) {
-                    if (scmConnector != null) {
-                        originalDependencyInfo.setSystemPath(fileName.replace(BACK_SLASH, FORWARD_SLASH));
-                    }
-                    allDependencies.add(originalDependencyInfo);
-                }
 
-                // print progress
-                if (showProgressBar) {
-                    displayProgress(index, totalFiles);
-                }
-                index++;
-            }
-        }
-        return allDependencies;
-    }
 
     private Map<File, Collection<String>> fillFilesMap(Collection<String> pathsToScan, String[] includes, String[] excludesExtended, boolean followSymlinks, boolean globCaseSensitive) {
         Map<File, Collection<String>> fileMap = new HashMap<>();
         for (String scannerBaseDir : pathsToScan) {
             File file = new File(scannerBaseDir);
             if (file.exists()) {
+                FilesScanner filesScanner = new FilesScanner();
                 if (file.isDirectory()) {
                     File basedir = new File(scannerBaseDir);
                     String[] fileNames = filesScanner.getFileNames(scannerBaseDir, includes, excludesExtended, followSymlinks, globCaseSensitive);
@@ -229,32 +210,7 @@ public class FileSystemScanner {
         dependency.getChildren().forEach(dependencyInfo -> increaseCount(dependencyInfo, totalDependencies));
     }
 
-    private void displayProgress(int index, int totalFiles) {
-        StringBuilder sb = new StringBuilder("[INFO] ");
 
-        // draw each animation for 4 frames
-        int actualAnimationIndex = animationIndex % (ANIMATION_FRAMES * 4);
-        sb.append(progressAnimation.get((actualAnimationIndex / 4) % ANIMATION_FRAMES));
-        animationIndex++;
-
-        // draw progress bar
-        sb.append(" [");
-        double percentage = ((double) index / totalFiles) * 100;
-        int progressionBlocks = (int) (percentage / 3);
-        for (int i = 0; i < progressionBlocks; i++) {
-            sb.append("#");
-        }
-        for (int i = progressionBlocks; i < 33; i++) {
-            sb.append(" ");
-        }
-        sb.append("] {0}% - {1} of {2} files\r");
-        System.out.print(MessageFormat.format(sb.toString(), (int) percentage, index, totalFiles));
-
-        if (index == totalFiles) {
-            // clear progress animation
-            System.out.print("                                                                                  \r");
-        }
-    }
 
     private void validateParams(int archiveExtractionDepth, String[] includes) {
         boolean isShutDown = false;
