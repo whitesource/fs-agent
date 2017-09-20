@@ -66,6 +66,9 @@ public class CommandLineArgs {
     @Parameter(names = "-proxy.pass", description = "Proxy Password")
     String proxyPass = null;
 
+    @Parameter(names = "-archiveFastUnpack", description = "Fast unpack")
+    String archiveFastUnpack = "false";
+
     /* --- Public methods --- */
 
     public String getConfigFilePath() {
