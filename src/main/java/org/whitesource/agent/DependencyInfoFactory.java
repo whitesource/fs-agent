@@ -22,7 +22,10 @@ import org.whitesource.agent.api.model.ChecksumType;
 import org.whitesource.agent.api.model.CopyrightInfo;
 import org.whitesource.agent.api.model.DependencyHintsInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.agent.hash.*;
+import org.whitesource.agent.hash.ChecksumUtils;
+import org.whitesource.agent.hash.HashAlgorithm;
+import org.whitesource.agent.hash.HashCalculator;
+import org.whitesource.agent.hash.HintUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -83,6 +86,8 @@ public class DependencyInfoFactory {
 
     private final Collection<String> excludedCopyrights;
     private final boolean partialSha1Match;
+    private boolean calculateHints;
+    private boolean calculateMd5;
 
     /* --- Constructors --- */
 
@@ -94,6 +99,12 @@ public class DependencyInfoFactory {
     public DependencyInfoFactory(Collection<String> excludedCopyrights, boolean partialSha1Match) {
         this.excludedCopyrights = excludedCopyrights;
         this.partialSha1Match = partialSha1Match;
+    }
+
+    public DependencyInfoFactory(Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
+        this(excludedCopyrights, partialSha1Match);
+        this.calculateHints = calculateHints;
+        this.calculateMd5 = calculateMd5;
     }
 
     /* --- Public methods --- */
@@ -115,13 +126,17 @@ public class DependencyInfoFactory {
             }
 
             // populate hints
-            DependencyHintsInfo hints = HintUtils.getHints(dependencyFile.getPath());
-            dependency.setHints(hints);
+            if (calculateHints) {
+                DependencyHintsInfo hints = HintUtils.getHints(dependencyFile.getPath());
+                dependency.setHints(hints);
+            }
 
             // additional sha1s
             // MD5
-            String md5 = ChecksumUtils.calculateHash(dependencyFile, HashAlgorithm.MD5);
-            dependency.addChecksum(ChecksumType.MD5, md5);
+            if (calculateMd5) {
+                String md5 = ChecksumUtils.calculateHash(dependencyFile, HashAlgorithm.MD5);
+                dependency.addChecksum(ChecksumType.MD5, md5);
+            }
 
             // handle JavaScript files
             if (filename.toLowerCase().matches(JAVA_SCRIPT_REGEX)) {
