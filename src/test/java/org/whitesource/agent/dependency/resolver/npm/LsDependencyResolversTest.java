@@ -1,9 +1,8 @@
-package org.agent.dependencyResolver.npm;
+package org.whitesource.agent.dependency.resolver.npm;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.dependency.resolver.bower.BowerLsJsonDependencyCollector;
 
 import java.util.Collection;
