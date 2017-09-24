@@ -39,6 +39,7 @@ public final class ConfigPropertyKeys {
     public static final String ARCHIVE_EXTRACTION_DEPTH_KEY = "archiveExtractionDepth";
     public static final String ARCHIVE_INCLUDES_PATTERN_KEY = "archiveIncludes";
     public static final String ARCHIVE_EXCLUDES_PATTERN_KEY = "archiveExcludes";
+    public static final String ARCHIVE_FAST_UNPACK_KEY = "archiveFastUnpack";
     public static final String CASE_SENSITIVE_GLOB_PROPERTY_KEY = "case.sensitive.glob";
     public static final String PROXY_HOST_PROPERTY_KEY = "proxy.host";
     public static final String PROXY_PORT_PROPERTY_KEY = "proxy.port";

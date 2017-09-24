@@ -19,7 +19,7 @@ public class ArchiveExtractorTest {
         String unzipFolder = getUnzippedFolderFromTest();
         Assert.assertNotNull(unzipFolder);
 
-        File fileDepth3 = new File(Paths.get(unzipFolder, "test\\resources\\node_modules\\accepts\\index.js").toString());
+        File fileDepth3 = new File(Paths.get(unzipFolder, "src_depth_2\\test\\resources\\dist\\node_modules\\node_modules\\accepts\\accepts\\index.js").toString());
         Assert.assertTrue(fileDepth3.exists());
 
         for (Integer i = 0; i < 10; i++) {

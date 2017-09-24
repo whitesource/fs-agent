@@ -59,6 +59,7 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
     /* --- Members --- */
 
     protected final boolean includeDevDependencies;
+    private boolean showNpmLsError;
 
     /* --- Constructors --- */
 
@@ -95,7 +96,10 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
         }
 
         if (dependencies.isEmpty()) {
-            logger.warn("Failed getting dependencies after running '{}' Please run 'npm install' on the folder {}", getLsCommandParams(), rootDirectory);
+            if (!showNpmLsError) {
+                logger.info("Failed getting dependencies after running '{}' Please run 'npm install' on the folder {}", getLsCommandParams(), rootDirectory);
+                showNpmLsError = true;
+            }
         }
         return dependencies;
     }
