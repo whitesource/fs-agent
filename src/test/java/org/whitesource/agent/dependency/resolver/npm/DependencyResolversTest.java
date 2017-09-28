@@ -1,15 +1,16 @@
-package org.agent.dependencyResolver.npm;
-
-import java.util.*;
-import java.util.stream.Collectors;
+package org.whitesource.agent.dependency.resolver.npm;
 
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * @author eugen.horovitz

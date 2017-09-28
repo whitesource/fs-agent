@@ -1,4 +1,4 @@
-package org.whitesource.agent.dependencyResolver.nuget;
+package org.whitesource.agent.dependency.resolver.nuget;
 
 import org.junit.Assert;
 import org.junit.Test;

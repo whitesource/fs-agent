@@ -1,4 +1,4 @@
-package org.agent.dependencyResolver.npm;
+package org.whitesource.agent.dependency.resolver.npm;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -12,7 +12,6 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 import org.whitesource.agent.utils.FilesScanner;
-import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.fs.FileSystemAgent;
 import org.whitesource.fs.Main;
 import org.whitesource.fs.StatusCode;

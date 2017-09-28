@@ -1,9 +1,8 @@
-package org.agent.archive;
+package org.whitesource.agent.archive;
 
 import javafx.util.Pair;
 import org.junit.Assert;
 import org.junit.Test;
-import org.whitesource.agent.archive.ArchiveExtractor;
 
 import java.io.File;
 import java.io.IOException;

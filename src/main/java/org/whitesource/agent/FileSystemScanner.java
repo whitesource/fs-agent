@@ -54,6 +54,14 @@ public class FileSystemScanner {
                                                    String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                    String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
                                                    Collection<String> excludedCopyrights, boolean partialSha1Match) {
+        return createDependencies(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
+                archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match, false, false);
+    }
+
+    public List<DependencyInfo> createDependencies(List<String> scannerBaseDirs, ScmConnector scmConnector,
+                                                   String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
+                                                   String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
+                                                   Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
         // get canonical paths
         Set<String> pathsToScan = getCanonicalPaths(scannerBaseDirs);
 
@@ -116,7 +124,8 @@ public class FileSystemScanner {
         logger.info(MessageFormat.format("Total Files Found: {0}", totalFiles));
 
         DependencyCalculator dependencyCalculator = new DependencyCalculator(showProgressBar);
-        Collection<DependencyInfo> filesDependencies = dependencyCalculator.createDependencies(scmConnector, totalFiles, fileMap, excludedCopyrights, partialSha1Match);
+        Collection<DependencyInfo> filesDependencies = dependencyCalculator.createDependencies(
+                scmConnector, totalFiles, fileMap, excludedCopyrights, partialSha1Match, calculateHints, calculateMd5);
         allDependencies.addAll(filesDependencies);
 
         // replace temp folder name with base dir

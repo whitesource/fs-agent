@@ -22,17 +22,21 @@ public class DependencyCalculator {
     }
 
     public Collection<DependencyInfo> createDependencies(ScmConnector scmConnector, int totalFiles, Map<File, Collection<String>> fileMap,
-                                                         Collection<String> excludedCopyrights,boolean partialSha1Match) {
-        DependencyInfoFactory factory ;
+                                                         Collection<String> excludedCopyrights, boolean partialSha1Match) {
+        return createDependencies(scmConnector, totalFiles, fileMap, excludedCopyrights, partialSha1Match, false, false);
+    }
 
+    public Collection<DependencyInfo> createDependencies(ScmConnector scmConnector, int totalFiles, Map<File, Collection<String>> fileMap,
+                                                         Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
         List<DependencyInfo> allDependencies = new ArrayList<>();
         if (showProgressBar) {
             displayProgress(0, totalFiles);
         }
+
         int index = 1;
         for (Map.Entry<File, Collection<String>> entry : fileMap.entrySet()) {
             for (String fileName : entry.getValue()) {
-                factory = new DependencyInfoFactory(excludedCopyrights, partialSha1Match);
+                DependencyInfoFactory factory = new DependencyInfoFactory(excludedCopyrights, partialSha1Match, calculateHints, calculateMd5);
                 DependencyInfo originalDependencyInfo = factory.createDependencyInfo(entry.getKey(), fileName);
                 if (originalDependencyInfo != null) {
                     if (scmConnector != null) {

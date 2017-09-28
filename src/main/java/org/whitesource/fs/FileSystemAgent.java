@@ -49,7 +49,7 @@ public class FileSystemAgent extends CommandLineAgent {
 
     private static final String AGENT_TYPE = "fs-agent";
     private static final String AGENT_VERSION = "2.3.9";
-    private static final String PLUGIN_VERSION = "1.8.8-SNAPSHOT";
+    private static final String PLUGIN_VERSION = "1.8.9-SNAPSHOT";
 
     /* --- Members --- */
 
@@ -131,6 +131,9 @@ public class FileSystemAgent extends CommandLineAgent {
         // check scan partial sha1s (false by default)
         boolean partialSha1Match = getBooleanProperty(PARTIAL_SHA1_MATCH_KEY, false);
 
+        boolean calculateHints = getBooleanProperty(CALCULATE_HINTS, false);
+        boolean calculateMd5 = getBooleanProperty(CALCULATE_MD5, false);
+
         // glob case sensitive
         final String globCaseSensitiveValue = config.getProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY);
         boolean globCaseSensitive = false;
@@ -154,7 +157,9 @@ public class FileSystemAgent extends CommandLineAgent {
         excludedCopyrights.remove("");
 
         boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
-        return new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createDependencies(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive,
-                archiveExtractionDepth, archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match);
+        return new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createDependencies(
+                scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
+                archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights,
+                partialSha1Match, calculateHints, calculateMd5);
     }
 }

@@ -1,9 +1,8 @@
-package org.agent.dependencyResolver.npm;
+package org.whitesource.agent.dependency.resolver.npm;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.BomFile;
-import org.whitesource.agent.dependency.resolver.npm.NpmBomParser;
 
 import java.nio.file.Paths;
 

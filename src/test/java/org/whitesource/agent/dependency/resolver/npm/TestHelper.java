@@ -1,4 +1,4 @@
-package org.agent.dependencyResolver.npm;
+package org.whitesource.agent.dependency.resolver.npm;
 
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.DependencyInfo;
