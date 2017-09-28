@@ -6,6 +6,8 @@ import org.junit.Test;
 import org.whitesource.agent.archive.ArchiveExtractor;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +16,25 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 public class ArchiveExtractorTest {
+    @Test
+    public void shouldWorkWithSingleFile() {
+        String currentDirectory = System.getProperty("user.dir");
+        String[] archiveIncludes = new String[]{"**/*.zip"};
+        String[] archiveExcludes = new String[0];
+        ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes);
+
+        String scannerFile = Paths.get(currentDirectory, "\\src\\test\\resources\\dist.zip").toString();
+        int archiveExtractionDepth = 4;
+        String unzipFolder = archiveExtractor.extractArchives(scannerFile, archiveExtractionDepth);
+        Assert.assertNotNull(unzipFolder);
+
+        try {
+            Files.delete(Paths.get(unzipFolder));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
     public void shouldCreateTheSameZipStructure() {
         String unzipFolder = getUnzippedFolderFromTest();
