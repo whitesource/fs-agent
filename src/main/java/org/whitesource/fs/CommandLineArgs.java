@@ -42,6 +42,9 @@ public class CommandLineArgs {
     @Parameter(names = "-f", description = "File list path")
     String fileListPath = "";
 
+    @Parameter(names = "-apiKey", description = "Organization api key")
+    String apiKey = null;
+
     @Parameter(names = "-product", description = "Product name or token")
     String product = null;
 

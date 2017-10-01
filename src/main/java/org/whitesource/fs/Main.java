@@ -65,7 +65,8 @@ public class Main {
         String project = commandLineArgs.project;
         Properties configProps = readAndValidateConfigFile(commandLineArgs.configFilePath, project);
 
-        // Check whether the user inserted project OR/AND product via command line
+        // Check whether the user inserted api key, project OR/AND product via command line
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY, commandLineArgs.apiKey);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, commandLineArgs.product);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY, commandLineArgs.productVersion);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, project);
