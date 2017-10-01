@@ -169,23 +169,25 @@ public class ArchiveExtractor {
             if (curLevel == 0) {
                 folderToScan = scannerBaseDir;
             } else {
-                folderToScan = getDepthFolder(curLevel-1);
+                folderToScan = getDepthFolder(curLevel - 1);
             }
             folderToExtract = getDepthFolder(curLevel);
 
-            String[] fileNames = getSearchedFileNames(folderToScan);
-            if (fileNames.length > 0) {
-                Pair<String,Collection<String>> filesFound = new Pair<>(folderToScan,Arrays.stream(fileNames).collect(Collectors.toList()));
+            Pair<String[], String> retiveFilesWithFolder = getSearchedFileNames(folderToScan);
+            if (retiveFilesWithFolder == null || retiveFilesWithFolder.getKey().length <= 0) {
+                break;
+            } else {
+                String[] fileNames = retiveFilesWithFolder.key;
+                folderToScan = retiveFilesWithFolder.value;
+
+                Pair<String, Collection<String>> filesFound = new Pair<>(folderToScan, Arrays.stream(fileNames).collect(Collectors.toList()));
                 Map<String, String> foundFiles;
-                if (fastUnpack){
+                if (fastUnpack) {
                     foundFiles = handleArchiveFilesFast(folderToExtract, filesFound);
-                }
-                else {
-                    foundFiles = handleArchiveFiles(folderToExtract, curLevel, filesFound);
+                } else {
+                    foundFiles = handleArchiveFiles(folderToExtract, filesFound);
                 }
                 allFiles.put(String.valueOf(curLevel), foundFiles);
-            } else {
-                break;
             }
         }
 
@@ -217,32 +219,35 @@ public class ArchiveExtractor {
         return archiveIncludesPattern;
     }
 
-    private String[] getSearchedFileNames(String folderToScan) {
+    private Pair<String[],String> getSearchedFileNames(String fileOrFolderToScan) {
         String[] foundFiles = null;
-        File file = new File(folderToScan);
+        File file = new File(fileOrFolderToScan);
+
+        String folderToScan;
         if (file.exists()) {
             FilesScanner filesScanner = new FilesScanner();
             if (file.isDirectory()) {
                 // scan directory
-                foundFiles = filesScanner.getFileNames(folderToScan, archiveIncludesPattern, archiveExcludesPattern, false, false);
+                foundFiles = filesScanner.getFileNames(fileOrFolderToScan, archiveIncludesPattern, archiveExcludesPattern, false, false);
+                folderToScan = fileOrFolderToScan;
+                return new Pair<>(foundFiles,folderToScan);
             } else {
                 //// handle file passed in -d parameter
                 //// check if file matches archive GLOB patterns
                 boolean included = filesScanner.isIncluded(file, archiveIncludesPattern, archiveExcludesPattern, false, false);
                 if (included) {
-                    foundFiles = new String[]{file.getParent()};
+                    folderToScan = file.getParent();
+                    String relativeFilePath = new File(folderToScan).toURI().relativize(new File(file.getAbsolutePath()).toURI()).getPath();
+                    foundFiles = new String[]{relativeFilePath};
+                    return new Pair<>(foundFiles,folderToScan);
                 }
             }
             filesScanner = null;
         }
-        if (foundFiles == null) {
-            return new String[0];
-        } else {
-            return foundFiles;
-        }
+        return null;
     }
 
-    private Map<String,String> handleArchiveFiles(String baseFolderToExtract, int curLevel,Pair<String, Collection<String>> fileNames) {
+    private Map<String,String> handleArchiveFiles(String baseFolderToExtract,Pair<String, Collection<String>> fileNames) {
         Map<String,String> founded = new HashMap<>();
         for (String fileName : fileNames.getValue()) {
 
