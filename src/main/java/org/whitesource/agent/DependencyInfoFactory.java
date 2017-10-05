@@ -116,7 +116,6 @@ public class DependencyInfoFactory {
             String sha1 = ChecksumUtils.calculateSHA1(dependencyFile);
             dependency = new DependencyInfo(sha1);
             dependency.setArtifactId(dependencyFile.getName());
-            dependency.setLastModified(new Date(dependencyFile.lastModified()));
 
             // system path
             try {
