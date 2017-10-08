@@ -79,7 +79,7 @@ public class FileSystemAgent extends CommandLineAgent {
 
         projectInfo.setDependencies(getDependencyInfos());
 
-        Collection<AgentProjectInfo> projects = new ArrayList<AgentProjectInfo>();
+        Collection<AgentProjectInfo> projects = new LinkedList<>();
         // don't use Arrays.asList, might be removed later if no dependencies
         projects.add(projectInfo);
         return projects;

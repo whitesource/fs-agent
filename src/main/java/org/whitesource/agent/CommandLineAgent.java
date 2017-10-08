@@ -113,7 +113,7 @@ public abstract class CommandLineAgent {
         }
 
         // create projects as usual
-        projects = createProjects();
+        projects.addAll(createProjects());
 
         Iterator<AgentProjectInfo> iterator = projects.iterator();
         while (iterator.hasNext()) {
