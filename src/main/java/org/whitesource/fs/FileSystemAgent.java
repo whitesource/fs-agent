@@ -57,8 +57,8 @@ public class FileSystemAgent extends CommandLineAgent {
 
     /* --- Constructors --- */
 
-    public FileSystemAgent(Properties config, List<String> dependencyDirs) {
-        super(config);
+    public FileSystemAgent(Properties config, List<String> dependencyDirs, List<String> offlineRequestFiles) {
+        super(config, offlineRequestFiles);
         this.dependencyDirs = dependencyDirs;
     }
 

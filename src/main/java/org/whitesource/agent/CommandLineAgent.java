@@ -15,6 +15,10 @@
  */
 package org.whitesource.agent;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +33,11 @@ import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 import org.whitesource.fs.StatusCode;
+import sun.misc.BASE64Decoder;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Properties;
+import java.io.*;
+import java.util.*;
+import java.util.zip.GZIPInputStream;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
@@ -58,17 +61,60 @@ public abstract class CommandLineAgent {
     /* --- Members --- */
 
     protected final Properties config;
+    protected final List<String> offlineRequestFiles;
 
     /* --- Constructors --- */
 
-    public CommandLineAgent(Properties config) {
+    public CommandLineAgent(Properties config, List<String> offlineRequestFiles) {
         this.config = config;
+        this.offlineRequestFiles = offlineRequestFiles;
     }
 
     /* --- Public methods --- */
 
     public StatusCode sendRequest() {
-        Collection<AgentProjectInfo> projects = createProjects();
+        Collection<AgentProjectInfo> projects = new LinkedList<>();
+
+        List<File> requestFiles = new LinkedList<>();
+        if (offlineRequestFiles != null) {
+            for (String requestFilePath : offlineRequestFiles) {
+                if (StringUtils.isNotBlank(requestFilePath)) {
+                    requestFiles.add(new File(requestFilePath));
+                }
+            }
+        }
+        if (!requestFiles.isEmpty()) {
+            for (File requestFile : requestFiles) {
+                Gson gson = new Gson();
+                UpdateInventoryRequest updateRequest;
+                logger.debug("Converting offline request to JSON");
+                try {
+                    updateRequest = gson.fromJson(new JsonReader(new FileReader(requestFile)), new TypeToken<UpdateInventoryRequest>() {}.getType());
+                    logger.info("Reading information from request file {}", requestFile);
+                    projects.addAll(updateRequest.getProjects());
+                } catch (JsonSyntaxException e) {
+                    // try to decompress file content
+                    try {
+                        logger.debug("Decompressing zipped offline request");
+                        String fileContent = decompress(requestFile);
+                        logger.debug("Converting offline request to JSON");
+                        updateRequest = gson.fromJson(fileContent, new TypeToken<UpdateInventoryRequest>() {}.getType());
+                        logger.info("Reading information from request file {}", requestFile);
+                        projects.addAll(updateRequest.getProjects());
+                    } catch (IOException ioe) {
+                        logger.warn("Error parsing request: " + ioe.getMessage());
+                    } catch (JsonSyntaxException jse) {
+                        logger.warn("Error parsing request: " + jse.getMessage());
+                    }
+                } catch (FileNotFoundException e) {
+                    logger.warn("Error parsing request: " + e.getMessage());
+                }
+            }
+        }
+
+        // create projects as usual
+        projects = createProjects();
+
         Iterator<AgentProjectInfo> iterator = projects.iterator();
         while (iterator.hasNext()) {
             AgentProjectInfo project = iterator.next();
@@ -293,4 +339,21 @@ public abstract class CommandLineAgent {
     }
 
     protected abstract String getPluginVersion();
+
+    private String decompress(File file) throws IOException {
+        if (file == null || !file.exists()) {
+            return "";
+        }
+
+        byte[] bytes = new BASE64Decoder().decodeBuffer(new FileInputStream(file));
+        GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(bytes));
+        BufferedReader bf = new BufferedReader(new InputStreamReader(gis, "UTF-8"));
+        String outStr = "";
+        String line;
+        while ((line = bf.readLine()) != null) {
+            outStr += line;
+        }
+        return outStr;
+    }
+
 }

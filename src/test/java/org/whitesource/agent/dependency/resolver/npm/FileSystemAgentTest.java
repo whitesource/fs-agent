@@ -244,7 +244,7 @@ public class FileSystemAgentTest {
     // Helper class
     private class FileSystemAgentTesting extends FileSystemAgent {
         public FileSystemAgentTesting(Properties config, List<String> dependencyDirs) {
-            super(config, dependencyDirs);
+            super(config, dependencyDirs, null);
         }
 
         @Override

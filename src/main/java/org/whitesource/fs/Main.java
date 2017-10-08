@@ -25,6 +25,7 @@ import org.whitesource.agent.ConfigPropertyKeys;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
@@ -81,6 +82,10 @@ public class Main {
         // archiving
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ARCHIVE_FAST_UNPACK_KEY, commandLineArgs.archiveFastUnpack);
 
+        // request file
+        List<String> offlineRequestFiles = new LinkedList<>();
+        offlineRequestFiles.addAll(commandLineArgs.requestFiles);
+
         // read log level from configuration file
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         String logLevel = configProps.getProperty(LOG_LEVEL_KEY, INFO);
@@ -104,7 +109,7 @@ public class Main {
         files.addAll(commandLineArgs.dependencyDirs);
 
         // run the agent
-        FileSystemAgent agent = new FileSystemAgent(configProps, files);
+        FileSystemAgent agent = new FileSystemAgent(configProps, files, offlineRequestFiles);
         StatusCode processExitCode = agent.sendRequest();
         logger.info("Process finished with exit code {} ({})", processExitCode, processExitCode.getValue());
         return processExitCode.getValue();

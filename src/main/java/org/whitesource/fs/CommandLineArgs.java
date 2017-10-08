@@ -18,7 +18,7 @@ package org.whitesource.fs;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.CommaParameterSplitter;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -37,7 +37,7 @@ public class CommandLineArgs {
 
     //TODO use a File converter for dependencyDir and configFilePath
     @Parameter(names = "-d", splitter = CommaParameterSplitter.class, description = "Comma separated list of directories and / or files to scan")
-    List<String> dependencyDirs = new ArrayList<>(); // TODO this may be a bad default, consider printing usage instead
+    List<String> dependencyDirs = new LinkedList<>(); // TODO this may be a bad default, consider printing usage instead
 
     @Parameter(names = "-f", description = "File list path")
     String fileListPath = "";
@@ -71,6 +71,9 @@ public class CommandLineArgs {
 
     @Parameter(names = "-archiveFastUnpack", description = "Fast unpack")
     String archiveFastUnpack = "false";
+
+    @Parameter(names = "-requestFiles", description = "Comma separated list of paths to offline request files")
+    List<String> requestFiles = new LinkedList<>();
 
     /* --- Public methods --- */
 
