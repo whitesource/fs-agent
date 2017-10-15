@@ -57,6 +57,7 @@ public abstract class CommandLineAgent {
     public static final String NEW_LINE = "\n";
     public static final String DOT = ".";
     public static final String JAVA_NETWORKING = "java.net";
+    private static final int MAX_NUMBER_OF_DEPENDENCIES = 1000000;
 
     /* --- Members --- */
 
@@ -170,6 +171,7 @@ public abstract class CommandLineAgent {
             offlineUpdate(service, orgToken, product, productVersion, projects);
             return StatusCode.SUCCESS;
         } else {
+            checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
             try {
                 if (getBooleanProperty(CHECK_POLICIES_PROPERTY_KEY, false)) {
@@ -193,6 +195,13 @@ public abstract class CommandLineAgent {
                 }
             }
             return statusCode;
+        }
+    }
+
+    private void checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
+        int numberOfDependencies = projects.stream().map(x -> x.getDependencies()).mapToInt(x -> x.size()).sum();
+        if (numberOfDependencies > MAX_NUMBER_OF_DEPENDENCIES) {
+            logger.warn("Number of dependencies: {} exceeded the maximum supported: {}", numberOfDependencies, MAX_NUMBER_OF_DEPENDENCIES);
         }
     }
 
