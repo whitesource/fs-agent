@@ -2,7 +2,9 @@ package org.whitesource.agent.archive;
 
 import javafx.util.Pair;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.whitesource.agent.utils.FilesScanner;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,12 +17,39 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 public class ArchiveExtractorTest {
+
+    @Ignore
+    @Test
+    public void shouldNotUnpackExcludes() {
+        // this test checks that unwanted files ( for example class files are not extracted during the unarchive process)
+        String[] archiveIncludes = new String[]{"**/*.jar", "**/*.war"};
+        String[] archiveExcludes = new String[0];
+
+        String[] fileExcludes = new String[]{"**/*.class", "**/*.html"};
+        int archiveExtractionDepth = 5;
+
+        ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, fileExcludes);
+        String scannerFile = Paths.get("", "C:\\Issues\\bigJar\\wss-server-1.1.0-SNAPSHOT.war").toString();
+        String unzipFolderFilter = archiveExtractor.extractArchives(scannerFile, archiveExtractionDepth);
+
+        archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, new String[0]);
+        scannerFile = Paths.get("", "C:\\Issues\\bigJar\\wss-server-1.1.0-SNAPSHOT.war").toString();
+        String unzipFolderAll = archiveExtractor.extractArchives(scannerFile, archiveExtractionDepth);
+
+        FilesScanner fs = new FilesScanner();
+        String[] filesAll = fs.getFileNames(unzipFolderAll, new String[]{"**/*.*"}, new String[0], false, false);
+        String[] filesClass = fs.getFileNames(unzipFolderAll, fileExcludes, new String[0], false, false);
+
+        String[] filesFiltered = fs.getFileNames(unzipFolderFilter, new String[]{"**/*.*"}, new String[0], false, false);
+        Assert.assertEquals(filesAll.length, filesClass.length + filesFiltered.length);
+    }
+
     @Test
     public void shouldWorkWithSingleFile() {
         String currentDirectory = System.getProperty("user.dir");
         String[] archiveIncludes = new String[]{"**/*.zip"};
         String[] archiveExcludes = new String[0];
-        ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes);
+        ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, new String[]{"*.js"});
 
         String scannerFile = Paths.get(currentDirectory, "\\src\\test\\resources\\dist.zip").toString();
         int archiveExtractionDepth = 4;
@@ -88,7 +117,7 @@ public class ArchiveExtractorTest {
         String currentDirectory = System.getProperty("user.dir");
         String[] archiveIncludes = new String[]{"test/resources/**/*.zip"};
         String[] archiveExcludes = new String[0];
-        ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes);
+        ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, new String[0]);
 
         String scannerBaseDir = Paths.get(currentDirectory, "src").toString();
         int archiveExtractionDepth = 4;

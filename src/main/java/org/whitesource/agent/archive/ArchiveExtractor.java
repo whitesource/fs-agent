@@ -2,6 +2,7 @@ package org.whitesource.agent.archive;
 
 import com.github.junrar.testutil.ExtractArchive;
 import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.model.FileHeader;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveInputStream;
 import org.apache.commons.compress.compressors.lzma.LZMACompressorInputStream;
@@ -25,10 +26,13 @@ import org.whitesource.agent.utils.FilesScanner;
 import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.file.FileSystems;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +48,7 @@ public class ArchiveExtractor {
     public static final int LONG_BOUND = 100000;
     public static final String DEPTH = "_depth_";
     public static final String DEPTH_REGEX = DEPTH + "[0-9]";
+    public static final String GLOB_PREFIX = "glob:";
 
     private final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
     private final String WHITESOURCE_TEMP_FOLDER = "WhiteSource-ArchiveExtractor";
@@ -101,18 +106,19 @@ public class ArchiveExtractor {
 
     private final String[] archiveIncludesPattern;
     private final String[] archiveExcludesPattern;
+    private final String[] filesExcludes;
     private String randomString;
     private String tempFolderNoDepth;
     private boolean fastUnpack = false;
 
     /* --- Constructors --- */
 
-    public ArchiveExtractor(String[] archiveIncludes, String[] archiveExcludes, boolean fastUnpack) {
-        this(archiveIncludes,archiveExcludes);
+    public ArchiveExtractor(String[] archiveIncludes, String[] archiveExcludes,String[] filesExcludes, boolean fastUnpack) {
+        this(archiveIncludes, archiveExcludes, filesExcludes);
         this.fastUnpack = fastUnpack;
     }
 
-    public ArchiveExtractor(String[] archiveIncludes, String[] archiveExcludes) {
+    public ArchiveExtractor(String[] archiveIncludes, String[] archiveExcludes , String[] filesExcludes) {
         if (archiveIncludes.length > 0 && StringUtils.isNotBlank(archiveIncludes[0])) {
             this.archiveIncludesPattern = archiveIncludes;
         } else {
@@ -120,6 +126,7 @@ public class ArchiveExtractor {
             this.archiveIncludesPattern = createArchivesArray();
         }
         this.archiveExcludesPattern = archiveExcludes;
+        this.filesExcludes = filesExcludes;
     }
 
     private String getTempFolder(String scannerBaseDir) {
@@ -342,15 +349,31 @@ public class ArchiveExtractor {
         ZipFile zipFile;
         try {
             zipFile = new ZipFile(archiveFile);
-            zipFile.extractAll(innerDir);
+            // Get the list of file headers from the zip file before unpacking
+            List fileHeaderList = zipFile.getFileHeaders();
+
+            List<PathMatcher> matchers = Arrays.stream(filesExcludes).map(fileExclude -> FileSystems.getDefault().getPathMatcher(GLOB_PREFIX + fileExclude)).collect(Collectors.toList());
+            // Loop through the file headers and extract only files that are not matched by fileExcludes patterns
+            for (int i = 0; i < fileHeaderList.size(); i++) {
+                FileHeader fileHeader = (FileHeader) fileHeaderList.get(i);
+                String fileName = fileHeader.getFileName();
+                if (filesExcludes.length > 0) {
+                    Predicate<PathMatcher> matchesExcludes = e -> e.matches(Paths.get(innerDir, fileName));
+                    if (matchers.stream().noneMatch(matchesExcludes)) {
+                        zipFile.extractFile(fileHeader, innerDir);
+                    }
+                } else {
+                    zipFile.extractFile(fileHeader, innerDir);
+                }
+            }
         } catch (Exception e) {
             success = false;
             logger.warn("Error extracting file {}: {}", archiveFile, e.getMessage());
             logger.debug("Error extracting file {}: {}", archiveFile, e.getStackTrace());
-        }finally {
+        } finally {
+            // remove reference to zip file
             zipFile = null;
         }
-
         return success;
     }
 

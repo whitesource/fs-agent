@@ -75,7 +75,7 @@ public class FileSystemScanner {
         // go over all base directories, look for archives
         Map<String, String> archiveToBaseDirMap = new HashMap<>();
         if (archiveExtractionDepth > 0) {
-            ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes ,archiveFastUnpack);
+            ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, excludes, archiveFastUnpack);
             logger.info("Starting Archive Extraction (may take a few minutes)");
             for (String scannerBaseDir : new LinkedHashSet<>(pathsToScan)) {
                 unpackDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth);
