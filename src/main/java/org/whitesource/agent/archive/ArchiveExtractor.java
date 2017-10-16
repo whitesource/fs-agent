@@ -358,7 +358,7 @@ public class ArchiveExtractor {
                 FileHeader fileHeader = (FileHeader) fileHeaderList.get(i);
                 String fileName = fileHeader.getFileName();
                 if (filesExcludes.length > 0) {
-                    Predicate<PathMatcher> matchesExcludes = e -> e.matches(Paths.get(innerDir, fileName));
+                    Predicate<PathMatcher> matchesExcludes = pathMatcher -> pathMatcher.matches(Paths.get(innerDir, fileName));
                     if (matchers.stream().noneMatch(matchesExcludes)) {
                         zipFile.extractFile(fileHeader, innerDir);
                     }
