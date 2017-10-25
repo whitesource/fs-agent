@@ -42,13 +42,14 @@ public class DependencyResolutionService {
     public DependencyResolutionService(Properties config) {
         final boolean npmResolveDependencies = getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
         final boolean npmIncludeDevDependencies = getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
+        final boolean ignoreJavaScriptFiles = getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
         final boolean bowerResolveDependencies = getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
         final boolean nugetResolveDependencies = getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
 
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, ignoreJavaScriptFiles));
         }
         if (bowerResolveDependencies) {
             dependencyResolvers.add(new BowerDependencyResolver());

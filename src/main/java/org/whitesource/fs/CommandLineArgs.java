@@ -75,6 +75,9 @@ public class CommandLineArgs {
     @Parameter(names = "-requestFiles", description = "Comma separated list of paths to offline request files")
     List<String> requestFiles = new LinkedList<>();
 
+    @Parameter(names = "-projectPerFolder", description = "Creates a project for each subfolder, the subfolder's name is used as the project name")
+    String projectPerFolder = "false";
+
     /* --- Public methods --- */
 
     public String getConfigFilePath() {

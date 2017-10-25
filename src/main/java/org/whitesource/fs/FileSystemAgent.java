@@ -26,6 +26,7 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.scm.ScmConnector;
 
+import java.io.File;
 import java.util.*;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
@@ -48,41 +49,90 @@ public class FileSystemAgent extends CommandLineAgent {
     private static final int DEFAULT_ARCHIVE_DEPTH = 0;
 
     private static final String AGENT_TYPE = "fs-agent";
-    private static final String AGENT_VERSION = "2.4.1";
-    private static final String PLUGIN_VERSION = "1.8.9-SNAPSHOT";
+    private static final String AGENT_VERSION = "2.4.3";
+    private static final String PLUGIN_VERSION = "1.9.0-SNAPSHOT";
 
     /* --- Members --- */
 
     private final List<String> dependencyDirs;
 
+    private boolean projectPerSubFolder;
+
     /* --- Constructors --- */
 
     public FileSystemAgent(Properties config, List<String> dependencyDirs, List<String> offlineRequestFiles) {
         super(config, offlineRequestFiles);
-        this.dependencyDirs = dependencyDirs;
+
+        projectPerSubFolder = getBooleanProperty(PROJECT_PER_SUBFOLDER, false);
+        if (projectPerSubFolder) {
+            this.dependencyDirs = new LinkedList<>();
+            for (String directory :dependencyDirs) {
+
+
+                File file = new File(directory);
+                if (file.isDirectory()) {
+                    String[] directories = getSubDirectories(directory);
+                    Arrays.stream(directories).forEach(subDir -> this.dependencyDirs.add(subDir));
+                } else if (file.isFile()) {
+                    this.dependencyDirs.add(directory);
+                }
+                else{
+                    logger.warn(directory + "is not a file nor a directory .");
+                }
+            }
+        } else {
+            this.dependencyDirs = dependencyDirs;
+        }
+    }
+
+    private String[] getSubDirectories(String directory) {
+        try {
+            File file = new File(directory);
+            String[] files = file.list((current, name) -> new File(current, name).isDirectory());
+            if (files == null){
+                logger.info("Error getting sub directories from: " + directory);
+                return new String[0];
+            }
+            return files;
+        } catch (Exception ex) {
+            logger.info("Error getting sub directories from: " + directory, ex);
+            return new String[0];
+        }
     }
 
     /* --- Overridden methods --- */
 
     @Override
     protected Collection<AgentProjectInfo> createProjects() {
-        AgentProjectInfo projectInfo = new AgentProjectInfo();
-        // use token or name + version
-        String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
-        if (StringUtils.isNotBlank(projectToken)) {
-            projectInfo.setProjectToken(projectToken);
+        if (projectPerSubFolder) {
+            Collection<AgentProjectInfo> projects = new LinkedList<>();
+            for (String directory : dependencyDirs) {
+                AgentProjectInfo projectInfo = new AgentProjectInfo();
+                String projectName = new File(directory).getName();
+                String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
+                projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+                projectInfo.setDependencies(getDependencyInfos(Collections.singletonList(directory)));
+                projects.add(projectInfo);
+            }
+            return projects;
         } else {
-            String projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
-            String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
-            projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+            AgentProjectInfo projectInfo = new AgentProjectInfo();
+            // use token or name + version
+            String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
+            if (StringUtils.isNotBlank(projectToken)) {
+                projectInfo.setProjectToken(projectToken);
+            } else {
+                String projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
+                String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
+                projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+            }
+            projectInfo.setDependencies(getDependencyInfos());
+
+            Collection<AgentProjectInfo> projects = new LinkedList<>();
+            // don't use Arrays.asList, might be removed later if no dependencies
+            projects.add(projectInfo);
+            return projects;
         }
-
-        projectInfo.setDependencies(getDependencyInfos());
-
-        Collection<AgentProjectInfo> projects = new LinkedList<>();
-        // don't use Arrays.asList, might be removed later if no dependencies
-        projects.add(projectInfo);
-        return projects;
     }
 
     @Override
@@ -104,7 +154,10 @@ public class FileSystemAgent extends CommandLineAgent {
 
     private List<DependencyInfo> getDependencyInfos() {
         List<String> scannerBaseDirs = dependencyDirs;
+        return getDependencyInfos(scannerBaseDirs);
+    }
 
+    private List<DependencyInfo> getDependencyInfos(List<String> scannerBaseDirs) {
         // create scm connector
         String scmType = config.getProperty(SCM_TYPE_PROPERTY_KEY);
         String url = config.getProperty(SCM_URL_PROPERTY_KEY);

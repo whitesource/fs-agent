@@ -51,22 +51,25 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractDependencyResolver.class);
+    public static final String EXCLUDE_TOP_FOLDER = "node_modules";
 
     /* --- Members --- */
 
     private final NpmLsJsonDependencyCollector bomCollector;
     private final NpmBomParser bomParser;
+    private final boolean ignoreJavaScriptFiles;
 
     /* --- Constructor --- */
 
-    public NpmDependencyResolver(boolean includeDevDependencies) {
+    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles) {
         super();
         bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies);
         bomParser = new NpmBomParser();
+        this.ignoreJavaScriptFiles = ignoreJavaScriptFiles;
     }
 
     public NpmDependencyResolver() {
-        this(false);
+        this(false,false);
     }
 
     /* --- Overridden methods --- */
@@ -216,7 +219,11 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
             topFolderFound = topFolderFound.substring(1, topFolderFound.length()) + FORWARD_SLASH;
 
         String finalRes = topFolderFound;
-        return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
+        if (ignoreJavaScriptFiles) {
+            return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
+        } else {
+            return excludes.stream().map(exclude -> finalRes + EXCLUDE_TOP_FOLDER + FORWARD_SLASH + exclude).collect(Collectors.toList());
+        }
     }
 
     private boolean fileShouldBeParsed(File file) {
