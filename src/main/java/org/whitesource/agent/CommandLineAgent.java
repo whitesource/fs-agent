@@ -164,11 +164,14 @@ public abstract class CommandLineAgent {
             productVersion = config.getProperty(PRODUCT_VERSION_PROPERTY_KEY);
         }
 
+        // requester email
+        String requesterEmail = config.getProperty(REQUESTER_EMAIL);
+
         // send request
         logger.info("Initializing WhiteSource Client");
         WhitesourceService service = createService();
         if (getBooleanProperty(OFFLINE_PROPERTY_KEY, false)) {
-            offlineUpdate(service, orgToken, product, productVersion, projects);
+            offlineUpdate(service, orgToken, requesterEmail, product, productVersion, projects);
             return StatusCode.SUCCESS;
         } else {
             checkDependenciesUpbound(projects);
@@ -179,7 +182,7 @@ public abstract class CommandLineAgent {
                     statusCode = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
                 }
                 if (statusCode == StatusCode.SUCCESS) {
-                    update(service, orgToken, product, productVersion, projects);
+                    update(service, orgToken, requesterEmail, product, productVersion, projects);
                 }
             } catch (WssServiceException e) {
                 if (e.getCause() != null &&
@@ -260,14 +263,14 @@ public abstract class CommandLineAgent {
         return policyCompliance;
     }
 
-    private void update(WhitesourceService service, String orgToken, String product, String productVersion,
+    private void update(WhitesourceService service, String orgToken, String requesterEmail, String product, String productVersion,
                         Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
-        UpdateInventoryResult updateResult = service.update(orgToken, product, productVersion, projects);
+        UpdateInventoryResult updateResult = service.update(orgToken, requesterEmail, product, productVersion, projects);
         logResult(updateResult);
     }
 
-    private void offlineUpdate(WhitesourceService service, String orgToken, String product, String productVersion,
+    private void offlineUpdate(WhitesourceService service, String orgToken, String requesterEmail, String product, String productVersion,
                                Collection<AgentProjectInfo> projects) {
         logger.info("Generating offline update request");
 
@@ -276,6 +279,7 @@ public abstract class CommandLineAgent {
 
         // generate offline request
         UpdateInventoryRequest updateRequest = service.offlineUpdate(orgToken, product, productVersion, projects);
+        updateRequest.setRequesterEmail(requesterEmail);
         try {
             OfflineUpdateRequest offlineUpdateRequest = new OfflineUpdateRequest(updateRequest);
             File outputDir = new File(".");
