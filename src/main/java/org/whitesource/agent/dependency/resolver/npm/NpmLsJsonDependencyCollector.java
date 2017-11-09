@@ -15,13 +15,13 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
-import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +31,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
+
 /**
  * Collect dependencies using 'npm ls' or bower command.
  *
@@ -60,10 +61,12 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
 
     protected final boolean includeDevDependencies;
     private boolean showNpmLsError;
+    private final double npmTimeoutDependenciesCollector;
 
     /* --- Constructors --- */
 
-    public NpmLsJsonDependencyCollector(boolean includeDevDependencies) {
+    public NpmLsJsonDependencyCollector(boolean includeDevDependencies, double npmTimeoutDependenciesCollector) {
+        this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
         this.includeDevDependencies = includeDevDependencies;
     }
 
@@ -75,21 +78,38 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
         try {
             // execute 'npm ls'
             ProcessBuilder pb = new ProcessBuilder(getLsCommandParams());
-
             pb.directory(new File(rootDirectory));
+            logger.debug("start 'npm ls'");
+            long startTimeOfProcess = System.currentTimeMillis();
             Process process = pb.start();
 
             // parse 'npm ls' output
-            String json = null;
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                json = reader.lines().reduce("", String::concat);
+            // String json = null;
+            StringBuilder json = new StringBuilder();
+
+            try {
+                InputStreamReader inputStreamReader = new InputStreamReader(process.getInputStream());
+                BufferedReader reader = new BufferedReader(inputStreamReader);
+                logger.debug("trying to read dependencies using 'npm ls'");
+                String line = null;
+                while ((line = reader.readLine()) != null && System.currentTimeMillis() < (startTimeOfProcess + this.npmTimeoutDependenciesCollector * 1000)) {
+                    logger.debug("read line: {}", line);
+                    json.append(line);
+                }
                 reader.close();
+                if (line == null) {
+                    logger.debug("finished read dependencies using 'npm ls'");
+                } else {
+                    logger.error("timeout: {} seconds in folder {}. Fail executing 'npm ls'", this.npmTimeoutDependenciesCollector ,rootDirectory);
+                    json = new StringBuilder();
+                }
             } catch (IOException e) {
                 logger.error("error parsing output : {}", e.getMessage());
             }
 
-            if (StringUtils.isNotBlank(json)) {
-                dependencies.addAll(getDependencies(new JSONObject(json)));
+            if (json != null && json.length() > 0) {
+                logger.debug("'npm ls' file is not empty");
+                dependencies.addAll(getDependencies(new JSONObject(json.toString())));
             }
         } catch (IOException e) {
             logger.info("Error getting dependencies after running 'npm ls --json' on {}", rootDirectory);
@@ -107,6 +127,7 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
     /* --- Private methods --- */
 
     private Collection<DependencyInfo> getDependencies(JSONObject jsonObject) {
+        logger.debug("trying get dependencies from 'npm ls'");
         Collection<DependencyInfo> dependencies = new ArrayList<>();
         if (jsonObject.has(DEPENDENCIES)) {
             JSONObject dependenciesJsonObject = jsonObject.getJSONObject(DEPENDENCIES);
@@ -120,6 +141,7 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
                         if (dependency != null) {
                             dependencies.add(dependency);
 
+                            logger.debug("collect child dependencies of {}", dependencyAlias);
                             // collect child dependencies
                             Collection<DependencyInfo> childDependencies = getDependencies(dependencyJsonObject);
                             dependency.getChildren().addAll(childDependencies);
