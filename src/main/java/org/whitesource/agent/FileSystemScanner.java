@@ -9,6 +9,7 @@ import org.whitesource.agent.archive.ArchiveExtractor;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.FilesScanner;
+import org.whitesource.agent.utils.MemoryUsageHelper;
 import org.whitesource.fs.FileSystemAgent;
 import org.whitesource.scm.ScmConnector;
 
@@ -62,6 +63,10 @@ public class FileSystemScanner {
                                                    String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                    String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
                                                    Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
+
+        MemoryUsageHelper.SystemStats systemStats = MemoryUsageHelper.getMemoryUsage();
+        logger.debug(systemStats.toString());
+
         // get canonical paths
         Set<String> pathsToScan = getCanonicalPaths(scannerBaseDirs);
 
@@ -161,6 +166,10 @@ public class FileSystemScanner {
             scmConnector.deleteCloneDirectory();
         }
         logger.info("Finished Analyzing Files");
+
+        systemStats = MemoryUsageHelper.getMemoryUsage();
+        logger.debug(systemStats.toString());
+
         return allDependencies;
     }
 
