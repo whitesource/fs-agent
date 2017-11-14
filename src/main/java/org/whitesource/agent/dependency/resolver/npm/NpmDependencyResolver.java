@@ -48,7 +48,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private static final String EXAMPLES = "**/examples/**/";
     private static final String WS_BOWER_FOLDER = "**/.ws_bower/**/";
     private static final String TEST = "**/test/**/";
-    private static final double NPM_DEFAULT_LS_TIMEOUT = 60;
+    private static final long NPM_DEFAULT_LS_TIMEOUT = 60;
 
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractDependencyResolver.class);
@@ -62,7 +62,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Constructor --- */
 
-    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, double npmTimeoutDependenciesCollector) {
+    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector) {
         super();
         bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector);
         bomParser = new NpmBomParser();

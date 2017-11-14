@@ -49,7 +49,7 @@ public class DependencyResolutionService {
         final boolean npmResolveDependencies = getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
         final boolean npmIncludeDevDependencies = getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
         final boolean ignoreJavaScriptFiles = getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
-        final double npmTimeoutDependenciesCollector = getDoubleProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
+        final long npmTimeoutDependenciesCollector = getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
         final boolean bowerResolveDependencies = getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
         final boolean nugetResolveDependencies = getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
 
@@ -139,11 +139,11 @@ public class DependencyResolutionService {
         return property;
     }
 
-    private double getDoubleProperty(Properties config, String propertyKey, double defaultValue) {
-        double property = defaultValue;
+    private long getLongProperty(Properties config, String propertyKey, long defaultValue) {
+        long property = defaultValue;
         String propertyValue = config.getProperty(propertyKey);
         if (StringUtils.isNotBlank(propertyValue)) {
-            property = Double.parseDouble(propertyValue);
+            property = Long.parseLong(propertyValue);
         }
         return property;
     }
