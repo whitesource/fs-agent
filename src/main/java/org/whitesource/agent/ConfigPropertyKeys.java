@@ -68,4 +68,5 @@ public final class ConfigPropertyKeys {
     public static final String BOWER_RESOLVE_DEPENDENCIES = "bower.resolveDependencies";
     public static final String NUGET_RESOLVE_DEPENDENCIES = "nuget.resolveDependencies";
     public static final String PROJECT_PER_SUBFOLDER = "projectPerFolder";
+    public static final String UPDATE_TYPE = "updateType";
 }
