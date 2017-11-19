@@ -80,7 +80,7 @@ public class CommandLineArgs {
     String projectPerFolder = "false";
 
     @Parameter(names = "-updateType", description = "Specify if the project dependencies should be removed before adding the new ones")
-    String updateType = UpdateType.OVERRIDE.toString();
+    String updateType = "";
 
     @Parameter(names = "-scm.repositoriesFile", description = "Specify the csv file from which scm repositories should be loaded")
     String repositoriesFile = null;
