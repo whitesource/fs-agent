@@ -31,6 +31,7 @@ import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,12 +55,13 @@ public class FileSystemAgent extends CommandLineAgent {
     private static final int DEFAULT_ARCHIVE_DEPTH = 0;
 
     private static final String AGENT_TYPE = "fs-agent";
-    private static final String AGENT_VERSION = "2.4.3";
-    private static final String PLUGIN_VERSION = "17.11.3-SNAPSHOT";
+    private static final String VERSION = "version";
+    private static final String AGENTS_VERSION = "agentsVersion";
 
     /* --- Members --- */
 
     private final List<String> dependencyDirs;
+    private final Properties properties;
 
     private boolean projectPerSubFolder;
 
@@ -67,7 +69,7 @@ public class FileSystemAgent extends CommandLineAgent {
 
     public FileSystemAgent(Properties config, List<String> dependencyDirs, List<String> offlineRequestFiles) {
         super(config, offlineRequestFiles);
-
+        properties = getProperties();
         projectPerSubFolder = getBooleanProperty(PROJECT_PER_SUBFOLDER, false);
         if (projectPerSubFolder) {
             this.dependencyDirs = new LinkedList<>();
@@ -147,15 +149,34 @@ public class FileSystemAgent extends CommandLineAgent {
 
     @Override
     protected String getAgentVersion() {
-        return AGENT_VERSION;
+        return getResource(AGENTS_VERSION);
     }
 
     @Override
     protected String getPluginVersion() {
-        return PLUGIN_VERSION;
+        return getResource(VERSION);
+    }
+
+    private String getResource(String propertyName) {
+        getProperties();
+        String val = (properties.getProperty(propertyName));
+        if(StringUtils.isNotBlank(val)){
+            return val;
+        }
+        return "";
     }
 
     /* --- Private methods --- */
+
+    private Properties getProperties() {
+        Properties properties = new Properties();
+        try (InputStream stream = Main.class.getResourceAsStream("/project.properties")) {
+            properties.load(stream);
+        } catch (IOException e) {
+            logger.error("Failed to get version ", e);
+        }
+        return properties;
+    }
 
     private List<DependencyInfo> getDependencyInfos() {
         List<String> scannerBaseDirs = dependencyDirs;
