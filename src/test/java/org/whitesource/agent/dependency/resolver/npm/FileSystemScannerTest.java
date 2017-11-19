@@ -1,3 +1,5 @@
+package org.whitesource.agent.dependency.resolver.npm;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.whitesource.agent.ConfigPropertyKeys;
@@ -10,23 +12,24 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 /**
- * Created by eugen.horovitz on 7/2/2017.
+ *@author eugen.horovitz
  */
 public class FileSystemScannerTest {
+    private static String FOLDER_TO_TEST = TestHelper.getFirstFolder(TestHelper.FOLDER_WITH_NPN_PROJECTS);
 
     @Test
     public void shouldRemoveJsFilesFromNpmFolders() {
         FilesScanner f = new FilesScanner();
         Properties p = TestHelper.getPropertiesFromFile();
         String[] filesJSBegin = f.getFileNames(
-                TestHelper.FOLDER_TO_TEST,
+                FOLDER_TO_TEST,
                 p.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY).split(" "),
                 p.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY).split(" "),
                 false,
                 false);
 
         String[] filesPackageJson = f.getFileNames(
-                TestHelper.FOLDER_TO_TEST,
+                FOLDER_TO_TEST,
                 new String[]{"**/*package.json"},
                 p.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY).split(" "),
                 false,
@@ -40,7 +43,7 @@ public class FileSystemScannerTest {
 
         FilesScanner fs = new FilesScanner();
         String[] filesJSEnd = fs.getFileNames(
-                TestHelper.FOLDER_TO_TEST,
+                FOLDER_TO_TEST,
                 p.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY).split(" "),
                 stockArr,
                 false,

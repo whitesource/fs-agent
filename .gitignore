@@ -2,3 +2,4 @@ target/
 *.iml
 .idea/
 whitesource-fs-agent.config
+/whitesource/

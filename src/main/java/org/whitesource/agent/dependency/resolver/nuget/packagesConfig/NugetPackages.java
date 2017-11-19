@@ -13,22 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.whitesource.fs;
+package org.whitesource.agent.dependency.resolver.nuget.packagesConfig;
+
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 
 /**
- *@author eugen.horovitz
+ * @author yossi.weinberg
  */
-public enum StatusCode {
+@XmlRootElement(name = "packages")
+public class NugetPackages {
 
-    SUCCESS(0), ERROR(-1), POLICY_VIOLATION(-2), CLIENT_FAILURE(-3), CONNECTION_FAILURE(-4), SERVER_FAILURE(-5);
+    /* --- Members --- */
 
-    private final int value;
+    private List<NugetPackage> nugets;
 
-    StatusCode(int value) {
-        this.value = value;
+    /* --- Getters / Setters --- */
+
+    @XmlElement(name = "package")
+    public List<NugetPackage> getNugets() {
+        return nugets;
     }
 
-    public int getValue() {
-        return value;
+    public void setNugets(List<NugetPackage> nugets) {
+        this.nugets = nugets;
     }
 }

@@ -39,6 +39,10 @@ public final class ConfigPropertyKeys {
     public static final String ARCHIVE_EXTRACTION_DEPTH_KEY = "archiveExtractionDepth";
     public static final String ARCHIVE_INCLUDES_PATTERN_KEY = "archiveIncludes";
     public static final String ARCHIVE_EXCLUDES_PATTERN_KEY = "archiveExcludes";
+    public static final String ARCHIVE_FAST_UNPACK_KEY = "archiveFastUnpack";
+    public static final String CALCULATE_HINTS = "calculate.hints";
+    public static final String CALCULATE_MD5 = "calculate.md5";
+    public static final String REQUESTER_EMAIL = "requesterEmail";
     public static final String CASE_SENSITIVE_GLOB_PROPERTY_KEY = "case.sensitive.glob";
     public static final String PROXY_HOST_PROPERTY_KEY = "proxy.host";
     public static final String PROXY_PORT_PROPERTY_KEY = "proxy.port";
@@ -58,6 +62,11 @@ public final class ConfigPropertyKeys {
     public static final String LOG_LEVEL_KEY = "log.level";
     public static final String FOLLOW_SYMBOLIC_LINKS = "followSymbolicLinks";
     public static final String SHOW_PROGRESS_BAR = "showProgressBar";
-    public static final String RESOLVE_NPM_DEPENDENCIES = "resolveNpmDependencies";
-
+    public static final String NPM_RESOLVE_DEPENDENCIES = "npm.resolveDependencies";
+    public static final String NPM_INCLUDE_DEV_DEPENDENCIES = "npm.includeDevDependencies";
+    public static final String NPM_IGNORE_JAVA_SCRIPT_FILES = "npm.ignoreJavaScriptFiles";
+    public static final String BOWER_RESOLVE_DEPENDENCIES = "bower.resolveDependencies";
+    public static final String NUGET_RESOLVE_DEPENDENCIES = "nuget.resolveDependencies";
+    public static final String PROJECT_PER_SUBFOLDER = "projectPerFolder";
+    public static final String UPDATE_TYPE = "updateType";
 }

@@ -15,26 +15,30 @@
  */
 package org.whitesource.agent;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.dispatch.CheckPolicyComplianceResult;
+import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 import org.whitesource.fs.StatusCode;
+import sun.misc.BASE64Decoder;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.ConnectException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Properties;
+import java.io.*;
+import java.util.*;
+import java.util.zip.GZIPInputStream;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
@@ -51,26 +55,83 @@ public abstract class CommandLineAgent {
 
     private static final Logger logger = LoggerFactory.getLogger(CommandLineAgent.class);
 
+    public static final String NEW_LINE = "\n";
+    public static final String DOT = ".";
+    public static final String JAVA_NETWORKING = "java.net";
+    private static final int MAX_NUMBER_OF_DEPENDENCIES = 1000000;
+
     /* --- Members --- */
 
     protected final Properties config;
+    protected final List<String> offlineRequestFiles;
 
     /* --- Constructors --- */
 
-    public CommandLineAgent(Properties config) {
+    public CommandLineAgent(Properties config, List<String> offlineRequestFiles) {
         this.config = config;
+        this.offlineRequestFiles = offlineRequestFiles;
     }
 
     /* --- Public methods --- */
 
     public StatusCode sendRequest() {
-        Collection<AgentProjectInfo> projects = createProjects();
+        Collection<AgentProjectInfo> projects = new LinkedList<>();
+
+        List<File> requestFiles = new LinkedList<>();
+        if (offlineRequestFiles != null) {
+            for (String requestFilePath : offlineRequestFiles) {
+                if (StringUtils.isNotBlank(requestFilePath)) {
+                    requestFiles.add(new File(requestFilePath));
+                }
+            }
+        }
+        if (!requestFiles.isEmpty()) {
+            for (File requestFile : requestFiles) {
+                Gson gson = new Gson();
+                UpdateInventoryRequest updateRequest;
+                logger.debug("Converting offline request to JSON");
+                try {
+                    updateRequest = gson.fromJson(new JsonReader(new FileReader(requestFile)), new TypeToken<UpdateInventoryRequest>() {}.getType());
+                    logger.info("Reading information from request file {}", requestFile);
+                    projects.addAll(updateRequest.getProjects());
+                } catch (JsonSyntaxException e) {
+                    // try to decompress file content
+                    try {
+                        logger.debug("Decompressing zipped offline request");
+                        String fileContent = decompress(requestFile);
+                        logger.debug("Converting offline request to JSON");
+                        updateRequest = gson.fromJson(fileContent, new TypeToken<UpdateInventoryRequest>() {}.getType());
+                        logger.info("Reading information from request file {}", requestFile);
+                        projects.addAll(updateRequest.getProjects());
+                    } catch (IOException ioe) {
+                        logger.warn("Error parsing request: " + ioe.getMessage());
+                    } catch (JsonSyntaxException jse) {
+                        logger.warn("Error parsing request: " + jse.getMessage());
+                    }
+                } catch (FileNotFoundException e) {
+                    logger.warn("Error parsing request: " + e.getMessage());
+                }
+            }
+        }
+
+        // create projects as usual
+        projects.addAll(createProjects());
+
         Iterator<AgentProjectInfo> iterator = projects.iterator();
         while (iterator.hasNext()) {
             AgentProjectInfo project = iterator.next();
             if (project.getDependencies().isEmpty()) {
                 iterator.remove();
-                logger.info("Removing empty project {} from update (found 0 matching files)", project.getCoordinates().getArtifactId());
+
+                // if coordinates are null, then use token
+                String projectIdentifier;
+                Coordinates coordinates = project.getCoordinates();
+                if (coordinates == null) {
+                    projectIdentifier = project.getProjectToken();
+                } else {
+                    projectIdentifier = coordinates.getArtifactId();
+                }
+                logger.info("Removing empty project {} from update (found 0 matching files)", projectIdentifier);
             }
         }
 
@@ -93,35 +154,53 @@ public abstract class CommandLineAgent {
     /* --- Private methods --- */
 
     protected StatusCode sendRequest(Collection<AgentProjectInfo> projects) {
+        // org token
         String orgToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
-        String productVersion = null;
+
+        // update type
+        UpdateType updateType = UpdateType.OVERRIDE;
+        String updateTypeValue = config.getProperty(UPDATE_TYPE, UpdateType.OVERRIDE.toString());
+        try {
+            updateType = UpdateType.valueOf(updateTypeValue);
+        } catch (Exception e) {
+            logger.info("Invalid value {} for updateType, defaulting to {}", updateTypeValue, UpdateType.OVERRIDE);
+        }
+
+        logger.info("UpdateType set to {} ", updateTypeValue);
+        // product token or name (and version)
         String product = config.getProperty(PRODUCT_TOKEN_PROPERTY_KEY);
+        String productVersion = null;
         if (StringUtils.isBlank(product)) {
             product = config.getProperty(PRODUCT_NAME_PROPERTY_KEY);
             productVersion = config.getProperty(PRODUCT_VERSION_PROPERTY_KEY);
         }
 
+        // requester email
+        String requesterEmail = config.getProperty(REQUESTER_EMAIL);
+
         // send request
         logger.info("Initializing WhiteSource Client");
         WhitesourceService service = createService();
         if (getBooleanProperty(OFFLINE_PROPERTY_KEY, false)) {
-            offlineUpdate(service, orgToken, product, productVersion, projects);
+            offlineUpdate(service, orgToken, updateType, requesterEmail, product, productVersion, projects);
             return StatusCode.SUCCESS;
         } else {
-            StatusCode sendUpdate = StatusCode.SUCCESS;
+            checkDependenciesUpbound(projects);
+            StatusCode statusCode = StatusCode.SUCCESS;
             try {
                 if (getBooleanProperty(CHECK_POLICIES_PROPERTY_KEY, false)) {
                     boolean policyCompliance = checkPolicies(service, orgToken, product, productVersion, projects);
-                    sendUpdate = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
+                    statusCode = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
                 }
-                if (sendUpdate == StatusCode.SUCCESS) {
-                    update(service, orgToken, product, productVersion, projects);
+                if (statusCode == StatusCode.SUCCESS) {
+                    update(service, orgToken, updateType, requesterEmail, product, productVersion, projects);
                 }
             } catch (WssServiceException e) {
-                if (e.getCause() != null && e.getCause() instanceof ConnectException) {
-                    sendUpdate = StatusCode.CONNECTION_FAILURE;
+                if (e.getCause() != null &&
+                        e.getCause().getClass().getCanonicalName().substring(0, e.getCause().getClass().getCanonicalName().lastIndexOf(DOT)).equals(JAVA_NETWORKING)) {
+                    statusCode = StatusCode.CONNECTION_FAILURE;
                 } else {
-                    sendUpdate = StatusCode.SERVER_FAILURE;
+                    statusCode = StatusCode.SERVER_FAILURE;
                 }
                 logger.error("Failed to send request to WhiteSource server: " + e.getMessage(), e);
             } finally {
@@ -129,7 +208,14 @@ public abstract class CommandLineAgent {
                     service.shutdown();
                 }
             }
-            return sendUpdate;
+            return statusCode;
+        }
+    }
+
+    private void checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
+        int numberOfDependencies = projects.stream().map(x -> x.getDependencies()).mapToInt(x -> x.size()).sum();
+        if (numberOfDependencies > MAX_NUMBER_OF_DEPENDENCIES) {
+            logger.warn("Number of dependencies: {} exceeded the maximum supported: {}", numberOfDependencies, MAX_NUMBER_OF_DEPENDENCIES);
         }
     }
 
@@ -143,8 +229,8 @@ public abstract class CommandLineAgent {
         }
         int connectionTimeoutMinutes = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
                 String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
-        final WhitesourceService service = new WhitesourceService(getAgentType(), getAgentVersion(), getPluginVersion(), serviceUrl,
-                setProxy, connectionTimeoutMinutes);
+        final WhitesourceService service = new WhitesourceService(getAgentType(), getAgentVersion(), getPluginVersion(),
+                serviceUrl, setProxy, connectionTimeoutMinutes);
         if (StringUtils.isNotBlank(proxyHost)) {
             final int proxyPort = Integer.parseInt(config.getProperty(PROXY_PORT_PROPERTY_KEY));
             final String proxyUser = config.getProperty(PROXY_USER_PROPERTY_KEY);
@@ -188,14 +274,14 @@ public abstract class CommandLineAgent {
         return policyCompliance;
     }
 
-    private void update(WhitesourceService service, String orgToken, String product, String productVersion,
+    private void update(WhitesourceService service, String orgToken, UpdateType updateType, String requesterEmail, String product, String productVersion,
                         Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
-        UpdateInventoryResult updateResult = service.update(orgToken, product, productVersion, projects);
+        UpdateInventoryResult updateResult = service.update(orgToken, requesterEmail, updateType, product, productVersion, projects);
         logResult(updateResult);
     }
 
-    private void offlineUpdate(WhitesourceService service, String orgToken, String product, String productVersion,
+    private void offlineUpdate(WhitesourceService service, String orgToken, UpdateType updateType, String requesterEmail, String product, String productVersion,
                                Collection<AgentProjectInfo> projects) {
         logger.info("Generating offline update request");
 
@@ -204,13 +290,16 @@ public abstract class CommandLineAgent {
 
         // generate offline request
         UpdateInventoryRequest updateRequest = service.offlineUpdate(orgToken, product, productVersion, projects);
+
+        updateRequest.setRequesterEmail(requesterEmail);
         try {
             OfflineUpdateRequest offlineUpdateRequest = new OfflineUpdateRequest(updateRequest);
+            updateRequest.setUpdateType(updateType);
             File outputDir = new File(".");
             File file = offlineUpdateRequest.generate(outputDir, zip, prettyJson);
             logger.info("Offline request generated successfully at {}", file.getPath());
         } catch (IOException e) {
-            logger.error("Error generating offline update request: " + e.getMessage(), e);
+            logger.error("Error generating offline update request: " + e.getMessage());
         } finally {
             if (service != null) {
                 service.shutdown();
@@ -219,28 +308,34 @@ public abstract class CommandLineAgent {
     }
 
     private void logResult(UpdateInventoryResult updateResult) {
-        StringBuilder resultLogMsg = new StringBuilder("Inventory update results for ").append(updateResult.getOrganization()).append("\n");
+        StringBuilder resultLogMsg = new StringBuilder("Inventory update results for ").append(updateResult.getOrganization()).append(NEW_LINE);
 
         // newly created projects
         Collection<String> createdProjects = updateResult.getCreatedProjects();
         if (createdProjects.isEmpty()) {
-            resultLogMsg.append("No new projects found.").append("\n");
+            resultLogMsg.append("No new projects found.").append(NEW_LINE);
         } else {
-            resultLogMsg.append("Newly created projects:").append("\n");
+            resultLogMsg.append("Newly created projects:").append(NEW_LINE);
             for (String projectName : createdProjects) {
-                resultLogMsg.append(projectName).append("\n");
+                resultLogMsg.append(projectName).append(NEW_LINE);
             }
         }
 
         // updated projects
         Collection<String> updatedProjects = updateResult.getUpdatedProjects();
         if (updatedProjects.isEmpty()) {
-            resultLogMsg.append("No projects were updated.").append("\n");
+            resultLogMsg.append("No projects were updated.").append(NEW_LINE);
         } else {
-            resultLogMsg.append("Updated projects:").append("\n");
+            resultLogMsg.append("Updated projects:").append(NEW_LINE);
             for (String projectName : updatedProjects) {
-                resultLogMsg.append(projectName).append("\n");
+                resultLogMsg.append(projectName).append(NEW_LINE);
             }
+        }
+
+        // support token
+        String requestToken = updateResult.getRequestToken();
+        if (StringUtils.isNotBlank(requestToken)) {
+            resultLogMsg.append(NEW_LINE).append("Support Token: ").append(requestToken).append(NEW_LINE);
         }
         logger.info(resultLogMsg.toString());
     }
@@ -256,5 +351,35 @@ public abstract class CommandLineAgent {
         return property;
     }
 
+    protected int getIntProperty(String propertyKey, int defaultValue) {
+        int value = defaultValue;
+        String propertyValue = config.getProperty(propertyKey);
+        if (StringUtils.isNotBlank(propertyValue)) {
+            try {
+                value = Integer.valueOf(propertyValue);
+            } catch (NumberFormatException e) {
+                // do nothing
+            }
+        }
+        return value;
+    }
+
     protected abstract String getPluginVersion();
+
+    private String decompress(File file) throws IOException {
+        if (file == null || !file.exists()) {
+            return "";
+        }
+
+        byte[] bytes = new BASE64Decoder().decodeBuffer(new FileInputStream(file));
+        GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(bytes));
+        BufferedReader bf = new BufferedReader(new InputStreamReader(gis, "UTF-8"));
+        String outStr = "";
+        String line;
+        while ((line = bf.readLine()) != null) {
+            outStr += line;
+        }
+        return outStr;
+    }
+
 }

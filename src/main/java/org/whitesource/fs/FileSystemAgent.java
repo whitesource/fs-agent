@@ -26,6 +26,7 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.scm.ScmConnector;
 
+import java.io.File;
 import java.util.*;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
@@ -45,44 +46,93 @@ public class FileSystemAgent extends CommandLineAgent {
 
     private static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
     private static final String EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX = ",";
-    private static final String DEFAULT_ARCHIVE_DEPTH = "0";
+    private static final int DEFAULT_ARCHIVE_DEPTH = 0;
 
     private static final String AGENT_TYPE = "fs-agent";
-    private static final String AGENT_VERSION = "2.3.7";
-    private static final String PLUGIN_VERSION = "1.8.0";
+    private static final String AGENT_VERSION = "2.4.3";
+    private static final String PLUGIN_VERSION = "17.11.3-SNAPSHOT";
 
     /* --- Members --- */
 
     private final List<String> dependencyDirs;
 
+    private boolean projectPerSubFolder;
+
     /* --- Constructors --- */
 
-    public FileSystemAgent(Properties config, List<String> dependencyDirs) {
-        super(config);
-        this.dependencyDirs = dependencyDirs;
+    public FileSystemAgent(Properties config, List<String> dependencyDirs, List<String> offlineRequestFiles) {
+        super(config, offlineRequestFiles);
+
+        projectPerSubFolder = getBooleanProperty(PROJECT_PER_SUBFOLDER, false);
+        if (projectPerSubFolder) {
+            this.dependencyDirs = new LinkedList<>();
+            for (String directory :dependencyDirs) {
+
+
+                File file = new File(directory);
+                if (file.isDirectory()) {
+                    String[] directories = getSubDirectories(directory);
+                    Arrays.stream(directories).forEach(subDir -> this.dependencyDirs.add(subDir));
+                } else if (file.isFile()) {
+                    this.dependencyDirs.add(directory);
+                }
+                else{
+                    logger.warn(directory + "is not a file nor a directory .");
+                }
+            }
+        } else {
+            this.dependencyDirs = dependencyDirs;
+        }
+    }
+
+    private String[] getSubDirectories(String directory) {
+        try {
+            File file = new File(directory);
+            String[] files = file.list((current, name) -> new File(current, name).isDirectory());
+            if (files == null){
+                logger.info("Error getting sub directories from: " + directory);
+                return new String[0];
+            }
+            return files;
+        } catch (Exception ex) {
+            logger.info("Error getting sub directories from: " + directory, ex);
+            return new String[0];
+        }
     }
 
     /* --- Overridden methods --- */
 
     @Override
     protected Collection<AgentProjectInfo> createProjects() {
-        AgentProjectInfo projectInfo = new AgentProjectInfo();
-        // use token or name + version
-        String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
-        if (StringUtils.isNotBlank(projectToken)) {
-            projectInfo.setProjectToken(projectToken);
+        if (projectPerSubFolder) {
+            Collection<AgentProjectInfo> projects = new LinkedList<>();
+            for (String directory : dependencyDirs) {
+                AgentProjectInfo projectInfo = new AgentProjectInfo();
+                String projectName = new File(directory).getName();
+                String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
+                projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+                projectInfo.setDependencies(getDependencyInfos(Collections.singletonList(directory)));
+                projects.add(projectInfo);
+            }
+            return projects;
         } else {
-            String projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
-            String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
-            projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+            AgentProjectInfo projectInfo = new AgentProjectInfo();
+            // use token or name + version
+            String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
+            if (StringUtils.isNotBlank(projectToken)) {
+                projectInfo.setProjectToken(projectToken);
+            } else {
+                String projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
+                String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
+                projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+            }
+            projectInfo.setDependencies(getDependencyInfos());
+
+            Collection<AgentProjectInfo> projects = new LinkedList<>();
+            // don't use Arrays.asList, might be removed later if no dependencies
+            projects.add(projectInfo);
+            return projects;
         }
-
-        projectInfo.setDependencies(getDependencyInfos());
-
-        Collection<AgentProjectInfo> projects = new ArrayList<AgentProjectInfo>();
-        // don't use Arrays.asList, might be removed later if no dependencies
-        projects.add(projectInfo);
-        return projects;
     }
 
     @Override
@@ -104,7 +154,10 @@ public class FileSystemAgent extends CommandLineAgent {
 
     private List<DependencyInfo> getDependencyInfos() {
         List<String> scannerBaseDirs = dependencyDirs;
+        return getDependencyInfos(scannerBaseDirs);
+    }
 
+    private List<DependencyInfo> getDependencyInfos(List<String> scannerBaseDirs) {
         // create scm connector
         String scmType = config.getProperty(SCM_TYPE_PROPERTY_KEY);
         String url = config.getProperty(SCM_URL_PROPERTY_KEY);
@@ -121,15 +174,18 @@ public class FileSystemAgent extends CommandLineAgent {
         }
 
         // read all properties
-        final boolean resolveNpmDependencies = getBooleanProperty(RESOLVE_NPM_DEPENDENCIES, true);
         final String[] includes = config.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         final String[] excludes = config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        final int archiveExtractionDepth = Integer.parseInt(config.getProperty(ARCHIVE_EXTRACTION_DEPTH_KEY, DEFAULT_ARCHIVE_DEPTH));
+        final int archiveExtractionDepth = getIntProperty(ARCHIVE_EXTRACTION_DEPTH_KEY, DEFAULT_ARCHIVE_DEPTH);
         final String[] archiveIncludes = config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         final String[] archiveExcludes = config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        final boolean archiveFastUnpack = getBooleanProperty(ARCHIVE_FAST_UNPACK_KEY, false);
         boolean followSymlinks = getBooleanProperty(FOLLOW_SYMBOLIC_LINKS, true);
         // check scan partial sha1s (false by default)
         boolean partialSha1Match = getBooleanProperty(PARTIAL_SHA1_MATCH_KEY, false);
+
+        boolean calculateHints = getBooleanProperty(CALCULATE_HINTS, false);
+        boolean calculateMd5 = getBooleanProperty(CALCULATE_MD5, false);
 
         // glob case sensitive
         final String globCaseSensitiveValue = config.getProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY);
@@ -154,7 +210,9 @@ public class FileSystemAgent extends CommandLineAgent {
         excludedCopyrights.remove("");
 
         boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
-        return new FileSystemScanner(showProgressBar, new DependencyResolutionService(resolveNpmDependencies)).createDependencies(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive,
-                archiveExtractionDepth, archiveIncludes, archiveExcludes, followSymlinks, excludedCopyrights, partialSha1Match);
+        return new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createDependencies(
+                scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
+                archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights,
+                partialSha1Match, calculateHints, calculateMd5);
     }
 }

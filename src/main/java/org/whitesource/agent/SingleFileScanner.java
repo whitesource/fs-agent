@@ -13,22 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.whitesource.fs;
+package org.whitesource.agent;
+
+import org.apache.tools.ant.DirectoryScanner;
+
+import java.io.File;
 
 /**
- *@author eugen.horovitz
+ * A {@link org.apache.tools.ant.DirectoryScanner} for a single file.
+ *
+ * @author tom.shapira
  */
-public enum StatusCode {
+public class SingleFileScanner extends DirectoryScanner {
 
-    SUCCESS(0), ERROR(-1), POLICY_VIOLATION(-2), CLIENT_FAILURE(-3), CONNECTION_FAILURE(-4), SERVER_FAILURE(-5);
-
-    private final int value;
-
-    StatusCode(int value) {
-        this.value = value;
-    }
-
-    public int getValue() {
-        return value;
+    /**
+     * Exposes the {@link DirectoryScanner#isIncluded(String)} method to check if a single file should be included
+     * in the scan.
+     *
+     * @param file
+     * @return
+     */
+    public boolean isIncluded(File file) {
+        return isIncluded(file.getAbsolutePath());
     }
 }

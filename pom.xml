@@ -6,12 +6,12 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>17.11.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <agent.api.version>2.3.7</agent.api.version>
+        <agent.api.version>2.4.5</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
     </properties>
 
@@ -219,6 +219,7 @@
                     <version>3.2.5</version>
                     <configuration>
                         <orgToken>${whitesource.orgToken}</orgToken>
+                        <product>File System Agent</product>
                     </configuration>
                 </plugin>
             </plugins>

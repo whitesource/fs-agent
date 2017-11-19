@@ -32,7 +32,7 @@ limitations under the License.
 
 [1]: http://www.github.com/whitesource/agents
 [2]: http://www.whitesourcesoftware.com
-[3]: http://docs.whitesourcesoftware.com/display/serviceDocs/File+System+Agent
+[3]: https://whitesource.atlassian.net/wiki/spaces/WD/pages/33718339/File+System+Agent
 [4]: https://github.com/whitesource/fs-agent
 [5]: mailto:support@whitesourcesoftware.com
 [6]: http://www.apache.org/licenses/LICENSE-2.0.html
