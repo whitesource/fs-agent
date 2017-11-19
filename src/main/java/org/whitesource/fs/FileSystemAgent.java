@@ -15,6 +15,7 @@
  */
 package org.whitesource.fs;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +25,14 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
+import org.whitesource.fs.configuration.ScmConfiguration;
+import org.whitesource.fs.configuration.ScmRepositoriesParser;
 import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
@@ -165,12 +170,34 @@ public class FileSystemAgent extends CommandLineAgent {
         String password = config.getProperty(SCM_PASS_PROPERTY_KEY);
         String branch = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
         String tag = config.getProperty(SCM_TAG_PROPERTY_KEY);
-        String privateKey = config.getProperty(SCM_PPK_PROPERTY_KEY);
-        ScmConnector scmConnector = ScmConnector.create(scmType, url, privateKey, username, password, branch, tag);
-        if (scmConnector != null) {
-            logger.info("Connecting to SCM");
-            scannerBaseDirs.clear();
-            scannerBaseDirs.add(scmConnector.cloneRepository().getPath());
+        String repositoriesFile = config.getProperty(SCM_REPOSITORIES_FILE);
+        String privateKey = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
+
+        Collection<String> scmPaths = new ArrayList<>();
+        final boolean[] hasScmConnectors = new boolean[1];
+
+        List<ScmConnector> scmConnectors = null;
+        if (StringUtils.isNotBlank(repositoriesFile)){
+            Collection<ScmConfiguration> scmConfigurations = ScmRepositoriesParser.parseRepositoriesFile(repositoriesFile , scmType, privateKey, username, password);
+            scmConnectors = scmConfigurations.stream()
+                    .map(scm -> ScmConnector.create(scm.getType(), scm.getUrl(),scm.getPpk(),scm.getUser(), scm.getPass(), scm.getBranch(), scm.getTag()))
+                    .collect(Collectors.toList());
+        }else {
+            scmConnectors = Arrays.asList(ScmConnector.create(scmType, url, privateKey, username, password, branch, tag));
+        }
+
+        if (scmConnectors != null) {
+            scmConnectors.stream().forEach(scmConnector -> {
+                if (scmConnector != null) {
+                    logger.info("Connecting to SCM");
+                    scannerBaseDirs.clear();
+
+                    String scmPath = scmConnector.cloneRepository().getPath();
+                    scmPaths.add(scmPath);
+                    scannerBaseDirs.add(scmPath);
+                    hasScmConnectors[0] = true;
+                }
+            });
         }
 
         // read all properties
@@ -197,8 +224,8 @@ public class FileSystemAgent extends CommandLineAgent {
                 globCaseSensitive = false;
             } else {
                 logger.error("Bad {}. Received {}, required true/false or y/n", CASE_SENSITIVE_GLOB_PROPERTY_KEY, globCaseSensitiveValue);
-                if (scmConnector != null) {
-                    scmConnector.deleteCloneDirectory();
+                if (scmConnectors != null) {
+                    scmConnectors.forEach(scmConnector -> scmConnector.deleteCloneDirectory());
                 }
                 System.exit(-1); // TODO this is within a try frame. Throw an exception instead
             }
@@ -206,13 +233,26 @@ public class FileSystemAgent extends CommandLineAgent {
 
         final String excludedCopyrightsValue = config.getProperty(EXCLUDED_COPYRIGHT_KEY, "");
         // get excluded copyrights
-        Collection<String> excludedCopyrights = new ArrayList<String>(Arrays.asList(excludedCopyrightsValue.split(EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX)));
+        Collection<String> excludedCopyrights = new ArrayList<>(Arrays.asList(excludedCopyrightsValue.split(EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX)));
         excludedCopyrights.remove("");
 
         boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
-        return new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createDependencies(
-                scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
+        List<DependencyInfo> dependencyInfos = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createDependencies(
+                scannerBaseDirs, hasScmConnectors[0], includes, excludes, globCaseSensitive, archiveExtractionDepth,
                 archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights,
                 partialSha1Match, calculateHints, calculateMd5);
+
+        // delete all temp scm files
+        scmPaths.forEach(directory->{
+            if (directory != null) {
+                try {
+                    FileUtils.forceDelete(new File(directory));
+                } catch (IOException e) {
+                    // do nothing
+                }
+            }
+        });
+        return  dependencyInfos;
     }
+
 }

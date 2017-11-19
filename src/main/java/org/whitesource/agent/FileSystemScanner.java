@@ -11,7 +11,6 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.MemoryUsageHelper;
 import org.whitesource.fs.FileSystemAgent;
-import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +50,7 @@ public class FileSystemScanner {
 
     /* --- Public methods --- */
 
-    public List<DependencyInfo> createDependencies(List<String> scannerBaseDirs, ScmConnector scmConnector,
+    public List<DependencyInfo> createDependencies(List<String> scannerBaseDirs, boolean scmConnector,
                                                    String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                    String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
                                                    Collection<String> excludedCopyrights, boolean partialSha1Match) {
@@ -59,7 +58,7 @@ public class FileSystemScanner {
                 archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match, false, false);
     }
 
-    public List<DependencyInfo> createDependencies(List<String> scannerBaseDirs, ScmConnector scmConnector,
+    public List<DependencyInfo> createDependencies(List<String> scannerBaseDirs, boolean scmConnector,
                                                    String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                    String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
                                                    Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
@@ -161,10 +160,6 @@ public class FileSystemScanner {
            }
         }
 
-        // delete scm clone directory
-        if (scmConnector != null) {
-            scmConnector.deleteCloneDirectory();
-        }
         logger.info("Finished Analyzing Files");
 
         systemStats = MemoryUsageHelper.getMemoryUsage();
