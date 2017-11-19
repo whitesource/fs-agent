@@ -25,6 +25,7 @@ import org.whitesource.agent.ConfigPropertyKeys;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
@@ -38,8 +39,9 @@ public class Main {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-    private static final CommandLineArgs commandLineArgs = new CommandLineArgs();
     private static final String INFO = "info";
+
+    public static final CommandLineArgs commandLineArgs = new CommandLineArgs();
 
     /* --- Main --- */
 
@@ -60,18 +62,33 @@ public class Main {
         // validate args // TODO use jCommander validators
         // TODO add usage command
 
-        String productName = commandLineArgs.product;
-        String projectName = commandLineArgs.project;
         // read configuration properties
-        Properties configProps = readAndValidateConfigFile(commandLineArgs.configFilePath, projectName);
+        String project = commandLineArgs.project;
+        Properties configProps = readAndValidateConfigFile(commandLineArgs.configFilePath, project);
 
-        // Check whether the user inserted project OR/AND product via command line
-        if (productName != null) {
-            configProps.put(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, productName);
-        }
-        if (projectName != null) {
-            configProps.put(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, projectName);
-        }
+        // Check whether the user inserted api key, project OR/AND product via command line
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY, commandLineArgs.apiKey);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.UPDATE_TYPE, commandLineArgs.updateType);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, commandLineArgs.product);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY, commandLineArgs.productVersion);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, project);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_VERSION_PROPERTY_KEY, commandLineArgs.projectVersion);
+
+        // proxy
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PORT_PROPERTY_KEY, commandLineArgs.proxyPass);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_USER_PROPERTY_KEY, commandLineArgs.proxyPort);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY, commandLineArgs.proxyUser);
+
+        // archiving
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ARCHIVE_FAST_UNPACK_KEY, commandLineArgs.archiveFastUnpack);
+
+        // project per folder
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, commandLineArgs.projectPerFolder);
+
+        // request file
+        List<String> offlineRequestFiles = new LinkedList<>();
+        offlineRequestFiles.addAll(commandLineArgs.requestFiles);
 
         // read log level from configuration file
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
@@ -96,13 +113,19 @@ public class Main {
         files.addAll(commandLineArgs.dependencyDirs);
 
         // run the agent
-        FileSystemAgent agent = new FileSystemAgent(configProps, files);
+        FileSystemAgent agent = new FileSystemAgent(configProps, files, offlineRequestFiles);
         StatusCode processExitCode = agent.sendRequest();
         logger.info("Process finished with exit code {} ({})", processExitCode, processExitCode.getValue());
         return processExitCode.getValue();
     }
 
     /* --- Private methods --- */
+
+    private static void readPropertyFromCommandLine(Properties configProps, String propertyKey, String propertyValue) {
+        if (StringUtils.isNotBlank(propertyValue)) {
+            configProps.put(propertyKey, propertyValue);
+        }
+    }
 
     private static Properties readAndValidateConfigFile(String configFilePath, String projectName) {
         Properties configProps = new Properties();
@@ -146,11 +169,11 @@ public class Main {
         boolean noProjectName = StringUtils.isBlank(projectName);
         if (noProjectToken && noProjectName) {
             foundError = true;
-            logger.error("Could not retrieve properties {} and {}  from {}",
+            logger.error("Could not retrieve properties {} and {} from {}",
                     PROJECT_NAME_PROPERTY_KEY, PROJECT_TOKEN_PROPERTY_KEY, configFilePath);
         } else if (!noProjectToken && !noProjectName) {
             foundError = true;
-            logger.error("Please choose {} or {}", PROJECT_NAME_PROPERTY_KEY, PROJECT_TOKEN_PROPERTY_KEY);
+            logger.error("Please choose just one of either {} or {} (and not both)", PROJECT_NAME_PROPERTY_KEY, PROJECT_TOKEN_PROPERTY_KEY);
         }
         return foundError;
     }
