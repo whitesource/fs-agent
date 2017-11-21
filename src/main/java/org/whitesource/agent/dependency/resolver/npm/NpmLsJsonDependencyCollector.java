@@ -83,6 +83,9 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
             // execute 'npm ls'
             ProcessBuilder pb = new ProcessBuilder(getLsCommandParams());
             pb.directory(new File(rootDirectory));
+            // redirect the error output to avoid output of npm ls by operating system
+            String redirectErrorOutput = isWindows() ? "nul" : "/dev/null";
+            pb.redirectError(new File(redirectErrorOutput));
             logger.debug("start 'npm ls'");
             Process process = pb.start();
 
