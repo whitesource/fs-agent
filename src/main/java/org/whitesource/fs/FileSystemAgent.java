@@ -24,10 +24,13 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
+import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
@@ -47,6 +50,13 @@ public class FileSystemAgent extends CommandLineAgent {
     private static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
     private static final String EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX = ",";
     private static final int DEFAULT_ARCHIVE_DEPTH = 0;
+
+    private static final String NPM_COMMAND = NpmLsJsonDependencyCollector.isWindows() ? "npm.cmd" : "npm";
+    private static final String NPM_INSTALL_COMMAND = "install";
+    private static final String NPM_INSTALL_OUTPUT_DESTINATION = NpmLsJsonDependencyCollector.isWindows() ? "nul" : "/dev/null";
+    private static final String PACKAGE_LOCK = "package-lock.json";
+    private static final String NODE_MODULES = "node_modules";
+    private static final String PACKAGE_JSON = "package.json";
 
     private static final String AGENT_TYPE = "fs-agent";
     private static final String AGENT_VERSION = "2.4.3";
@@ -166,11 +176,16 @@ public class FileSystemAgent extends CommandLineAgent {
         String branch = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
         String tag = config.getProperty(SCM_TAG_PROPERTY_KEY);
         String privateKey = config.getProperty(SCM_PPK_PROPERTY_KEY);
+        boolean isScmNpmInstall = getBooleanProperty(SCM_NPM_INSTALL, true);
+        int npmInstallTimeoutMinutes = getIntProperty(SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
         ScmConnector scmConnector = ScmConnector.create(scmType, url, privateKey, username, password, branch, tag);
+        String separatorFiles = NpmLsJsonDependencyCollector.isWindows() ? "\\" : "/";
         if (scmConnector != null) {
             logger.info("Connecting to SCM");
             scannerBaseDirs.clear();
-            scannerBaseDirs.add(scmConnector.cloneRepository().getPath());
+            String cloneRepoFilesPath = scmConnector.cloneRepository().getPath();
+            cloneRepoFilesPath = npmInstallScmRepository(isScmNpmInstall, npmInstallTimeoutMinutes, scmConnector, separatorFiles, cloneRepoFilesPath);
+            scannerBaseDirs.add(cloneRepoFilesPath);
         }
 
         // read all properties
@@ -214,5 +229,46 @@ public class FileSystemAgent extends CommandLineAgent {
                 scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
                 archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights,
                 partialSha1Match, calculateHints, calculateMd5);
+    }
+
+    private String npmInstallScmRepository(boolean scmNpmInstall, int npmInstallTimeoutMinutes, ScmConnector scmConnector,
+                                           String separatorFiles, String pathToCloneRepoFiles) {
+        File packageJson = new File(pathToCloneRepoFiles + separatorFiles + PACKAGE_JSON);
+        boolean npmInstallFailed = false;
+        if (scmNpmInstall && packageJson.exists()) {
+            try {
+                // execute 'npm install'
+                File packageLock = new File(pathToCloneRepoFiles + separatorFiles + PACKAGE_LOCK);
+                if (packageLock.exists()) {
+                    packageLock.delete();
+                }
+                ProcessBuilder pb = new ProcessBuilder(NPM_COMMAND, NPM_INSTALL_COMMAND);
+                pb.directory(new File(pathToCloneRepoFiles));
+                // redirect the output to avoid output of npm install by operating system
+                pb.redirectOutput(new File(NPM_INSTALL_OUTPUT_DESTINATION));
+                logger.info("Found package.json file, executing 'npm install'");
+                try {
+                    Process npmInstallProcess = pb.start();
+                    npmInstallProcess.waitFor(npmInstallTimeoutMinutes, TimeUnit.MINUTES);
+                    if (npmInstallProcess.exitValue() != 0) {
+                        npmInstallFailed = true;
+                        logger.error("Failed to run 'npm install' on {}", scmConnector.getUrl());
+                    }
+                } catch (InterruptedException e) {
+                    npmInstallFailed = true;
+                    logger.error("'npm install' was interrupted {}", e);
+                }
+            } catch (IOException e) {
+                npmInstallFailed = true;
+                logger.error("Failed to start 'npm install' {}", e);
+            }
+        }
+        if (npmInstallFailed) {
+            // In case of error in 'npm install', delete and clone the repository to prevent wrong output
+            this.prepStepStatusCode = StatusCode.PREP_STEP_FAILURE;
+            scmConnector.deleteCloneDirectory();
+            pathToCloneRepoFiles = scmConnector.cloneRepository().getPath();
+        }
+        return pathToCloneRepoFiles;
     }
 }
