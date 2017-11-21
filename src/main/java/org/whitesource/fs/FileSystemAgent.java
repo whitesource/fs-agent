@@ -233,6 +233,7 @@ public class FileSystemAgent extends CommandLineAgent {
                     hasScmConnectors[0] = true;
                 }
             });
+        }
 
         // read all properties
         final String[] includes = config.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
@@ -304,7 +305,7 @@ public class FileSystemAgent extends CommandLineAgent {
                 pb.directory(new File(pathToCloneRepoFiles));
                 // redirect the output to avoid output of npm install by operating system
                 pb.redirectOutput(new File(NPM_INSTALL_OUTPUT_DESTINATION));
-                logger.info("Found package.json file, executing 'npm install'");
+                logger.info("Found package.json file, executing 'npm install' on {}", scmConnector.getUrl());
                 try {
                     Process npmInstallProcess = pb.start();
                     npmInstallProcess.waitFor(npmInstallTimeoutMinutes, TimeUnit.MINUTES);
