@@ -58,6 +58,8 @@ public final class ConfigPropertyKeys {
     public static final String SCM_PASS_PROPERTY_KEY = "scm.pass";
     public static final String SCM_BRANCH_PROPERTY_KEY = "scm.branch";
     public static final String SCM_TAG_PROPERTY_KEY = "scm.tag";
+    public static final String SCM_NPM_INSTALL = "scm.npmInstall";
+    public static final String SCM_NPM_INSTALL_TIMEOUT_MINUTES = "scm.npmInstallTimeoutMinutes";
     public static final String SCM_REPOSITORIES_FILE = "scm.repositoriesFile";
     public static final String EXCLUDED_COPYRIGHT_KEY = "copyright.excludes";
     public static final String LOG_LEVEL_KEY = "log.level";

@@ -64,6 +64,7 @@ public abstract class CommandLineAgent {
 
     protected final Properties config;
     protected final List<String> offlineRequestFiles;
+    protected StatusCode prepStepStatusCode = StatusCode.SUCCESS;
 
     /* --- Constructors --- */
 
@@ -137,7 +138,7 @@ public abstract class CommandLineAgent {
 
         if (projects.isEmpty()) {
             logger.info("Exiting, nothing to update");
-            return StatusCode.SUCCESS;
+            return this.prepStepStatusCode;
         } else {
             return sendRequest(projects);
         }
@@ -173,7 +174,7 @@ public abstract class CommandLineAgent {
         WhitesourceService service = createService();
         if (getBooleanProperty(OFFLINE_PROPERTY_KEY, false)) {
             offlineUpdate(service, orgToken, requesterEmail, product, productVersion, projects);
-            return StatusCode.SUCCESS;
+            return this.prepStepStatusCode;
         } else {
             // update type
             UpdateType updateType = UpdateType.OVERRIDE;
@@ -207,6 +208,9 @@ public abstract class CommandLineAgent {
                 if (service != null) {
                     service.shutdown();
                 }
+            }
+            if (statusCode == StatusCode.SUCCESS) {
+                return this.prepStepStatusCode;
             }
             return statusCode;
         }
@@ -400,4 +404,7 @@ public abstract class CommandLineAgent {
         return outStr;
     }
 
+    public StatusCode getPrepStepStatusCode() {
+        return this.prepStepStatusCode;
+    }
 }
