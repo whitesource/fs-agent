@@ -221,10 +221,10 @@ public class FileSystemAgent extends CommandLineAgent {
         }
 
         if (scmConnectors != null) {
+            scannerBaseDirs.clear();
             scmConnectors.stream().forEach(scmConnector -> {
                 if (scmConnector != null) {
                     logger.info("Connecting to SCM");
-                    scannerBaseDirs.clear();
 
                     String scmPath = scmConnector.cloneRepository().getPath();
                     scmPath = npmInstallScmRepository(isScmNpmInstall, npmInstallTimeoutMinutes, scmConnector, separatorFiles, scmPath);
