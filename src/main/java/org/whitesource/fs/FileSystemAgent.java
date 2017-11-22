@@ -220,7 +220,7 @@ public class FileSystemAgent extends CommandLineAgent {
             scmConnectors = Arrays.asList(ScmConnector.create(scmType, url, privateKey, username, password, branch, tag));
         }
 
-        if (scmConnectors != null) {
+        if (scmConnectors != null && scmConnectors.stream().anyMatch(scm->scm!=null)) {
             scannerBaseDirs.clear();
             scmConnectors.stream().forEach(scmConnector -> {
                 if (scmConnector != null) {
