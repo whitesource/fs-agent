@@ -78,11 +78,12 @@ public class FileSystemScanner {
         String unpackDirectory = null;
         // go over all base directories, look for archives
         Map<String, String> archiveToBaseDirMap = new HashMap<>();
+        List<String> archiveDirectories = new ArrayList<>();
         if (archiveExtractionDepth > 0) {
             ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, excludes, archiveFastUnpack);
             logger.info("Starting Archive Extraction (may take a few minutes)");
             for (String scannerBaseDir : new LinkedHashSet<>(pathsToScan)) {
-                unpackDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth);
+                unpackDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth, archiveDirectories);
                 if (unpackDirectory != null) {
                     archiveToBaseDirMap.put(unpackDirectory, new File(scannerBaseDir).getParent());
                     pathsToScan.add(unpackDirectory);
@@ -149,17 +150,18 @@ public class FileSystemScanner {
         }
 
         // delete all archive temp folders
-        if (unpackDirectory != null) {
-           File directory = new File(unpackDirectory);
-           if (directory.exists()) {
-               try {
-                   FileUtils.deleteDirectory(directory);
-               } catch (IOException e) {
-                   logger.warn("Error deleting archive directory", e);
+        if (!archiveDirectories.isEmpty()) {
+            for (String archiveDirectory : archiveDirectories) {
+               File directory = new File(archiveDirectory);
+               if (directory.exists()) {
+                   try {
+                       FileUtils.deleteDirectory(directory);
+                   } catch (IOException e) {
+                       logger.warn("Error deleting archive directory", e);
+                   }
                }
-           }
+            }
         }
-
         logger.info("Finished Analyzing Files");
 
         systemStats = MemoryUsageHelper.getMemoryUsage();

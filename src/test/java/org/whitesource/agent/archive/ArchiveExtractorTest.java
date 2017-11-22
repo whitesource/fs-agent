@@ -30,11 +30,11 @@ public class ArchiveExtractorTest {
 
         ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, fileExcludes);
         String scannerFile = Paths.get("", "C:\\Issues\\bigJar\\wss-server-1.1.0-SNAPSHOT.war").toString();
-        String unzipFolderFilter = archiveExtractor.extractArchives(scannerFile, archiveExtractionDepth);
+        String unzipFolderFilter = archiveExtractor.extractArchives(scannerFile, archiveExtractionDepth, new ArrayList<>());
 
         archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, new String[0]);
         scannerFile = Paths.get("", "C:\\Issues\\bigJar\\wss-server-1.1.0-SNAPSHOT.war").toString();
-        String unzipFolderAll = archiveExtractor.extractArchives(scannerFile, archiveExtractionDepth);
+        String unzipFolderAll = archiveExtractor.extractArchives(scannerFile, archiveExtractionDepth, new ArrayList<>());
 
         FilesScanner fs = new FilesScanner();
         String[] filesAll = fs.getFileNames(unzipFolderAll, new String[]{"**/*.*"}, new String[0], false, false);
@@ -53,7 +53,7 @@ public class ArchiveExtractorTest {
 
         String scannerFile = Paths.get(currentDirectory, "\\src\\test\\resources\\dist.zip").toString();
         int archiveExtractionDepth = 4;
-        String unzipFolder = archiveExtractor.extractArchives(scannerFile, archiveExtractionDepth);
+        String unzipFolder = archiveExtractor.extractArchives(scannerFile, archiveExtractionDepth, new ArrayList<>());
         Assert.assertNotNull(unzipFolder);
 
         try {
@@ -121,7 +121,7 @@ public class ArchiveExtractorTest {
 
         String scannerBaseDir = Paths.get(currentDirectory, "src").toString();
         int archiveExtractionDepth = 4;
-        String unzipFolder = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth);
+        String unzipFolder = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth, new ArrayList<>());
         return unzipFolder;
     }
 }
