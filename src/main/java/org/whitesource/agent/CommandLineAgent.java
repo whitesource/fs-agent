@@ -23,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.dispatch.CheckPolicyComplianceResult;
+import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.model.AgentProjectInfo;
@@ -175,6 +176,16 @@ public abstract class CommandLineAgent {
             offlineUpdate(service, orgToken, requesterEmail, product, productVersion, projects);
             return this.prepStepStatusCode;
         } else {
+            // update type
+            UpdateType updateType = UpdateType.OVERRIDE;
+            String updateTypeValue = config.getProperty(UPDATE_TYPE, UpdateType.OVERRIDE.toString());
+            try {
+                updateType = UpdateType.valueOf(updateTypeValue);
+            } catch (Exception e) {
+                logger.info("Invalid value {} for updateType, defaulting to {}", updateTypeValue, UpdateType.OVERRIDE);
+            }
+            logger.info("UpdateType set to {} ", updateTypeValue);
+
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
             try {
@@ -183,7 +194,7 @@ public abstract class CommandLineAgent {
                     statusCode = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
                 }
                 if (statusCode == StatusCode.SUCCESS) {
-                    update(service, orgToken, requesterEmail, product, productVersion, projects);
+                    update(service, orgToken, updateType, requesterEmail, product, productVersion, projects);
                 }
             } catch (WssServiceException e) {
                 if (e.getCause() != null &&
@@ -267,10 +278,10 @@ public abstract class CommandLineAgent {
         return policyCompliance;
     }
 
-    private void update(WhitesourceService service, String orgToken, String requesterEmail, String product, String productVersion,
+    private void update(WhitesourceService service, String orgToken, UpdateType updateType, String requesterEmail, String product, String productVersion,
                         Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
-        UpdateInventoryResult updateResult = service.update(orgToken, requesterEmail, product, productVersion, projects);
+        UpdateInventoryResult updateResult = service.update(orgToken, requesterEmail, updateType, product, productVersion, projects);
         logResult(updateResult);
     }
 
@@ -283,9 +294,29 @@ public abstract class CommandLineAgent {
 
         // generate offline request
         UpdateInventoryRequest updateRequest = service.offlineUpdate(orgToken, product, productVersion, projects);
+
         updateRequest.setRequesterEmail(requesterEmail);
         try {
             OfflineUpdateRequest offlineUpdateRequest = new OfflineUpdateRequest(updateRequest);
+
+            UpdateType updateTypeFinal;
+
+            // if the update type was forced by command or config -> set it
+            if (StringUtils.isNotBlank(config.getProperty(UPDATE_TYPE))){
+                String updateTypeValue = config.getProperty(UPDATE_TYPE) ;
+                try {
+                    updateTypeFinal = UpdateType.valueOf(updateTypeValue);
+                } catch (Exception e) {
+                    logger.info("Invalid value {} for updateType, defaulting to {}", updateTypeValue, UpdateType.OVERRIDE);
+                    updateTypeFinal = UpdateType.OVERRIDE;
+                }
+            }else {
+                // Otherwise use the parameter in the file
+                updateTypeFinal = updateRequest.getUpdateType();
+            }
+
+            logger.info("UpdateType offline set to {} ", updateTypeFinal);
+            updateRequest.setUpdateType(updateTypeFinal);
             File outputDir = new File(".");
             File file = offlineUpdateRequest.generate(outputDir, zip, prettyJson);
             logger.info("Offline request generated successfully at {}", file.getPath());

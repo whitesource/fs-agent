@@ -21,12 +21,12 @@ public class DependencyCalculator {
         this.animationIndex = 0;
     }
 
-    public Collection<DependencyInfo> createDependencies(ScmConnector scmConnector, int totalFiles, Map<File, Collection<String>> fileMap,
+    public Collection<DependencyInfo> createDependencies(boolean scmConnector, int totalFiles, Map<File, Collection<String>> fileMap,
                                                          Collection<String> excludedCopyrights, boolean partialSha1Match) {
         return createDependencies(scmConnector, totalFiles, fileMap, excludedCopyrights, partialSha1Match, false, false);
     }
 
-    public Collection<DependencyInfo> createDependencies(ScmConnector scmConnector, int totalFiles, Map<File, Collection<String>> fileMap,
+    public Collection<DependencyInfo> createDependencies(boolean scmConnector, int totalFiles, Map<File, Collection<String>> fileMap,
                                                          Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
         List<DependencyInfo> allDependencies = new ArrayList<>();
         if (showProgressBar) {
@@ -39,7 +39,7 @@ public class DependencyCalculator {
                 DependencyInfoFactory factory = new DependencyInfoFactory(excludedCopyrights, partialSha1Match, calculateHints, calculateMd5);
                 DependencyInfo originalDependencyInfo = factory.createDependencyInfo(entry.getKey(), fileName);
                 if (originalDependencyInfo != null) {
-                    if (scmConnector != null) {
+                    if (scmConnector) {
                         originalDependencyInfo.setSystemPath(fileName.replace(BACK_SLASH, FORWARD_SLASH));
                     }
                     allDependencies.add(originalDependencyInfo);

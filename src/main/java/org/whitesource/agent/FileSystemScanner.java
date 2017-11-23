@@ -9,8 +9,8 @@ import org.whitesource.agent.archive.ArchiveExtractor;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.FilesScanner;
+import org.whitesource.agent.utils.MemoryUsageHelper;
 import org.whitesource.fs.FileSystemAgent;
-import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +47,7 @@ public class FileSystemScanner {
 
     /* --- Public methods --- */
 
-    public List<DependencyInfo> createDependencies(List<String> scannerBaseDirs, ScmConnector scmConnector,
+    public List<DependencyInfo> createDependencies(List<String> scannerBaseDirs, boolean scmConnector,
                                                    String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                    String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
                                                    Collection<String> excludedCopyrights, boolean partialSha1Match) {
@@ -55,10 +55,14 @@ public class FileSystemScanner {
                 archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match, false, false);
     }
 
-    public List<DependencyInfo> createDependencies(List<String> scannerBaseDirs, ScmConnector scmConnector,
+    public List<DependencyInfo> createDependencies(List<String> scannerBaseDirs, boolean scmConnector,
                                                    String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                    String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
                                                    Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
+
+        MemoryUsageHelper.SystemStats systemStats = MemoryUsageHelper.getMemoryUsage();
+        logger.debug(systemStats.toString());
+
         // get canonical paths
         Set<String> pathsToScan = getCanonicalPaths(scannerBaseDirs);
 
@@ -71,11 +75,12 @@ public class FileSystemScanner {
         String unpackDirectory = null;
         // go over all base directories, look for archives
         Map<String, String> archiveToBaseDirMap = new HashMap<>();
+        List<String> archiveDirectories = new ArrayList<>();
         if (archiveExtractionDepth > 0) {
             ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, excludes, archiveFastUnpack);
             logger.info("Starting Archive Extraction (may take a few minutes)");
             for (String scannerBaseDir : new LinkedHashSet<>(pathsToScan)) {
-                unpackDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth);
+                unpackDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth, archiveDirectories);
                 if (unpackDirectory != null) {
                     archiveToBaseDirMap.put(unpackDirectory, new File(scannerBaseDir).getParent());
                     pathsToScan.add(unpackDirectory);
@@ -144,22 +149,23 @@ public class FileSystemScanner {
         }
 
         // delete all archive temp folders
-        if (unpackDirectory != null) {
-           File directory = new File(unpackDirectory);
-           if (directory.exists()) {
-               try {
-                   FileUtils.deleteDirectory(directory);
-               } catch (IOException e) {
-                   logger.warn("Error deleting archive directory", e);
+        if (!archiveDirectories.isEmpty()) {
+            for (String archiveDirectory : archiveDirectories) {
+               File directory = new File(archiveDirectory);
+               if (directory.exists()) {
+                   try {
+                       FileUtils.deleteDirectory(directory);
+                   } catch (IOException e) {
+                       logger.warn("Error deleting archive directory", e);
+                   }
                }
-           }
-        }
-
-        // delete scm clone directory
-        if (scmConnector != null) {
-            scmConnector.deleteCloneDirectory();
+            }
         }
         logger.info("Finished Analyzing Files");
+
+        systemStats = MemoryUsageHelper.getMemoryUsage();
+        logger.debug(systemStats.toString());
+
         return allDependencies;
     }
 

@@ -17,6 +17,7 @@ package org.whitesource.fs;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.CommaParameterSplitter;
+import org.whitesource.agent.api.dispatch.UpdateType;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -77,6 +78,12 @@ public class CommandLineArgs {
 
     @Parameter(names = "-projectPerFolder", description = "Creates a project for each subfolder, the subfolder's name is used as the project name")
     String projectPerFolder = "false";
+
+    @Parameter(names = "-updateType", description = "Specify if the project dependencies should be removed before adding the new ones")
+    String updateType = "";
+
+    @Parameter(names = "-scm.repositoriesFile", description = "Specify the csv file from which scm repositories should be loaded")
+    String repositoriesFile = null;
 
     /* --- Public methods --- */
 

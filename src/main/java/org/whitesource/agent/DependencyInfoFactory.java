@@ -140,7 +140,13 @@ public class DependencyInfoFactory {
 
             // handle JavaScript files
             if (filename.toLowerCase().matches(JAVA_SCRIPT_REGEX)) {
-                Map<ChecksumType, String> javaScriptChecksums = new HashCalculator().calculateJavaScriptHashes(dependencyFile);
+                Map<ChecksumType, String> javaScriptChecksums = new HashMap<>();
+                try {
+                    javaScriptChecksums = new HashCalculator().calculateJavaScriptHashes(dependencyFile);
+                } catch (Exception e) {
+                    logger.info("Failed to calculate javaScript file hash for : {}", dependencyFile.getPath());
+                    logger.debug("Failed to calculate javaScript hash for file: {}, error: {}", dependencyFile.getPath(), e);
+                }
                 for (Map.Entry<ChecksumType, String> entry : javaScriptChecksums.entrySet()) {
                     dependency.addChecksum(entry.getKey(), entry.getValue());
                 }

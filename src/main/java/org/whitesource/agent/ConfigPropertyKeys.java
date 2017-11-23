@@ -60,6 +60,7 @@ public final class ConfigPropertyKeys {
     public static final String SCM_TAG_PROPERTY_KEY = "scm.tag";
     public static final String SCM_NPM_INSTALL = "scm.npmInstall";
     public static final String SCM_NPM_INSTALL_TIMEOUT_MINUTES = "scm.npmInstallTimeoutMinutes";
+    public static final String SCM_REPOSITORIES_FILE = "scm.repositoriesFile";
     public static final String EXCLUDED_COPYRIGHT_KEY = "copyright.excludes";
     public static final String LOG_LEVEL_KEY = "log.level";
     public static final String FOLLOW_SYMBOLIC_LINKS = "followSymbolicLinks";
@@ -71,4 +72,5 @@ public final class ConfigPropertyKeys {
     public static final String BOWER_RESOLVE_DEPENDENCIES = "bower.resolveDependencies";
     public static final String NUGET_RESOLVE_DEPENDENCIES = "nuget.resolveDependencies";
     public static final String PROJECT_PER_SUBFOLDER = "projectPerFolder";
+    public static final String UPDATE_TYPE = "updateType";
 }
