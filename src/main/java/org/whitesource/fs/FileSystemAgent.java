@@ -307,7 +307,9 @@ public class FileSystemAgent extends CommandLineAgent {
                 ProcessBuilder pb = new ProcessBuilder(NPM_COMMAND, NPM_INSTALL_COMMAND);
                 pb.directory(new File(pathToCloneRepoFiles));
                 // redirect the output to avoid output of npm install by operating system
-                pb.redirectOutput(new File(NPM_INSTALL_OUTPUT_DESTINATION));
+                File npmOutput = new File(NPM_INSTALL_OUTPUT_DESTINATION);
+                pb.redirectOutput(npmOutput);
+                pb.redirectError(npmOutput);
                 logger.info("Found package.json file, executing 'npm install' on {}", scmConnector.getUrl());
                 try {
                     Process npmInstallProcess = pb.start();
