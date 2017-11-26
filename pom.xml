@@ -6,7 +6,7 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>17.11.3-SNAPSHOT</version>
+    <version>17.11.3</version>
     <packaging>jar</packaging>
 
     <properties>
