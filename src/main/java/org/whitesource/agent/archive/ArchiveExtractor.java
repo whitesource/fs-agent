@@ -161,9 +161,10 @@ public class ArchiveExtractor {
      *
      * @param scannerBaseDir         - directory for scanning.
      * @param archiveExtractionDepth - drill down hierarchy level in archive files
+     * @param archiveDirectories
      * @return the temp directory for the extracted files.
      */
-    public String extractArchives(String scannerBaseDir, int archiveExtractionDepth) {
+    public String extractArchives(String scannerBaseDir, int archiveExtractionDepth, List<String> archiveDirectories) {
         this.randomString = String.valueOf(ThreadLocalRandom.current().nextLong(0, LONG_BOUND));
         this.tempFolderNoDepth = getTempFolder(scannerBaseDir);
         logger.debug("Base directory is {}, extraction depth is set to {}", scannerBaseDir, archiveExtractionDepth);
@@ -179,7 +180,6 @@ public class ArchiveExtractor {
                 folderToScan = getDepthFolder(curLevel - 1);
             }
             folderToExtract = getDepthFolder(curLevel);
-
             Pair<String[], String> retiveFilesWithFolder = getSearchedFileNames(folderToScan);
             if (retiveFilesWithFolder == null || retiveFilesWithFolder.getKey().length <= 0) {
                 break;
@@ -197,9 +197,10 @@ public class ArchiveExtractor {
                 allFiles.put(String.valueOf(curLevel), foundFiles);
             }
         }
-
         if (!allFiles.isEmpty()) {
-            return new File(this.tempFolderNoDepth).getParent();
+            String parentDirectory = new File(this.tempFolderNoDepth).getParent();
+            archiveDirectories.add(parentDirectory);
+            return parentDirectory;
         } else {
             // if unable to extract, return null
             return null;
@@ -315,7 +316,7 @@ public class ArchiveExtractor {
         String lowerCaseFileName = dataToUnpack.getKey().toLowerCase();
 
         if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
-            foundArchive = unZip(innerDir,dataToUnpack.getKey());
+            foundArchive = unZip(innerDir, dataToUnpack.getKey());
         } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
             foundArchive = unTar(lowerCaseFileName, innerDir, dataToUnpack.getKey());
             innerDir = innerDir + File.separator + RUBY_DATA_FILE;

@@ -48,6 +48,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private static final String EXAMPLES = "**/examples/**/";
     private static final String WS_BOWER_FOLDER = "**/.ws_bower/**/";
     private static final String TEST = "**/test/**/";
+    private static final long NPM_DEFAULT_LS_TIMEOUT = 60;
 
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractDependencyResolver.class);
@@ -61,15 +62,15 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Constructor --- */
 
-    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles) {
+    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector) {
         super();
-        bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies);
+        bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector);
         bomParser = new NpmBomParser();
         this.ignoreJavaScriptFiles = ignoreJavaScriptFiles;
     }
 
     public NpmDependencyResolver() {
-        this(false,false);
+        this(false,false, NPM_DEFAULT_LS_TIMEOUT);
     }
 
     /* --- Overridden methods --- */
@@ -90,6 +91,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, List<String> bomFiles) {
+        logger.debug("Attempting to parse package.json files");
         // parse package.json files
         Collection<BomFile> parsedBomFiles = new LinkedList<>();
 
@@ -110,15 +112,19 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
             }
         });
 
+        logger.debug("Trying to collect dependencies via 'npm ls'");
         // try to collect dependencies via 'npm ls'
         Collection<DependencyInfo> dependencies = getDependencyCollector().collectDependencies(topLevelFolder);
         boolean lsSuccess = dependencies.size() > 0;
         if (lsSuccess) {
+            logger.debug("'npm ls succeeded");
             handleLsSuccess(parsedBomFiles, dependencies);
         } else {
+            logger.debug("'npm ls failed");
             dependencies.addAll(collectPackageJsonDependencies(parsedBomFiles));
         }
 
+        logger.debug("Creating excludes for .js files upon finding NPM dependencies");
         // create excludes for .js files upon finding NPM dependencies
         List<String> excludes = new LinkedList<>();
         if (!dependencies.isEmpty()) {
@@ -196,8 +202,10 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
                 dependencies.add(dependency);
                 enrichDependency(dependency, packageJson);
                 dependencyPackageJsonMap.put(dependency, packageJson);
+                logger.debug("collect package.json of the dependency in the file: {}", dependency.getFilename());
             }
         }
+        logger.debug("set hierarchy of the dependencies");
         // set hierarchy in case the 'npm ls' did not run or it did not return results
         setHierarchy(dependencyPackageJsonMap);
         return dependencies;
@@ -250,6 +258,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
                 .filter(distinctByKey(file -> file.getFileName()))
                 .collect(Collectors.toMap(BomFile::getUniqueDependencyName, Function.identity()));
 
+        logger.debug("handling all dependencies");
         dependencies.forEach(dependency -> handleLSDependencyRecursivelyImpl(dependency, resultFiles));
     }
 
@@ -261,6 +270,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         } else {
             logger.debug("Dependency {} could not be enriched.'package.json' could not be found", dependency.getArtifactId());
         }
+        logger.debug("handle the children dependencies in the file: {}", dependency.getFilename());
         dependency.getChildren().forEach(childDependency -> handleLSDependencyRecursivelyImpl(childDependency, resultFiles));
     }
 

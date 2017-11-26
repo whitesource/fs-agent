@@ -29,17 +29,14 @@ public class FileSystemScanner {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
-
     private static final String EMPTY_STRING = "";
-    public static final int MAX_EXTRACTION_DEPTH = 7;
+    private static final int MAX_EXTRACTION_DEPTH = 7;
     private static String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
-    private final boolean showProgressBar;
-
-    private DependencyResolutionService dependencyResolutionService;
 
     /* --- Members --- */
 
-
+    private final boolean showProgressBar;
+    private DependencyResolutionService dependencyResolutionService;
 
     /* --- Constructors --- */
 
@@ -78,11 +75,12 @@ public class FileSystemScanner {
         String unpackDirectory = null;
         // go over all base directories, look for archives
         Map<String, String> archiveToBaseDirMap = new HashMap<>();
+        List<String> archiveDirectories = new ArrayList<>();
         if (archiveExtractionDepth > 0) {
             ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, excludes, archiveFastUnpack);
             logger.info("Starting Archive Extraction (may take a few minutes)");
             for (String scannerBaseDir : new LinkedHashSet<>(pathsToScan)) {
-                unpackDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth);
+                unpackDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth, archiveDirectories);
                 if (unpackDirectory != null) {
                     archiveToBaseDirMap.put(unpackDirectory, new File(scannerBaseDir).getParent());
                     pathsToScan.add(unpackDirectory);
@@ -94,11 +92,12 @@ public class FileSystemScanner {
         logger.info("Starting Analysis");
         List<DependencyInfo> allDependencies = new ArrayList<>();
 
-        logger.info("Scanning Directory {} for Matching Files (may take a few minutes)", pathsToScan);
+        logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
         Map<File, Collection<String>> fileMapBeforeResolve = fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
         Set<String> allFiles = fileMapBeforeResolve.entrySet().stream().flatMap(folder -> folder.getValue().stream()).collect(Collectors.toSet());
 
         if (dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies(allFiles)) {
+            logger.info("Attempting to resolve dependencies");
             // get all resolution results
             Collection<ResolutionResult> resolutionResults = dependencyResolutionService.resolveDependencies(pathsToScan, excludes);
 
@@ -122,6 +121,7 @@ public class FileSystemScanner {
         }
 
         String[] excludesExtended = excludeFileSystemAgent(excludes);
+        logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
         Map<File, Collection<String>> fileMap = fillFilesMap(pathsToScan, includes, excludesExtended, followSymlinks, globCaseSensitive);
         long filesCount = fileMap.entrySet().stream().flatMap(folder -> folder.getValue().stream()).count();
         totalFiles += filesCount;
@@ -136,7 +136,7 @@ public class FileSystemScanner {
         for (DependencyInfo dependencyInfo : allDependencies) {
             String systemPath = dependencyInfo.getSystemPath();
             if (systemPath == null) {
-                logger.debug("Dependency {} has no system path", dependencyInfo.getFilename());
+                logger.debug("Dependency {} has no system path", dependencyInfo.getArtifactId());
             } else {
                 for (String key : archiveToBaseDirMap.keySet()) {
                     if (systemPath.contains(key) && unpackDirectory != null) {
@@ -149,17 +149,18 @@ public class FileSystemScanner {
         }
 
         // delete all archive temp folders
-        if (unpackDirectory != null) {
-           File directory = new File(unpackDirectory);
-           if (directory.exists()) {
-               try {
-                   FileUtils.deleteDirectory(directory);
-               } catch (IOException e) {
-                   logger.warn("Error deleting archive directory", e);
+        if (!archiveDirectories.isEmpty()) {
+            for (String archiveDirectory : archiveDirectories) {
+               File directory = new File(archiveDirectory);
+               if (directory.exists()) {
+                   try {
+                       FileUtils.deleteDirectory(directory);
+                   } catch (IOException e) {
+                       logger.warn("Error deleting archive directory", e);
+                   }
                }
-           }
+            }
         }
-
         logger.info("Finished Analyzing Files");
 
         systemStats = MemoryUsageHelper.getMemoryUsage();
@@ -185,12 +186,12 @@ public class FileSystemScanner {
         return pathsToScan;
     }
 
-
-
-    private Map<File, Collection<String>> fillFilesMap(Collection<String> pathsToScan, String[] includes, String[] excludesExtended, boolean followSymlinks, boolean globCaseSensitive) {
+    private Map<File, Collection<String>> fillFilesMap(Collection<String> pathsToScan, String[] includes, String[] excludesExtended,
+                                                       boolean followSymlinks, boolean globCaseSensitive) {
         Map<File, Collection<String>> fileMap = new HashMap<>();
         for (String scannerBaseDir : pathsToScan) {
             File file = new File(scannerBaseDir);
+            logger.debug("Scanning {}", file.getAbsolutePath());
             if (file.exists()) {
                 FilesScanner filesScanner = new FilesScanner();
                 if (file.isDirectory()) {
@@ -222,8 +223,6 @@ public class FileSystemScanner {
         totalDependencies[0] += dependency.getChildren().size();
         dependency.getChildren().forEach(dependencyInfo -> increaseCount(dependencyInfo, totalDependencies));
     }
-
-
 
     private void validateParams(int archiveExtractionDepth, String[] includes) {
         boolean isShutDown = false;
