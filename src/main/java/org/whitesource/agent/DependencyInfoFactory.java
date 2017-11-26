@@ -22,10 +22,7 @@ import org.whitesource.agent.api.model.ChecksumType;
 import org.whitesource.agent.api.model.CopyrightInfo;
 import org.whitesource.agent.api.model.DependencyHintsInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.agent.hash.ChecksumUtils;
-import org.whitesource.agent.hash.HashAlgorithm;
-import org.whitesource.agent.hash.HashCalculator;
-import org.whitesource.agent.hash.HintUtils;
+import org.whitesource.agent.hash.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -139,7 +136,12 @@ public class DependencyInfoFactory {
 
             // handle JavaScript files
             if (filename.toLowerCase().matches(JAVA_SCRIPT_REGEX)) {
-                Map<ChecksumType, String> javaScriptChecksums = new HashCalculator().calculateJavaScriptHashes(dependencyFile);
+                Map<ChecksumType, String> javaScriptChecksums = null;
+                try {
+                    javaScriptChecksums = new HashCalculator().calculateJavaScriptHashes(dependencyFile);
+                } catch (WssHashException e) {
+                    e.printStackTrace();
+                }
                 for (Map.Entry<ChecksumType, String> entry : javaScriptChecksums.entrySet()) {
                     dependency.addChecksum(entry.getKey(), entry.getValue());
                 }

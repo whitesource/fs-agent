@@ -168,7 +168,6 @@ public class FileSystemAgent extends CommandLineAgent {
     }
 
     private String getResource(String propertyName) {
-        getProperties();
         String val = (properties.getProperty(propertyName));
         if(StringUtils.isNotBlank(val)){
             return val;
@@ -221,7 +220,7 @@ public class FileSystemAgent extends CommandLineAgent {
         }
 
         if (scmConnectors != null) {
-            scannerBaseDirs.clear();
+            //scannerBaseDirs.clear();
             scmConnectors.stream().forEach(scmConnector -> {
                 if (scmConnector != null) {
                     logger.info("Connecting to SCM");

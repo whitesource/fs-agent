@@ -11,7 +11,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <agent.api.version>2.4.5</agent.api.version>
+        <agent.api.version>2.4.7</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
     </properties>
 
@@ -29,6 +29,11 @@
     </licenses>
 
     <dependencies>
+        <dependency>
+            <groupId>fr.dutra.tools.maven.deptree</groupId>
+            <artifactId>maven-dependency-tree-parser</artifactId>
+            <version>1.0.3-SNAPSHOT</version>
+        </dependency>
         <!-- White Source -->
         <dependency>
             <groupId>org.whitesource</groupId>
