@@ -68,6 +68,7 @@ public final class ConfigPropertyKeys {
     public static final String NPM_RESOLVE_DEPENDENCIES = "npm.resolveDependencies";
     public static final String NPM_INCLUDE_DEV_DEPENDENCIES = "npm.includeDevDependencies";
     public static final String NPM_IGNORE_JAVA_SCRIPT_FILES = "npm.ignoreJavaScriptFiles";
+    public static final String NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS = "npm.timeoutDependenciesCollectorInSeconds";
     public static final String BOWER_RESOLVE_DEPENDENCIES = "bower.resolveDependencies";
     public static final String NUGET_RESOLVE_DEPENDENCIES = "nuget.resolveDependencies";
     public static final String PROJECT_PER_SUBFOLDER = "projectPerFolder";

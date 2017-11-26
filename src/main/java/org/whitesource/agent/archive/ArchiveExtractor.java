@@ -316,7 +316,7 @@ public class ArchiveExtractor {
         String lowerCaseFileName = dataToUnpack.getKey().toLowerCase();
 
         if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
-            foundArchive = unZip(innerDir,dataToUnpack.getKey());
+            foundArchive = unZip(innerDir, dataToUnpack.getKey());
         } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
             foundArchive = unTar(lowerCaseFileName, innerDir, dataToUnpack.getKey());
             innerDir = innerDir + File.separator + RUBY_DATA_FILE;

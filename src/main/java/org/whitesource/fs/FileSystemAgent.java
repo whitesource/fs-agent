@@ -26,6 +26,7 @@ import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
+import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.fs.configuration.ScmConfiguration;
 import org.whitesource.fs.configuration.ScmRepositoriesParser;
 import org.whitesource.scm.ScmConnector;
@@ -33,8 +34,10 @@ import org.whitesource.scm.ScmConnector;
 import java.io.File;
 import java.io.IOException;
 import java.io.IOException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -304,7 +307,9 @@ public class FileSystemAgent extends CommandLineAgent {
                 ProcessBuilder pb = new ProcessBuilder(NPM_COMMAND, NPM_INSTALL_COMMAND);
                 pb.directory(new File(pathToCloneRepoFiles));
                 // redirect the output to avoid output of npm install by operating system
-                pb.redirectOutput(new File(NPM_INSTALL_OUTPUT_DESTINATION));
+                File npmOutput = new File(NPM_INSTALL_OUTPUT_DESTINATION);
+                pb.redirectOutput(npmOutput);
+                pb.redirectError(npmOutput);
                 logger.info("Found package.json file, executing 'npm install' on {}", scmConnector.getUrl());
                 try {
                     Process npmInstallProcess = pb.start();
@@ -330,4 +335,5 @@ public class FileSystemAgent extends CommandLineAgent {
         }
         return pathToCloneRepoFiles;
     }
+
 }
