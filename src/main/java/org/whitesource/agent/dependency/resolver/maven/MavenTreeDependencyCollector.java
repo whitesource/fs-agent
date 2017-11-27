@@ -64,52 +64,45 @@ public class MavenTreeDependencyCollector implements DependencyCollector {
     @Override
     public Collection<DependencyInfo> collectDependencies(String rootDirectory) {
         Collection<DependencyInfo> dependencies = new LinkedList<>();
-        Map<String,List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
+        Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
         try {
+            List<String> lines = getExternalProcessOutput(rootDirectory, getLsCommandParams());
+            List<List<String>> projectsLines = lines.stream()
+                    .map(x -> x.replace(INFO, ""))
+                    .collect(splitBySeparator(x -> x.contains(MAVEN_DEPENDENCY_PLUGIN_TREE)));
 
-
-
-                List<String> lines = getExternalProcessOutput(rootDirectory, getLsCommandParams());
-                List<List<String>> projectsLines = lines.stream()
-                        .map(x->x.replace(INFO,""))
-                        .collect(splitBySeparator(x-> x.contains(MAVEN_DEPENDENCY_PLUGIN_TREE)));
-
-                List<Node> nodes = new ArrayList<>();
-                projectsLines.forEach(singleProjectLines -> {
-                    String json = String.join(System.lineSeparator(), singleProjectLines);
-                    try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8.name()));
-                         Reader lineReader = new InputStreamReader(is, UTF_8)) {
-                        Parser parser = InputType.TEXT.newParser();
-                        Node tree = parser.parse(lineReader);
-                        nodes.add(tree);
-                    } catch (UnsupportedEncodingException e) {
-                        logger.error("unsupportedEncoding error parsing output : {}", e.getMessage());
-                    } catch (ParseException e) {
-                        logger.error("error parsing output : {} ", e.getMessage());
-                    }
-                    catch (Exception e) {
-                        // this can happen often - some parts of the output are not parsable
-                        logger.debug("error parsing output : {} {}", e.getMessage() , json);
-                    }
-                });
-
-
-                Node tree = nodes.stream().max(Comparator.comparingInt(x->x.getChildNodes().size())).get();
-                Stream<Node> nodeStream ;
-                if(includeDevDependencies){
-                    nodeStream = tree.getChildNodes().stream();
-                }else{
-                    nodeStream = tree.getChildNodes().stream().filter(node->node.getScope().equals(SCOPE_COMPILE) || node.getScope().equals(SCOPE_RUNTIME));
+            List<Node> nodes = new ArrayList<>();
+            projectsLines.forEach(singleProjectLines -> {
+                String json = String.join(System.lineSeparator(), singleProjectLines);
+                try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8.name()));
+                     Reader lineReader = new InputStreamReader(is, UTF_8)) {
+                    Parser parser = InputType.TEXT.newParser();
+                    Node tree = parser.parse(lineReader);
+                    nodes.add(tree);
+                } catch (UnsupportedEncodingException e) {
+                    logger.error("unsupportedEncoding error parsing output : {}", e.getMessage());
+                } catch (ParseException e) {
+                    logger.error("error parsing output : {} ", e.getMessage());
+                } catch (Exception e) {
+                    // this can happen often - some parts of the output are not parsable
+                    logger.debug("error parsing output : {} {}", e.getMessage(), json);
                 }
-                dependencies.addAll(nodeStream.map(node->getDependencyFromNode(node,pathToDependenciesMap)).collect(Collectors.toList()));
+            });
 
-            Map<String, String> pathToSha1Map = pathToDependenciesMap.keySet().stream().distinct().parallel().collect(Collectors.toMap(file->file, file-> getSha1(file)));
-            pathToSha1Map.entrySet().forEach(pathSha1Pair-> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency->dependency.setSha1(pathSha1Pair.getValue())));
+            Node tree = nodes.stream().max(Comparator.comparingInt(x -> x.getChildNodes().size())).get();
+            Stream<Node> nodeStream;
+            if (includeDevDependencies) {
+                nodeStream = tree.getChildNodes().stream();
+            } else {
+                nodeStream = tree.getChildNodes().stream().filter(node -> node.getScope().equals(SCOPE_COMPILE) || node.getScope().equals(SCOPE_RUNTIME));
+            }
+            dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
+
+            Map<String, String> pathToSha1Map = pathToDependenciesMap.keySet().stream().distinct().parallel().collect(Collectors.toMap(file -> file, file -> getSha1(file)));
+            pathToSha1Map.entrySet().forEach(pathSha1Pair -> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency -> dependency.setSha1(pathSha1Pair.getValue())));
         } catch (IOException e) {
             logger.info("Error getting dependencies after running " + getLsCommandParams() + " on " + rootDirectory, e);
         }
-
-
 
         if (dependencies.isEmpty()) {
             if (!showMavenTreeError) {
@@ -142,11 +135,12 @@ public class MavenTreeDependencyCollector implements DependencyCollector {
         }
 
         String filePath = Paths.get(M2Path, dependency.getGroupId().replace(DOT, File.separator), dependency.getArtifactId(), dependency.getVersion(), shortName).toString();
-
         if (!paths.containsKey(filePath)) {
             paths.put(filePath, new ArrayList<>());
         }
         paths.get(filePath).add(dependency);
+        dependency.setSystemPath(filePath);
+        dependency.setFilename(filePath);
 
         node.getChildNodes().forEach(childNode -> dependency.getChildren().add(getDependencyFromNode(childNode, paths)));
         return dependency;
