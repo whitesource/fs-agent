@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver;
+import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.api.model.DependencyType;
+
+import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author eugen.horovitz
  */
 public abstract class AbstractDependencyResolver {
+
+    /* --- Static Members --- */
+
+    private static final String BACK_SLASH = "\\";
+    private static final String FORWARD_SLASH = "/";
 
     /* --- Abstract methods --- */
 
@@ -35,4 +44,27 @@ public abstract class AbstractDependencyResolver {
     protected abstract String getBomPattern();
 
     protected abstract Collection<String> getLanguageExcludes();
+
+    protected List<String> normalizeLocalPath(String parentFolder, String topFolderFound, Collection<String> excludes, String folderToIgnore) {
+        String normalizedRoot = new File(parentFolder).getPath();
+        if (normalizedRoot.equals(topFolderFound)) {
+            topFolderFound = topFolderFound
+                    .replace(normalizedRoot, "")
+                    .replace(BACK_SLASH, FORWARD_SLASH);
+        } else {
+            topFolderFound = topFolderFound
+                    .replace(parentFolder, "")
+                    .replace(BACK_SLASH, FORWARD_SLASH);
+        }
+
+        if (topFolderFound.length() > 0)
+            topFolderFound = topFolderFound.substring(1, topFolderFound.length()) + FORWARD_SLASH;
+
+        String finalRes = topFolderFound;
+        if (StringUtils.isBlank(folderToIgnore)) {
+            return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
+        } else {
+            return excludes.stream().map(exclude -> finalRes + folderToIgnore + FORWARD_SLASH + exclude).collect(Collectors.toList());
+        }
+    }
 }

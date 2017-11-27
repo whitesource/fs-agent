@@ -4,18 +4,21 @@ import fr.dutra.tools.maven.deptree.core.Node;
 import fr.dutra.tools.maven.deptree.core.ParseException;
 import fr.dutra.tools.maven.deptree.core.Parser;
 import org.apache.commons.lang.StringUtils;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
+import org.whitesource.agent.hash.ChecksumUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Collect dependencies using 'npm ls' or bower command.
@@ -28,157 +31,172 @@ public class MavenTreeDependencyCollector implements DependencyCollector {
 
     private static final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector.class);
 
-    public static final String LS_COMMAND = "dependency:tree";
-    //public static final String LS_PARAMETER_JSON = ":tree";
+    private static final String MVN_PARAMS_M2PATH_PATH = "help:evaluate";
+    private static final String MVN_PARAMS_M2PATH_LOCAL = "-Dexpression=settings.localRepository";
 
-    private static final String NPM_COMMAND = isWindows() ? "mvn.cmd" : "mvn";
+    private static final String MVN_PARAMS_TREE = "dependency:tree";
+    private static final String MVN_COMMAND = isWindows() ? "mvn.cmd" : "mvn";
     private static final String OS_NAME = "os.name";
     private static final String WINDOWS = "win";
-    //private static final String DEPENDENCIES = "dependencies";
-    //private static final String VERSION = "version";
-    //private static final String RESOLVED = "resolved";
-    //private static final String LS_ONLY_PROD_ARGUMENT = "--only=prod";
-    //private static final String MISSING = "missing";
-    //public static final String PEER_MISSING = "peerMissing";
-    //private static final String NAME = "name";
+    private static final String MAVEN_DEPENDENCY_PLUGIN_TREE = "maven-dependency-plugin:"; // 2.8:tree";
+    private static final String INFO = "[INFO] ";
+    public static final String UTF_8 = "UTF-8";
+    public static final String SCOPE_COMPILE = "compile";
+    public static final String SCOPE_RUNTIME = "runtime";
+    public static final String DOT = ".";
+    public static final String DASH = "-";
 
-/* --- Members --- */
+    /* --- Members --- */
 
-    protected final boolean includeDevDependencies;
-    private boolean showNpmLsError;
+    private final boolean includeDevDependencies;
+    private final String M2Path;
+    private boolean showMavenTreeError;
 
-/* --- Constructors --- */
+    /* --- Constructors --- */
 
     public MavenTreeDependencyCollector(boolean includeDevDependencies) {
         this.includeDevDependencies = includeDevDependencies;
+        this.M2Path = getMavenM2Path(DOT);
     }
 
-/* --- Public methods --- */
+    /* --- Public methods --- */
 
     @Override
     public Collection<DependencyInfo> collectDependencies(String rootDirectory) {
         Collection<DependencyInfo> dependencies = new LinkedList<>();
+        Map<String,List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
         try {
-            // execute 'npm ls'
-            ProcessBuilder pb = new ProcessBuilder(getLsCommandParams());
 
-            pb.directory(new File(rootDirectory));
-            Process process = pb.start();
 
-            // parse 'npm ls' output
-            //String json = null;
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                //json = reader.lines().reduce("", String::concat);
 
-                //List<String> lines = reader.lines().collect(Collectors.toList());
-
-                //reader.lines().forEach(x->{
-                //    if (x.equals(" [INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ wss-common ---")){
-//
-                //    }
-                //});
-
-                List<List<String>> lines2 = reader.lines()
-                        .map(x->x.replace("[INFO] ",""))
-                        .collect(splitBySeparator(x-> {
-                    if (x.contains("maven-dependency-plugin:2.8:tree")) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }));
+                List<String> lines = getExternalProcessOutput(rootDirectory, getLsCommandParams());
+                List<List<String>> projectsLines = lines.stream()
+                        .map(x->x.replace(INFO,""))
+                        .collect(splitBySeparator(x-> x.contains(MAVEN_DEPENDENCY_PLUGIN_TREE)));
 
                 List<Node> nodes = new ArrayList<>();
-                lines2.forEach(x->{
-                    String json = String.join(System.lineSeparator(),x);
-                    InputStream is = null;
-                    Reader r;
-                    try {
-                        is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8.name()));
-                        r = new InputStreamReader(is, "UTF-8");
+                projectsLines.forEach(singleProjectLines -> {
+                    String json = String.join(System.lineSeparator(), singleProjectLines);
+                    try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8.name()));
+                         Reader lineReader = new InputStreamReader(is, UTF_8)) {
                         Parser parser = InputType.TEXT.newParser();
-                        Node tree = parser.parse(r);
+                        Node tree = parser.parse(lineReader);
                         nodes.add(tree);
-
-                        String s ="";
                     } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
+                        logger.error("unsupportedEncoding error parsing output : {}", e.getMessage());
                     } catch (ParseException e) {
-                        e.printStackTrace();
+                        logger.error("error parsing output : {} ", e.getMessage());
                     }
                     catch (Exception e) {
-                        e.printStackTrace();
+                        // this can happen often - some parts of the output are not parsable
+                        logger.debug("error parsing output : {} {}", e.getMessage() , json);
                     }
                 });
 
 
-                        //reader.lines().collect(Collectors.partitioningBy(s -> s.equals(" [INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ wss-common ---")));
+                Node tree = nodes.stream().max(Comparator.comparingInt(x->x.getChildNodes().size())).get();
+                Stream<Node> nodeStream ;
+                if(includeDevDependencies){
+                    nodeStream = tree.getChildNodes().stream();
+                }else{
+                    nodeStream = tree.getChildNodes().stream().filter(node->node.getScope().equals(SCOPE_COMPILE) || node.getScope().equals(SCOPE_RUNTIME));
+                }
+                dependencies.addAll(nodeStream.map(node->getDependencyFromNode(node,pathToDependenciesMap)).collect(Collectors.toList()));
 
-                //json = reader.lines().reduce(System.lineSeparator(), String::concat);
-                reader.close();
-
-                Node n = nodes.stream().max(Comparator.comparingInt(x->x.getChildNodes().size())).get();
-
-                return n.getChildNodes().stream().map(x->getDependencyFromNode(x)).collect(Collectors.toList());
-                //List<List<String>> groups =
-            } catch (IOException e) {
-                logger.error("error parsing output : {}", e.getMessage());
-            }
-
-            //if (StringUtils.isNotBlank(json)) {
-            //    //dependencies.addAll(getDependencies(new JSONObject(json)));
-            //}
-
+            Map<String, String> pathToSha1Map = pathToDependenciesMap.keySet().stream().distinct().parallel().collect(Collectors.toMap(file->file, file-> getSha1(file)));
+            pathToSha1Map.entrySet().forEach(pathSha1Pair-> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency->dependency.setSha1(pathSha1Pair.getValue())));
         } catch (IOException e) {
-            logger.info("Error getting dependencies after running 'npm ls --json' on {}", rootDirectory);
+            logger.info("Error getting dependencies after running " + getLsCommandParams() + " on " + rootDirectory, e);
         }
 
+
+
         if (dependencies.isEmpty()) {
-            if (!showNpmLsError) {
-                logger.info("Failed getting dependencies after running '{}' Please run 'npm install' on the folder {}", getLsCommandParams(), rootDirectory);
-                showNpmLsError = true;
+            if (!showMavenTreeError) {
+                logger.info("Failed getting dependencies after running '{}' Please install maven ", getLsCommandParams());
+                showMavenTreeError = true;
             }
         }
         return dependencies;
     }
 
-    private DependencyInfo getDependencyFromNode(Node node) {
-        DependencyInfo d =  new DependencyInfo(node.getGroupId(),node.getArtifactId(),node.getVersion());
-        node.getChildNodes().forEach(y->d.getChildren().add(getDependencyFromNode(y)));
-        return d;
+    private String getSha1(String filePath) {
+        try {
+            return  ChecksumUtils.calculateSHA1(new File(filePath));
+        } catch (IOException e) {
+            logger.info("Failed getting " +filePath, getLsCommandParams());
+            return null;
+        }
     }
 
+    private DependencyInfo getDependencyFromNode(Node node, Map<String,List<DependencyInfo>> paths ) {
+        DependencyInfo dependency = new DependencyInfo(node.getGroupId(), node.getArtifactId(), node.getVersion());
+        dependency.setDependencyType(DependencyType.MAVEN);
+        dependency.setScope(node.getScope());
+
+        String shortName;
+        if (StringUtils.isBlank(node.getClassifier())) {
+            shortName = dependency.getArtifactId() + DASH + dependency.getVersion() + DOT + node.getPackaging();
+        } else {
+            shortName = dependency.getArtifactId() + DASH + dependency.getVersion() + DASH + node.getClassifier() + DOT + node.getPackaging();
+        }
+
+        String filePath = Paths.get(M2Path, dependency.getGroupId().replace(DOT, File.separator), dependency.getArtifactId(), dependency.getVersion(), shortName).toString();
+
+        if (!paths.containsKey(filePath)) {
+            paths.put(filePath, new ArrayList<>());
+        }
+        paths.get(filePath).add(dependency);
+
+        node.getChildNodes().forEach(childNode -> dependency.getChildren().add(getDependencyFromNode(childNode, paths)));
+        return dependency;
+    }
+
+    // so : 29095967
     private static Collector<String, List<List<String>>, List<List<String>>> splitBySeparator(Predicate<String> sep) {
         return Collector.of(() -> new ArrayList<List<String>>(Arrays.asList(new ArrayList<>())),
                 (l, elem) -> {if(sep.test(elem)){l.add(new ArrayList<>());} else l.get(l.size()-1).add(elem);},
                 (l1, l2) -> {l1.get(l1.size() - 1).addAll(l2.remove(0)); l1.addAll(l2); return l1;});
     }
 
-/* --- Private methods --- */
+    /* --- Private methods --- */
 
-/* --- Protected methods --- */
-
-    protected String[] getLsCommandParams() {
-        //if (includeDevDependencies) {
-        //    return new String[]{NPM_COMMAND, LS_COMMAND, LS_PARAMETER_JSON};
-        //} else {
-        return new String[]{NPM_COMMAND, LS_COMMAND};
-        //}
+    private String[] getLsCommandParams() {
+        return new String[]{MVN_COMMAND, MVN_PARAMS_TREE};
     }
 
-    protected DependencyInfo getDependency(String dependencyAlias, JSONObject jsonObject) {
-        DependencyInfo dependency = new DependencyInfo();
-        //dependency.setGroupId(name);
-        //dependency.setArtifactId(filename);
-        //dependency.setVersion(version);
-        //dependency.setFilename(filename);
-        //dependency.setDependencyType(DependencyType.NPM);
-        return dependency;
+    private String getMavenM2Path(String rootDirectory) {
+        String[] params = new String[]{MVN_COMMAND,MVN_PARAMS_M2PATH_PATH ,MVN_PARAMS_M2PATH_LOCAL};
+        try {
+            List<String> lines = getExternalProcessOutput(rootDirectory, params);
+            Optional<String> pathLine = lines.stream().filter(line->(new File(line).exists())).findFirst();
+            if(pathLine.isPresent()){
+                return  pathLine.get();
+            }else {
+                logger.error("could not get m2 path : {} out: {}", rootDirectory, lines.stream().reduce("", String::concat));
+                return null;
+            }
+        } catch (IOException io){
+            logger.error("could not get m2 path : {}", io.getMessage());
+            showMavenTreeError = true;
+            return null;
+        }
     }
 
-/* --- Static methods --- */
+    private List<String> getExternalProcessOutput(String rootDirectory, String[] processWithArgs) throws IOException {
+        ProcessBuilder pb = new ProcessBuilder(processWithArgs);
+        pb.directory(new File(rootDirectory));
+        Process process = pb.start();
 
-    public static boolean isWindows() {
+        try (InputStreamReader inputStreamReader = new InputStreamReader(process.getInputStream());
+             BufferedReader reader = new BufferedReader(inputStreamReader)) {
+            return reader.lines().collect(Collectors.toList());
+        }
+    }
+
+    /* --- Static methods --- */
+
+    private static boolean isWindows() {
         return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
     }
 }

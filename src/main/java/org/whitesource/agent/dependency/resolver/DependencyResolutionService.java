@@ -17,6 +17,7 @@ package org.whitesource.agent.dependency.resolver;
 
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
+import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
@@ -43,8 +44,12 @@ public class DependencyResolutionService {
         final boolean npmResolveDependencies = getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
         final boolean npmIncludeDevDependencies = getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
         final boolean ignoreJavaScriptFiles = getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
+
         final boolean bowerResolveDependencies = getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
+
         final boolean nugetResolveDependencies = getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
+
+        final boolean mavenResolveDependencies = getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
 
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
@@ -56,6 +61,9 @@ public class DependencyResolutionService {
         }
         if (nugetResolveDependencies) {
             dependencyResolvers.add(new NugetDependencyResolver());
+        }
+        if(mavenResolveDependencies) {
+            dependencyResolvers.add(new MavenDependencyResolver(npmIncludeDevDependencies));
         }
     }
 
