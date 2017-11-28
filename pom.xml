@@ -32,7 +32,7 @@
         <dependency>
             <groupId>fr.dutra.tools.maven.deptree</groupId>
             <artifactId>maven-dependency-tree-parser</artifactId>
-            <version>1.0.3-SNAPSHOT</version>
+            <version>1.0.3</version>
         </dependency>
         <!-- White Source -->
         <dependency>
