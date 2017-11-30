@@ -16,6 +16,7 @@
 package org.whitesource.agent.dependency.resolver.npm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
@@ -109,7 +110,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         });
 
         // try to collect dependencies via 'npm ls'
-        Collection<DependencyInfo> dependencies = getDependencyCollector().collectDependencies(topLevelFolder);
+        Collection<AgentProjectInfo> projects = getDependencyCollector().collectDependencies(topLevelFolder);
+        Collection<DependencyInfo> dependencies = projects.stream().flatMap(project->project.getDependencies().stream()).collect(Collectors.toList());
+
         boolean lsSuccess = dependencies.size() > 0;
         if (lsSuccess) {
             handleLsSuccess(parsedBomFiles, dependencies);

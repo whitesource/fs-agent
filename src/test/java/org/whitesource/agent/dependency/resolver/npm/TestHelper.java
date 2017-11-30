@@ -1,6 +1,7 @@
 package org.whitesource.agent.dependency.resolver.npm;
 
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 
@@ -36,8 +37,9 @@ public class TestHelper {
 
     public static Stream<String> getDependenciesWithNpm(String dir) {
         NpmLsJsonDependencyCollector collector = new NpmLsJsonDependencyCollector(false);
-        Collection<DependencyInfo> dependencyInfos = collector.collectDependencies(dir);
-        return dependencyInfos.stream().map(dep -> getShortNameByTgz(dep)).sorted();
+        AgentProjectInfo projectInfo = collector.collectDependencies(dir).stream().findFirst().get();
+        Collection<DependencyInfo> dependencies = projectInfo.getDependencies();
+        return dependencies.stream().map(dep -> getShortNameByTgz(dep)).sorted();
     }
 
     public static String getShortNameByTgz(DependencyInfo dep) {

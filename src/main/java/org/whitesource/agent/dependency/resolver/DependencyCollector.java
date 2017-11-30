@@ -15,12 +15,23 @@
  */
 package org.whitesource.agent.dependency.resolver;
 
+import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
+
+import java.util.ArrayList;
 import java.util.Collection;
 /**
  * @author eugen.horovitz
  */
-public interface DependencyCollector {
+public abstract class DependencyCollector {
 
-    Collection<DependencyInfo> collectDependencies(String folder);
+    protected abstract Collection<AgentProjectInfo> collectDependencies(String folder);
+
+    protected Collection<AgentProjectInfo> getSingleProjectList(Collection<DependencyInfo> dependencies) {
+        Collection<AgentProjectInfo> projects = new ArrayList<>();
+        AgentProjectInfo projectInfo = new AgentProjectInfo();
+        dependencies.stream().forEach(dependency -> projectInfo.getDependencies().add(dependency) );
+        projects.add(projectInfo);
+        return projects;
+    }
 }

@@ -30,6 +30,7 @@ public abstract class AbstractDependencyResolver {
 
     private static final String BACK_SLASH = "\\";
     private static final String FORWARD_SLASH = "/";
+    protected IBomParser bomParser;
 
     /* --- Abstract methods --- */
 
@@ -44,6 +45,8 @@ public abstract class AbstractDependencyResolver {
     protected abstract String getBomPattern();
 
     protected abstract Collection<String> getLanguageExcludes();
+
+    /* --- Protected methods --- */
 
     protected List<String> normalizeLocalPath(String parentFolder, String topFolderFound, Collection<String> excludes, String folderToIgnore) {
         String normalizedRoot = new File(parentFolder).getPath();

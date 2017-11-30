@@ -15,9 +15,11 @@
  */
 package org.whitesource.agent.dependency.resolver;
 
+import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 
-import java.util.Collection;
+import java.nio.file.Path;
+import java.util.*;
 
 /**
  * Created by eugen on 6/21/2017.
@@ -26,15 +28,26 @@ public class ResolutionResult {
 
     /* --- Members --- */
 
-    private Collection<DependencyInfo> resolvedDependencies;
+    private Map<AgentProjectInfo,Path> resolvedProjects;
     private Collection<String> excludes;
 
     /* --- Constructors --- */
 
-    public ResolutionResult(Collection<DependencyInfo> resolvedDependencies, Collection<String> excludes) {
-        this.resolvedDependencies = resolvedDependencies;
+    public ResolutionResult(Map<AgentProjectInfo,Path> resolvedProjects, Collection<String> excludes) {
+        this.resolvedProjects = resolvedProjects;
         this.excludes = excludes;
     }
+
+    public ResolutionResult(Collection<DependencyInfo> dependencies, Iterable<String> excludes) {
+        AgentProjectInfo projectInfo = new AgentProjectInfo();
+        dependencies.forEach(dependencyInfo ->  projectInfo.getDependencies().add(dependencyInfo));
+
+        this.resolvedProjects = new HashMap<>();
+        this.resolvedProjects.put(projectInfo,null);
+        this.excludes = new ArrayList<>();
+        excludes.forEach(exclude->this.excludes.add(exclude));
+    }
+
 
     /* --- Getters --- */
 
@@ -42,7 +55,7 @@ public class ResolutionResult {
         return excludes;
     }
 
-    public Collection<DependencyInfo> getResolvedDependencies() {
-        return resolvedDependencies;
+    public Map<AgentProjectInfo,Path> getResolvedProjects() {
+        return resolvedProjects;
     }
 }

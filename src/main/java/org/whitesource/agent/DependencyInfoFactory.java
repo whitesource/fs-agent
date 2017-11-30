@@ -139,11 +139,11 @@ public class DependencyInfoFactory {
                 Map<ChecksumType, String> javaScriptChecksums = null;
                 try {
                     javaScriptChecksums = new HashCalculator().calculateJavaScriptHashes(dependencyFile);
+                    for (Map.Entry<ChecksumType, String> entry : javaScriptChecksums.entrySet()) {
+                        dependency.addChecksum(entry.getKey(), entry.getValue());
+                    }
                 } catch (WssHashException e) {
-                    e.printStackTrace();
-                }
-                for (Map.Entry<ChecksumType, String> entry : javaScriptChecksums.entrySet()) {
-                    dependency.addChecksum(entry.getKey(), entry.getValue());
+                    logger.debug("Error calculating JavaScript checksum for " + dependencyFile + ": " + e.getMessage());
                 }
             }
 

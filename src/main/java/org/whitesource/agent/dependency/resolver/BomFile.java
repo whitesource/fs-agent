@@ -28,6 +28,7 @@ public class BomFile {
 
     private final String name;
     private final String version;
+    private String groupId;
     private String sha1;
     private String fileName;
     private final String localFileName;
@@ -45,6 +46,12 @@ public class BomFile {
         this.localFileName = localFileName;
         this.dependencies = dependencies;
         this.optionalDependencies = optionalDependencies;
+        this.groupId = null;
+    }
+
+    public BomFile(String groupId, String artifactId, String version, String bomPath) {
+        this(artifactId,version,null,null,bomPath,null,null);
+        this.groupId = groupId;
     }
 
     /* --- Public method --- */
@@ -75,6 +82,10 @@ public class BomFile {
         return fileName;
     }
 
+    public String getGroupId() {
+        return groupId;
+    }
+
     public static String getUniqueDependencyName(String name, String version) {
         return name + "@" + version.replace("v", "");
     }
@@ -89,5 +100,10 @@ public class BomFile {
 
     public Map<String, String> getOptionalDependencies() {
         return optionalDependencies;
+    }
+
+    @Override
+    public String toString() {
+        return String.join(".", getGroupId(), getName(), getVersion());
     }
 }

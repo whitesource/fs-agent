@@ -281,12 +281,7 @@ public abstract class CommandLineAgent {
     private void update(WhitesourceService service, String orgToken, UpdateType updateType, String requesterEmail, String product, String productVersion,
                         Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
-        UpdateInventoryResult updateResult = null;
-        try {
-            updateResult = service.update(orgToken, requesterEmail, updateType, product, productVersion, projects);
-        } catch (Exception ex) {
-            String s = "";
-        }
+        UpdateInventoryResult updateResult = service.update(orgToken, requesterEmail, updateType, product, productVersion, projects);
         logResult(updateResult);
     }
 

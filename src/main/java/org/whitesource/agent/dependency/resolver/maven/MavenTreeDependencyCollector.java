@@ -6,6 +6,8 @@ import fr.dutra.tools.maven.deptree.core.Parser;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
@@ -25,7 +27,7 @@ import java.util.stream.Stream;
  *
  * @author eugen.horovitz
  */
-public class MavenTreeDependencyCollector implements DependencyCollector {
+public class MavenTreeDependencyCollector extends DependencyCollector {
 
 /* --- Statics Members --- */
 
@@ -49,27 +51,30 @@ public class MavenTreeDependencyCollector implements DependencyCollector {
     /* --- Members --- */
 
     private final boolean includeDevDependencies;
-    private final String M2Path;
+    private String M2Path;
     private boolean showMavenTreeError;
 
     /* --- Constructors --- */
 
     public MavenTreeDependencyCollector(boolean includeDevDependencies) {
         this.includeDevDependencies = includeDevDependencies;
-        this.M2Path = getMavenM2Path(DOT);
     }
 
     /* --- Public methods --- */
 
     @Override
-    public Collection<DependencyInfo> collectDependencies(String rootDirectory) {
-        Collection<DependencyInfo> dependencies = new LinkedList<>();
+    public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
+        if (StringUtils.isBlank(M2Path)){
+            this.M2Path = getMavenM2Path(DOT);
+        }
+
         Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
+        Collection<AgentProjectInfo> projects = null;
         try {
             List<String> lines = getExternalProcessOutput(rootDirectory, getLsCommandParams());
             List<List<String>> projectsLines = lines.stream()
-                    .map(x -> x.replace(INFO, ""))
-                    .collect(splitBySeparator(x -> x.contains(MAVEN_DEPENDENCY_PLUGIN_TREE)));
+                    .map(line -> line.replace(INFO, ""))
+                    .collect(splitBySeparator(formattedLines -> formattedLines.contains(MAVEN_DEPENDENCY_PLUGIN_TREE)));
 
             List<Node> nodes = new ArrayList<>();
             projectsLines.forEach(singleProjectLines -> {
@@ -89,28 +94,36 @@ public class MavenTreeDependencyCollector implements DependencyCollector {
                 }
             });
 
-            Node tree = nodes.stream().max(Comparator.comparingInt(x -> x.getChildNodes().size())).get();
-            Stream<Node> nodeStream;
-            if (includeDevDependencies) {
-                nodeStream = tree.getChildNodes().stream();
-            } else {
-                nodeStream = tree.getChildNodes().stream().filter(node -> node.getScope().equals(SCOPE_COMPILE) || node.getScope().equals(SCOPE_RUNTIME));
-            }
-            dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
+            projects = nodes.stream().filter(node -> node.getChildNodes().size() > 0).map(tree -> {
+                List<DependencyInfo> dependencies = new LinkedList<>();
+                Stream<Node> nodeStream;
+                if (includeDevDependencies) {
+                    nodeStream = tree.getChildNodes().stream();
+                } else {
+                    nodeStream = tree.getChildNodes().stream().filter(node -> node.getScope().equals(SCOPE_COMPILE) || node.getScope().equals(SCOPE_RUNTIME));
+                }
+                dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
 
-            Map<String, String> pathToSha1Map = pathToDependenciesMap.keySet().stream().distinct().parallel().collect(Collectors.toMap(file -> file, file -> getSha1(file)));
-            pathToSha1Map.entrySet().forEach(pathSha1Pair -> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency -> dependency.setSha1(pathSha1Pair.getValue())));
+                Map<String, String> pathToSha1Map = pathToDependenciesMap.keySet().stream().distinct().parallel().collect(Collectors.toMap(file -> file, file -> getSha1(file)));
+                pathToSha1Map.entrySet().forEach(pathSha1Pair -> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency -> dependency.setSha1(pathSha1Pair.getValue())));
+
+                AgentProjectInfo projectInfo = new AgentProjectInfo();
+                projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
+                dependencies.stream().forEach(dependency -> projectInfo.getDependencies().add(dependency));
+                return projectInfo;
+            }).collect(Collectors.toList());
+
         } catch (IOException e) {
             logger.info("Error getting dependencies after running " + getLsCommandParams() + " on " + rootDirectory, e);
         }
 
-        if (dependencies.isEmpty()) {
+        if (projects != null && projects.size() > 0) {
             if (!showMavenTreeError) {
                 logger.info("Failed getting dependencies after running '{}' Please install maven ", getLsCommandParams());
                 showMavenTreeError = true;
             }
         }
-        return dependencies;
+        return projects;
     }
 
     private String getSha1(String filePath) {
