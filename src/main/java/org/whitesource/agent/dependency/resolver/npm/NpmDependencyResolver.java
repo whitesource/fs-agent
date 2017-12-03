@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver.npm;
+import org.eclipse.jgit.util.StringUtils;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.client.RestTemplate;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
@@ -24,6 +27,7 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 
 import java.io.File;
+import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -49,6 +53,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private static final String WS_BOWER_FOLDER = "**/.ws_bower/**/";
     private static final String TEST = "**/test/**/";
     private static final long NPM_DEFAULT_LS_TIMEOUT = 60;
+    private static final String VERSIONS = "versions";
+    private static final String DIST = "dist";
+    private static final String SHASUM = "shasum";
 
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractDependencyResolver.class);
@@ -177,7 +184,11 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     protected void enrichDependency(DependencyInfo dependency, BomFile packageJson) {
-        dependency.setSha1(packageJson.getSha1());
+        String sha1 = packageJson.getSha1();
+        if (StringUtils.isEmptyOrNull(sha1)) {
+            sha1 = getSha1FromRegistryPackageUrl(packageJson.getRegistryPackageUrl(), packageJson.isScopedPackage(), packageJson.getVersion());
+        }
+        dependency.setSha1(sha1);
         dependency.setGroupId(packageJson.getName());
         dependency.setArtifactId(packageJson.getFileName());
         dependency.setVersion(packageJson.getVersion());
@@ -186,8 +197,36 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         dependency.setDependencyType(getDependencyType());
     }
 
-
     /* --- Private methods --- */
+
+    private String getSha1FromRegistryPackageUrl(String registryPackageUrl, boolean isScopeDep, String versionOfPackage) {
+        RestTemplate restTemplate = new RestTemplate();
+        URI uriScopeDep = null;
+        if (isScopeDep) {
+            try {
+                uriScopeDep = new URI(registryPackageUrl.replace(BomFile.DUMMY_PARAMETER_SCOPE_PACKAGE, "%2F"));
+            } catch (Exception e) {
+                //TODO add exception???
+            }
+        }
+        String responseFromRegistry = null;
+        try {
+            if (isScopeDep) {
+                responseFromRegistry = restTemplate.getForObject(uriScopeDep, String.class);
+            } else {
+                responseFromRegistry = restTemplate.getForObject(registryPackageUrl, String.class);
+            }
+        } catch (Exception e) {
+            logger.debug("Failed to get the shasum from {}", registryPackageUrl);
+            return "";
+        }
+        JSONObject jsonRegistry = new JSONObject(responseFromRegistry);
+        if (isScopeDep) {
+            return jsonRegistry.getJSONObject(VERSIONS).getJSONObject(versionOfPackage).getJSONObject(DIST).getString(SHASUM);
+        } else {
+            return jsonRegistry.getJSONObject(DIST).getString(SHASUM);
+        }
+    }
 
     /**
      * Collect dependencies from package.json files - without 'npm ls'
