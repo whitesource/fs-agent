@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver.npm;
+
 import org.eclipse.jgit.util.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -25,11 +26,15 @@ import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
+import org.whitesource.fs.StatusCode;
 
 import java.io.File;
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -60,6 +65,8 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractDependencyResolver.class);
     public static final String EXCLUDE_TOP_FOLDER = "node_modules";
+    private static final String EMPTY_STRING = "";
+    public static final int NUM_THREADS = 8;
 
     /* --- Members --- */
 
@@ -206,7 +213,8 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
             try {
                 uriScopeDep = new URI(registryPackageUrl.replace(BomFile.DUMMY_PARAMETER_SCOPE_PACKAGE, "%2F"));
             } catch (Exception e) {
-                //TODO add exception???
+                logger.debug("Failed creating uri of {}", registryPackageUrl);
+                return EMPTY_STRING;
             }
         }
         String responseFromRegistry = null;
@@ -217,8 +225,8 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
                 responseFromRegistry = restTemplate.getForObject(registryPackageUrl, String.class);
             }
         } catch (Exception e) {
-            logger.debug("Failed to get the shasum from {}", registryPackageUrl);
-            return "";
+            logger.error("Could not reach the registry using the URL: {}. Got an error: {}", registryPackageUrl, e);
+            return EMPTY_STRING;
         }
         JSONObject jsonRegistry = new JSONObject(responseFromRegistry);
         if (isScopeDep) {
@@ -234,15 +242,24 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private Collection<DependencyInfo> collectPackageJsonDependencies(Collection<BomFile> packageJsons) {
         Collection<DependencyInfo> dependencies = new LinkedList<>();
         Map<DependencyInfo, BomFile> dependencyPackageJsonMap = new HashMap<>();
+        ExecutorService executorService = Executors.newWorkStealingPool(NUM_THREADS);
+        Collection<EnrichDependency> threadsCollection = new LinkedList<>();
         for (BomFile packageJson : packageJsons) {
             if (packageJson != null && packageJson.isValid()) {
                 // do not add new dependencies if 'npm ls' already returned all
                 DependencyInfo dependency = new DependencyInfo();
                 dependencies.add(dependency);
-                enrichDependency(dependency, packageJson);
+                threadsCollection.add(new EnrichDependency(packageJson, dependency));
                 dependencyPackageJsonMap.put(dependency, packageJson);
-                logger.debug("collect package.json of the dependency in the file: {}", dependency.getFilename());
+                logger.debug("Collect package.json of the dependency in the file: {}", dependency.getFilename());
             }
+        }
+        try {
+            executorService.invokeAll(threadsCollection);
+            executorService.shutdown();
+        } catch (InterruptedException e) {
+            logger.error("One of the threads was interrupted, please try to scan again the project. Error: {}", e);
+            System.exit(StatusCode.ERROR.getValue());
         }
         logger.debug("set hierarchy of the dependencies");
         // set hierarchy in case the 'npm ls' did not run or it did not return results
@@ -254,11 +271,11 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         String normalizedRoot = new File(parentFolder).getPath();
         if (normalizedRoot.equals(topFolderFound)) {
             topFolderFound = topFolderFound
-                    .replace(normalizedRoot, "")
+                    .replace(normalizedRoot, EMPTY_STRING)
                     .replace(BACK_SLASH, FORWARD_SLASH);
         } else {
             topFolderFound = topFolderFound
-                    .replace(parentFolder, "")
+                    .replace(parentFolder, EMPTY_STRING)
                     .replace(BACK_SLASH, FORWARD_SLASH);
         }
 
@@ -294,27 +311,61 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private void handleLsSuccess(Collection<BomFile> packageJsonFiles, Collection<DependencyInfo> dependencies) {
         Map<String, BomFile> resultFiles = packageJsonFiles.stream()
                 .filter(packageJson -> packageJson != null && packageJson.isValid())
-                .filter(distinctByKey(file -> file.getFileName()))
+                .filter(distinctByKey(BomFile::getFileName))
                 .collect(Collectors.toMap(BomFile::getUniqueDependencyName, Function.identity()));
 
-        logger.debug("handling all dependencies");
-        dependencies.forEach(dependency -> handleLSDependencyRecursivelyImpl(dependency, resultFiles));
+        logger.debug("Handling all dependencies");
+        Collection<EnrichDependency> threadsCollection = new LinkedList<>();
+        dependencies.forEach(dependency -> handleLSDependencyRecursivelyImpl(dependency, resultFiles, threadsCollection));
+        ExecutorService executorService = Executors.newWorkStealingPool(NUM_THREADS);
+        try {
+            executorService.invokeAll(threadsCollection);
+            executorService.shutdown();
+        } catch (InterruptedException e) {
+            logger.error("One of the threads was interrupted, please try to scan again the project. Error: {}", e);
+            System.exit(StatusCode.ERROR.getValue());
+        }
     }
 
-    private void handleLSDependencyRecursivelyImpl(DependencyInfo dependency, Map<String, BomFile> resultFiles) {
+    private void handleLSDependencyRecursivelyImpl(DependencyInfo dependency, Map<String, BomFile> resultFiles, Collection<EnrichDependency> threadsCollection) {
         String uniqueName = BomFile.getUniqueDependencyName(dependency.getGroupId(), dependency.getVersion());
         BomFile packageJson = resultFiles.get(uniqueName);
         if (packageJson != null) {
-            enrichDependency(dependency, packageJson);
+            threadsCollection.add(new EnrichDependency(packageJson, dependency));
         } else {
-            logger.debug("Dependency {} could not be enriched.'package.json' could not be found", dependency.getArtifactId());
+            logger.debug("Dependency {} could not be retrieved. 'package.json' could not be found", dependency.getArtifactId());
         }
         logger.debug("handle the children dependencies in the file: {}", dependency.getFilename());
-        dependency.getChildren().forEach(childDependency -> handleLSDependencyRecursivelyImpl(childDependency, resultFiles));
+        dependency.getChildren().forEach(childDependency -> handleLSDependencyRecursivelyImpl(childDependency, resultFiles, threadsCollection));
     }
 
     private <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
         Map<Object, Boolean> seen = new ConcurrentHashMap<>();
         return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+    }
+
+        /* --- Nested classes --- */
+
+    class EnrichDependency implements Callable<Void> {
+
+        /* --- Members --- */
+
+        private BomFile packageJson;
+        private DependencyInfo dependency;
+
+        /* --- Constructors --- */
+
+        public EnrichDependency(BomFile packageJson, DependencyInfo dependency) {
+            this.packageJson = packageJson;
+            this.dependency = dependency;
+        }
+
+        /* --- Overridden methods --- */
+
+        @Override
+        public Void call() {
+            enrichDependency(this.dependency, this.packageJson);
+            return null;
+        }
     }
 }
