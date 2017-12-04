@@ -14,12 +14,14 @@ public class MavenTreeDependencyCollectorTest {
 
         String currentDirectory = System.getProperty("user.dir");
 
-        MavenTreeDependencyCollector mavenTreeDependencyCollector = new MavenTreeDependencyCollector(false);
+        MavenTreeDependencyCollector mavenTreeDependencyCollector = new MavenTreeDependencyCollector(null);
 
         Collection<AgentProjectInfo> projects = mavenTreeDependencyCollector.collectDependencies(currentDirectory);
 
         Collection<DependencyInfo> deps = projects.stream().findFirst().get().getDependencies();
+
         Assert.assertTrue(deps.size() > 0);
         deps.stream().allMatch(x->x.getDependencyType().equals(DependencyType.MAVEN));
+
     }
 }

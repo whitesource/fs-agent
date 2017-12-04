@@ -36,18 +36,21 @@ import java.util.stream.Collectors;
     /* --- Static Members --- */
 
     private static final String POM_XML = "pom.xml";
-    private static final List<String> JAVA_EXTENSIONS = Arrays.asList(".java",".jar",".war",".ear",".car");
+    private static final List<String> JAVA_EXTENSIONS = Arrays.asList(".java",".jar",".war",".ear",".car",".class");
 
-    //private static final String JAVA_EXTENSION_PATTERN = "**/*" + JAVA_EXTENSIONS;
     private static final String TARGET = "target";
-    private static final String TEST = String.join(File.separator,new String[]{"src","test"});
+    private static final String TEST = String.join(File.separator,new String[]{"src","test"});// todo make sure this works
+    private final boolean mavenAggregateModules;
+    private final boolean dependenciesOnly;
 
     /* --- Constructor --- */
 
-    public MavenDependencyResolver(boolean mavenIncludeDevDependencies) {
+    public MavenDependencyResolver(boolean mavenAggregateModules, String[] mavenIgnoredScopes, boolean dependenciesOnly) {
         super();
-        this.dependencyCollector = new MavenTreeDependencyCollector(mavenIncludeDevDependencies);
+        this.dependencyCollector = new MavenTreeDependencyCollector(mavenIgnoredScopes);
         this.bomParser = new MavenParser();
+        this.mavenAggregateModules = mavenAggregateModules;
+        this.dependenciesOnly = dependenciesOnly;
     }
 
     /* --- Members --- */
@@ -59,9 +62,9 @@ import java.util.stream.Collectors;
         // try to collect dependencies via 'npm ls'
         Collection<AgentProjectInfo> projects = dependencyCollector.collectDependencies(topLevelFolder);
         List<BomFile> files = bomFiles.stream().map(bomParser::parseBomFile)
-                .filter(bom->!bom.getLocalFileName().contains(TARGET) && !bom.getLocalFileName().contains(TEST)).collect(Collectors.toList());
+                .filter(bom -> !bom.getLocalFileName().contains(TARGET) && !bom.getLocalFileName().contains(TEST)).collect(Collectors.toList());
         // create excludes for .JAVA files upon finding MAVEN dependencies
-        List<String> excludes = new LinkedList<>();
+        Set<String> excludes = new HashSet<>();
 
         Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
             Optional<BomFile> folderPath = files.stream().filter(file -> projectInfo.getCoordinates().getArtifactId().equals(file.getName())).findFirst();
@@ -69,16 +72,22 @@ import java.util.stream.Collectors;
                 File topFolderFound = new File(folderPath.get().getLocalFileName()).getParentFile();
 
                 // for java do not remove anything since they are not the duplicates of the dependencies found
+                // discard other java files only if specified ( decenciesOnly = true)
 
-                // excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), Arrays.asList(JAVA_EXTENSION_PATTERN), null));
-                // excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), Arrays.asList(CLASS_EXTENSION_PATTERN), null));
-                // excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), Arrays.asList(JAR_EXTENSION_PATTERN), null));
-
+                if(dependenciesOnly) {
+                    excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), JAVA_EXTENSIONS, null));
+                }
                 return topFolderFound.toPath();
             }
             return null;
         }));
-        ResolutionResult resolutionResult = new ResolutionResult(projectInfoPathMap, excludes);
+
+        ResolutionResult resolutionResult ;
+        if (!mavenAggregateModules) {
+            resolutionResult = new ResolutionResult(projectInfoPathMap, excludes);
+        } else {
+            resolutionResult = new ResolutionResult(projectInfoPathMap.keySet().stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes);
+        }
         return resolutionResult;
     }
 

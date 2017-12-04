@@ -32,11 +32,13 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
  * @author eugen.horovitz
  */
 public class DependencyResolutionService {
+    public static final String SPACE = " ";
 
     /* --- Members --- */
 
     private final FilesScanner fileScanner;
     private final Collection<AbstractDependencyResolver> dependencyResolvers;
+    private final boolean dependenciesOnly;
 
     /* --- Constructors --- */
 
@@ -50,6 +52,10 @@ public class DependencyResolutionService {
         final boolean nugetResolveDependencies = getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
 
         final boolean mavenResolveDependencies = getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
+        final String[] mavenIgnoredScopes = getListProperty(config, MAVEN_IGNORED_SCOPES, null);
+        final boolean mavenAggregateModules = getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, false);
+
+        dependenciesOnly = getBooleanProperty(config, DEPENDENCIES_ONLY, false);
 
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
@@ -62,12 +68,16 @@ public class DependencyResolutionService {
         if (nugetResolveDependencies) {
             dependencyResolvers.add(new NugetDependencyResolver());
         }
-        if(mavenResolveDependencies) {
-            dependencyResolvers.add(new MavenDependencyResolver(npmIncludeDevDependencies));
+        if (mavenResolveDependencies) {
+            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules,mavenIgnoredScopes, dependenciesOnly));
         }
     }
 
     /* --- Public methods --- */
+
+    public boolean isDependenciesOnly() {
+        return dependenciesOnly;
+    }
 
     public boolean shouldResolveDependencies(Set<String> allFoundFiles) {
         for (AbstractDependencyResolver dependencyResolver : dependencyResolvers) {
@@ -107,6 +117,16 @@ public class DependencyResolutionService {
         });
 
         return resolutionResults;
+    }
+
+    /* --- Private methods --- */
+
+    private String[] getListProperty(Properties config, String propertyName, String[] defaultValue) {
+        String property = config.getProperty(propertyName);
+        if (property == null){
+            return defaultValue;
+        }
+        return property.split(SPACE);
     }
 
     private void reduceDependencies(Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap) {

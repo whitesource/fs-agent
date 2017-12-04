@@ -59,13 +59,13 @@ public class FileSystemScanner {
                                                    Collection<String> excludedCopyrights, boolean partialSha1Match) {
         Collection<AgentProjectInfo> projects = createDependencies(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
                 archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match, false, false);
-        return projects.stream().flatMap(project->project.getDependencies().stream()).collect(Collectors.toList());
+        return projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
     }
 
     public Collection<AgentProjectInfo> createDependencies(List<String> scannerBaseDirs, boolean scmConnector,
-                                                   String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
-                                                   String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
-                                                   Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
+                                                           String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
+                                                           String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
+                                                           Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
 
         MemoryUsageHelper.SystemStats systemStats = MemoryUsageHelper.getMemoryUsage();
         logger.debug(systemStats.toString());
@@ -102,7 +102,10 @@ public class FileSystemScanner {
         Map<File, Collection<String>> fileMapBeforeResolve = fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
         Set<String> allFiles = fileMapBeforeResolve.entrySet().stream().flatMap(folder -> folder.getValue().stream()).collect(Collectors.toSet());
 
+        boolean isDependenciesOnly = false;
         if (dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies(allFiles)) {
+            isDependenciesOnly = dependencyResolutionService.isDependenciesOnly();
+
             // get all resolution results
             Collection<ResolutionResult> resolutionResults = dependencyResolutionService.resolveDependencies(pathsToScan, excludes);
 
@@ -133,10 +136,13 @@ public class FileSystemScanner {
         long filesCount = fileMap.entrySet().stream().flatMap(folder -> folder.getValue().stream()).count();
         totalFiles += filesCount;
         logger.info(MessageFormat.format("Total Files Found: {0}", totalFiles));
-
         DependencyCalculator dependencyCalculator = new DependencyCalculator(showProgressBar);
-        Collection<DependencyInfo> filesDependencies = dependencyCalculator.createDependencies(
-                scmConnector, totalFiles, fileMap, excludedCopyrights, partialSha1Match, calculateHints, calculateMd5);
+        final Collection<DependencyInfo> filesDependencies = new LinkedList<>();
+
+        if (!isDependenciesOnly) {
+            filesDependencies.addAll(dependencyCalculator.createDependencies(
+                    scmConnector, totalFiles, fileMap, excludedCopyrights, partialSha1Match, calculateHints, calculateMd5));
+        }
 
         if (allProjects.size() <= 1) {
             AgentProjectInfo project = null;
@@ -155,7 +161,8 @@ public class FileSystemScanner {
                 filesDependencies.removeAll(projectDependencies);
             });
 
-            if (filesDependencies.size() > 0) {
+            // create new projects if necessary
+            if (!isDependenciesOnly && filesDependencies.size() > 0) {
                 scannerBaseDirs.stream().forEach(directory -> {
                     List<Path> subDirectories = FilesUtils.getSubDirectories(directory);
                     subDirectories.forEach(subFolder -> {

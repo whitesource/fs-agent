@@ -38,7 +38,7 @@
         <dependency>
             <groupId>fr.dutra.tools.maven.deptree</groupId>
             <artifactId>maven-dependency-tree-parser</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.3-WSS</version>
         </dependency>
         <!-- White Source -->
         <dependency>

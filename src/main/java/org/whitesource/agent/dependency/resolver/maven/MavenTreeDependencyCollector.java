@@ -15,6 +15,7 @@ import org.whitesource.agent.hash.ChecksumUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
@@ -42,22 +43,36 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String WINDOWS = "win";
     private static final String MAVEN_DEPENDENCY_PLUGIN_TREE = "maven-dependency-plugin:"; // 2.8:tree";
     private static final String INFO = "[INFO] ";
-    public static final String UTF_8 = "UTF-8";
-    public static final String SCOPE_COMPILE = "compile";
-    public static final String SCOPE_RUNTIME = "runtime";
-    public static final String DOT = ".";
-    public static final String DASH = "-";
+    private static final String UTF_8 = "UTF-8";
+    private static final String SCOPE_COMPILE = "compile";
+    private static final String SCOPE_TEST = "test";
+    private static final String SCOPE_PROVIDED = "provided";
+    private static final String SCOPE_SYSTEM = "system";
+    private static final String SCOPE_RUNTIME = "runtime";
+    private static final String DOT = ".";
+    private static final String DASH = "-";
+    private static final String USER_HOME = "user.home";
+    private static final String M2 = ".m2";
+    private static final String REPOSITORY = "repository";
+    public static final String JAVA_HOME = "java.home";
+
 
     /* --- Members --- */
 
-    private final boolean includeDevDependencies;
+    private final Set<String> mavenIgnoredScopes;
     private String M2Path;
     private boolean showMavenTreeError;
 
     /* --- Constructors --- */
 
-    public MavenTreeDependencyCollector(boolean includeDevDependencies) {
-        this.includeDevDependencies = includeDevDependencies;
+    public MavenTreeDependencyCollector(String[] mavenIgnoredScopes) {
+        this.mavenIgnoredScopes = new HashSet<>();
+        if (mavenIgnoredScopes == null) {
+            this.mavenIgnoredScopes.add(SCOPE_PROVIDED);
+            this.mavenIgnoredScopes.add(SCOPE_TEST);
+        } else {
+            Arrays.stream(mavenIgnoredScopes).filter(exclude -> StringUtils.isBlank(exclude)).map(exclude -> this.mavenIgnoredScopes.add(exclude));
+        }
     }
 
     /* --- Public methods --- */
@@ -94,14 +109,10 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 }
             });
 
-            projects = nodes.stream().filter(node -> node.getChildNodes().size() > 0).map(tree -> {
+            projects = nodes.stream().filter(node -> !node.getPackaging().equals("pom")).map(tree -> {
+            //projects = nodes.stream().filter(node -> node.getChildNodes().size() > 0 && !node.getPackaging().equals("pom")).map(tree -> {
                 List<DependencyInfo> dependencies = new LinkedList<>();
-                Stream<Node> nodeStream;
-                if (includeDevDependencies) {
-                    nodeStream = tree.getChildNodes().stream();
-                } else {
-                    nodeStream = tree.getChildNodes().stream().filter(node -> node.getScope().equals(SCOPE_COMPILE) || node.getScope().equals(SCOPE_RUNTIME));
-                }
+                Stream<Node> nodeStream = tree.getChildNodes().stream().filter(node -> !mavenIgnoredScopes.contains(node.getScope()));
                 dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
 
                 Map<String, String> pathToSha1Map = pathToDependenciesMap.keySet().stream().distinct().parallel().collect(Collectors.toMap(file -> file, file -> getSha1(file)));
@@ -117,7 +128,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             logger.info("Error getting dependencies after running " + getLsCommandParams() + " on " + rootDirectory, e);
         }
 
-        if (projects != null && projects.size() > 0) {
+        if (projects != null && projects.isEmpty()) {
             if (!showMavenTreeError) {
                 logger.info("Failed getting dependencies after running '{}' Please install maven ", getLsCommandParams());
                 showMavenTreeError = true;
@@ -131,7 +142,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             return  ChecksumUtils.calculateSHA1(new File(filePath));
         } catch (IOException e) {
             logger.info("Failed getting " +filePath, getLsCommandParams());
-            return null;
+            return "";
         }
     }
 
@@ -173,6 +184,13 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     }
 
     private String getMavenM2Path(String rootDirectory) {
+        String currentUsersHomeDir = System.getProperty(USER_HOME);
+        File m2Path = Paths.get(currentUsersHomeDir, M2, REPOSITORY).toFile();
+
+        if(m2Path.exists()){
+            return m2Path.getAbsolutePath();
+        }
+
         String[] params = new String[]{MVN_COMMAND,MVN_PARAMS_M2PATH_PATH ,MVN_PARAMS_M2PATH_LOCAL};
         try {
             List<String> lines = getExternalProcessOutput(rootDirectory, params);
@@ -191,7 +209,14 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     }
 
     private List<String> getExternalProcessOutput(String rootDirectory, String[] processWithArgs) throws IOException {
-        ProcessBuilder pb = new ProcessBuilder(processWithArgs);
+        // execute 'args'
+        ProcessBuilder pb = new ProcessBuilder(getLsCommandParams());
+        pb.directory(new File(rootDirectory));
+        // redirect the error output to avoid output of npm ls by operating system
+        String redirectErrorOutput = isWindows() ? "nul" : "/dev/null";
+        pb.redirectError(new File(redirectErrorOutput));
+        logger.debug("start "+ processWithArgs);
+
         pb.directory(new File(rootDirectory));
         Process process = pb.start();
 
