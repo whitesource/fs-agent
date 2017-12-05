@@ -27,19 +27,19 @@ import java.util.stream.Collectors;
 
 
 /**
-     * Dependency Resolver for Maven projects.
-     *
-     * @author eugen.horovitz
-     */
-    public class MavenDependencyResolver extends AbstractDependencyResolver {
+ * Dependency Resolver for Maven projects.
+ *
+ * @author eugen.horovitz
+ */
+public class MavenDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Static Members --- */
 
-    private static final String POM_XML = "pom.xml";
-    private static final List<String> JAVA_EXTENSIONS = Arrays.asList(".java",".jar",".war",".ear",".car",".class");
+    private static final String POM_XML = "**/*pom.xml";
+    private static final List<String> JAVA_EXTENSIONS = Arrays.asList(".java", ".jar", ".war", ".ear", ".car", ".class");
 
     private static final String TARGET = "target";
-    private static final String TEST = String.join(File.separator,new String[]{"src","test"});// todo make sure this works
+    private static final String TEST = String.join(File.separator, new String[]{"src", "test"});
     private final boolean mavenAggregateModules;
     private final boolean dependenciesOnly;
 
@@ -59,7 +59,8 @@ import java.util.stream.Collectors;
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, List<String> bomFiles) {
-        // try to collect dependencies via 'npm ls'
+        // try to collect dependencies via 'mvn dependency tree and parse'
+
         Collection<AgentProjectInfo> projects = dependencyCollector.collectDependencies(topLevelFolder);
         List<BomFile> files = bomFiles.stream().map(bomParser::parseBomFile)
                 .filter(bom -> !bom.getLocalFileName().contains(TARGET) && !bom.getLocalFileName().contains(TEST)).collect(Collectors.toList());
@@ -67,14 +68,15 @@ import java.util.stream.Collectors;
         Set<String> excludes = new HashSet<>();
 
         Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
+
+            // map each pom file to specific project
             Optional<BomFile> folderPath = files.stream().filter(file -> projectInfo.getCoordinates().getArtifactId().equals(file.getName())).findFirst();
             if (folderPath.isPresent()) {
                 File topFolderFound = new File(folderPath.get().getLocalFileName()).getParentFile();
 
-                // for java do not remove anything since they are not the duplicates of the dependencies found
+                // in java do not remove anything since they are not the duplicates of the dependencies found
                 // discard other java files only if specified ( decenciesOnly = true)
-
-                if(dependenciesOnly) {
+                if (dependenciesOnly) {
                     excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), JAVA_EXTENSIONS, null));
                 }
                 return topFolderFound.toPath();
@@ -82,11 +84,12 @@ import java.util.stream.Collectors;
             return null;
         }));
 
-        ResolutionResult resolutionResult ;
+        ResolutionResult resolutionResult;
         if (!mavenAggregateModules) {
             resolutionResult = new ResolutionResult(projectInfoPathMap, excludes);
         } else {
-            resolutionResult = new ResolutionResult(projectInfoPathMap.keySet().stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes);
+            resolutionResult = new ResolutionResult(projectInfoPathMap.keySet().stream()
+                    .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes);
         }
         return resolutionResult;
     }
@@ -110,7 +113,7 @@ import java.util.stream.Collectors;
 
     @Override
     public String getBomPattern() {
-        return "**/*" + POM_XML;
+        return POM_XML;
     }
 
     @Override

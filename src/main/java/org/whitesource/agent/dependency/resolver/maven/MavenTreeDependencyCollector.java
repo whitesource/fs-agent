@@ -44,17 +44,16 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String MAVEN_DEPENDENCY_PLUGIN_TREE = "maven-dependency-plugin:"; // 2.8:tree";
     private static final String INFO = "[INFO] ";
     private static final String UTF_8 = "UTF-8";
-    private static final String SCOPE_COMPILE = "compile";
     private static final String SCOPE_TEST = "test";
     private static final String SCOPE_PROVIDED = "provided";
-    private static final String SCOPE_SYSTEM = "system";
-    private static final String SCOPE_RUNTIME = "runtime";
     private static final String DOT = ".";
     private static final String DASH = "-";
     private static final String USER_HOME = "user.home";
     private static final String M2 = ".m2";
     private static final String REPOSITORY = "repository";
-    public static final String JAVA_HOME = "java.home";
+    private static final String ALL = "All";
+    public static final String EMPTY_STRING = "";
+    public static final String POM = "pom";
 
 
     /* --- Members --- */
@@ -71,7 +70,12 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             this.mavenIgnoredScopes.add(SCOPE_PROVIDED);
             this.mavenIgnoredScopes.add(SCOPE_TEST);
         } else {
-            Arrays.stream(mavenIgnoredScopes).filter(exclude -> StringUtils.isBlank(exclude)).map(exclude -> this.mavenIgnoredScopes.add(exclude));
+            if (mavenIgnoredScopes.length == 1 && mavenIgnoredScopes[0].equals(ALL)) {
+                // do not filter out any scope
+            } else {
+                Arrays.stream(mavenIgnoredScopes).filter(exclude -> StringUtils.isBlank(exclude))
+                        .map(exclude -> this.mavenIgnoredScopes.add(exclude));
+            }
         }
     }
 
@@ -88,13 +92,14 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         try {
             List<String> lines = getExternalProcessOutput(rootDirectory, getLsCommandParams());
             List<List<String>> projectsLines = lines.stream()
-                    .map(line -> line.replace(INFO, ""))
+                    .map(line -> line.replace(INFO, EMPTY_STRING))
                     .collect(splitBySeparator(formattedLines -> formattedLines.contains(MAVEN_DEPENDENCY_PLUGIN_TREE)));
 
+            logger.info("Start parsing pom files");
             List<Node> nodes = new ArrayList<>();
             projectsLines.forEach(singleProjectLines -> {
-                String json = String.join(System.lineSeparator(), singleProjectLines);
-                try (InputStream is = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8.name()));
+                String mvnLines = String.join(System.lineSeparator(), singleProjectLines);
+                try (InputStream is = new ByteArrayInputStream(mvnLines.getBytes(StandardCharsets.UTF_8.name()));
                      Reader lineReader = new InputStreamReader(is, UTF_8)) {
                     Parser parser = InputType.TEXT.newParser();
                     Node tree = parser.parse(lineReader);
@@ -105,12 +110,15 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                     logger.error("error parsing output : {} ", e.getMessage());
                 } catch (Exception e) {
                     // this can happen often - some parts of the output are not parsable
-                    logger.debug("error parsing output : {} {}", e.getMessage(), json);
+                    logger.debug("error parsing output : {} {}", e.getMessage(), mvnLines);
                 }
             });
 
-            projects = nodes.stream().filter(node -> !node.getPackaging().equals("pom")).map(tree -> {
-            //projects = nodes.stream().filter(node -> node.getChildNodes().size() > 0 && !node.getPackaging().equals("pom")).map(tree -> {
+            logger.info("End parsing pom files , found : " + String.join(",",
+                    nodes.stream().map(node -> node.getArtifactId()).collect(Collectors.toList())));
+
+            projects = nodes.stream().filter(node -> !node.getPackaging().equals(POM)).map(tree -> {
+
                 List<DependencyInfo> dependencies = new LinkedList<>();
                 Stream<Node> nodeStream = tree.getChildNodes().stream().filter(node -> !mavenIgnoredScopes.contains(node.getScope()));
                 dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
@@ -142,11 +150,12 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             return  ChecksumUtils.calculateSHA1(new File(filePath));
         } catch (IOException e) {
             logger.info("Failed getting " +filePath, getLsCommandParams());
-            return "";
+            return EMPTY_STRING;
         }
     }
 
     private DependencyInfo getDependencyFromNode(Node node, Map<String,List<DependencyInfo>> paths ) {
+        logger.debug("converting node to dependency :" + node.getArtifactId());
         DependencyInfo dependency = new DependencyInfo(node.getGroupId(), node.getArtifactId(), node.getVersion());
         dependency.setDependencyType(DependencyType.MAVEN);
         dependency.setScope(node.getScope());
@@ -163,8 +172,12 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             paths.put(filePath, new ArrayList<>());
         }
         paths.get(filePath).add(dependency);
-        dependency.setSystemPath(filePath);
-        dependency.setFilename(filePath);
+        if (StringUtils.isNotBlank(filePath)) {
+            File jarFile = new File(filePath);
+            if(jarFile.exists()) {
+                dependency.setFilename(jarFile.getName());
+            }
+        }
 
         node.getChildNodes().forEach(childNode -> dependency.getChildren().add(getDependencyFromNode(childNode, paths)));
         return dependency;
@@ -187,27 +200,28 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         String currentUsersHomeDir = System.getProperty(USER_HOME);
         File m2Path = Paths.get(currentUsersHomeDir, M2, REPOSITORY).toFile();
 
-        if(m2Path.exists()){
+        if (m2Path.exists()) {
             return m2Path.getAbsolutePath();
         }
 
-        String[] params = new String[]{MVN_COMMAND,MVN_PARAMS_M2PATH_PATH ,MVN_PARAMS_M2PATH_LOCAL};
+        String[] params = new String[]{MVN_COMMAND, MVN_PARAMS_M2PATH_PATH, MVN_PARAMS_M2PATH_LOCAL};
         try {
             List<String> lines = getExternalProcessOutput(rootDirectory, params);
-            Optional<String> pathLine = lines.stream().filter(line->(new File(line).exists())).findFirst();
-            if(pathLine.isPresent()){
-                return  pathLine.get();
-            }else {
+            Optional<String> pathLine = lines.stream().filter(line -> (new File(line).exists())).findFirst();
+            if (pathLine.isPresent()) {
+                return pathLine.get();
+            } else {
                 logger.error("could not get m2 path : {} out: {}", rootDirectory, lines.stream().reduce("", String::concat));
                 return null;
             }
-        } catch (IOException io){
+        } catch (IOException io) {
             logger.error("could not get m2 path : {}", io.getMessage());
             showMavenTreeError = true;
             return null;
         }
     }
 
+    // todo : refactor all process builder methods with timeout and error handling - (npm resolver)
     private List<String> getExternalProcessOutput(String rootDirectory, String[] processWithArgs) throws IOException {
         // execute 'args'
         ProcessBuilder pb = new ProcessBuilder(getLsCommandParams());
