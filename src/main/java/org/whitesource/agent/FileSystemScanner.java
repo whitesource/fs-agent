@@ -115,9 +115,13 @@ public class FileSystemScanner {
             resolutionResults.stream().map(result -> result.getResolvedProjects()).forEach(projects -> {
                 projects.entrySet().stream().forEach(project -> {
                     Collection<DependencyInfo> dependencies = project.getKey().getDependencies();
-                    allProjects.put(project.getKey(), project.getValue());
-                    totalDependencies[0] += dependencies.size();
-                    dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies));
+
+                    // do not add projects with no dependencies
+                    if(!dependencies.isEmpty()) {
+                        allProjects.put(project.getKey(), project.getValue());
+                        totalDependencies[0] += dependencies.size();
+                        dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies));
+                    }
                 });
             });
             logger.info(MessageFormat.format("Total dependencies Found: {0}", totalDependencies[0]));
@@ -157,10 +161,10 @@ public class FileSystemScanner {
             project.getDependencies().addAll(filesDependencies);
         } else {
             // remove files from handled projects
-            allProjects.entrySet().forEach(project -> {
-                Collection<DependencyInfo> projectDependencies = filesDependencies.stream().filter(dependencyInfo -> dependencyInfo.getSystemPath().contains(project.getValue().toString())).collect(Collectors.toList());
-                project.getKey().getDependencies().addAll(projectDependencies);
-                filesDependencies.removeAll(projectDependencies);
+            allProjects.entrySet().stream().forEach(project -> {
+                    Collection<DependencyInfo> projectDependencies = filesDependencies.stream().filter(dependencyInfo -> dependencyInfo.getSystemPath().contains(project.getValue().toString())).collect(Collectors.toList());
+                    project.getKey().getDependencies().addAll(projectDependencies);
+                    filesDependencies.removeAll(projectDependencies);
             });
 
             // create new projects if necessary

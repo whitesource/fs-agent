@@ -65,6 +65,10 @@ public class DependencyResolversTest {
         String folderParent = TestHelper.FOLDER_WITH_BOWER_PROJECTS;
         Properties props = new Properties();
         props.setProperty(ConfigPropertyKeys.BOWER_RESOLVE_DEPENDENCIES, "true");
+        props.setProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, "false");
+        props.setProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, "false");
+        props.setProperty(ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, "false");
+
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(props);
         List<ResolutionResult> results = dependencyResolutionService.resolveDependencies(Arrays.asList(folderParent), new String[0]);
 

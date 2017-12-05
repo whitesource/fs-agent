@@ -71,7 +71,10 @@ public class NpmBomParser extends BomParser {
         Map optionalDependencies = getDependenciesFromJson(json, OPTIONAL_DEPENDENCIES);
         String fileName = getFilename(name, version);
         String sha1 = "";
-        String resolved = json.getString(RESOLVED);
+        String resolved = null;
+        if(json.has(RESOLVED)) {
+            resolved = json.getString(RESOLVED);
+        }
 
         // optional fields for packageJson parser
         if (json.has(SHA1)) {

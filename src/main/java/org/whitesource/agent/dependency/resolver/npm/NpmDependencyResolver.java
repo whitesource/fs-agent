@@ -83,7 +83,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     public NpmDependencyResolver() {
-        this(false,false, NPM_DEFAULT_LS_TIMEOUT);
+        this(false,true, NPM_DEFAULT_LS_TIMEOUT);
     }
 
     /* --- Overridden methods --- */
