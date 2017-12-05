@@ -30,6 +30,7 @@ public abstract class AbstractDependencyResolver {
 
     private static final String BACK_SLASH = "\\";
     private static final String FORWARD_SLASH = "/";
+    private static final String EMPTY_STRING = "";
     protected IBomParser bomParser;
 
     /* --- Abstract methods --- */
@@ -52,11 +53,11 @@ public abstract class AbstractDependencyResolver {
         String normalizedRoot = new File(parentFolder).getPath();
         if (normalizedRoot.equals(topFolderFound)) {
             topFolderFound = topFolderFound
-                    .replace(normalizedRoot, "")
+                    .replace(normalizedRoot, EMPTY_STRING)
                     .replace(BACK_SLASH, FORWARD_SLASH);
         } else {
             topFolderFound = topFolderFound
-                    .replace(parentFolder, "")
+                    .replace(parentFolder, EMPTY_STRING)
                     .replace(BACK_SLASH, FORWARD_SLASH);
         }
 
