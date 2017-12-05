@@ -26,6 +26,7 @@ import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
+import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.fs.configuration.ScmConfiguration;
 import org.whitesource.fs.configuration.ScmRepositoriesParser;
 import org.whitesource.scm.ScmConnector;

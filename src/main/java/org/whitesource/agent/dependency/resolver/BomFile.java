@@ -56,7 +56,7 @@ public class BomFile {
     }
 
     public BomFile(String groupId, String artifactId, String version, String bomPath) {
-        this(artifactId,version,null,null,bomPath,null,null);
+        this(artifactId,version,null,null,bomPath,null,null,null);
         this.groupId = groupId;
     }
 
