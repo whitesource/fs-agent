@@ -18,7 +18,7 @@ public class LsDependencyResolversTest {
 
     @Test
     public void shouldReturnDependenciesTreeNpm() {
-        AgentProjectInfo projectInfo = new NpmLsJsonDependencyCollector(false).collectDependencies(FOLDER_TO_TEST).stream().findFirst().get();
+        AgentProjectInfo projectInfo = new NpmLsJsonDependencyCollector(false, 60).collectDependencies(FOLDER_TO_TEST).stream().findFirst().get();
         Collection<DependencyInfo> dependencies = projectInfo.getDependencies();
         Assert.assertTrue(dependencies.size() > 0);
 
@@ -29,7 +29,7 @@ public class LsDependencyResolversTest {
     @Test
     public void shouldReturnDependenciesTreeBower() {
         String firstFolder = TestHelper.getFirstFolder(TestHelper.FOLDER_WITH_BOWER_PROJECTS);
-        AgentProjectInfo projectInfo = new BowerLsJsonDependencyCollector().collectDependencies(firstFolder).stream().findFirst().get();
+        AgentProjectInfo projectInfo = new BowerLsJsonDependencyCollector(60).collectDependencies(firstFolder).stream().findFirst().get();
         Collection<DependencyInfo> dependencies = projectInfo.getDependencies();
         Assert.assertTrue(dependencies.size() > 0);
 

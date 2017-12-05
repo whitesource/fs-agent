@@ -16,6 +16,8 @@
 package org.whitesource.agent.dependency.resolver;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
@@ -40,13 +42,17 @@ public class DependencyResolutionService {
     private final Collection<AbstractDependencyResolver> dependencyResolvers;
     private final boolean dependenciesOnly;
 
+    /* --- Static members --- */
+
+    private static final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
+
     /* --- Constructors --- */
 
     public DependencyResolutionService(Properties config) {
         final boolean npmResolveDependencies = getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
         final boolean npmIncludeDevDependencies = getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
         final boolean ignoreJavaScriptFiles = getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
-
+        final long npmTimeoutDependenciesCollector = getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
         final boolean bowerResolveDependencies = getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
 
         final boolean nugetResolveDependencies = getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
@@ -60,10 +66,10 @@ public class DependencyResolutionService {
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, ignoreJavaScriptFiles));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, ignoreJavaScriptFiles, npmTimeoutDependenciesCollector));
         }
         if (bowerResolveDependencies) {
-            dependencyResolvers.add(new BowerDependencyResolver());
+            dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector));
         }
         if (nugetResolveDependencies) {
             dependencyResolvers.add(new NugetDependencyResolver());
@@ -100,15 +106,18 @@ public class DependencyResolutionService {
             for (String exclude : resolverExcludes) {
                 combinedExcludes.add(exclude);
             }
-
+            logger.debug("Attempting to find the top folders of {} with pattern {}", pathsToScan, dependencyResolver.getBomPattern());
             Collection<ResolvedFolder> topFolders = fileScanner.findTopFolders(pathsToScan, dependencyResolver.getBomPattern(), combinedExcludes);
             topFolders.forEach(topFolder -> topFolderResolverMap.put(topFolder, dependencyResolver));
         });
-
+        logger.debug("Attempting to reduce dependencies");
         // reduce the dependencies and duplicates files
         reduceDependencies(topFolderResolverMap);
 
+        logger.debug("Finishing reduce dependencies");
         List<ResolutionResult> resolutionResults = new ArrayList<>();
+
+
         topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
                 ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
@@ -153,6 +162,15 @@ public class DependencyResolutionService {
         String propertyValue = config.getProperty(propertyKey);
         if (StringUtils.isNotBlank(propertyValue)) {
             property = Boolean.valueOf(propertyValue);
+        }
+        return property;
+    }
+
+    private long getLongProperty(Properties config, String propertyKey, long defaultValue) {
+        long property = defaultValue;
+        String propertyValue = config.getProperty(propertyKey);
+        if (StringUtils.isNotBlank(propertyValue)) {
+            property = Long.parseLong(propertyValue);
         }
         return property;
     }

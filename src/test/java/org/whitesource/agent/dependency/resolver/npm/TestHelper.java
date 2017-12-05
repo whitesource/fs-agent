@@ -36,7 +36,7 @@ public class TestHelper {
     }
 
     public static Stream<String> getDependenciesWithNpm(String dir) {
-        NpmLsJsonDependencyCollector collector = new NpmLsJsonDependencyCollector(false);
+        NpmLsJsonDependencyCollector collector = new NpmLsJsonDependencyCollector(false, 60);
         AgentProjectInfo projectInfo = collector.collectDependencies(dir).stream().findFirst().get();
         Collection<DependencyInfo> dependencies = projectInfo.getDependencies();
         return dependencies.stream().map(dep -> getShortNameByTgz(dep)).sorted();

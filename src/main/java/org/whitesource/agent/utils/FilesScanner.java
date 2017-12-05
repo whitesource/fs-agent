@@ -22,7 +22,8 @@ import org.whitesource.agent.SingleFileScanner;
 import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 
 import java.io.File;
-import java.nio.file.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -88,33 +89,49 @@ public class FilesScanner {
                 .collect(Collectors.toList());
 
         // get top folders
-        Map<Integer, List<String>> foldersGroupedByLengthMap = fullPaths.stream()
-                .collect(Collectors.groupingBy(filename -> new File(filename).getParentFile().getParent().length()));
+        Map<String, List<String>> foldersGroupedByLengthMap = fullPaths.stream()
+                .collect(Collectors.groupingBy(filename -> new File(filename).getParentFile().getParent()));
 
         // create result map with only the top folder and the corresponding bom files
         Map<String, List<String>> resultMap = new HashMap<>();
+
+        logger.debug("found folders:" + System.lineSeparator());
+        foldersGroupedByLengthMap.keySet().forEach(folder -> logger.debug(folder));
+        logger.debug(System.lineSeparator());
+
         while (foldersGroupedByLengthMap.entrySet().size() > 0) {
-            Optional<Integer> shortestPathLength = foldersGroupedByLengthMap.keySet().stream().min(Integer::compareTo);
-            if (shortestPathLength.isPresent()) {
-                Integer length = shortestPathLength.get();
 
-                List<String> foundShortestFolder = foldersGroupedByLengthMap.get(length);
-                List<String> topFolders = foundShortestFolder.stream()
-                        .map(file -> new File(file).getParent()).collect(Collectors.toList());
+            String shortestFolder = foldersGroupedByLengthMap.keySet().stream().min(Comparator.comparingInt(String::length)).get();
+            List<String> foundShortestFolder = foldersGroupedByLengthMap.get(shortestFolder);
+            foldersGroupedByLengthMap.remove(shortestFolder);
 
-                topFolders.forEach(folder -> {
-                    resultMap.put(folder, fullPaths.stream().filter(fileName -> fileName.contains(folder)).collect(Collectors.toList()));
+            List<String> topFolders = foundShortestFolder.stream()
+                    .map(file -> new File(file).getParent()).collect(Collectors.toList());
 
-                    // remove from list folders that are children of the one found so they will not be calculated twice
-                    foldersGroupedByLengthMap.entrySet().removeIf(otherFolder -> {
-                        if (otherFolder.getValue().get(0).contains(folder)) {
-                            return true;
-                        }
-                        return false;
-                    });
+            topFolders.forEach(folder -> {
+                resultMap.put(folder, fullPaths.stream().filter(fileName -> fileName.contains(folder)).collect(Collectors.toList()));
+
+                // remove from list folders that are children of the one found so they will not be calculated twice
+                foldersGroupedByLengthMap.entrySet().removeIf(otherFolder -> {
+                    Path otherFolderPath = Paths.get(otherFolder.getKey());
+                    Path folderPath = Paths.get(folder).getParent();
+
+                    boolean shouldRemove = false;
+                    try {
+                        shouldRemove = otherFolderPath.toFile().getCanonicalPath().startsWith(folderPath.toFile().getCanonicalPath());
+                    } catch (Exception e) {
+                        logger.debug("could not get file path " + otherFolderPath + folderPath, e);
+                    }
+                    logger.debug(String.join(";", otherFolder.getKey(), folder, Boolean.toString(shouldRemove)));
+                    if (shouldRemove) {
+                        logger.debug("---> removed: " + otherFolder.getKey());
+                        return true;
+                    }
+                    return false;
                 });
-            }
+            });
         }
+        logger.debug(System.lineSeparator());
         return resultMap;
     }
 

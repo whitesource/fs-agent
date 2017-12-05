@@ -13,6 +13,7 @@ import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.archiver.tar.TarBZip2UnArchiver;
 import org.codehaus.plexus.archiver.tar.TarGZipUnArchiver;
 import org.codehaus.plexus.archiver.tar.TarUnArchiver;
+import org.codehaus.plexus.archiver.xz.XZUnArchiver;
 import org.codehaus.plexus.logging.console.ConsoleLogger;
 import org.redline_rpm.ReadableChannelWrapper;
 import org.redline_rpm.Util;
@@ -55,7 +56,7 @@ public class ArchiveExtractor {
 
     public static final List<String> ZIP_EXTENSIONS = Arrays.asList("jar", "war", "ear", "egg", "zip", "whl", "sca", "sda");
     public static final List<String> GEM_EXTENSIONS = Collections.singletonList("gem");
-    public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar", "tgz", "tar.bz2");
+    public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar", "tgz", "tar.bz2", "tar.xz");
     public static final List<String> RPM_EXTENSIONS = Collections.singletonList("rpm");
     public static final List<String> RAR_EXTENSIONS = Collections.singletonList("rar");
 
@@ -68,6 +69,7 @@ public class ArchiveExtractor {
     public static final String TAR_SUFFIX = ".tar";
     public static final String GZ_SUFFIX = ".gz";
     public static final String BZ_SUFFIX = ".bz2";
+    public static final String XZ_SUFFIX = ".xz";
     public static final String LZMA = "lzma";
     public static final String CPIO = ".cpio";
     public static final String RAR = ".rar";
@@ -82,6 +84,7 @@ public class ArchiveExtractor {
     public static final String GLOB_PATTERN_PREFIX = "**/*.";
     public static final String PATTERN_PREFIX = ".*\\.";
     public static final String OR = "|";
+    public static final String XZ_UN_ARCHIVER_FILE_NAME = "compressedFile.tar";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
 
     static {
@@ -161,9 +164,10 @@ public class ArchiveExtractor {
      *
      * @param scannerBaseDir         - directory for scanning.
      * @param archiveExtractionDepth - drill down hierarchy level in archive files
+     * @param archiveDirectories
      * @return the temp directory for the extracted files.
      */
-    public String extractArchives(String scannerBaseDir, int archiveExtractionDepth) {
+    public String extractArchives(String scannerBaseDir, int archiveExtractionDepth, List<String> archiveDirectories) {
         this.randomString = String.valueOf(ThreadLocalRandom.current().nextLong(0, LONG_BOUND));
         this.tempFolderNoDepth = getTempFolder(scannerBaseDir);
         logger.debug("Base directory is {}, extraction depth is set to {}", scannerBaseDir, archiveExtractionDepth);
@@ -179,7 +183,6 @@ public class ArchiveExtractor {
                 folderToScan = getDepthFolder(curLevel - 1);
             }
             folderToExtract = getDepthFolder(curLevel);
-
             Pair<String[], String> retiveFilesWithFolder = getSearchedFileNames(folderToScan);
             if (retiveFilesWithFolder == null || retiveFilesWithFolder.getKey().length <= 0) {
                 break;
@@ -197,9 +200,10 @@ public class ArchiveExtractor {
                 allFiles.put(String.valueOf(curLevel), foundFiles);
             }
         }
-
         if (!allFiles.isEmpty()) {
-            return new File(this.tempFolderNoDepth).getParent();
+            String parentDirectory = new File(this.tempFolderNoDepth).getParent();
+            archiveDirectories.add(parentDirectory);
+            return parentDirectory;
         } else {
             // if unable to extract, return null
             return null;
@@ -315,7 +319,7 @@ public class ArchiveExtractor {
         String lowerCaseFileName = dataToUnpack.getKey().toLowerCase();
 
         if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
-            foundArchive = unZip(innerDir,dataToUnpack.getKey());
+            foundArchive = unZip(innerDir, dataToUnpack.getKey());
         } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
             foundArchive = unTar(lowerCaseFileName, innerDir, dataToUnpack.getKey());
             innerDir = innerDir + File.separator + RUBY_DATA_FILE;
@@ -382,17 +386,26 @@ public class ArchiveExtractor {
         boolean success = true;
         TarUnArchiver unArchiver = new TarUnArchiver();
         try {
-            if (fileName.endsWith(TAR_GZ_SUFFIX) || fileName.endsWith(TGZ_SUFFIX)) {
-                unArchiver = new TarGZipUnArchiver();
-            } else if (fileName.endsWith(TAR_BZ2_SUFFIX)) {
-                unArchiver = new TarBZip2UnArchiver();
-            }
-            unArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
-            unArchiver.setSourceFile(new File(archiveFile));
             File destDir = new File(innerDir);
             if (!destDir.exists()) {
                 destDir.mkdirs();
             }
+            if (fileName.endsWith(TAR_GZ_SUFFIX) || fileName.endsWith(TGZ_SUFFIX)) {
+                unArchiver = new TarGZipUnArchiver();
+            } else if (fileName.endsWith(TAR_BZ2_SUFFIX)) {
+                unArchiver = new TarBZip2UnArchiver();
+            } else if (fileName.endsWith(XZ_SUFFIX)) {
+                XZUnArchiver XZUnArchiver = new XZUnArchiver();
+                XZUnArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
+                XZUnArchiver.setSourceFile(new File(archiveFile));
+                String destFileUrl = destDir.getCanonicalPath() + "\\" + XZ_UN_ARCHIVER_FILE_NAME;
+                File destFile = new File(destFileUrl);
+                XZUnArchiver.setDestFile(destFile);
+                XZUnArchiver.extract();
+                archiveFile = destFileUrl;
+            }
+            unArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
+            unArchiver.setSourceFile(new File(archiveFile));
             unArchiver.setDestDirectory(destDir);
             unArchiver.extract();
         } catch (Exception e) {

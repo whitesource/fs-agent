@@ -113,6 +113,7 @@ public class DependencyInfoFactory {
             String sha1 = ChecksumUtils.calculateSHA1(dependencyFile);
             dependency = new DependencyInfo(sha1);
             dependency.setArtifactId(dependencyFile.getName());
+            dependency.setFilename(dependencyFile.getName());
 
             // system path
             try {
@@ -138,7 +139,13 @@ public class DependencyInfoFactory {
             if (filename.toLowerCase().matches(JAVA_SCRIPT_REGEX)) {
                 Map<ChecksumType, String> javaScriptChecksums = null;
                 try {
+                    javaScriptChecksums = new HashMap<>();
+                try {
                     javaScriptChecksums = new HashCalculator().calculateJavaScriptHashes(dependencyFile);
+                } catch (Exception e) {
+                    logger.info("Failed to calculate javaScript file hash for : {}", dependencyFile.getPath());
+                    logger.debug("Failed to calculate javaScript hash for file: {}, error: {}", dependencyFile.getPath(), e);
+                }
                     for (Map.Entry<ChecksumType, String> entry : javaScriptChecksums.entrySet()) {
                         dependency.addChecksum(entry.getKey(), entry.getValue());
                     }

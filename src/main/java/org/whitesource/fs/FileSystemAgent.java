@@ -25,16 +25,18 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
-import org.whitesource.agent.utils.FilesUtils;
+import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.fs.configuration.ScmConfiguration;
 import org.whitesource.fs.configuration.ScmRepositoriesParser;
 import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -197,7 +199,7 @@ public class FileSystemAgent extends CommandLineAgent {
             scmConnectors = Arrays.asList(ScmConnector.create(scmType, url, privateKey, username, password, branch, tag));
         }
 
-        if (scmConnectors != null) {
+        if (scmConnectors != null && scmConnectors.stream().anyMatch(scm->scm!=null)) {
             //scannerBaseDirs.clear();
             scmConnectors.stream().forEach(scmConnector -> {
                 if (scmConnector != null) {
@@ -281,7 +283,9 @@ public class FileSystemAgent extends CommandLineAgent {
                 ProcessBuilder pb = new ProcessBuilder(NPM_COMMAND, NPM_INSTALL_COMMAND);
                 pb.directory(new File(pathToCloneRepoFiles));
                 // redirect the output to avoid output of npm install by operating system
-                pb.redirectOutput(new File(NPM_INSTALL_OUTPUT_DESTINATION));
+                File npmOutput = new File(NPM_INSTALL_OUTPUT_DESTINATION);
+                pb.redirectOutput(npmOutput);
+                pb.redirectError(npmOutput);
                 logger.info("Found package.json file, executing 'npm install' on {}", scmConnector.getUrl());
                 try {
                     Process npmInstallProcess = pb.start();
@@ -307,4 +311,5 @@ public class FileSystemAgent extends CommandLineAgent {
         }
         return pathToCloneRepoFiles;
     }
+
 }
