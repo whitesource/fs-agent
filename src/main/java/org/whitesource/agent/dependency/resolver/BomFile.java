@@ -28,6 +28,7 @@ public class BomFile {
 
     private final String name;
     private final String version;
+    private String groupId;
     private String sha1;
     private String fileName;
     private final String localFileName;
@@ -51,6 +52,12 @@ public class BomFile {
         this.optionalDependencies = optionalDependencies;
         this.resolved = resolved;
         this.scopedPackage = false;
+        this.groupId = null;
+    }
+
+    public BomFile(String groupId, String artifactId, String version, String bomPath) {
+        this(artifactId,version,null,null,bomPath,null,null,null);
+        this.groupId = groupId;
     }
 
     /* --- Public method --- */
@@ -79,6 +86,10 @@ public class BomFile {
 
     public String getFileName() {
         return fileName;
+    }
+
+    public String getGroupId() {
+        return groupId;
     }
 
     public static String getUniqueDependencyName(String name, String version) {
@@ -114,5 +125,10 @@ public class BomFile {
 
     public boolean isScopedPackage() {
         return this.scopedPackage;
+    }
+
+    @Override
+    public String toString() {
+        return String.join(".", getGroupId(), getName(), getVersion());
     }
 }

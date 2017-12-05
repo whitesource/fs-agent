@@ -2,6 +2,7 @@ package org.whitesource.agent.dependency.resolver.npm;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.bower.BowerLsJsonDependencyCollector;
 
@@ -17,7 +18,8 @@ public class LsDependencyResolversTest {
 
     @Test
     public void shouldReturnDependenciesTreeNpm() {
-        Collection<DependencyInfo> dependencies = new NpmLsJsonDependencyCollector(false, 60).collectDependencies(FOLDER_TO_TEST);
+        AgentProjectInfo projectInfo = new NpmLsJsonDependencyCollector(false, 60).collectDependencies(FOLDER_TO_TEST).stream().findFirst().get();
+        Collection<DependencyInfo> dependencies = projectInfo.getDependencies();
         Assert.assertTrue(dependencies.size() > 0);
 
         List<DependencyInfo> dependencyInformation = dependencies.stream().filter(x -> x.getChildren().size() > 0).collect(Collectors.toList());
@@ -27,7 +29,8 @@ public class LsDependencyResolversTest {
     @Test
     public void shouldReturnDependenciesTreeBower() {
         String firstFolder = TestHelper.getFirstFolder(TestHelper.FOLDER_WITH_BOWER_PROJECTS);
-        Collection<DependencyInfo> dependencies = new BowerLsJsonDependencyCollector(60).collectDependencies(firstFolder);
+        AgentProjectInfo projectInfo = new BowerLsJsonDependencyCollector(60).collectDependencies(firstFolder).stream().findFirst().get();
+        Collection<DependencyInfo> dependencies = projectInfo.getDependencies();
         Assert.assertTrue(dependencies.size() > 0);
 
         List<DependencyInfo> dependencyInformation = dependencies.stream().filter(x -> x.getChildren().size() > 0).collect(Collectors.toList());

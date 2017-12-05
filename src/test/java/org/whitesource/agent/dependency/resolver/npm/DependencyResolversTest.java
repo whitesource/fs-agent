@@ -51,12 +51,12 @@ public class DependencyResolversTest {
 
     private void testDependencyResult(boolean checkChildren, List<ResolutionResult> results) {
         results.forEach(resolutionResult -> {
-            Assert.assertTrue(resolutionResult.getResolvedDependencies().size() > 0);
+            Assert.assertTrue(resolutionResult.getResolvedProjects().size() > 0);
             if (!checkChildren) {
                 return;
             }
             List<DependencyInfo> dependencyInformation = resolutionResult
-                    .getResolvedDependencies().stream().filter(x -> x.getChildren().size() > 0).collect(Collectors.toList());
+                    .getResolvedProjects().keySet().stream().findFirst().get().getDependencies().stream().filter(x -> x.getChildren().size() > 0).collect(Collectors.toList());
             Assert.assertTrue(dependencyInformation.size() > 0);
         });
     }

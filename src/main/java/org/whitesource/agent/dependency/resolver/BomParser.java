@@ -27,7 +27,7 @@ import java.io.InputStream;
 /**
  * @author eugen.horovitz
  */
-public abstract class BomParser {
+public abstract class BomParser implements IBomParser{
 
     /* --- Static members --- */
 

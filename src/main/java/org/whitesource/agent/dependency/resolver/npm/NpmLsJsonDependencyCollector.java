@@ -20,6 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
@@ -30,7 +31,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -41,7 +41,7 @@ import java.util.concurrent.*;
  *
  * @author eugen.horovitz
  */
-public class NpmLsJsonDependencyCollector implements DependencyCollector {
+public class NpmLsJsonDependencyCollector extends DependencyCollector {
 
     /* --- Statics Members --- */
 
@@ -77,7 +77,7 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
     /* --- Public methods --- */
 
     @Override
-    public Collection<DependencyInfo> collectDependencies(String rootDirectory) {
+    public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
         Collection<DependencyInfo> dependencies = new LinkedList<>();
         try {
             // execute 'npm ls'
@@ -144,7 +144,7 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
                 showNpmLsError = true;
             }
         }
-        return dependencies;
+        return getSingleProjectList(dependencies);
     }
 
     /* --- Private methods --- */

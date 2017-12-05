@@ -71,6 +71,10 @@ public final class ConfigPropertyKeys {
     public static final String NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS = "npm.timeoutDependenciesCollectorInSeconds";
     public static final String BOWER_RESOLVE_DEPENDENCIES = "bower.resolveDependencies";
     public static final String NUGET_RESOLVE_DEPENDENCIES = "nuget.resolveDependencies";
+    public static final String MAVEN_IGNORED_SCOPES = "maven.ignoredScopes";
+    public static final String MAVEN_RESOLVE_DEPENDENCIES = "maven.resolveDependencies";
+    public static final String MAVEN_AGGREGATE_MODULES = "maven.aggregateModules";
+    public static final String DEPENDENCIES_ONLY = "dependenciesOnly";
     public static final String PROJECT_PER_SUBFOLDER = "projectPerFolder";
     public static final String UPDATE_TYPE = "updateType";
 }
