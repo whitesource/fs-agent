@@ -88,6 +88,10 @@ public abstract class CommandLineAgent {
         }
         if (!requestFiles.isEmpty()) {
             for (File requestFile : requestFiles) {
+                if (!requestFile.isFile()) {
+                    logger.warn("'{}' is a folder. Enter a valid file path, folder is not acceptable.", requestFile.getName());
+                    continue;
+                }
                 Gson gson = new Gson();
                 UpdateInventoryRequest updateRequest;
                 logger.debug("Converting offline request to JSON");
