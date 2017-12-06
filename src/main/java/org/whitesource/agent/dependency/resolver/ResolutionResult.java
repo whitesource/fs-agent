@@ -17,8 +17,10 @@ package org.whitesource.agent.dependency.resolver;
 
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.api.model.DependencyType;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -28,26 +30,31 @@ public class ResolutionResult {
 
     /* --- Members --- */
 
-    private Map<AgentProjectInfo,Path> resolvedProjects;
+    private Map<AgentProjectInfo, Path> resolvedProjects;
     private Collection<String> excludes;
+    private final DependencyType dependencyType;
+    private final String topLevelFolder;
 
     /* --- Constructors --- */
 
-    public ResolutionResult(Map<AgentProjectInfo,Path> resolvedProjects, Collection<String> excludes) {
+    public ResolutionResult(Map<AgentProjectInfo, Path> resolvedProjects, Collection<String> excludes, DependencyType dependencyType, String topLevelFolder) {
         this.resolvedProjects = resolvedProjects;
         this.excludes = excludes;
+        this.dependencyType = dependencyType;
+        this.topLevelFolder = topLevelFolder;
     }
 
-    public ResolutionResult(Collection<DependencyInfo> dependencies, Iterable<String> excludes) {
+    public ResolutionResult(Collection<DependencyInfo> dependencies, Iterable<String> excludes, DependencyType dependencyType, String topLevelFolder) {
         AgentProjectInfo projectInfo = new AgentProjectInfo();
-        dependencies.forEach(dependencyInfo ->  projectInfo.getDependencies().add(dependencyInfo));
+        dependencies.forEach(dependencyInfo -> projectInfo.getDependencies().add(dependencyInfo));
 
         this.resolvedProjects = new HashMap<>();
-        this.resolvedProjects.put(projectInfo,null);
+        this.resolvedProjects.put(projectInfo, Paths.get(topLevelFolder));
         this.excludes = new ArrayList<>();
-        excludes.forEach(exclude->this.excludes.add(exclude));
+        this.dependencyType = dependencyType;
+        this.topLevelFolder = topLevelFolder;
+        excludes.forEach(exclude -> this.excludes.add(exclude));
     }
-
 
     /* --- Getters --- */
 
@@ -55,7 +62,15 @@ public class ResolutionResult {
         return excludes;
     }
 
-    public Map<AgentProjectInfo,Path> getResolvedProjects() {
+    public Map<AgentProjectInfo, Path> getResolvedProjects() {
         return resolvedProjects;
+    }
+
+    public DependencyType getDependencyType() {
+        return dependencyType;
+    }
+
+    public String getTopLevelFolder() {
+        return topLevelFolder;
     }
 }

@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.archive.ArchiveExtractor;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
@@ -52,19 +53,19 @@ public class FileSystemScanner {
 
     /* --- Public methods --- */
 
-    public List<DependencyInfo> createDependencies(List<String> scannerBaseDirs, boolean scmConnector,
-                                                   String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
-                                                   String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
-                                                   Collection<String> excludedCopyrights, boolean partialSha1Match) {
-        Collection<AgentProjectInfo> projects = createDependencies(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
+    public List<DependencyInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
+                                               String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
+                                               String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
+                                               Collection<String> excludedCopyrights, boolean partialSha1Match) {
+        Collection<AgentProjectInfo> projects = createProjects(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
                 archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match, false, false);
         return projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
     }
 
-    public Collection<AgentProjectInfo> createDependencies(List<String> scannerBaseDirs, boolean scmConnector,
-                                                           String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
-                                                           String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
-                                                           Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
+    public Collection<AgentProjectInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
+                                                       String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
+                                                       String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
+                                                       Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
 
         MemoryUsageHelper.SystemStats systemStats = MemoryUsageHelper.getMemoryUsage();
         logger.debug(systemStats.toString());
@@ -94,9 +95,10 @@ public class FileSystemScanner {
             }
         }
 
-        // create dependencies from files
+        // create dependencies from files - first project is always the default one
         logger.info("Starting Analysis");
         Map<AgentProjectInfo, Path> allProjects = new HashMap<>();
+        allProjects.put(new AgentProjectInfo(),null);
 
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
         Map<File, Collection<String>> fileMapBeforeResolve = fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
@@ -112,13 +114,27 @@ public class FileSystemScanner {
 
             // add all resolved dependencies
             final int[] totalDependencies = {0};
-            resolutionResults.stream().map(result -> result.getResolvedProjects()).forEach(projects -> {
+            resolutionResults.stream().forEach( result->
+            {
+                Map<AgentProjectInfo,Path> projects = result.getResolvedProjects();
                 projects.entrySet().stream().forEach(project -> {
                     Collection<DependencyInfo> dependencies = project.getKey().getDependencies();
 
                     // do not add projects with no dependencies
                     if(!dependencies.isEmpty()) {
-                        allProjects.put(project.getKey(), project.getValue());
+                        AgentProjectInfo currentProject;
+                        if(dependencyResolutionService.isSeparateProjects()) {
+                            if (result.getDependencyType().equals(DependencyType.MAVEN)) {
+                                allProjects.put(project.getKey(), project.getValue());
+                            }else{
+                                currentProject = allProjects.keySet().stream().findFirst().get();
+                                currentProject.getDependencies().addAll(project.getKey().getDependencies());
+                            }
+                        }else {
+                            //allProjects.put(project.getKey(), project.getValue());
+                            currentProject = allProjects.keySet().stream().findFirst().get();
+                            currentProject.getDependencies().addAll(project.getKey().getDependencies());
+                        }
                         totalDependencies[0] += dependencies.size();
                         dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies));
                     }
@@ -150,19 +166,14 @@ public class FileSystemScanner {
                     scmConnector, totalFiles, fileMap, excludedCopyrights, partialSha1Match, calculateHints, calculateMd5));
         }
 
-        if (allProjects.size() <= 1) {
-            AgentProjectInfo project = null;
-            if (allProjects.isEmpty()) {
-                project = new AgentProjectInfo();
-                allProjects.put(project, null);
-            } else {
-                project = allProjects.keySet().stream().findFirst().get();
-            }
+        if (allProjects.size() == 1 ) {
+            AgentProjectInfo project = allProjects.keySet().stream().findFirst().get();
             project.getDependencies().addAll(filesDependencies);
         } else {
             // remove files from handled projects
             allProjects.entrySet().stream().forEach(project -> {
-                    Collection<DependencyInfo> projectDependencies = filesDependencies.stream().filter(dependencyInfo -> dependencyInfo.getSystemPath().contains(project.getValue().toString())).collect(Collectors.toList());
+                    Collection<DependencyInfo> projectDependencies = filesDependencies.stream()
+                            .filter(dependencyInfo -> project.getValue()!=null && dependencyInfo.getSystemPath().contains(project.getValue().toString())).collect(Collectors.toList());
                     project.getKey().getDependencies().addAll(projectDependencies);
                     filesDependencies.removeAll(projectDependencies);
             });
@@ -175,10 +186,15 @@ public class FileSystemScanner {
                         if (filesDependencies.size() > 0) {
                             List<DependencyInfo> projectDependencies = filesDependencies.stream().filter(dependencyInfo -> dependencyInfo.getSystemPath().contains(subFolder.toString())).collect(Collectors.toList());
                             if (!projectDependencies.isEmpty()) {
-                                AgentProjectInfo subProject = new AgentProjectInfo();
-                                subProject.setCoordinates(new Coordinates(null, subFolder.toFile().getName(), null));
+                                AgentProjectInfo subProject;
+                                if(dependencyResolutionService.isSeparateProjects()) {
+                                    subProject = new AgentProjectInfo();
+                                    allProjects.put(subProject, null);
+                                    subProject.setCoordinates(new Coordinates(null, subFolder.toFile().getName(), null));
+                                }else{
+                                    subProject = allProjects.entrySet().stream().findFirst().get().getKey();
+                                }
                                 subProject.setDependencies(projectDependencies);
-                                allProjects.put(subProject, null);
                                 filesDependencies.removeAll(projectDependencies);
                             }
                         }

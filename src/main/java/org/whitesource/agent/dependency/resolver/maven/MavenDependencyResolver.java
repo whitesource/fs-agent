@@ -86,10 +86,10 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
 
         ResolutionResult resolutionResult;
         if (!mavenAggregateModules) {
-            resolutionResult = new ResolutionResult(projectInfoPathMap, excludes);
+            resolutionResult = new ResolutionResult(projectInfoPathMap, excludes, getDependencyType(), topLevelFolder);
         } else {
             resolutionResult = new ResolutionResult(projectInfoPathMap.keySet().stream()
-                    .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes);
+                    .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes, getDependencyType(), topLevelFolder);
         }
         return resolutionResult;
     }

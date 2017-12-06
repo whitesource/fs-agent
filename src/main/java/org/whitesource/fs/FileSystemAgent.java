@@ -25,7 +25,6 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
-import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.fs.configuration.ScmConfiguration;
 import org.whitesource.fs.configuration.ScmRepositoriesParser;
@@ -33,11 +32,9 @@ import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -120,20 +117,21 @@ public class FileSystemAgent extends CommandLineAgent {
             return projects;
         } else {
             Collection<AgentProjectInfo> projects = getProjects(dependencyDirs);
-            if (projects.size() == 1) {
-                AgentProjectInfo projectInfo = projects.stream().findFirst().get();
-                if (projectInfo.getCoordinates() == null) {
-                    // use token or name + version
-                    String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
-                    if (StringUtils.isNotBlank(projectToken)) {
-                        projectInfo.setProjectToken(projectToken);
-                    } else {
-                        String projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
-                        String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
-                        projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
-                    }
+
+            AgentProjectInfo projectInfo = projects.stream().findFirst().get();
+            if (projectInfo.getCoordinates() == null) {
+                // use token or name + version
+                String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
+                if (StringUtils.isNotBlank(projectToken)) {
+                    projectInfo.setProjectToken(projectToken);
+                } else {
+                    String projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
+                    String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
+                    projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
                 }
             }
+
+            // todo: check for duplicates projects
             return projects;
         }
     }
@@ -252,7 +250,7 @@ public class FileSystemAgent extends CommandLineAgent {
         excludedCopyrights.remove("");
 
         boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
-        Collection<AgentProjectInfo> projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createDependencies(
+        Collection<AgentProjectInfo> projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createProjects(
                 scannerBaseDirs, hasScmConnectors[0], includes, excludes, globCaseSensitive, archiveExtractionDepth,
                 archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights,
                 partialSha1Match, calculateHints, calculateMd5);

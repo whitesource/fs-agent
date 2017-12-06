@@ -46,6 +46,8 @@ public class DependencyResolutionService {
 
     private static final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
 
+    private boolean separateProjects = false;
+
     /* --- Constructors --- */
 
     public DependencyResolutionService(Properties config) {
@@ -59,7 +61,7 @@ public class DependencyResolutionService {
 
         final boolean mavenResolveDependencies = getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
         final String[] mavenIgnoredScopes = getListProperty(config, MAVEN_IGNORED_SCOPES, null);
-        final boolean mavenAggregateModules = getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, false);
+        final boolean mavenAggregateModules = getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
 
         dependenciesOnly = getBooleanProperty(config, DEPENDENCIES_ONLY, false);
 
@@ -76,10 +78,15 @@ public class DependencyResolutionService {
         }
         if (mavenResolveDependencies) {
             dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules,mavenIgnoredScopes, dependenciesOnly));
+            separateProjects = !mavenAggregateModules;
         }
     }
 
     /* --- Public methods --- */
+
+    public boolean isSeparateProjects() {
+        return separateProjects;
+    }
 
     public boolean isDependenciesOnly() {
         return dependenciesOnly;

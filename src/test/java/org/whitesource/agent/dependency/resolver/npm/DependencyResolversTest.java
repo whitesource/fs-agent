@@ -36,17 +36,31 @@ public class DependencyResolversTest {
         testNpmResolve(true);
     }
 
+    @Test
+    public void shouldResolvePackageJson() {
+        String folderParent = "C:\\repos\\ws\\fs-agent\\src\\test\\resources\\resolver\\npm\\";
+
+        List<ResolutionResult> results = getResolutionResults(Arrays.asList(folderParent));
+
+        DependencyInfo dependencyInfo = results.get(0).getResolvedProjects().keySet().stream().findFirst().get().getDependencies().stream().findFirst().get();
+        Assert.assertNotNull(dependencyInfo.getArtifactId());
+    }
+
     private void testNpmResolve(boolean checkChildren) {
         String folderParent = TestHelper.FOLDER_WITH_NPN_PROJECTS;
 
+        List<ResolutionResult> results = getResolutionResults(Arrays.asList(folderParent));
+
+        testDependencyResult(checkChildren, results);
+    }
+
+    private List<ResolutionResult> getResolutionResults(List<String> pathsToScan) {
         Properties props = new Properties();
         props.setProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, "true");
         props.setProperty(ConfigPropertyKeys.NPM_INCLUDE_DEV_DEPENDENCIES, "false");
 
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(props);
-        List<ResolutionResult> results = dependencyResolutionService.resolveDependencies(Arrays.asList(folderParent), new String[0]);
-
-        testDependencyResult(checkChildren, results);
+        return dependencyResolutionService.resolveDependencies(pathsToScan, new String[0]);
     }
 
     private void testDependencyResult(boolean checkChildren, List<ResolutionResult> results) {

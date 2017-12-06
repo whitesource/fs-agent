@@ -51,7 +51,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     private static final String PACKAGE_JSON = "package.json";
     private static final String JAVA_SCRIPT_EXTENSION = ".js";
-    public static final String JS_PATTERN = "**/*.js";
+    private static final String JS_PATTERN = "**/*.js";
     private static final String EXAMPLE = "**/example/**/";
     private static final String EXAMPLES = "**/examples/**/";
     private static final String WS_BOWER_FOLDER = "**/.ws_bower/**/";
@@ -63,9 +63,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractDependencyResolver.class);
-    public static final String EXCLUDE_TOP_FOLDER = "node_modules";
+    private static final String EXCLUDE_TOP_FOLDER = "node_modules";
     private static final String EMPTY_STRING = "";
-    public static final int NUM_THREADS = 8;
+    private static final int NUM_THREADS = 8;
 
     /* --- Members --- */
 
@@ -150,7 +150,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
                 excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN), EXCLUDE_TOP_FOLDER));
             }
         }
-        return new ResolutionResult(dependencies, excludes);
+        return new ResolutionResult(dependencies, excludes, getDependencyType(), topLevelFolder);
     }
 
     @Override
@@ -272,29 +272,6 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         setHierarchy(dependencyPackageJsonMap);
         return dependencies;
     }
-
-//    private List<String> normalizeLocalPathRaz(String parentFolder, String topFolderFound, Collection<String> excludes) {
-//        String normalizedRoot = new File(parentFolder).getPath();
-//        if (normalizedRoot.equals(topFolderFound)) {
-//            topFolderFound = topFolderFound
-//                    .replace(normalizedRoot, EMPTY_STRING)
-//                    .replace(BACK_SLASH, FORWARD_SLASH);
-//        } else {
-//            topFolderFound = topFolderFound
-//                    .replace(parentFolder, EMPTY_STRING)
-//                    .replace(BACK_SLASH, FORWARD_SLASH);
-//        }
-//
-//        if (topFolderFound.length() > 0)
-//            topFolderFound = topFolderFound.substring(1, topFolderFound.length()) + FORWARD_SLASH;
-//
-//        String finalRes = topFolderFound;
-//        if (ignoreJavaScriptFiles) {
-//            return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
-//        } else {
-//            return excludes.stream().map(exclude -> finalRes + EXCLUDE_TOP_FOLDER + FORWARD_SLASH + exclude).collect(Collectors.toList());
-//        }
-//    }
 
     private boolean fileShouldBeParsed(File file) {
         return (file.getAbsolutePath().endsWith(getPreferredFileName()));
