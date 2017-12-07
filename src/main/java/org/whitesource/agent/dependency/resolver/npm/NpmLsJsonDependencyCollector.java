@@ -15,6 +15,7 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
+import com.google.gson.Gson;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
@@ -24,6 +25,7 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
+import org.whitesource.agent.utils.CommandLineProcess;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,6 +36,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.*;
 
 /**
@@ -80,57 +83,14 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
         Collection<DependencyInfo> dependencies = new LinkedList<>();
         try {
-            // execute 'npm ls'
-            ProcessBuilder pb = new ProcessBuilder(getLsCommandParams());
-            pb.directory(new File(rootDirectory));
-            // redirect the error output to avoid output of npm ls by operating system
-            String redirectErrorOutput = isWindows() ? "nul" : "/dev/null";
-            pb.redirectError(new File(redirectErrorOutput));
-            logger.debug("start 'npm ls'");
-            Process process = pb.start();
-
-            // parse 'npm ls' output
-            // String json = null;
+            CommandLineProcess npmLs = new CommandLineProcess(rootDirectory, getLsCommandParams());
+            npmLs.setTimeoutReadLineSeconds(this.npmTimeoutDependenciesCollector);
+            List<String> lines = npmLs.executeProcess();
             StringBuilder json = new StringBuilder();
-            InputStreamReader inputStreamReader = null;
-            BufferedReader reader = null;
-            ExecutorService executorService = Executors.newFixedThreadPool(1);
-            boolean continueReadingLines = true;
-            try {
-                inputStreamReader = new InputStreamReader(process.getInputStream());
-                reader = new BufferedReader(inputStreamReader);
-                logger.debug("trying to read dependencies using 'npm ls'");
-
-                int lineIndex = 1;
-                String line = "";
-                while (continueReadingLines && line != null) {
-                    Future<String> future = executorService.submit(new ReadLineTask(reader));
-                    try {
-                        line = future.get(this.npmTimeoutDependenciesCollector, TimeUnit.SECONDS);
-                        if (StringUtils.isNotBlank(line)) {
-                            logger.debug("Read line #{}: {}", lineIndex, line);
-                            json.append(line);
-                        } else {
-                            logger.debug("Finished reading {} lines", lineIndex - 1);
-                        }
-                    } catch (TimeoutException e) {
-                        logger.debug("Received timeout when reading line #" + lineIndex, e);
-                        continueReadingLines = false;
-                    } catch (Exception e) {
-                        logger.debug("Error reading line #" + lineIndex, e);
-                        continueReadingLines = false;
-                    }
-                    lineIndex++;
-                }
-            } catch (Exception e) {
-                logger.error("error parsing output : {}", e.getMessage());
-            } finally {
-                executorService.shutdown();
-                IOUtils.closeQuietly(inputStreamReader);
-                IOUtils.closeQuietly(reader);
+            for (String line : lines) {
+                json.append(line);
             }
-
-            if (json != null && json.length() > 0 && continueReadingLines) {
+            if (json != null && json.length() > 0 && !npmLs.isErrorInProcess()) {
                 logger.debug("'npm ls' output is not empty");
                 dependencies.addAll(getDependencies(new JSONObject(json.toString())));
             }

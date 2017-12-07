@@ -110,6 +110,9 @@ public class BomFile {
 
     public String getRegistryPackageUrl() {
         String registryPackageUrl = null;
+        if (StringUtils.isEmpty(this.resolved)) {
+            return StringUtils.EMPTY;
+        }
         if (this.resolved.contains("@")) {
             registryPackageUrl =  this.resolved.substring(0, this.resolved.indexOf(this.name) + this.name.length());
             int lastSlashIndex = registryPackageUrl.lastIndexOf('/');

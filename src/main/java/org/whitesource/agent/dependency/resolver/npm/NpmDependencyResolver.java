@@ -198,8 +198,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     protected void enrichDependency(DependencyInfo dependency, BomFile packageJson) {
         String sha1 = packageJson.getSha1();
-        if (StringUtils.isEmptyOrNull(sha1)) {
-            sha1 = getSha1FromRegistryPackageUrl(packageJson.getRegistryPackageUrl(), packageJson.isScopedPackage(), packageJson.getVersion());
+        String registryPackageUrl = packageJson.getRegistryPackageUrl();
+        if (StringUtils.isEmptyOrNull(sha1) && !StringUtils.isEmptyOrNull(registryPackageUrl)) {
+            sha1 = getSha1FromRegistryPackageUrl(registryPackageUrl, packageJson.isScopedPackage(), packageJson.getVersion());
         }
         dependency.setSha1(sha1);
         dependency.setGroupId(packageJson.getName());

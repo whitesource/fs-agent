@@ -7,6 +7,7 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -38,7 +39,7 @@ public class DependencyResolversTest {
 
     @Test
     public void shouldResolvePackageJson() {
-        String folderParent = "C:\\repos\\ws\\fs-agent\\src\\test\\resources\\resolver\\npm\\";
+        String folderParent = Paths.get(".").toAbsolutePath().normalize().toString() + "\\src\\test\\resources\\resolver\\npm\\";
 
         List<ResolutionResult> results = getResolutionResults(Arrays.asList(folderParent));
 

@@ -25,6 +25,7 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
+import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.fs.configuration.ScmConfiguration;
 import org.whitesource.fs.configuration.ScmRepositoriesParser;
@@ -273,42 +274,31 @@ public class FileSystemAgent extends CommandLineAgent {
         File packageJson = new File(pathToCloneRepoFiles + separatorFiles + PACKAGE_JSON);
         boolean npmInstallFailed = false;
         if (scmNpmInstall && packageJson.exists()) {
+            // execute 'npm install'
+            File packageLock = new File(pathToCloneRepoFiles + separatorFiles + PACKAGE_LOCK);
+            if (packageLock.exists()) {
+                packageLock.delete();
+            }
+            CommandLineProcess npmInstall = new CommandLineProcess(pathToCloneRepoFiles, new String[]{NPM_COMMAND, NPM_INSTALL_COMMAND});
+            logger.info("Found package.json file, executing 'npm install' on {}", scmConnector.getUrl());
             try {
-                // execute 'npm install'
-                File packageLock = new File(pathToCloneRepoFiles + separatorFiles + PACKAGE_LOCK);
-                if (packageLock.exists()) {
-                    packageLock.delete();
-                }
-                ProcessBuilder pb = new ProcessBuilder(NPM_COMMAND, NPM_INSTALL_COMMAND);
-                pb.directory(new File(pathToCloneRepoFiles));
-                // redirect the output to avoid output of npm install by operating system
-                File npmOutput = new File(NPM_INSTALL_OUTPUT_DESTINATION);
-                pb.redirectOutput(npmOutput);
-                pb.redirectError(npmOutput);
-                logger.info("Found package.json file, executing 'npm install' on {}", scmConnector.getUrl());
-                try {
-                    Process npmInstallProcess = pb.start();
-                    npmInstallProcess.waitFor(npmInstallTimeoutMinutes, TimeUnit.MINUTES);
-                    if (npmInstallProcess.exitValue() != 0) {
-                        npmInstallFailed = true;
-                        logger.error("Failed to run 'npm install' on {}", scmConnector.getUrl());
-                    }
-                } catch (InterruptedException e) {
+                npmInstall.executeProcessWithoutOutput();
+                npmInstall.setTimeoutProcessMinutes(npmInstallTimeoutMinutes);
+                if (npmInstall.isErrorInProcess()) {
                     npmInstallFailed = true;
-                    logger.error("'npm install' was interrupted {}", e);
+                    logger.error("Failed to run 'npm install' on {}", scmConnector.getUrl());
                 }
             } catch (IOException e) {
                 npmInstallFailed = true;
                 logger.error("Failed to start 'npm install' {}", e);
             }
-        }
-        if (npmInstallFailed) {
-            // In case of error in 'npm install', delete and clone the repository to prevent wrong output
-            this.prepStepStatusCode = StatusCode.PREP_STEP_FAILURE;
-            scmConnector.deleteCloneDirectory();
-            pathToCloneRepoFiles = scmConnector.cloneRepository().getPath();
+            if (npmInstallFailed) {
+                // In case of error in 'npm install', delete and clone the repository to prevent wrong output
+                this.prepStepStatusCode = StatusCode.PREP_STEP_FAILURE;
+                scmConnector.deleteCloneDirectory();
+                pathToCloneRepoFiles = scmConnector.cloneRepository().getPath();
+            }
         }
         return pathToCloneRepoFiles;
     }
-
 }

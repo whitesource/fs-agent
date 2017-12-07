@@ -12,6 +12,7 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.hash.ChecksumUtils;
+import org.whitesource.agent.utils.CommandLineProcess;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -38,7 +39,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String MVN_PARAMS_M2PATH_LOCAL = "-Dexpression=settings.localRepository";
 
     private static final String MVN_PARAMS_TREE = "dependency:tree";
-    private static final String MVN_COMMAND = isWindows() ? "mvn.cmd" : "mvn";
+    private static final String MVN_COMMAND = "mvn";
     private static final String OS_NAME = "os.name";
     private static final String WINDOWS = "win";
     private static final String MAVEN_DEPENDENCY_PLUGIN_TREE = "maven-dependency-plugin:"; // 2.8:tree";
@@ -52,6 +53,8 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String M2 = ".m2";
     private static final String REPOSITORY = "repository";
     private static final String ALL = "All";
+    private static final String CMD = "cmd";
+    private static final String C_Char_WINDOWS = "/c";
     public static final String EMPTY_STRING = "";
     public static final String POM = "pom";
 
@@ -90,48 +93,52 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
         Collection<AgentProjectInfo> projects = null;
         try {
-            List<String> lines = getExternalProcessOutput(rootDirectory, getLsCommandParams());
-            List<List<String>> projectsLines = lines.stream()
-                    .map(line -> line.replace(INFO, EMPTY_STRING))
-                    .collect(splitBySeparator(formattedLines -> formattedLines.contains(MAVEN_DEPENDENCY_PLUGIN_TREE)));
+            CommandLineProcess mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParams());
+            List<String> lines = mvnDependencies.executeProcess();
+            if (!mvnDependencies.isErrorInProcess()) {
+                List<List<String>> projectsLines = lines.stream()
+                        .map(line -> line.replace(INFO, EMPTY_STRING))
+                        .collect(splitBySeparator(formattedLines -> formattedLines.contains(MAVEN_DEPENDENCY_PLUGIN_TREE)));
 
-            logger.info("Start parsing pom files");
-            List<Node> nodes = new ArrayList<>();
-            projectsLines.forEach(singleProjectLines -> {
-                String mvnLines = String.join(System.lineSeparator(), singleProjectLines);
-                try (InputStream is = new ByteArrayInputStream(mvnLines.getBytes(StandardCharsets.UTF_8.name()));
-                     Reader lineReader = new InputStreamReader(is, UTF_8)) {
-                    Parser parser = InputType.TEXT.newParser();
-                    Node tree = parser.parse(lineReader);
-                    nodes.add(tree);
-                } catch (UnsupportedEncodingException e) {
-                    logger.error("unsupportedEncoding error parsing output : {}", e.getMessage());
-                } catch (ParseException e) {
-                    logger.error("error parsing output : {} ", e.getMessage());
-                } catch (Exception e) {
-                    // this can happen often - some parts of the output are not parsable
-                    logger.debug("error parsing output : {} {}", e.getMessage(), mvnLines);
-                }
-            });
+                logger.info("Start parsing pom files");
+                List<Node> nodes = new ArrayList<>();
+                projectsLines.forEach(singleProjectLines -> {
+                    String mvnLines = String.join(System.lineSeparator(), singleProjectLines);
+                    try (InputStream is = new ByteArrayInputStream(mvnLines.getBytes(StandardCharsets.UTF_8.name()));
+                         Reader lineReader = new InputStreamReader(is, UTF_8)) {
+                        Parser parser = InputType.TEXT.newParser();
+                        Node tree = parser.parse(lineReader);
+                        nodes.add(tree);
+                    } catch (UnsupportedEncodingException e) {
+                        logger.error("unsupportedEncoding error parsing output : {}", e.getMessage());
+                    } catch (ParseException e) {
+                        logger.error("error parsing output : {} ", e.getMessage());
+                    } catch (Exception e) {
+                        // this can happen often - some parts of the output are not parsable
+                        logger.debug("error parsing output : {} {}", e.getMessage(), mvnLines);
+                    }
+                });
 
-            logger.info("End parsing pom files , found : " + String.join(",",
-                    nodes.stream().map(node -> node.getArtifactId()).collect(Collectors.toList())));
+                logger.info("End parsing pom files , found : " + String.join(",",
+                        nodes.stream().map(node -> node.getArtifactId()).collect(Collectors.toList())));
 
-            projects = nodes.stream().filter(node -> !node.getPackaging().equals(POM)).map(tree -> {
+                projects = nodes.stream().filter(node -> !node.getPackaging().equals(POM)).map(tree -> {
 
-                List<DependencyInfo> dependencies = new LinkedList<>();
-                Stream<Node> nodeStream = tree.getChildNodes().stream().filter(node -> !mavenIgnoredScopes.contains(node.getScope()));
-                dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
+                    List<DependencyInfo> dependencies = new LinkedList<>();
+                    Stream<Node> nodeStream = tree.getChildNodes().stream().filter(node -> !mavenIgnoredScopes.contains(node.getScope()));
+                    dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
 
-                Map<String, String> pathToSha1Map = pathToDependenciesMap.keySet().stream().distinct().parallel().collect(Collectors.toMap(file -> file, file -> getSha1(file)));
-                pathToSha1Map.entrySet().forEach(pathSha1Pair -> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency -> dependency.setSha1(pathSha1Pair.getValue())));
+                    Map<String, String> pathToSha1Map = pathToDependenciesMap.keySet().stream().distinct().parallel().collect(Collectors.toMap(file -> file, file -> getSha1(file)));
+                    pathToSha1Map.entrySet().forEach(pathSha1Pair -> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency -> dependency.setSha1(pathSha1Pair.getValue())));
 
-                AgentProjectInfo projectInfo = new AgentProjectInfo();
-                projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
-                dependencies.stream().forEach(dependency -> projectInfo.getDependencies().add(dependency));
-                return projectInfo;
-            }).collect(Collectors.toList());
-
+                    AgentProjectInfo projectInfo = new AgentProjectInfo();
+                    projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
+                    dependencies.stream().forEach(dependency -> projectInfo.getDependencies().add(dependency));
+                    return projectInfo;
+                }).collect(Collectors.toList());
+            } else {
+                logger.error("Failed to execute {}", getLsCommandParams());
+            }
         } catch (IOException e) {
             logger.info("Error getting dependencies after running " + getLsCommandParams() + " on " + rootDirectory, e);
         }
@@ -193,7 +200,11 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     /* --- Private methods --- */
 
     private String[] getLsCommandParams() {
-        return new String[]{MVN_COMMAND, MVN_PARAMS_TREE};
+        if (isWindows()) {
+            return new String[] {CMD, C_Char_WINDOWS, MVN_COMMAND, MVN_PARAMS_TREE};
+        } else {
+            return new String[] {MVN_COMMAND, MVN_PARAMS_TREE};
+        }
     }
 
     private String getMavenM2Path(String rootDirectory) {
@@ -203,15 +214,26 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         if (m2Path.exists()) {
             return m2Path.getAbsolutePath();
         }
-
-        String[] params = new String[]{MVN_COMMAND, MVN_PARAMS_M2PATH_PATH, MVN_PARAMS_M2PATH_LOCAL};
+        String[] params = null;
+        if (isWindows()) {
+            params = new String[]{CMD, C_Char_WINDOWS, MVN_COMMAND, MVN_PARAMS_M2PATH_PATH, MVN_PARAMS_M2PATH_LOCAL};
+        } else {
+            params = new String[]{MVN_COMMAND, MVN_PARAMS_M2PATH_PATH, MVN_PARAMS_M2PATH_LOCAL};
+        }
         try {
-            List<String> lines = getExternalProcessOutput(rootDirectory, params);
-            Optional<String> pathLine = lines.stream().filter(line -> (new File(line).exists())).findFirst();
-            if (pathLine.isPresent()) {
-                return pathLine.get();
+            CommandLineProcess mvnProcess = new CommandLineProcess(rootDirectory, params);
+            List<String> lines = mvnProcess.executeProcess();
+            if (!mvnProcess.isErrorInProcess()) {
+                Optional<String> pathLine = lines.stream().filter(line -> (new File(line).exists())).findFirst();
+                if (pathLine.isPresent()) {
+                    return pathLine.get();
+                } else {
+                    logger.error("could not get m2 path : {} out: {}", rootDirectory, lines.stream().reduce("", String::concat));
+                    showMavenTreeError = true;
+                    return null;
+                }
             } else {
-                logger.error("could not get m2 path : {} out: {}", rootDirectory, lines.stream().reduce("", String::concat));
+                logger.error("Failed to execute {}", getLsCommandParams());
                 return null;
             }
         } catch (IOException io) {
@@ -225,7 +247,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private List<String> getExternalProcessOutput(String rootDirectory, String[] processWithArgs) throws IOException {
         // execute 'args'
         ProcessBuilder pb = new ProcessBuilder(getLsCommandParams());
-        pb.directory(new File(rootDirectory));
         // redirect the error output to avoid output of npm ls by operating system
         String redirectErrorOutput = isWindows() ? "nul" : "/dev/null";
         pb.redirectError(new File(redirectErrorOutput));
