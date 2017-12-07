@@ -5,6 +5,10 @@ import org.junit.Test;
 import org.whitesource.agent.api.model.DependencyInfo;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Test class for creadur-rat.
@@ -17,7 +21,9 @@ public class DependencyInfoFactoryTest {
     @Test
     public void testCopyrights() {
         DependencyInfoFactory factory = new DependencyInfoFactory();
-        DependencyInfo dependencyInfo = factory.createDependencyInfo(new File("C:\\Users\\Chen\\Desktop\\test2"), "ZedGraph.dll");
+        String currentDir = System.getProperty("user.dir");
+        Path testPath = Paths.get(currentDir,"src\\test\\resources");
+        DependencyInfo dependencyInfo = factory.createDependencyInfo(testPath.toFile(),"ZedGraph.dll");
         dependencyInfo.getCopyrights();
     }
 }

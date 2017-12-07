@@ -37,8 +37,8 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
     private static final String RESOLUTION = "_resolution";
     private static final String TYPE = "type";
     private static final String TAG = "tag";
-    public static final String NAME = "name";
-    public static final String MISSING = "missing";
+    private static final String NAME = "name";
+    private static final String MISSING = "missing";
 
     /* --- Constructors --- */
 

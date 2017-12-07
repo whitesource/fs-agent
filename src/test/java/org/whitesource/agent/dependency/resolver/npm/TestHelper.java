@@ -22,10 +22,9 @@ public class TestHelper {
     /* --- Static Members --- */
     public static final String SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES = "\\node_modules\\chokidar\\package.json";
 
-    public static final String FOLDER_WITH_MIX_FOLDERS = "C:\\Dev\\ws_mix\\ws_mix3\\ws_mix2_separated";
-    public static String FOLDER_WITH_BOWER_PROJECTS = "C:\\Dev\\ws_mix\\ws_mix1\\bower_samples";
-    public static String FOLDER_WITH_NPN_PROJECTS = "C:\\Dev\\ws_mix\\ws_mix1\\npm_samples";
-    //public static String FOLDER_WITH_NPN_PROJECTS_UBUNTU = "/home/eugen/Documents/Repositories/fs-agent/toScan/";
+    public static final String FOLDER_WITH_MIX_FOLDERS = "C:\\repos\\ws\\fs-agent\\src\\test\\resources\\resolver";
+    public static String FOLDER_WITH_BOWER_PROJECTS = "C:\\repos\\ws\\fs-agent\\src\\test\\resources\\resolver\\bower";
+    public static String FOLDER_WITH_NPN_PROJECTS = "C:\\repos\\ws\\fs-agent\\src\\test\\resources\\resolver\\npm\\apostrophe";
 
     /* --- Static Methods --- */
 
@@ -59,7 +58,7 @@ public class TestHelper {
         Properties p = new Properties();
         try {
             String currentDir = System.getProperty("user.dir");
-            InputStream input1 = new FileInputStream(Paths.get(currentDir, "whitesource-fs-agent.config").toString());
+            InputStream input1 = new FileInputStream(Paths.get(currentDir,"src\\test\\resources","whitesource-fs-agent.config").toString());
             p.load(input1);
         } catch (FileNotFoundException e) {
             e.printStackTrace();

@@ -67,6 +67,7 @@ public class DependencyResolversTest {
     private void testDependencyResult(boolean checkChildren, List<ResolutionResult> results) {
         results.forEach(resolutionResult -> {
             Assert.assertTrue(resolutionResult.getResolvedProjects().size() > 0);
+            Assert.assertTrue(resolutionResult.getResolvedProjects().keySet().stream().findFirst().get().getDependencies().size() > 0);
             if (!checkChildren) {
                 return;
             }
