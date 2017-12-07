@@ -1,0 +1,28 @@
+{
+  "name": "apostrophe-test",
+  "version": "1.0.1",
+  "description": "The Apostrophe test",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:punkave/apostrophe.git"
+  },
+  "keywords": [
+    "apostrophe",
+    "cms",
+    "content management",
+    "content management system",
+    "punkave"
+  ],
+  "author": "P'unk Avenue LLC",
+  "license": "MIT",
+  "dependencies": {
+    "apostrophe": "2.42.1"
+  },
+  "devDependencies": {
+    "mocha": "^3.5.0"
+  }
+}
