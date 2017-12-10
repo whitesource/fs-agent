@@ -22,9 +22,9 @@ public class TestHelper {
     /* --- Static Members --- */
     public static final String SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES = "\\node_modules\\chokidar\\package.json";
 
-    public static final String FOLDER_WITH_MIX_FOLDERS = "C:\\repos\\ws\\fs-agent\\src\\test\\resources\\resolver";
-    public static String FOLDER_WITH_BOWER_PROJECTS = "C:\\repos\\ws\\fs-agent\\src\\test\\resources\\resolver\\bower";
-    public static String FOLDER_WITH_NPN_PROJECTS = "C:\\repos\\ws\\fs-agent\\src\\test\\resources\\resolver\\npm\\apostrophe";
+    public static final String FOLDER_WITH_MIX_FOLDERS = Paths.get(System.getProperty("user.dir"),"\\src\\test\\resources\\resolver").toString();
+    public static String FOLDER_WITH_BOWER_PROJECTS = Paths.get(System.getProperty("user.dir"),"\\src\\test\\resources\\resolver\\bower").toString();
+    public static String FOLDER_WITH_NPN_PROJECTS = Paths.get(System.getProperty("user.dir"),"\\src\\test\\resources\\resolver\\npm\\apostrophe").toString();
 
     /* --- Static Methods --- */
 

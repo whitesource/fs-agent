@@ -11,6 +11,7 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.ResolvedFolder;
+import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.FileSystemAgent;
 import org.whitesource.fs.Main;
@@ -119,7 +120,7 @@ public class FileSystemAgentTest {
 
             // send to server via npm-plugin
 
-            runNpmPluginOnFolder(dir,"\\whitesource\\bin\\whitesource-fs");
+            runNpmPluginOnFolder(dir,"\\whitesource\\bin\\whitesource");
 
             // collect number of dependencies via npm-plugin
             Collection<DependencyInfo> dependencyInfosNPMPLugin = readNpmPluginFile(dir, "ws-log-report-post.json");
@@ -160,21 +161,29 @@ public class FileSystemAgentTest {
         String currentDir = System.getProperty("user.home");
         String path = Paths.get(currentDir, "Application Data\\npm\\node_modules" + plugin).toString();
         String[] args = new String[]{"node", path, "run"};
-        ProcessBuilder pb = new ProcessBuilder(args);
-        pb.directory(dir);
+
+        CommandLineProcess commandLineProcess = new CommandLineProcess(dir.toString(),args);
         try {
-            Process process = pb.start();
-            // parse 'npm ls --json' output
-            String output;
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                output = reader.lines().reduce("", String::concat);
-                reader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            List<String> lines = commandLineProcess.executeProcess();
+            Assert.assertFalse(commandLineProcess.isErrorInProcess());
         } catch (IOException e) {
             e.printStackTrace();
         }
+//        ProcessBuilder pb = new ProcessBuilder(args);
+//        pb.directory(dir);
+//        try {
+//            Process process = pb.start();
+//            // parse 'npm ls --json' output
+//            String output;
+//            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+//                output = reader.lines().reduce("", String::concat);
+//                reader.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     private Collection<DependencyInfo> readNpmPluginFile(File dir, String fileLog) {
