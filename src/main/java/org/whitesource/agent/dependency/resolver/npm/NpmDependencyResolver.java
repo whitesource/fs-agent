@@ -248,7 +248,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
      */
     private Collection<DependencyInfo> collectPackageJsonDependencies(Collection<BomFile> packageJsons) {
         Collection<DependencyInfo> dependencies = new LinkedList<>();
-        Map<DependencyInfo, BomFile> dependencyPackageJsonMap = new HashMap<>();
+        ConcurrentHashMap<DependencyInfo, BomFile> dependencyPackageJsonMap = new ConcurrentHashMap<>();
         ExecutorService executorService = Executors.newWorkStealingPool(NUM_THREADS);
         Collection<EnrichDependency> threadsCollection = new LinkedList<>();
         for (BomFile packageJson : packageJsons) {
@@ -256,8 +256,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
                 // do not add new dependencies if 'npm ls' already returned all
                 DependencyInfo dependency = new DependencyInfo();
                 dependencies.add(dependency);
-                threadsCollection.add(new EnrichDependency(packageJson, dependency));
-                dependencyPackageJsonMap.put(dependency, packageJson);
+                threadsCollection.add(new EnrichDependency(packageJson, dependency, dependencyPackageJsonMap));
                 logger.debug("Collect package.json of the dependency in the file: {}", dependency.getFilename());
             }
         }
@@ -336,12 +335,20 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
         private BomFile packageJson;
         private DependencyInfo dependency;
+        private ConcurrentHashMap<DependencyInfo, BomFile> dependencyPackageJsonMap;
 
         /* --- Constructors --- */
 
         public EnrichDependency(BomFile packageJson, DependencyInfo dependency) {
             this.packageJson = packageJson;
             this.dependency = dependency;
+            this.dependencyPackageJsonMap = null;
+        }
+
+        public EnrichDependency(BomFile packageJson, DependencyInfo dependency, ConcurrentHashMap<DependencyInfo, BomFile> dependencyPackageJsonMap) {
+            this.packageJson = packageJson;
+            this.dependency = dependency;
+            this.dependencyPackageJsonMap = dependencyPackageJsonMap;
         }
 
         /* --- Overridden methods --- */
@@ -349,6 +356,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         @Override
         public Void call() {
             enrichDependency(this.dependency, this.packageJson);
+            if (dependencyPackageJsonMap != null) {
+                dependencyPackageJsonMap.putIfAbsent(this.dependency, this.packageJson);
+            }
             return null;
         }
     }
