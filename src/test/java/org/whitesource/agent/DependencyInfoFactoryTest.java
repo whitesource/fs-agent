@@ -3,6 +3,7 @@ package org.whitesource.agent;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,9 +21,8 @@ public class DependencyInfoFactoryTest {
     @Test
     public void testCopyrights() {
         DependencyInfoFactory factory = new DependencyInfoFactory();
-        String currentDir = System.getProperty("user.dir");
-        Path testPath = Paths.get(currentDir,"src\\test\\resources");
-        DependencyInfo dependencyInfo = factory.createDependencyInfo(testPath.toFile(),"ZedGraph.dll");
+        File file = TestHelper.getFileFromResources("ZedGraph.dll");
+        DependencyInfo dependencyInfo = factory.createDependencyInfo(file.getParentFile(),file.getName());
         dependencyInfo.getCopyrights();
     }
 }

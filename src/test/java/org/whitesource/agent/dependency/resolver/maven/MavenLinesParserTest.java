@@ -3,11 +3,9 @@ package org.whitesource.agent.dependency.resolver.maven;
 import fr.dutra.tools.maven.deptree.core.Node;
 import org.junit.Assert;
 import org.junit.Test;
+import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,10 +14,8 @@ public class MavenLinesParserTest {
 
     @Test
     public void shouldParseLinesWithWarnings(){
-        String currentDirectory = System.getProperty("user.dir");
-        String fileName = "\\src\\test\\resources\\resolver\\maven\\lines.txt";
-
-        List<String> lines = readFileAsList(Paths.get(currentDirectory,fileName).toString());
+        File file = TestHelper.getFileFromResources("resolver\\maven\\lines.txt");
+        List<String> lines = readFileAsList(file.getAbsolutePath());
         MavenLinesParser mavenLinesParser = new MavenLinesParser();
         List<Node> nodes = mavenLinesParser.parseLines(lines);
         Assert.assertEquals(nodes.size() , 1);

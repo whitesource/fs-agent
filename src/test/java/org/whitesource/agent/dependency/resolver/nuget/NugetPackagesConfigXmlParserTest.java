@@ -2,6 +2,7 @@ package org.whitesource.agent.dependency.resolver.nuget;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackage;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackages;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackagesConfigXmlParser;
@@ -27,7 +28,7 @@ public class NugetPackagesConfigXmlParserTest {
 
     @Test
     public void parseNugetDependenciesFromXml() throws JAXBException {
-        File xmlFile = new File(JAVA_TEMP_DIR + "file.xml");
+        File xmlFile = TestHelper.getFileFromResources("resolver/nuget/file.xml");
         JAXBContext jaxbContext = JAXBContext.newInstance(NugetPackages.class);
 
         Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
@@ -43,7 +44,7 @@ public class NugetPackagesConfigXmlParserTest {
         Assert.assertNotNull("Object was deserialized", packages);
         Assert.assertEquals(5, packages.getNugets().size());
 
-        xmlFile.delete();
+        //xmlFile.delete();
     }
 
 

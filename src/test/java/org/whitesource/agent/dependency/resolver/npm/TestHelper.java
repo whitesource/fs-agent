@@ -20,11 +20,13 @@ import java.util.stream.Stream;
 public class TestHelper {
 
     /* --- Static Members --- */
-    public static final String SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES = "\\node_modules\\chokidar\\package.json";
+    public static final File SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES = TestHelper.getFileFromResources("resolver\\npm\\sample\\package.json");
 
-    public static final String FOLDER_WITH_MIX_FOLDERS = Paths.get(System.getProperty("user.dir"),"\\src\\test\\resources\\resolver").toString();
-    public static String FOLDER_WITH_BOWER_PROJECTS = Paths.get(System.getProperty("user.dir"),"\\src\\test\\resources\\resolver\\bower").toString();
-    public static String FOLDER_WITH_NPN_PROJECTS = Paths.get(System.getProperty("user.dir"),"\\src\\test\\resources\\resolver\\npm\\apostrophe").toString();
+    public static String FOLDER_WITH_BOWER_PROJECTS = TestHelper.getFileFromResources("resolver\\bower\\angular.js\\bower.json")
+            .getParentFile().getParentFile().getAbsolutePath();
+    public static String FOLDER_WITH_NPN_PROJECTS = SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES
+            .getParentFile().getParentFile().getAbsolutePath();
+    public static final String FOLDER_WITH_MIX_FOLDERS = new File(FOLDER_WITH_NPN_PROJECTS).getParent();
 
     /* --- Static Methods --- */
 
@@ -57,8 +59,8 @@ public class TestHelper {
     public static Properties getPropertiesFromFile() {
         Properties p = new Properties();
         try {
-            String currentDir = System.getProperty("user.dir");
-            InputStream input1 = new FileInputStream(Paths.get(currentDir,"src\\test\\resources","whitesource-fs-agent.config").toString());
+            File file = TestHelper.getFileFromResources("whitesource-fs-agent.config");
+            InputStream input1 = new FileInputStream(file);
             p.load(input1);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -79,5 +81,16 @@ public class TestHelper {
         p.setProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, "true");
         p.setProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, "testNpm");
         return p;
+    }
+
+    public static File getFileFromResources(String relativeFilePath) {
+        ClassLoader classLoader = TestHelper.class.getClassLoader();
+        String osFilePath = getOsRelativePath(relativeFilePath);
+        File file = new File(classLoader.getResource(osFilePath).getFile());
+        return file;
+    }
+
+    public static String getOsRelativePath(String relativeFilePath) {
+        return relativeFilePath.replace("\\", String.valueOf(File.separatorChar).replace("/", String.valueOf(File.separatorChar)));
     }
 }

@@ -35,6 +35,9 @@ import static org.whitesource.agent.ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY
  */
 public class FileSystemAgentTest {
 
+    private static final String OS_NAME = "os.name";
+    private static final String WINDOWS = "win";
+
     /* --- Tests --- */
 
     @Test
@@ -99,7 +102,8 @@ public class FileSystemAgentTest {
             //runMainOnDir(dir);
 
             // send to server via npm-plugin
-            runNpmPluginOnFolder(dir,"\\ws-bower\\bin\\ws-bower.js");
+            String pluginPath = TestHelper.getOsRelativePath("ws-bower\\bin\\ws-bower.js");
+            runNpmPluginOnFolder(dir,pluginPath);
 
             // collect number of dependencies via npm-plugin
             Collection<DependencyInfo> bowerPluginDependencies = readNpmPluginFile(dir, "ws-log-bower-report-post.json");
@@ -119,8 +123,8 @@ public class FileSystemAgentTest {
             //runMainOnDir(dir);
 
             // send to server via npm-plugin
-
-            runNpmPluginOnFolder(dir,"\\whitesource\\bin\\whitesource");
+            String pluginPath = TestHelper.getOsRelativePath("whitesource/bin/whitesource.js");
+            runNpmPluginOnFolder(dir,pluginPath);
 
             // collect number of dependencies via npm-plugin
             Collection<DependencyInfo> dependencyInfosNPMPLugin = readNpmPluginFile(dir, "ws-log-report-post.json");
@@ -159,7 +163,15 @@ public class FileSystemAgentTest {
 
     private void runNpmPluginOnFolder(File dir, String plugin) {
         String currentDir = System.getProperty("user.home");
-        String path = Paths.get(currentDir, "Application Data\\npm\\node_modules" + plugin).toString();
+        String currentDirLinux = "/usr/local/lib/node_modules/";
+
+        String path = isWindows() ?
+                Paths.get(currentDir, TestHelper.getOsRelativePath("Application Data\\npm\\node_modules\\" + plugin)).toString() :
+                Paths.get(currentDirLinux, plugin).toString();
+
+
+        //String folder = isWindows() ? "Application Data\\npm\\node_modules\\" : "/usr/local/bin/";
+
         String[] args = new String[]{"node", path, "run"};
 
         CommandLineProcess commandLineProcess = new CommandLineProcess(dir.toString(),args);
@@ -169,21 +181,10 @@ public class FileSystemAgentTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-//        ProcessBuilder pb = new ProcessBuilder(args);
-//        pb.directory(dir);
-//        try {
-//            Process process = pb.start();
-//            // parse 'npm ls --json' output
-//            String output;
-//            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-//                output = reader.lines().reduce("", String::concat);
-//                reader.close();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+    }
+
+    public static boolean isWindows() {
+        return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
     }
 
     private Collection<DependencyInfo> readNpmPluginFile(File dir, String fileLog) {
@@ -240,7 +241,9 @@ public class FileSystemAgentTest {
     /* --- Private methods --- */
 
     private void runMainOnDir(File directory) {
-        String config = Paths.get(System.getProperty("user.dir"),"src\\test\\resources\\whitesource-fs-agent.config").toString();
+
+        File file = TestHelper.getFileFromResources("whitesource-fs-agent.config");
+        String config = file.getAbsolutePath();
         String[] args = ("-c "+ config + " -d " + directory.getPath() + " -product " + "fsAgentMain" + " -project " + directory.getName()).split(" ");
         int result = Main.execute(args);
         Assert.assertEquals(result, 0);
