@@ -20,9 +20,9 @@ import java.util.stream.Stream;
 public class TestHelper {
 
     /* --- Static Members --- */
-    public static final File SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES = TestHelper.getFileFromResources("resolver\\npm\\sample\\package.json");
+    public static final File SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES = TestHelper.getFileFromResources("resolver/npm/sample/package.json");
 
-    public static String FOLDER_WITH_BOWER_PROJECTS = TestHelper.getFileFromResources("resolver\\bower\\angular.js\\bower.json")
+    public static String FOLDER_WITH_BOWER_PROJECTS = TestHelper.getFileFromResources("resolver/bower/angular.js/bower.json")
             .getParentFile().getParentFile().getAbsolutePath();
     public static String FOLDER_WITH_NPN_PROJECTS = SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES
             .getParentFile().getParentFile().getAbsolutePath();

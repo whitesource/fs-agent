@@ -14,7 +14,7 @@ public class MavenLinesParserTest {
 
     @Test
     public void shouldParseLinesWithWarnings(){
-        File file = TestHelper.getFileFromResources("resolver\\maven\\lines.txt");
+        File file = TestHelper.getFileFromResources("resolver/maven/lines.txt");
         List<String> lines = readFileAsList(file.getAbsolutePath());
         MavenLinesParser mavenLinesParser = new MavenLinesParser();
         List<Node> nodes = mavenLinesParser.parseLines(lines);
