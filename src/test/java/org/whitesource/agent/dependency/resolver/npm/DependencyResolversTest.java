@@ -39,7 +39,7 @@ public class DependencyResolversTest {
 
     @Test
     public void shouldResolvePackageJson() {
-        String folderParent = Paths.get(".").toAbsolutePath().normalize().toString() + "\\src\\test\\resources\\resolver\\npm\\";
+        String folderParent = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\npm\\");
 
         List<ResolutionResult> results = getResolutionResults(Arrays.asList(folderParent));
 

@@ -13,8 +13,7 @@ public class NpmPackageJsonTest {
 
     @Test
     public void shouldLoadOptionalDependencies() {
-        String testFolder = TestHelper.getFirstFolder(TestHelper.FOLDER_WITH_NPN_PROJECTS);
-        String path = Paths.get(testFolder, TestHelper.SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES).toString();
+        String path = TestHelper.SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES.getAbsolutePath();
         BomFile file = new NpmBomParser().parseBomFile(path);
         Assert.assertTrue(file.getOptionalDependencies().keySet().size() > 0);
         Assert.assertTrue(file.getDependencies().keySet().size() > 0);

@@ -35,6 +35,7 @@ public class NpmBomParser extends BomParser {
     /* --- Static members --- */
 
     private static String OPTIONAL_DEPENDENCIES = "optionalDependencies";
+    private static String DEV_DEPENDENCIES = "devDependencies";
     private static String NAME = "name";
     private static String VERSION = "version";
     private static String SHA1 = "_shasum";

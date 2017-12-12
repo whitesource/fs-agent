@@ -1,5 +1,5 @@
 target/
 *.iml
 .idea/
-whitesource-fs-agent.config
+/whitesource-fs-agent.config
 /whitesource/

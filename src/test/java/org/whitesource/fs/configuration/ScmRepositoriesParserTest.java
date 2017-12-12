@@ -3,6 +3,7 @@ package org.whitesource.fs.configuration;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.scm.ScmType;
 
 import java.nio.file.Paths;
@@ -12,8 +13,7 @@ public class ScmRepositoriesParserTest {
 
     @Test
     public void shouldParse() {
-        String currentDirectory = System.getProperty("user.dir");
-        String repos = Paths.get(currentDirectory, "\\src\\test\\resources\\repos.json").toString();
+        String repos = TestHelper.getFileFromResources("repos.json").getAbsolutePath();
         Collection<ScmConfiguration> configs = ScmRepositoriesParser.parseRepositoriesFile(repos, ScmType.GIT.toString(), "", "", "");
 
         Assert.assertNotNull(configs);

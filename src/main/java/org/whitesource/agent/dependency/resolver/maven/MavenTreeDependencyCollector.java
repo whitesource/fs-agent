@@ -1,8 +1,20 @@
+/**
+ * Copyright (C) 2017 WhiteSource Ltd.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.whitesource.agent.dependency.resolver.maven;
-import fr.dutra.tools.maven.deptree.core.InputType;
 import fr.dutra.tools.maven.deptree.core.Node;
-import fr.dutra.tools.maven.deptree.core.ParseException;
-import fr.dutra.tools.maven.deptree.core.Parser;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,12 +27,8 @@ import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.CommandLineProcess;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,9 +50,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String MVN_COMMAND = "mvn";
     private static final String OS_NAME = "os.name";
     private static final String WINDOWS = "win";
-    private static final String MAVEN_DEPENDENCY_PLUGIN_TREE = "maven-dependency-plugin:"; // 2.8:tree";
-    private static final String INFO = "[INFO] ";
-    private static final String UTF_8 = "UTF-8";
     private static final String SCOPE_TEST = "test";
     private static final String SCOPE_PROVIDED = "provided";
     private static final String DOT = ".";
@@ -55,8 +60,8 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String ALL = "All";
     private static final String CMD = "cmd";
     private static final String C_Char_WINDOWS = "/c";
-    public static final String EMPTY_STRING = "";
-    public static final String POM = "pom";
+    private static final String EMPTY_STRING = "";
+    private static final String POM = "pom";
 
 
     /* --- Members --- */
@@ -64,10 +69,12 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private final Set<String> mavenIgnoredScopes;
     private String M2Path;
     private boolean showMavenTreeError;
+    private MavenLinesParser mavenLinesParser;
 
     /* --- Constructors --- */
 
     public MavenTreeDependencyCollector(String[] mavenIgnoredScopes) {
+        mavenLinesParser = new MavenLinesParser();
         this.mavenIgnoredScopes = new HashSet<>();
         if (mavenIgnoredScopes == null) {
             this.mavenIgnoredScopes.add(SCOPE_PROVIDED);
@@ -96,28 +103,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             CommandLineProcess mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParams());
             List<String> lines = mvnDependencies.executeProcess();
             if (!mvnDependencies.isErrorInProcess()) {
-                List<List<String>> projectsLines = lines.stream()
-                        .map(line -> line.replace(INFO, EMPTY_STRING))
-                        .collect(splitBySeparator(formattedLines -> formattedLines.contains(MAVEN_DEPENDENCY_PLUGIN_TREE)));
-
-                logger.info("Start parsing pom files");
-                List<Node> nodes = new ArrayList<>();
-                projectsLines.forEach(singleProjectLines -> {
-                    String mvnLines = String.join(System.lineSeparator(), singleProjectLines);
-                    try (InputStream is = new ByteArrayInputStream(mvnLines.getBytes(StandardCharsets.UTF_8.name()));
-                         Reader lineReader = new InputStreamReader(is, UTF_8)) {
-                        Parser parser = InputType.TEXT.newParser();
-                        Node tree = parser.parse(lineReader);
-                        nodes.add(tree);
-                    } catch (UnsupportedEncodingException e) {
-                        logger.error("unsupportedEncoding error parsing output : {}", e.getMessage());
-                    } catch (ParseException e) {
-                        logger.error("error parsing output : {} ", e.getMessage());
-                    } catch (Exception e) {
-                        // this can happen often - some parts of the output are not parsable
-                        logger.debug("error parsing output : {} {}", e.getMessage(), mvnLines);
-                    }
-                });
+                List<Node> nodes = mavenLinesParser.parseLines(lines);
 
                 logger.info("End parsing pom files , found : " + String.join(",",
                         nodes.stream().map(node -> node.getArtifactId()).collect(Collectors.toList())));
@@ -190,13 +176,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         return dependency;
     }
 
-    // so : 29095967
-    private static Collector<String, List<List<String>>, List<List<String>>> splitBySeparator(Predicate<String> sep) {
-        return Collector.of(() -> new ArrayList<List<String>>(Arrays.asList(new ArrayList<>())),
-                (l, elem) -> {if(sep.test(elem)){l.add(new ArrayList<>());} else l.get(l.size()-1).add(elem);},
-                (l1, l2) -> {l1.get(l1.size() - 1).addAll(l2.remove(0)); l1.addAll(l2); return l1;});
-    }
-
     /* --- Private methods --- */
 
     private String[] getLsCommandParams() {
@@ -240,24 +219,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             logger.error("could not get m2 path : {}", io.getMessage());
             showMavenTreeError = true;
             return null;
-        }
-    }
-
-    // todo : refactor all process builder methods with timeout and error handling - (npm resolver)
-    private List<String> getExternalProcessOutput(String rootDirectory, String[] processWithArgs) throws IOException {
-        // execute 'args'
-        ProcessBuilder pb = new ProcessBuilder(getLsCommandParams());
-        // redirect the error output to avoid output of npm ls by operating system
-        String redirectErrorOutput = isWindows() ? "nul" : "/dev/null";
-        pb.redirectError(new File(redirectErrorOutput));
-        logger.debug("start "+ processWithArgs);
-
-        pb.directory(new File(rootDirectory));
-        Process process = pb.start();
-
-        try (InputStreamReader inputStreamReader = new InputStreamReader(process.getInputStream());
-             BufferedReader reader = new BufferedReader(inputStreamReader)) {
-            return reader.lines().collect(Collectors.toList());
         }
     }
 

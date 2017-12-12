@@ -20,7 +20,6 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.CommandLineAgent;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.IBomParser;
 
@@ -32,15 +31,15 @@ import java.io.IOException;
  *
  * @author eugen.horovitz
  */
-public class MavenParser implements IBomParser {
+public class MavenPomParser implements IBomParser {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(MavenParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(MavenPomParser.class);
 
     /* --- Constructor --- */
 
-    public MavenParser() {
+    public MavenPomParser() {
         reader = new MavenXpp3Reader();
     }
 
