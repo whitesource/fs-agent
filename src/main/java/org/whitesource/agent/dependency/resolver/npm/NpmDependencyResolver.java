@@ -15,6 +15,7 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
+import com.sun.org.apache.xerces.internal.impl.xs.util.LSInputListImpl;
 import org.eclipse.jgit.util.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -268,16 +269,26 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
             System.exit(StatusCode.ERROR.getValue());
         }
         logger.debug("set hierarchy of the dependencies");
-        // set hierarchy in case the 'npm ls' did not run or it did not return results
-        setHierarchy(dependencyPackageJsonMap);
-        return dependencies;
+        // remove duplicates dependencies
+        Map<String, DependencyInfo> existDependencies = new HashMap<>();
+        Map<DependencyInfo, BomFile> dependencyPackageJsonMapWithoutDuplicates = new HashMap<>();
+        for (Map.Entry<DependencyInfo, BomFile> entry : dependencyPackageJsonMap.entrySet()) {
+            DependencyInfo keyDep = entry.getKey();
+            String key = keyDep.getSha1() + keyDep.getVersion() + keyDep.getArtifactId();
+            if (!existDependencies.containsKey(key)) {
+                existDependencies.put(key, keyDep);
+                dependencyPackageJsonMapWithoutDuplicates.put(keyDep, entry.getValue());
+            }
+        }
+        setHierarchy(dependencyPackageJsonMapWithoutDuplicates, existDependencies);
+        return existDependencies.values();
     }
 
     private boolean fileShouldBeParsed(File file) {
         return (file.getAbsolutePath().endsWith(getPreferredFileName()));
     }
 
-    private void setHierarchy(Map<DependencyInfo, BomFile> dependencyPackageJsonMap) {
+    private void setHierarchy(Map<DependencyInfo, BomFile> dependencyPackageJsonMap, Map<String, DependencyInfo> existDependencies) {
         dependencyPackageJsonMap.forEach((dependency, packageJson) -> {
             packageJson.getDependencies().forEach((name, version) -> {
                 Optional<DependencyInfo> childDep = dependencyPackageJsonMap.keySet().stream()
@@ -285,7 +296,12 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
                         .findFirst();
 
                 if (childDep.isPresent()) {
-                    dependency.getChildren().add(childDep.get());
+                    DependencyInfo childDepGet = childDep.get();
+                    String key = childDepGet.getSha1() + childDepGet.getVersion() + childDepGet.getArtifactId();
+                    if (!existDependencies.containsKey(key)) {
+                        dependency.getChildren().add(childDep.get());
+                        existDependencies.put(key, childDepGet);
+                    }
                 }
             });
         });
