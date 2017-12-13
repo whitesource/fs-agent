@@ -2,26 +2,64 @@ package org.whitesource.agent.dependency.resolver.maven;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
+import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
+import org.whitesource.agent.dependency.resolver.ResolutionResult;
+import org.whitesource.agent.dependency.resolver.npm.DependencyResolversTest;
+import org.whitesource.agent.dependency.resolver.npm.TestHelper;
+
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class MavenTreeDependencyCollectorTest {
 
+    public static final String POM = ".pom";
+
     @Test
     public void shouldParseOutput() {
-
         String currentDirectory = System.getProperty("user.dir");
+        Collection<DependencyInfo> deps = testFsa(currentDirectory);
 
+        Assert.assertTrue(deps.size() > 0);
+        Assert.assertTrue(deps.stream().allMatch(x->x.getDependencyType().equals(DependencyType.MAVEN)));
+
+        currentDirectory = TestHelper.FOLDER_WITH_MVN_PROJECTS;
+        deps = testFsa(currentDirectory);
+
+        List<DependencyInfo> pomDeps = deps.stream()
+                .filter(x->x.getFilename().contains(POM))
+                .collect(Collectors.toList());
+
+        Assert.assertTrue(pomDeps.size() > 0);
+    }
+
+    private Collection<DependencyInfo> testFsa(String currentDirectory) {
         MavenTreeDependencyCollector mavenTreeDependencyCollector = new MavenTreeDependencyCollector(null);
 
         Collection<AgentProjectInfo> projects = mavenTreeDependencyCollector.collectDependencies(currentDirectory);
 
         Collection<DependencyInfo> deps = projects.stream().findFirst().get().getDependencies();
 
-        Assert.assertTrue(deps.size() > 0);
-        deps.stream().allMatch(x->x.getDependencyType().equals(DependencyType.MAVEN));
+        return deps;
+    }
 
+    @Test
+    public void shouldFindPomDependencies() {
+        String folderParent = TestHelper.FOLDER_WITH_MVN_PROJECTS;
+        Properties props = new Properties();
+        props.setProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, "true");
+        props.setProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, "false");
+        props.setProperty(ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, "false");
+
+        DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(props);
+        List<ResolutionResult> results = dependencyResolutionService.resolveDependencies(Arrays.asList(folderParent), new String[0]);
+
+        TestHelper.testDependencyResult(true, results);
     }
 }
