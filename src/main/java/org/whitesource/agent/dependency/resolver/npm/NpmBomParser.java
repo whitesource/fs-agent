@@ -35,11 +35,13 @@ public class NpmBomParser extends BomParser {
     /* --- Static members --- */
 
     private static String OPTIONAL_DEPENDENCIES = "optionalDependencies";
-    public static String NAME = "name";
-    public static String VERSION = "version";
+    private static String DEV_DEPENDENCIES = "devDependencies";
+    private static String NAME = "name";
+    private static String VERSION = "version";
     private static String SHA1 = "_shasum";
     private static String DEPENDENCIES = "dependencies";
     private static String NPM_PACKAGE_FORMAT = "{0}-{1}.tgz";
+    private static String RESOLVED = "_resolved";
 
     private static final Logger logger = LoggerFactory.getLogger(NpmBomParser.class);
 
@@ -70,6 +72,10 @@ public class NpmBomParser extends BomParser {
         Map optionalDependencies = getDependenciesFromJson(json, OPTIONAL_DEPENDENCIES);
         String fileName = getFilename(name, version);
         String sha1 = "";
+        String resolved = null;
+        if(json.has(RESOLVED)) {
+            resolved = json.getString(RESOLVED);
+        }
 
         // optional fields for packageJson parser
         if (json.has(SHA1)) {
@@ -78,7 +84,7 @@ public class NpmBomParser extends BomParser {
             logger.debug("shasum not found in file {}", localFileName);
         }
 
-        BomFile bom = new BomFile(name, version, sha1, fileName, localFileName, dependencies, optionalDependencies);
+        BomFile bom = new BomFile(name, version, sha1, fileName, localFileName, dependencies, optionalDependencies, resolved);
         return bom;
     }
 

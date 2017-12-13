@@ -15,6 +15,7 @@
  */
 package org.whitesource.fs;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,12 +23,21 @@ import org.whitesource.agent.CommandLineAgent;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
-import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
+import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
+import org.whitesource.agent.utils.CommandLineProcess;
+import org.whitesource.agent.utils.FilesUtils;
+import org.whitesource.fs.configuration.ScmConfiguration;
+import org.whitesource.fs.configuration.ScmRepositoriesParser;
 import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
@@ -48,13 +58,20 @@ public class FileSystemAgent extends CommandLineAgent {
     private static final String EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX = ",";
     private static final int DEFAULT_ARCHIVE_DEPTH = 0;
 
+    private static final String NPM_COMMAND = NpmLsJsonDependencyCollector.isWindows() ? "npm.cmd" : "npm";
+    private static final String NPM_INSTALL_COMMAND = "install";
+    private static final String NPM_INSTALL_OUTPUT_DESTINATION = NpmLsJsonDependencyCollector.isWindows() ? "nul" : "/dev/null";
+    private static final String PACKAGE_LOCK = "package-lock.json";
+    private static final String PACKAGE_JSON = "package.json";
+
     private static final String AGENT_TYPE = "fs-agent";
-    private static final String AGENT_VERSION = "2.4.3";
-    private static final String PLUGIN_VERSION = "17.11.3-SNAPSHOT";
+    private static final String VERSION = "version";
+    private static final String AGENTS_VERSION = "agentsVersion";
 
     /* --- Members --- */
 
     private final List<String> dependencyDirs;
+    private final Properties properties;
 
     private boolean projectPerSubFolder;
 
@@ -62,17 +79,16 @@ public class FileSystemAgent extends CommandLineAgent {
 
     public FileSystemAgent(Properties config, List<String> dependencyDirs, List<String> offlineRequestFiles) {
         super(config, offlineRequestFiles);
-
+        properties = getProperties();
         projectPerSubFolder = getBooleanProperty(PROJECT_PER_SUBFOLDER, false);
         if (projectPerSubFolder) {
             this.dependencyDirs = new LinkedList<>();
             for (String directory :dependencyDirs) {
 
-
                 File file = new File(directory);
                 if (file.isDirectory()) {
-                    String[] directories = getSubDirectories(directory);
-                    Arrays.stream(directories).forEach(subDir -> this.dependencyDirs.add(subDir));
+                    List<Path> directories = FilesUtils.getSubDirectories(directory);
+                    directories.forEach(subDir -> this.dependencyDirs.add(subDir.toString()));
                 } else if (file.isFile()) {
                     this.dependencyDirs.add(directory);
                 }
@@ -85,21 +101,6 @@ public class FileSystemAgent extends CommandLineAgent {
         }
     }
 
-    private String[] getSubDirectories(String directory) {
-        try {
-            File file = new File(directory);
-            String[] files = file.list((current, name) -> new File(current, name).isDirectory());
-            if (files == null){
-                logger.info("Error getting sub directories from: " + directory);
-                return new String[0];
-            }
-            return files;
-        } catch (Exception ex) {
-            logger.info("Error getting sub directories from: " + directory, ex);
-            return new String[0];
-        }
-    }
-
     /* --- Overridden methods --- */
 
     @Override
@@ -107,30 +108,31 @@ public class FileSystemAgent extends CommandLineAgent {
         if (projectPerSubFolder) {
             Collection<AgentProjectInfo> projects = new LinkedList<>();
             for (String directory : dependencyDirs) {
-                AgentProjectInfo projectInfo = new AgentProjectInfo();
-                String projectName = new File(directory).getName();
-                String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
-                projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
-                projectInfo.setDependencies(getDependencyInfos(Collections.singletonList(directory)));
-                projects.add(projectInfo);
+                projects = getProjects(Collections.singletonList(directory));
+                if (projects.size() == 1) {
+                    String projectName = new File(directory).getName();
+                    String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
+                    projects.stream().findFirst().get().setCoordinates(new Coordinates(null, projectName, projectVersion));
+                }
             }
             return projects;
         } else {
-            AgentProjectInfo projectInfo = new AgentProjectInfo();
-            // use token or name + version
-            String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
-            if (StringUtils.isNotBlank(projectToken)) {
-                projectInfo.setProjectToken(projectToken);
-            } else {
-                String projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
-                String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
-                projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
-            }
-            projectInfo.setDependencies(getDependencyInfos());
+            Collection<AgentProjectInfo> projects = getProjects(dependencyDirs);
 
-            Collection<AgentProjectInfo> projects = new LinkedList<>();
-            // don't use Arrays.asList, might be removed later if no dependencies
-            projects.add(projectInfo);
+            AgentProjectInfo projectInfo = projects.stream().findFirst().get();
+            if (projectInfo.getCoordinates() == null) {
+                // use token or name + version
+                String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
+                if (StringUtils.isNotBlank(projectToken)) {
+                    projectInfo.setProjectToken(projectToken);
+                } else {
+                    String projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
+                    String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
+                    projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+                }
+            }
+
+            // todo: check for duplicates projects
             return projects;
         }
     }
@@ -142,22 +144,35 @@ public class FileSystemAgent extends CommandLineAgent {
 
     @Override
     protected String getAgentVersion() {
-        return AGENT_VERSION;
+        return getResource(AGENTS_VERSION);
     }
 
     @Override
     protected String getPluginVersion() {
-        return PLUGIN_VERSION;
+        return getResource(VERSION);
+    }
+
+    private String getResource(String propertyName) {
+        String val = (properties.getProperty(propertyName));
+        if(StringUtils.isNotBlank(val)){
+            return val;
+        }
+        return "";
     }
 
     /* --- Private methods --- */
 
-    private List<DependencyInfo> getDependencyInfos() {
-        List<String> scannerBaseDirs = dependencyDirs;
-        return getDependencyInfos(scannerBaseDirs);
+    private Properties getProperties() {
+        Properties properties = new Properties();
+        try (InputStream stream = Main.class.getResourceAsStream("/project.properties")) {
+            properties.load(stream);
+        } catch (IOException e) {
+            logger.error("Failed to get version ", e);
+        }
+        return properties;
     }
 
-    private List<DependencyInfo> getDependencyInfos(List<String> scannerBaseDirs) {
+    private Collection<AgentProjectInfo> getProjects(List<String> scannerBaseDirs) {
         // create scm connector
         String scmType = config.getProperty(SCM_TYPE_PROPERTY_KEY);
         String url = config.getProperty(SCM_URL_PROPERTY_KEY);
@@ -165,12 +180,38 @@ public class FileSystemAgent extends CommandLineAgent {
         String password = config.getProperty(SCM_PASS_PROPERTY_KEY);
         String branch = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
         String tag = config.getProperty(SCM_TAG_PROPERTY_KEY);
-        String privateKey = config.getProperty(SCM_PPK_PROPERTY_KEY);
-        ScmConnector scmConnector = ScmConnector.create(scmType, url, privateKey, username, password, branch, tag);
-        if (scmConnector != null) {
-            logger.info("Connecting to SCM");
-            scannerBaseDirs.clear();
-            scannerBaseDirs.add(scmConnector.cloneRepository().getPath());
+        String repositoriesFile = config.getProperty(SCM_REPOSITORIES_FILE);
+        String privateKey = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
+        boolean isScmNpmInstall = getBooleanProperty(SCM_NPM_INSTALL, true);
+        int npmInstallTimeoutMinutes = getIntProperty(SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
+        //ScmConnector scmConnector = ScmConnector.create(scmType, url, privateKey, username, password, branch, tag);
+        String separatorFiles = NpmLsJsonDependencyCollector.isWindows() ? "\\" : "/";
+        Collection<String> scmPaths = new ArrayList<>();
+        final boolean[] hasScmConnectors = new boolean[1];
+
+        List<ScmConnector> scmConnectors = null;
+        if (StringUtils.isNotBlank(repositoriesFile)){
+            Collection<ScmConfiguration> scmConfigurations = ScmRepositoriesParser.parseRepositoriesFile(repositoriesFile , scmType, privateKey, username, password);
+            scmConnectors = scmConfigurations.stream()
+                    .map(scm -> ScmConnector.create(scm.getType(), scm.getUrl(),scm.getPpk(),scm.getUser(), scm.getPass(), scm.getBranch(), scm.getTag()))
+                    .collect(Collectors.toList());
+        }else {
+            scmConnectors = Arrays.asList(ScmConnector.create(scmType, url, privateKey, username, password, branch, tag));
+        }
+
+        if (scmConnectors != null && scmConnectors.stream().anyMatch(scm->scm!=null)) {
+            //scannerBaseDirs.clear();
+            scmConnectors.stream().forEach(scmConnector -> {
+                if (scmConnector != null) {
+                    logger.info("Connecting to SCM");
+
+                    String scmPath = scmConnector.cloneRepository().getPath();
+                    scmPath = npmInstallScmRepository(isScmNpmInstall, npmInstallTimeoutMinutes, scmConnector, separatorFiles, scmPath);
+                    scmPaths.add(scmPath);
+                    scannerBaseDirs.add(scmPath);
+                    hasScmConnectors[0] = true;
+                }
+            });
         }
 
         // read all properties
@@ -197,8 +238,8 @@ public class FileSystemAgent extends CommandLineAgent {
                 globCaseSensitive = false;
             } else {
                 logger.error("Bad {}. Received {}, required true/false or y/n", CASE_SENSITIVE_GLOB_PROPERTY_KEY, globCaseSensitiveValue);
-                if (scmConnector != null) {
-                    scmConnector.deleteCloneDirectory();
+                if (scmConnectors != null) {
+                    scmConnectors.forEach(scmConnector -> scmConnector.deleteCloneDirectory());
                 }
                 System.exit(-1); // TODO this is within a try frame. Throw an exception instead
             }
@@ -206,13 +247,58 @@ public class FileSystemAgent extends CommandLineAgent {
 
         final String excludedCopyrightsValue = config.getProperty(EXCLUDED_COPYRIGHT_KEY, "");
         // get excluded copyrights
-        Collection<String> excludedCopyrights = new ArrayList<String>(Arrays.asList(excludedCopyrightsValue.split(EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX)));
+        Collection<String> excludedCopyrights = new ArrayList<>(Arrays.asList(excludedCopyrightsValue.split(EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX)));
         excludedCopyrights.remove("");
 
         boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
-        return new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createDependencies(
-                scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
+        Collection<AgentProjectInfo> projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createProjects(
+                scannerBaseDirs, hasScmConnectors[0], includes, excludes, globCaseSensitive, archiveExtractionDepth,
                 archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights,
                 partialSha1Match, calculateHints, calculateMd5);
+
+        // delete all temp scm files
+        scmPaths.forEach(directory->{
+            if (directory != null) {
+                try {
+                    FileUtils.forceDelete(new File(directory));
+                } catch (IOException e) {
+                    // do nothing
+                }
+            }
+        });
+        return  projects;
+    }
+
+    private String npmInstallScmRepository(boolean scmNpmInstall, int npmInstallTimeoutMinutes, ScmConnector scmConnector,
+                                           String separatorFiles, String pathToCloneRepoFiles) {
+        File packageJson = new File(pathToCloneRepoFiles + separatorFiles + PACKAGE_JSON);
+        boolean npmInstallFailed = false;
+        if (scmNpmInstall && packageJson.exists()) {
+            // execute 'npm install'
+            File packageLock = new File(pathToCloneRepoFiles + separatorFiles + PACKAGE_LOCK);
+            if (packageLock.exists()) {
+                packageLock.delete();
+            }
+            CommandLineProcess npmInstall = new CommandLineProcess(pathToCloneRepoFiles, new String[]{NPM_COMMAND, NPM_INSTALL_COMMAND});
+            logger.info("Found package.json file, executing 'npm install' on {}", scmConnector.getUrl());
+            try {
+                npmInstall.executeProcessWithoutOutput();
+                npmInstall.setTimeoutProcessMinutes(npmInstallTimeoutMinutes);
+                if (npmInstall.isErrorInProcess()) {
+                    npmInstallFailed = true;
+                    logger.error("Failed to run 'npm install' on {}", scmConnector.getUrl());
+                }
+            } catch (IOException e) {
+                npmInstallFailed = true;
+                logger.error("Failed to start 'npm install' {}", e);
+            }
+            if (npmInstallFailed) {
+                // In case of error in 'npm install', delete and clone the repository to prevent wrong output
+                this.prepStepStatusCode = StatusCode.PREP_STEP_FAILURE;
+                scmConnector.deleteCloneDirectory();
+                pathToCloneRepoFiles = scmConnector.cloneRepository().getPath();
+            }
+        }
+        return pathToCloneRepoFiles;
     }
 }

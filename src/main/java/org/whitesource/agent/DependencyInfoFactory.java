@@ -22,10 +22,7 @@ import org.whitesource.agent.api.model.ChecksumType;
 import org.whitesource.agent.api.model.CopyrightInfo;
 import org.whitesource.agent.api.model.DependencyHintsInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.agent.hash.ChecksumUtils;
-import org.whitesource.agent.hash.HashAlgorithm;
-import org.whitesource.agent.hash.HashCalculator;
-import org.whitesource.agent.hash.HintUtils;
+import org.whitesource.agent.hash.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -116,6 +113,7 @@ public class DependencyInfoFactory {
             String sha1 = ChecksumUtils.calculateSHA1(dependencyFile);
             dependency = new DependencyInfo(sha1);
             dependency.setArtifactId(dependencyFile.getName());
+            dependency.setFilename(dependencyFile.getName());
 
             // system path
             try {
@@ -139,9 +137,15 @@ public class DependencyInfoFactory {
 
             // handle JavaScript files
             if (filename.toLowerCase().matches(JAVA_SCRIPT_REGEX)) {
-                Map<ChecksumType, String> javaScriptChecksums = new HashCalculator().calculateJavaScriptHashes(dependencyFile);
-                for (Map.Entry<ChecksumType, String> entry : javaScriptChecksums.entrySet()) {
-                    dependency.addChecksum(entry.getKey(), entry.getValue());
+                Map<ChecksumType, String> javaScriptChecksums;
+                try {
+                    javaScriptChecksums = new HashCalculator().calculateJavaScriptHashes(dependencyFile);
+                    for (Map.Entry<ChecksumType, String> entry : javaScriptChecksums.entrySet()) {
+                        dependency.addChecksum(entry.getKey(), entry.getValue());
+                    }
+                } catch (Exception e) {
+                    // logger.info("Failed to calculate javaScript file hash for : {}", dependencyFile.getPath());
+                    logger.debug("Failed to calculate javaScript hash for file: {}, error: {}", dependencyFile.getPath(), e);
                 }
             }
 

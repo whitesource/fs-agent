@@ -15,13 +15,18 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
+import com.google.gson.Gson;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
+import org.whitesource.agent.utils.CommandLineProcess;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -31,12 +36,15 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.*;
+
 /**
  * Collect dependencies using 'npm ls' or bower command.
  *
  * @author eugen.horovitz
  */
-public class NpmLsJsonDependencyCollector implements DependencyCollector {
+public class NpmLsJsonDependencyCollector extends DependencyCollector {
 
     /* --- Statics Members --- */
 
@@ -60,36 +68,31 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
 
     protected final boolean includeDevDependencies;
     private boolean showNpmLsError;
+    private final long npmTimeoutDependenciesCollector;
 
     /* --- Constructors --- */
 
-    public NpmLsJsonDependencyCollector(boolean includeDevDependencies) {
+    public NpmLsJsonDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector) {
+        this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
         this.includeDevDependencies = includeDevDependencies;
     }
 
     /* --- Public methods --- */
 
     @Override
-    public Collection<DependencyInfo> collectDependencies(String rootDirectory) {
+    public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
         Collection<DependencyInfo> dependencies = new LinkedList<>();
         try {
-            // execute 'npm ls'
-            ProcessBuilder pb = new ProcessBuilder(getLsCommandParams());
-
-            pb.directory(new File(rootDirectory));
-            Process process = pb.start();
-
-            // parse 'npm ls' output
-            String json = null;
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                json = reader.lines().reduce("", String::concat);
-                reader.close();
-            } catch (IOException e) {
-                logger.error("error parsing output : {}", e.getMessage());
+            CommandLineProcess npmLs = new CommandLineProcess(rootDirectory, getLsCommandParams());
+            npmLs.setTimeoutReadLineSeconds(this.npmTimeoutDependenciesCollector);
+            List<String> lines = npmLs.executeProcess();
+            StringBuilder json = new StringBuilder();
+            for (String line : lines) {
+                json.append(line);
             }
-
-            if (StringUtils.isNotBlank(json)) {
-                dependencies.addAll(getDependencies(new JSONObject(json)));
+            if (json != null && json.length() > 0 && !npmLs.isErrorInProcess()) {
+                logger.debug("'npm ls' output is not empty");
+                dependencies.addAll(getDependencies(new JSONObject(json.toString())));
             }
         } catch (IOException e) {
             logger.info("Error getting dependencies after running 'npm ls --json' on {}", rootDirectory);
@@ -101,7 +104,7 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
                 showNpmLsError = true;
             }
         }
-        return dependencies;
+        return getSingleProjectList(dependencies);
     }
 
     /* --- Private methods --- */
@@ -120,6 +123,7 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
                         if (dependency != null) {
                             dependencies.add(dependency);
 
+                            logger.debug("Collect child dependencies of {}", dependencyAlias);
                             // collect child dependencies
                             Collection<DependencyInfo> childDependencies = getDependencies(dependencyJsonObject);
                             dependency.getChildren().addAll(childDependencies);
@@ -191,5 +195,28 @@ public class NpmLsJsonDependencyCollector implements DependencyCollector {
 
     public static boolean isWindows() {
         return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
+    }
+
+    /* --- Nested classes --- */
+
+    class ReadLineTask implements Callable<String> {
+
+        /* --- Members --- */
+
+        private final BufferedReader reader;
+
+        /* --- Constructors --- */
+
+        ReadLineTask(BufferedReader reader) {
+            this.reader = reader;
+        }
+
+        /* --- Overridden methods --- */
+
+        @Override
+        public String call() throws Exception {
+//            while (true) { }
+            return reader.readLine();
+        }
     }
 }

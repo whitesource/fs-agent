@@ -47,10 +47,10 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
 
     /* --- Constructor --- */
 
-    public BowerDependencyResolver() {
+    public BowerDependencyResolver(long npmTimeoutDependenciesCollector) {
         super();
         bomParser = new BowerBomParser();
-        bomCollector = new BowerLsJsonDependencyCollector();
+        bomCollector = new BowerLsJsonDependencyCollector(npmTimeoutDependenciesCollector);
     }
 
     /* --- Overridden methods --- */

@@ -1,6 +1,7 @@
 package org.whitesource.agent.dependency.resolver.npm;
 
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 
@@ -19,12 +20,13 @@ import java.util.stream.Stream;
 public class TestHelper {
 
     /* --- Static Members --- */
-    public static final String SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES = "\\node_modules\\chokidar\\package.json";
+    public static final File SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES = TestHelper.getFileFromResources("resolver/npm/sample/package.json");
 
-    public static final String FOLDER_WITH_MIX_FOLDERS = "C:\\Dev\\ws_mix\\ws_mix3\\ws_mix2_separated";
-    public static String FOLDER_WITH_BOWER_PROJECTS = "C:\\Dev\\ws_mix\\ws_mix1\\bower_samples";
-    public static String FOLDER_WITH_NPN_PROJECTS = "C:\\Dev\\ws_mix\\ws_mix1\\npm_samples";
-    //public static String FOLDER_WITH_NPN_PROJECTS_UBUNTU = "/home/eugen/Documents/Repositories/fs-agent/toScan/";
+    public static String FOLDER_WITH_BOWER_PROJECTS = TestHelper.getFileFromResources("resolver/bower/angular.js/bower.json")
+            .getParentFile().getParentFile().getAbsolutePath();
+    public static String FOLDER_WITH_NPN_PROJECTS = SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES
+            .getParentFile().getParentFile().getAbsolutePath();
+    public static final String FOLDER_WITH_MIX_FOLDERS = new File(FOLDER_WITH_NPN_PROJECTS).getParent();
 
     /* --- Static Methods --- */
 
@@ -35,9 +37,10 @@ public class TestHelper {
     }
 
     public static Stream<String> getDependenciesWithNpm(String dir) {
-        NpmLsJsonDependencyCollector collector = new NpmLsJsonDependencyCollector(false);
-        Collection<DependencyInfo> dependencyInfos = collector.collectDependencies(dir);
-        return dependencyInfos.stream().map(dep -> getShortNameByTgz(dep)).sorted();
+        NpmLsJsonDependencyCollector collector = new NpmLsJsonDependencyCollector(false, 60);
+        AgentProjectInfo projectInfo = collector.collectDependencies(dir).stream().findFirst().get();
+        Collection<DependencyInfo> dependencies = projectInfo.getDependencies();
+        return dependencies.stream().map(dep -> getShortNameByTgz(dep)).sorted();
     }
 
     public static String getShortNameByTgz(DependencyInfo dep) {
@@ -56,8 +59,8 @@ public class TestHelper {
     public static Properties getPropertiesFromFile() {
         Properties p = new Properties();
         try {
-            String currentDir = System.getProperty("user.dir");
-            InputStream input1 = new FileInputStream(Paths.get(currentDir, "whitesource-fs-agent.config").toString());
+            File file = TestHelper.getFileFromResources("whitesource-fs-agent.config");
+            InputStream input1 = new FileInputStream(file);
             p.load(input1);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -78,5 +81,16 @@ public class TestHelper {
         p.setProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, "true");
         p.setProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, "testNpm");
         return p;
+    }
+
+    public static File getFileFromResources(String relativeFilePath) {
+        ClassLoader classLoader = TestHelper.class.getClassLoader();
+        String osFilePath = getOsRelativePath(relativeFilePath);
+        File file = new File(classLoader.getResource(osFilePath).getFile());
+        return file;
+    }
+
+    public static String getOsRelativePath(String relativeFilePath) {
+        return relativeFilePath.replace("\\", String.valueOf(File.separatorChar).replace("/", String.valueOf(File.separatorChar)));
     }
 }

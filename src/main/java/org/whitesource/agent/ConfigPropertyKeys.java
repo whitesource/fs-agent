@@ -58,6 +58,9 @@ public final class ConfigPropertyKeys {
     public static final String SCM_PASS_PROPERTY_KEY = "scm.pass";
     public static final String SCM_BRANCH_PROPERTY_KEY = "scm.branch";
     public static final String SCM_TAG_PROPERTY_KEY = "scm.tag";
+    public static final String SCM_NPM_INSTALL = "scm.npmInstall";
+    public static final String SCM_NPM_INSTALL_TIMEOUT_MINUTES = "scm.npmInstallTimeoutMinutes";
+    public static final String SCM_REPOSITORIES_FILE = "scm.repositoriesFile";
     public static final String EXCLUDED_COPYRIGHT_KEY = "copyright.excludes";
     public static final String LOG_LEVEL_KEY = "log.level";
     public static final String FOLLOW_SYMBOLIC_LINKS = "followSymbolicLinks";
@@ -65,8 +68,13 @@ public final class ConfigPropertyKeys {
     public static final String NPM_RESOLVE_DEPENDENCIES = "npm.resolveDependencies";
     public static final String NPM_INCLUDE_DEV_DEPENDENCIES = "npm.includeDevDependencies";
     public static final String NPM_IGNORE_JAVA_SCRIPT_FILES = "npm.ignoreJavaScriptFiles";
+    public static final String NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS = "npm.timeoutDependenciesCollectorInSeconds";
     public static final String BOWER_RESOLVE_DEPENDENCIES = "bower.resolveDependencies";
     public static final String NUGET_RESOLVE_DEPENDENCIES = "nuget.resolveDependencies";
+    public static final String MAVEN_IGNORED_SCOPES = "maven.ignoredScopes";
+    public static final String MAVEN_RESOLVE_DEPENDENCIES = "maven.resolveDependencies";
+    public static final String MAVEN_AGGREGATE_MODULES = "maven.aggregateModules";
+    public static final String DEPENDENCIES_ONLY = "dependenciesOnly";
     public static final String PROJECT_PER_SUBFOLDER = "projectPerFolder";
     public static final String UPDATE_TYPE = "updateType";
 }

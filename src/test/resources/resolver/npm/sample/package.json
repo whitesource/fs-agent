@@ -1,0 +1,55 @@
+{
+  "name": "dustjs-linkedin",
+  "title": "Dust - Asynchronous Templating",
+  "version": "2.5.1",
+  "author": {
+    "name": "Aleksander Williams",
+    "url": "http://akdubya.github.com/dustjs"
+  },
+  "homepage": "http://linkedin.github.io/dustjs/",
+  "description": "Asynchronous templates for the browser and node.js ( LinkedIn fork )",
+  "contributors": [
+    "Veena Basavaraj <veena.braj@gmail.com>",
+    "Tom Carchrae",
+    "Jimmy Chan <jchan@linkedin.com>",
+    "Steven Foote <sfoote@linkedin.com>",
+    "Prayrit Prash Jain <prjain@linkedin.com>",
+    "Seth Kinast <skinast@linkedin.com>",
+    "Jairo de Morais <jairodemorais@gmail.com>",
+    "Kate Odnous <kodnous@linkedin.com>",
+    "Richard Ragan <rragan@ebay.com>"
+  ],
+  "scripts": {
+    "test": "grunt test"
+  },
+  "bin": {
+    "dustc": "./bin/dustc"
+  },
+  "main": "lib/server.js",
+  "browser": "./lib/dust.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/linkedin/dustjs.git"
+  },
+  "keywords": [
+    "templates",
+    "views",
+    "dust",
+    "dustjs",
+    "dust.js",
+    "linkedin"
+  ],
+  "dependencies": {
+    "request": "2.83.0"
+  },
+  "devDependencies": {
+    "uuid": "3.1.0"
+  },
+  "optionalDependencies": {
+    "uuid": "3.1.0"
+  },
+  "license": "MIT",
+  "engine": {
+    "node": ">=0.8"
+  }
+}

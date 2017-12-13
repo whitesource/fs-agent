@@ -28,16 +28,21 @@ public class BomFile {
 
     private final String name;
     private final String version;
+    private String groupId;
     private String sha1;
     private String fileName;
     private final String localFileName;
     private final Map<String, String> dependencies;
     private Map<String, String> optionalDependencies;
+    private String resolved;
+    private boolean scopedPackage;
+
+    public static String DUMMY_PARAMETER_SCOPE_PACKAGE = "{dummyParameterOfScopePackage}";
 
     /* --- Constructors --- */
 
     public BomFile(String name, String version, String sha1, String fileName, String localFileName,
-                   Map<String, String> dependencies, Map<String, String> optionalDependencies) {
+                   Map<String, String> dependencies, Map<String, String> optionalDependencies, String resolved) {
         this.name = name;
         this.version = version;
         this.sha1 = sha1;
@@ -45,6 +50,14 @@ public class BomFile {
         this.localFileName = localFileName;
         this.dependencies = dependencies;
         this.optionalDependencies = optionalDependencies;
+        this.resolved = resolved;
+        this.scopedPackage = false;
+        this.groupId = null;
+    }
+
+    public BomFile(String groupId, String artifactId, String version, String bomPath) {
+        this(artifactId,version,null,null,bomPath,null,null,null);
+        this.groupId = groupId;
     }
 
     /* --- Public method --- */
@@ -75,6 +88,10 @@ public class BomFile {
         return fileName;
     }
 
+    public String getGroupId() {
+        return groupId;
+    }
+
     public static String getUniqueDependencyName(String name, String version) {
         return name + "@" + version.replace("v", "");
     }
@@ -89,5 +106,32 @@ public class BomFile {
 
     public Map<String, String> getOptionalDependencies() {
         return optionalDependencies;
+    }
+
+    public String getRegistryPackageUrl() {
+        String registryPackageUrl = null;
+        if (StringUtils.isEmpty(this.resolved)) {
+            return StringUtils.EMPTY;
+        }
+        if (this.resolved.contains("@")) {
+            registryPackageUrl =  this.resolved.substring(0, this.resolved.indexOf(this.name) + this.name.length());
+            int lastSlashIndex = registryPackageUrl.lastIndexOf('/');
+            registryPackageUrl = registryPackageUrl.substring(0, lastSlashIndex) + DUMMY_PARAMETER_SCOPE_PACKAGE + registryPackageUrl.substring(lastSlashIndex + 1);
+            this.scopedPackage = true;
+        } else {
+            String urlName = "/" + this.name + "/";
+            registryPackageUrl = this.resolved.substring(0, this.resolved.indexOf(urlName) + urlName.length());
+            registryPackageUrl = registryPackageUrl + this.version;
+        }
+        return registryPackageUrl;
+    }
+
+    public boolean isScopedPackage() {
+        return this.scopedPackage;
+    }
+
+    @Override
+    public String toString() {
+        return String.join(".", getGroupId(), getName(), getVersion());
     }
 }

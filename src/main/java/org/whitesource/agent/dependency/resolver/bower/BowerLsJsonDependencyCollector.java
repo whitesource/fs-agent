@@ -34,13 +34,16 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
     private static final String BOWER_COMMAND = NpmLsJsonDependencyCollector.isWindows() ? "bower.cmd" : "bower";
     private static final String VERSION = "version";
     private static final String PKG_META = "pkgMeta";
-    public static final String NAME = "name";
-    public static final String MISSING = "missing";
+    private static final String RESOLUTION = "_resolution";
+    private static final String TYPE = "type";
+    private static final String TAG = "tag";
+    private static final String NAME = "name";
+    private static final String MISSING = "missing";
 
     /* --- Constructors --- */
 
-    public BowerLsJsonDependencyCollector() {
-        super(false);
+    public BowerLsJsonDependencyCollector(long npmTimeoutDependenciesCollector) {
+        super(false, npmTimeoutDependenciesCollector);
     }
 
     /* --- Overridden methods --- */
@@ -54,19 +57,40 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
     protected DependencyInfo getDependency(String dependencyAlias, JSONObject jsonObject) {
         String version = "";
         String name = "";
+        boolean unmetDependency = false;
 
-       if (jsonObject.has(MISSING) && jsonObject.getBoolean(MISSING)) {
-           logger.warn("Unmet dependency --> {}", name);
-           return null;
-       }
+        if (jsonObject.has(MISSING) && jsonObject.getBoolean(MISSING)) {
+            unmetDependencyLog(dependencyAlias);
+            return null;
+        }
         if (jsonObject.has(PKG_META)) {
             JSONObject metaData = jsonObject.getJSONObject(PKG_META);
-            if (metaData.has(VERSION)) {
-                version = metaData.getString(VERSION);
+            if (metaData.has(RESOLUTION)) {
+                JSONObject resolution = metaData.getJSONObject(RESOLUTION);
+                String resolutionType = resolution.getString(TYPE);
+                if (metaData.has(NAME)) {
+                    name = metaData.getString(NAME);
+                } else {
+                    unmetDependency = true;
+                }
+                if (resolutionType.equals(TAG) || resolutionType.equals(VERSION)) {
+                    version = metaData.getString(VERSION);
+                } else {
+                    logger.warn("We were not able to allocate the bower version for '{}' in you bower.json file." +
+                            "At the moment we only support tag, so please modify your bower.json " +
+                            "accordingly and run the plugin again.", name);
+                    return null;
+                }
+            } else {
+                unmetDependency = true;
             }
-            if (metaData.has(NAME)) {
-                name = metaData.getString(NAME);
-            }
+        } else {
+            unmetDependency = true;
+        }
+
+        if (unmetDependency) {
+            unmetDependencyLog(dependencyAlias);
+            return null;
         }
 
         DependencyInfo dependency = new DependencyInfo();
@@ -75,5 +99,9 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
         dependency.setVersion(version);
         dependency.setDependencyType(DependencyType.BOWER);
         return dependency;
+    }
+
+    private void unmetDependencyLog(String dependencyAlias) {
+        logger.warn("Unmet dependency --> {}", dependencyAlias);
     }
 }

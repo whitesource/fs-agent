@@ -82,7 +82,7 @@ public abstract class ScmConnector {
      * @return The folder in which the specific branch/tag resides.
      */
     public File cloneRepository() {
-        cloneDirectory = new File(SCM_CONNECTOR_TMP_DIRECTORY, getType().toString().toLowerCase());
+        cloneDirectory = new File(SCM_CONNECTOR_TMP_DIRECTORY, getType().toString().toLowerCase() + "_" + getUrlName() + "_" + getBranch());
         deleteDirectory(cloneDirectory); // delete just in case it's not empty
 
         logger.info("Cloning repository {} ...this may take a few minutes", getUrl());
@@ -124,6 +124,10 @@ public abstract class ScmConnector {
 
     public String getUrl() {
         return url;
+    }
+
+    public String getUrlName() {
+       return this.url.substring(this.url.lastIndexOf('/') + 1, this.url.length());
     }
 
     public String getBranch() {

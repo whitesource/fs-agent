@@ -64,6 +64,7 @@ public abstract class CommandLineAgent {
 
     protected final Properties config;
     protected final List<String> offlineRequestFiles;
+    protected StatusCode prepStepStatusCode = StatusCode.SUCCESS;
 
     /* --- Constructors --- */
 
@@ -87,6 +88,10 @@ public abstract class CommandLineAgent {
         }
         if (!requestFiles.isEmpty()) {
             for (File requestFile : requestFiles) {
+                if (!requestFile.isFile()) {
+                    logger.warn("'{}' is a folder. Enter a valid file path, folder is not acceptable.", requestFile.getName());
+                    continue;
+                }
                 Gson gson = new Gson();
                 UpdateInventoryRequest updateRequest;
                 logger.debug("Converting offline request to JSON");
@@ -137,7 +142,7 @@ public abstract class CommandLineAgent {
 
         if (projects.isEmpty()) {
             logger.info("Exiting, nothing to update");
-            return StatusCode.SUCCESS;
+            return this.prepStepStatusCode;
         } else {
             return sendRequest(projects);
         }
@@ -157,16 +162,6 @@ public abstract class CommandLineAgent {
         // org token
         String orgToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
 
-        // update type
-        UpdateType updateType = UpdateType.OVERRIDE;
-        String updateTypeValue = config.getProperty(UPDATE_TYPE, UpdateType.OVERRIDE.toString());
-        try {
-            updateType = UpdateType.valueOf(updateTypeValue);
-        } catch (Exception e) {
-            logger.info("Invalid value {} for updateType, defaulting to {}", updateTypeValue, UpdateType.OVERRIDE);
-        }
-
-        logger.info("UpdateType set to {} ", updateTypeValue);
         // product token or name (and version)
         String product = config.getProperty(PRODUCT_TOKEN_PROPERTY_KEY);
         String productVersion = null;
@@ -182,9 +177,19 @@ public abstract class CommandLineAgent {
         logger.info("Initializing WhiteSource Client");
         WhitesourceService service = createService();
         if (getBooleanProperty(OFFLINE_PROPERTY_KEY, false)) {
-            offlineUpdate(service, orgToken, updateType, requesterEmail, product, productVersion, projects);
-            return StatusCode.SUCCESS;
+            offlineUpdate(service, orgToken, requesterEmail, product, productVersion, projects);
+            return this.prepStepStatusCode;
         } else {
+            // update type
+            UpdateType updateType = UpdateType.OVERRIDE;
+            String updateTypeValue = config.getProperty(UPDATE_TYPE, UpdateType.OVERRIDE.toString());
+            try {
+                updateType = UpdateType.valueOf(updateTypeValue);
+            } catch (Exception e) {
+                logger.info("Invalid value {} for updateType, defaulting to {}", updateTypeValue, UpdateType.OVERRIDE);
+            }
+            logger.info("UpdateType set to {} ", updateTypeValue);
+
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
             try {
@@ -207,6 +212,9 @@ public abstract class CommandLineAgent {
                 if (service != null) {
                     service.shutdown();
                 }
+            }
+            if (statusCode == StatusCode.SUCCESS) {
+                return this.prepStepStatusCode;
             }
             return statusCode;
         }
@@ -281,7 +289,7 @@ public abstract class CommandLineAgent {
         logResult(updateResult);
     }
 
-    private void offlineUpdate(WhitesourceService service, String orgToken, UpdateType updateType, String requesterEmail, String product, String productVersion,
+    private void offlineUpdate(WhitesourceService service, String orgToken, String requesterEmail, String product, String productVersion,
                                Collection<AgentProjectInfo> projects) {
         logger.info("Generating offline update request");
 
@@ -294,7 +302,25 @@ public abstract class CommandLineAgent {
         updateRequest.setRequesterEmail(requesterEmail);
         try {
             OfflineUpdateRequest offlineUpdateRequest = new OfflineUpdateRequest(updateRequest);
-            updateRequest.setUpdateType(updateType);
+
+            UpdateType updateTypeFinal;
+
+            // if the update type was forced by command or config -> set it
+            if (StringUtils.isNotBlank(config.getProperty(UPDATE_TYPE))){
+                String updateTypeValue = config.getProperty(UPDATE_TYPE) ;
+                try {
+                    updateTypeFinal = UpdateType.valueOf(updateTypeValue);
+                } catch (Exception e) {
+                    logger.info("Invalid value {} for updateType, defaulting to {}", updateTypeValue, UpdateType.OVERRIDE);
+                    updateTypeFinal = UpdateType.OVERRIDE;
+                }
+            }else {
+                // Otherwise use the parameter in the file
+                updateTypeFinal = updateRequest.getUpdateType();
+            }
+
+            logger.info("UpdateType offline set to {} ", updateTypeFinal);
+            updateRequest.setUpdateType(updateTypeFinal);
             File outputDir = new File(".");
             File file = offlineUpdateRequest.generate(outputDir, zip, prettyJson);
             logger.info("Offline request generated successfully at {}", file.getPath());
@@ -382,4 +408,7 @@ public abstract class CommandLineAgent {
         return outStr;
     }
 
+    public StatusCode getPrepStepStatusCode() {
+        return this.prepStepStatusCode;
+    }
 }

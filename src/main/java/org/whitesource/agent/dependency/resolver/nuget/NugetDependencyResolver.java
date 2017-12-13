@@ -51,7 +51,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
             dependencies.addAll(collectDependenciesFromNugetConfig(configNugetPackage));
         }
 
-        return new ResolutionResult(dependencies, new LinkedList<>());
+        return new ResolutionResult(dependencies, new LinkedList<>(), getDependencyType(), topLevelFolder);
     }
 
     @Override
