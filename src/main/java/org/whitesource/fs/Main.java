@@ -42,6 +42,7 @@ public class Main {
     private static final String INFO = "info";
 
     public static final CommandLineArgs commandLineArgs = new CommandLineArgs();
+    public static final String FALSE = "false";
 
     /* --- Main --- */
 
@@ -77,7 +78,7 @@ public class Main {
         List<String> offlineRequestFiles = new LinkedList<>();
         offlineRequestFiles.addAll(commandLineArgs.requestFiles);
         if (offlineRequestFiles.size() > 0) {
-            configProps.put(ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, "false");
+            configProps.put(ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, FALSE);
         }
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, commandLineArgs.offline);
 
