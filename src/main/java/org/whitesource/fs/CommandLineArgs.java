@@ -85,6 +85,9 @@ public class CommandLineArgs {
     @Parameter(names = "-scm.repositoriesFile", description = "Specify the csv file from which scm repositories should be loaded")
     String repositoriesFile = null;
 
+    @Parameter(names = "-offline", description = "Whether or not to create an offline update request instead of sending one to WhiteSource")
+    String offline = null;
+
     /* --- Public methods --- */
 
     public String getConfigFilePath() {
