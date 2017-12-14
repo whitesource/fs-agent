@@ -73,6 +73,12 @@ public class Main {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY, commandLineArgs.productVersion);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, project);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_VERSION_PROPERTY_KEY, commandLineArgs.projectVersion);
+        // request file
+        List<String> offlineRequestFiles = new LinkedList<>();
+        offlineRequestFiles.addAll(commandLineArgs.requestFiles);
+        if (offlineRequestFiles.size() > 0) {
+            configProps.put(ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, "false");
+        }
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, commandLineArgs.offline);
 
         // proxy
@@ -89,10 +95,6 @@ public class Main {
 
         // Check whether the user inserted repositoriesFile via command line
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCM_REPOSITORIES_FILE, commandLineArgs.repositoriesFile);
-
-        // request file
-        List<String> offlineRequestFiles = new LinkedList<>();
-        offlineRequestFiles.addAll(commandLineArgs.requestFiles);
 
         // read log level from configuration file
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
