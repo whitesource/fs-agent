@@ -52,7 +52,7 @@ public class DependencyResolversTest {
 
         List<ResolutionResult> results = getResolutionResults(Arrays.asList(folderParent));
 
-        testDependencyResult(checkChildren, results);
+        TestHelper.testDependencyResult(checkChildren, results);
     }
 
     private List<ResolutionResult> getResolutionResults(List<String> pathsToScan) {
@@ -62,19 +62,6 @@ public class DependencyResolversTest {
 
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(props);
         return dependencyResolutionService.resolveDependencies(pathsToScan, new String[0]);
-    }
-
-    private void testDependencyResult(boolean checkChildren, List<ResolutionResult> results) {
-        results.forEach(resolutionResult -> {
-            Assert.assertTrue(resolutionResult.getResolvedProjects().size() > 0);
-            Assert.assertTrue(resolutionResult.getResolvedProjects().keySet().stream().findFirst().get().getDependencies().size() > 0);
-            if (!checkChildren) {
-                return;
-            }
-            List<DependencyInfo> dependencyInformation = resolutionResult
-                    .getResolvedProjects().keySet().stream().findFirst().get().getDependencies().stream().filter(x -> x.getChildren().size() > 0).collect(Collectors.toList());
-            Assert.assertTrue(dependencyInformation.size() > 0);
-        });
     }
 
     private void testBowerResolve(boolean checkChildren) {
@@ -88,6 +75,6 @@ public class DependencyResolversTest {
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(props);
         List<ResolutionResult> results = dependencyResolutionService.resolveDependencies(Arrays.asList(folderParent), new String[0]);
 
-        testDependencyResult(checkChildren, results);
+        TestHelper.testDependencyResult(checkChildren, results);
     }
 }

@@ -1,15 +1,16 @@
 package org.whitesource.agent.dependency.resolver.npm;
 
+import org.junit.Assert;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
-
+import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import java.io.*;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -24,11 +25,26 @@ public class TestHelper {
 
     public static String FOLDER_WITH_BOWER_PROJECTS = TestHelper.getFileFromResources("resolver/bower/angular.js/bower.json")
             .getParentFile().getParentFile().getAbsolutePath();
+    public static String FOLDER_WITH_MVN_PROJECTS = TestHelper.getFileFromResources("resolver/maven/pom.xml")
+            .getParentFile().getAbsolutePath();
     public static String FOLDER_WITH_NPN_PROJECTS = SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES
             .getParentFile().getParentFile().getAbsolutePath();
     public static final String FOLDER_WITH_MIX_FOLDERS = new File(FOLDER_WITH_NPN_PROJECTS).getParent();
 
     /* --- Static Methods --- */
+
+    public static void testDependencyResult(boolean checkChildren, List<ResolutionResult> results) {
+        results.forEach(resolutionResult -> {
+            Assert.assertTrue(resolutionResult.getResolvedProjects().size() > 0);
+            Assert.assertTrue(resolutionResult.getResolvedProjects().keySet().stream().findFirst().get().getDependencies().size() > 0);
+            if (!checkChildren) {
+                return;
+            }
+            List<DependencyInfo> dependencyInformation = resolutionResult
+                    .getResolvedProjects().keySet().stream().findFirst().get().getDependencies().stream().filter(x -> x.getChildren().size() > 0).collect(Collectors.toList());
+            Assert.assertTrue(dependencyInformation.size() > 0);
+        });
+    }
 
     public static String getFirstFolder(String dir) {
         File file = new File(dir);

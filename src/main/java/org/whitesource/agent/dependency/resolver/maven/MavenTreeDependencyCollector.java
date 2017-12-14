@@ -108,7 +108,9 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 logger.info("End parsing pom files , found : " + String.join(",",
                         nodes.stream().map(node -> node.getArtifactId()).collect(Collectors.toList())));
 
-                projects = nodes.stream().filter(node -> !node.getPackaging().equals(POM)).map(tree -> {
+                projects = nodes.stream()
+                        .filter(node -> !node.getPackaging().equals(POM))
+                        .map(tree -> {
 
                     List<DependencyInfo> dependencies = new LinkedList<>();
                     Stream<Node> nodeStream = tree.getChildNodes().stream().filter(node -> !mavenIgnoredScopes.contains(node.getScope()));
