@@ -80,6 +80,7 @@ public class FileSystemScanner {
         int totalFiles = 0;
 
         String unpackDirectory = null;
+        boolean archiveExtraction = false;
         // go over all base directories, look for archives
         Map<String, String> archiveToBaseDirMap = new HashMap<>();
         List<String> archiveDirectories = new ArrayList<>();
@@ -89,7 +90,10 @@ public class FileSystemScanner {
             for (String scannerBaseDir : new LinkedHashSet<>(pathsToScan)) {
                 unpackDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth, archiveDirectories);
                 if (unpackDirectory != null) {
-                    archiveToBaseDirMap.put(unpackDirectory, new File(scannerBaseDir).getParent());
+                    archiveExtraction = true;
+                    String parentFileUrl = new File(scannerBaseDir).getParent();
+                    logger.debug("Unpack directory: {}, parent file: {}", unpackDirectory, parentFileUrl);
+                    archiveToBaseDirMap.put(unpackDirectory, parentFileUrl);
                     pathsToScan.add(unpackDirectory);
                 }
             }
@@ -215,8 +219,9 @@ public class FileSystemScanner {
                     logger.debug("Dependency {} has no system path", dependencyInfo.getArtifactId());
                 } else {
                     for (String key : archiveToBaseDirMap.keySet()) {
-                        if (systemPath.contains(key) && unpackDirectory != null) {
+                        if (systemPath.contains(key) && archiveExtraction) {
                             String newSystemPath = systemPath.replace(key, archiveToBaseDirMap.get(key)).replaceAll(ArchiveExtractor.DEPTH_REGEX, "");
+                            logger.debug("Original system path: {}, new system path: {}, key: {}", systemPath, newSystemPath, key);
                             dependencyInfo.setSystemPath(newSystemPath);
                             break;
                         }
