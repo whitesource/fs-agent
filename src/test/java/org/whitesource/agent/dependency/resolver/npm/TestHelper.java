@@ -5,6 +5,8 @@ import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
+import org.whitesource.fs.CommandLineArgs;
+
 import java.io.*;
 import java.util.Arrays;
 import java.util.Collection;
@@ -75,7 +77,7 @@ public class TestHelper {
     public static Properties getPropertiesFromFile() {
         Properties p = new Properties();
         try {
-            File file = TestHelper.getFileFromResources("whitesource-fs-agent.config");
+            File file = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
             InputStream input1 = new FileInputStream(file);
             p.load(input1);
         } catch (FileNotFoundException e) {

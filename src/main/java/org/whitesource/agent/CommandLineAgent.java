@@ -34,6 +34,7 @@ import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 import org.whitesource.fs.StatusCode;
+import org.whitesource.fs.configuration.ConfigurationValidation;
 import sun.misc.BASE64Decoder;
 
 import java.io.*;
@@ -64,6 +65,7 @@ public abstract class CommandLineAgent {
 
     protected final Properties config;
     protected final List<String> offlineRequestFiles;
+    protected final ConfigurationValidation configurationValidation;
     protected StatusCode prepStepStatusCode = StatusCode.SUCCESS;
 
     /* --- Constructors --- */
@@ -71,6 +73,7 @@ public abstract class CommandLineAgent {
     public CommandLineAgent(Properties config, List<String> offlineRequestFiles) {
         this.config = config;
         this.offlineRequestFiles = offlineRequestFiles;
+        this.configurationValidation = new ConfigurationValidation();
     }
 
     /* --- Public methods --- */
@@ -155,6 +158,16 @@ public abstract class CommandLineAgent {
     protected abstract String getAgentType();
 
     protected abstract String getAgentVersion();
+
+    /* --- Protected methods --- */
+
+    protected boolean getBooleanProperty(String propertyName, boolean defaultValue) {
+        return configurationValidation.getBooleanProperty(config, propertyName, defaultValue);
+    }
+
+    protected int getIntProperty(String propertyName, int defaultValue) {
+        return configurationValidation.getIntProperty(config, propertyName, defaultValue);
+    }
 
     /* --- Private methods --- */
 
@@ -364,30 +377,6 @@ public abstract class CommandLineAgent {
             resultLogMsg.append(NEW_LINE).append("Support Token: ").append(requestToken).append(NEW_LINE);
         }
         logger.info(resultLogMsg.toString());
-    }
-
-    /* --- Protected methods --- */
-
-    protected boolean getBooleanProperty(String propertyKey, boolean defaultValue) {
-        boolean property = defaultValue;
-        String propertyValue = config.getProperty(propertyKey);
-        if (StringUtils.isNotBlank(propertyValue)) {
-            property = Boolean.valueOf(propertyValue);
-        }
-        return property;
-    }
-
-    protected int getIntProperty(String propertyKey, int defaultValue) {
-        int value = defaultValue;
-        String propertyValue = config.getProperty(propertyKey);
-        if (StringUtils.isNotBlank(propertyValue)) {
-            try {
-                value = Integer.valueOf(propertyValue);
-            } catch (NumberFormatException e) {
-                // do nothing
-            }
-        }
-        return value;
     }
 
     protected abstract String getPluginVersion();
