@@ -7,6 +7,7 @@ import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.whitesource.agent.ProjectsSender;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -15,7 +16,6 @@ import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.FileSystemAgent;
 import org.whitesource.fs.Main;
-import org.whitesource.fs.StatusCode;
 
 import java.io.*;
 import java.net.URI;
@@ -150,10 +150,12 @@ public class FileSystemAgentTest {
         // collect number of dependencies via npm-fs-agent
         props.setProperty(PROJECT_NAME_PROPERTY_KEY, dir.getName());
         props.setProperty(PRODUCT_NAME_PROPERTY_KEY, "bower_plugin_01");
-        FileSystemAgentTesting f = new FileSystemAgentTesting(props, Arrays.asList(dir.getAbsolutePath()));
-        Collection<AgentProjectInfo> projects = f.createProjects();
+        FileSystemAgent fileSystemAgent = new FileSystemAgent(props, Arrays.asList(dir.getAbsolutePath()));
+        Collection<AgentProjectInfo> projects = fileSystemAgent.createProjects().getKey();
         Collection<DependencyInfo> fsAgentDeps = projects.stream().findFirst().get().getDependencies();
-        f.sendRequest(projects);
+
+        ProjectsSender projectsSender = new ProjectsSender(props);
+        projectsSender.sendProjects(projects);
 
         int npmPluginCount = getCount(dependencyInfosNPMPLugin);
         int fsAgentCount = getCount(fsAgentDeps);
@@ -264,28 +266,11 @@ public class FileSystemAgentTest {
     }
 
     private Stream<DependencyInfo> getDependenciesWithFilter(List<String> dirs, Properties p) {
-        FileSystemAgentTesting f = new FileSystemAgentTesting(p, dirs);
+        FileSystemAgent f = new FileSystemAgent(p, dirs);
 
-        Collection<AgentProjectInfo> projects = f.createProjects();
+        Collection<AgentProjectInfo> projects = f.createProjects().getKey();
 
         Stream<DependencyInfo> dependenciesOrig = projects.stream().map(x -> x.getDependencies()).flatMap(d -> d.stream());
         return dependenciesOrig;
-    }
-
-    // Helper class
-    private class FileSystemAgentTesting extends FileSystemAgent {
-        public FileSystemAgentTesting(Properties config, List<String> dependencyDirs) {
-            super(config, dependencyDirs, null);
-        }
-
-        @Override
-        public Collection<AgentProjectInfo> createProjects() {
-            return super.createProjects();
-        }
-
-        @Override
-        public StatusCode sendRequest(Collection<AgentProjectInfo> projects) {
-            return super.sendRequest(projects);
-        }
     }
 }

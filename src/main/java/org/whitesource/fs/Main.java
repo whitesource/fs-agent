@@ -17,18 +17,25 @@ package org.whitesource.fs;
 
 import ch.qos.logback.classic.Level;
 import com.beust.jcommander.JCommander;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.ProjectsSender;
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
+import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.ConfigurationValidation;
+import sun.misc.BASE64Decoder;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
+import java.util.zip.GZIPInputStream;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
@@ -61,6 +68,22 @@ public class Main {
     }
 
     public static int execute(String[] args) {
+        Properties properties = getProperties(args);
+        // read configuration properties
+        String project = commandLineArgs.project;
+
+        Pair<Collection<AgentProjectInfo>,StatusCode> projects = getAllProjects(properties, project);
+        if(!projects.getValue().equals(StatusCode.SUCCESS)){
+            return projects.getValue().getValue();
+        }
+
+        ProjectsSender projectsSender = new ProjectsSender(properties);
+        StatusCode processExitCode = projectsSender.sendProjects(projects.getKey());
+        logger.info("Process finished with exit code {} ({})", processExitCode, processExitCode.getValue());
+        return processExitCode.getValue();
+    }
+
+    public static Properties getProperties(String[] args) {
         new JCommander(commandLineArgs, args);
         // validate args // TODO use jCommander validators
         // TODO add usage command
@@ -68,6 +91,10 @@ public class Main {
         // read configuration properties
         String project = commandLineArgs.project;
         Properties configProperties = configurationValidation.readAndValidateConfigFile(commandLineArgs.configFilePath, project);
+        return configProperties;
+    }
+
+    public static Pair<Collection<AgentProjectInfo>,StatusCode> getAllProjects(Properties configProperties, String project) {
 
         List<String> offlineRequestFiles = updateProperties(configProperties, project);
 
@@ -94,10 +121,78 @@ public class Main {
         files.addAll(commandLineArgs.dependencyDirs);
 
         // run the agent
-        FileSystemAgent agent = new FileSystemAgent(configProperties, files, offlineRequestFiles);
-        StatusCode processExitCode = agent.sendRequest();
-        logger.info("Process finished with exit code {} ({})", processExitCode, processExitCode.getValue());
-        return processExitCode.getValue();
+        FileSystemAgent agent = new FileSystemAgent(configProperties, files);
+        //Collection<AgentProjectInfo> projects = agent.createProjects();
+
+        Collection<AgentProjectInfo> projects = getAgentProjectsFromRequests(offlineRequestFiles);
+        // create projects as usual
+
+        Pair<Collection<AgentProjectInfo>,StatusCode> createdProjects = agent.createProjects();
+        projects.addAll(createdProjects.getKey());
+
+        return new Pair<>(projects,createdProjects.getValue());
+    }
+
+    private static Collection<AgentProjectInfo> getAgentProjectsFromRequests(List<String> offlineRequestFiles) {
+        Collection<AgentProjectInfo> projects = new LinkedList<>();
+
+        List<File> requestFiles = new LinkedList<>();
+        if (offlineRequestFiles != null) {
+            for (String requestFilePath : offlineRequestFiles) {
+                if (StringUtils.isNotBlank(requestFilePath)) {
+                    requestFiles.add(new File(requestFilePath));
+                }
+            }
+        }
+        if (!requestFiles.isEmpty()) {
+            for (File requestFile : requestFiles) {
+                if (!requestFile.isFile()) {
+                    logger.warn("'{}' is a folder. Enter a valid file path, folder is not acceptable.", requestFile.getName());
+                    continue;
+                }
+                Gson gson = new Gson();
+                UpdateInventoryRequest updateRequest;
+                logger.debug("Converting offline request to JSON");
+                try {
+                    updateRequest = gson.fromJson(new JsonReader(new FileReader(requestFile)), new TypeToken<UpdateInventoryRequest>() {}.getType());
+                    logger.info("Reading information from request file {}", requestFile);
+                    projects.addAll(updateRequest.getProjects());
+                } catch (JsonSyntaxException e) {
+                    // try to decompress file content
+                    try {
+                        logger.debug("Decompressing zipped offline request");
+                        String fileContent = decompress(requestFile);
+                        logger.debug("Converting offline request to JSON");
+                        updateRequest = gson.fromJson(fileContent, new TypeToken<UpdateInventoryRequest>() {}.getType());
+                        logger.info("Reading information from request file {}", requestFile);
+                        projects.addAll(updateRequest.getProjects());
+                    } catch (IOException ioe) {
+                        logger.warn("Error parsing request: " + ioe.getMessage());
+                    } catch (JsonSyntaxException jse) {
+                        logger.warn("Error parsing request: " + jse.getMessage());
+                    }
+                } catch (FileNotFoundException e) {
+                    logger.warn("Error parsing request: " + e.getMessage());
+                }
+            }
+        }
+        return projects;
+    }
+
+    private static String decompress(File file) throws IOException {
+        if (file == null || !file.exists()) {
+            return "";
+        }
+
+        byte[] bytes = new BASE64Decoder().decodeBuffer(new FileInputStream(file));
+        GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(bytes));
+        BufferedReader bf = new BufferedReader(new InputStreamReader(gis, "UTF-8"));
+        String outStr = "";
+        String line;
+        while ((line = bf.readLine()) != null) {
+            outStr += line;
+        }
+        return outStr;
     }
 
     private static List<String> updateProperties(Properties configProps, String project) {

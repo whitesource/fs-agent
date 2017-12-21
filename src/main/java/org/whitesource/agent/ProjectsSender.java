@@ -15,10 +15,6 @@
  */
 package org.whitesource.agent;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,13 +29,12 @@ import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
+import org.whitesource.fs.Main;
 import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.ConfigurationValidation;
-import sun.misc.BASE64Decoder;
 
 import java.io.*;
 import java.util.*;
-import java.util.zip.GZIPInputStream;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
@@ -50,81 +45,38 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
  * @author tom.shapira
  * @author anna.rozin
  */
-public abstract class CommandLineAgent {
+public class ProjectsSender {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(CommandLineAgent.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProjectsSender.class);
 
-    public static final String NEW_LINE = "\n";
-    public static final String DOT = ".";
-    public static final String JAVA_NETWORKING = "java.net";
+    private static final String NEW_LINE = "\n";
+    private static final String DOT = ".";
+    private static final String JAVA_NETWORKING = "java.net";
     private static final int MAX_NUMBER_OF_DEPENDENCIES = 1000000;
+    private static final String AGENT_TYPE = "fs-agent";
+    private static final String VERSION = "version";
+    private static final String AGENTS_VERSION = "agentsVersion";
 
     /* --- Members --- */
 
     protected final Properties config;
-    protected final List<String> offlineRequestFiles;
-    protected final ConfigurationValidation configurationValidation;
+    private final ConfigurationValidation configurationValidation;
     protected StatusCode prepStepStatusCode = StatusCode.SUCCESS;
+    private Properties properties;
 
     /* --- Constructors --- */
 
-    public CommandLineAgent(Properties config, List<String> offlineRequestFiles) {
+    public ProjectsSender(Properties config) {
         this.config = config;
-        this.offlineRequestFiles = offlineRequestFiles;
         this.configurationValidation = new ConfigurationValidation();
+        this.properties = getProperties();
     }
 
     /* --- Public methods --- */
 
-    public StatusCode sendRequest() {
-        Collection<AgentProjectInfo> projects = new LinkedList<>();
-
-        List<File> requestFiles = new LinkedList<>();
-        if (offlineRequestFiles != null) {
-            for (String requestFilePath : offlineRequestFiles) {
-                if (StringUtils.isNotBlank(requestFilePath)) {
-                    requestFiles.add(new File(requestFilePath));
-                }
-            }
-        }
-        if (!requestFiles.isEmpty()) {
-            for (File requestFile : requestFiles) {
-                if (!requestFile.isFile()) {
-                    logger.warn("'{}' is a folder. Enter a valid file path, folder is not acceptable.", requestFile.getName());
-                    continue;
-                }
-                Gson gson = new Gson();
-                UpdateInventoryRequest updateRequest;
-                logger.debug("Converting offline request to JSON");
-                try {
-                    updateRequest = gson.fromJson(new JsonReader(new FileReader(requestFile)), new TypeToken<UpdateInventoryRequest>() {}.getType());
-                    logger.info("Reading information from request file {}", requestFile);
-                    projects.addAll(updateRequest.getProjects());
-                } catch (JsonSyntaxException e) {
-                    // try to decompress file content
-                    try {
-                        logger.debug("Decompressing zipped offline request");
-                        String fileContent = decompress(requestFile);
-                        logger.debug("Converting offline request to JSON");
-                        updateRequest = gson.fromJson(fileContent, new TypeToken<UpdateInventoryRequest>() {}.getType());
-                        logger.info("Reading information from request file {}", requestFile);
-                        projects.addAll(updateRequest.getProjects());
-                    } catch (IOException ioe) {
-                        logger.warn("Error parsing request: " + ioe.getMessage());
-                    } catch (JsonSyntaxException jse) {
-                        logger.warn("Error parsing request: " + jse.getMessage());
-                    }
-                } catch (FileNotFoundException e) {
-                    logger.warn("Error parsing request: " + e.getMessage());
-                }
-            }
-        }
-
-        // create projects as usual
-        projects.addAll(createProjects());
-
+    public StatusCode sendProjects(Collection<AgentProjectInfo> projects) {
         Iterator<AgentProjectInfo> iterator = projects.iterator();
         while (iterator.hasNext()) {
             AgentProjectInfo project = iterator.next();
@@ -145,33 +97,15 @@ public abstract class CommandLineAgent {
 
         if (projects.isEmpty()) {
             logger.info("Exiting, nothing to update");
-            return this.prepStepStatusCode;
+            return StatusCode.SUCCESS;
         } else {
             return sendRequest(projects);
         }
     }
 
-    /* --- Abstract methods --- */
-
-    protected abstract Collection<AgentProjectInfo> createProjects();
-
-    protected abstract String getAgentType();
-
-    protected abstract String getAgentVersion();
-
-    /* --- Protected methods --- */
-
-    protected boolean getBooleanProperty(String propertyName, boolean defaultValue) {
-        return configurationValidation.getBooleanProperty(config, propertyName, defaultValue);
-    }
-
-    protected int getIntProperty(String propertyName, int defaultValue) {
-        return configurationValidation.getIntProperty(config, propertyName, defaultValue);
-    }
-
     /* --- Private methods --- */
 
-    protected StatusCode sendRequest(Collection<AgentProjectInfo> projects) {
+    private StatusCode sendRequest(Collection<AgentProjectInfo> projects) {
         // org token
         String orgToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
 
@@ -231,6 +165,10 @@ public abstract class CommandLineAgent {
             }
             return statusCode;
         }
+    }
+
+    private boolean getBooleanProperty(String propertyName, boolean defaultValue) {
+        return configurationValidation.getBooleanProperty(config, propertyName, defaultValue);
     }
 
     private void checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
@@ -379,25 +317,33 @@ public abstract class CommandLineAgent {
         logger.info(resultLogMsg.toString());
     }
 
-    protected abstract String getPluginVersion();
-
-    private String decompress(File file) throws IOException {
-        if (file == null || !file.exists()) {
-            return "";
-        }
-
-        byte[] bytes = new BASE64Decoder().decodeBuffer(new FileInputStream(file));
-        GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(bytes));
-        BufferedReader bf = new BufferedReader(new InputStreamReader(gis, "UTF-8"));
-        String outStr = "";
-        String line;
-        while ((line = bf.readLine()) != null) {
-            outStr += line;
-        }
-        return outStr;
+    private String getAgentType() {
+        return AGENT_TYPE;
     }
 
-    public StatusCode getPrepStepStatusCode() {
-        return this.prepStepStatusCode;
+    private String getAgentVersion() {
+        return getResource(AGENTS_VERSION);
+    }
+
+    private String getPluginVersion() {
+        return getResource(VERSION);
+    }
+
+    private String getResource(String propertyName) {
+        String val = (properties.getProperty(propertyName));
+        if(StringUtils.isNotBlank(val)){
+            return val;
+        }
+        return "";
+    }
+
+    private Properties getProperties() {
+        Properties properties = new Properties();
+        try (InputStream stream = Main.class.getResourceAsStream("/project.properties")) {
+            properties.load(stream);
+        } catch (IOException e) {
+            logger.error("Failed to get version ", e);
+        }
+        return properties;
     }
 }

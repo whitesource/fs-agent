@@ -1,3 +1,18 @@
+/**
+ * Copyright (C) 2014 WhiteSource Ltd.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.whitesource.agent.archive;
 
 import com.github.junrar.testutil.ExtractArchive;
@@ -23,6 +38,7 @@ import org.redline_rpm.header.Header;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.utils.FilesScanner;
+import org.whitesource.agent.utils.Pair;
 
 import java.io.*;
 import java.nio.channels.Channels;
@@ -187,8 +203,8 @@ public class ArchiveExtractor {
             if (retiveFilesWithFolder == null || retiveFilesWithFolder.getKey().length <= 0) {
                 break;
             } else {
-                String[] fileNames = retiveFilesWithFolder.key;
-                folderToScan = retiveFilesWithFolder.value;
+                String[] fileNames = retiveFilesWithFolder.getKey();
+                folderToScan = retiveFilesWithFolder.getValue();
 
                 Pair<String, Collection<String>> filesFound = new Pair<>(folderToScan, Arrays.stream(fileNames).collect(Collectors.toList()));
                 Map<String, String> foundFiles;
@@ -338,7 +354,7 @@ public class ArchiveExtractor {
             ExtractArchive.extractArchive(dataToUnpack.getKey(), innerDir);
             foundArchive = true;
         } else {
-            logger.warn("Error: {} is unsupported archive type", dataToUnpack.key);
+            logger.warn("Error: {} is unsupported archive type", dataToUnpack.getKey());
         }
         if (foundArchive) {
             Pair resultArchive = new Pair(lowerCaseFileName, innerDir);
@@ -527,23 +543,5 @@ public class ArchiveExtractor {
 
     /* --- Nested Class --- */
 
-    private class Pair <X, Y>{
-        /* --- Private members --- */
-        private final X key;
-        private final Y value;
 
-        /* --- Constructor --- */
-        public Pair(X key, Y value) {
-            this.key = key;
-            this.value = value;
-        }
-
-        /* --- Getters --- */
-        public X getKey() {
-            return key;
-        }
-        public Y getValue() {
-            return value;
-        }
-    }
 }

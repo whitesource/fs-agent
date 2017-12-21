@@ -19,7 +19,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.CommandLineAgent;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
@@ -27,17 +26,16 @@ import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.FilesUtils;
+import org.whitesource.agent.utils.Pair;
+import org.whitesource.fs.configuration.ConfigurationValidation;
 import org.whitesource.fs.configuration.ScmConfiguration;
 import org.whitesource.fs.configuration.ScmRepositoriesParser;
 import org.whitesource.scm.ScmConnector;
-
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 /**
@@ -47,7 +45,7 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
  * @author tom.shapira
  * @author anna.rozin
  */
-public class FileSystemAgent extends CommandLineAgent {
+public class FileSystemAgent {
 
     /* --- Static members --- */
 
@@ -63,26 +61,23 @@ public class FileSystemAgent extends CommandLineAgent {
     private static final String PACKAGE_LOCK = "package-lock.json";
     private static final String PACKAGE_JSON = "package.json";
 
-    private static final String AGENT_TYPE = "fs-agent";
-    private static final String VERSION = "version";
-    private static final String AGENTS_VERSION = "agentsVersion";
-
     /* --- Members --- */
 
     private final List<String> dependencyDirs;
-    private final Properties properties;
+    private final Properties config;
+    private final ConfigurationValidation configurationValidation;
 
     private boolean projectPerSubFolder;
 
     /* --- Constructors --- */
 
-    public FileSystemAgent(Properties config, List<String> dependencyDirs, List<String> offlineRequestFiles) {
-        super(config, offlineRequestFiles);
-        properties = getProperties();
-        projectPerSubFolder = getBooleanProperty(PROJECT_PER_SUBFOLDER, false);
+    public FileSystemAgent(Properties config, List<String> dependencyDirs) {
+        this.config = config;
+        this.configurationValidation = new ConfigurationValidation();
+        projectPerSubFolder = configurationValidation.getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         if (projectPerSubFolder) {
             this.dependencyDirs = new LinkedList<>();
-            for (String directory :dependencyDirs) {
+            for (String directory : dependencyDirs) {
 
                 File file = new File(directory);
                 if (file.isDirectory()) {
@@ -90,8 +85,7 @@ public class FileSystemAgent extends CommandLineAgent {
                     directories.forEach(subDir -> this.dependencyDirs.add(subDir.toString()));
                 } else if (file.isFile()) {
                     this.dependencyDirs.add(directory);
-                }
-                else{
+                } else {
                     logger.warn(directory + "is not a file nor a directory .");
                 }
             }
@@ -102,23 +96,29 @@ public class FileSystemAgent extends CommandLineAgent {
 
     /* --- Overridden methods --- */
 
-    @Override
-    protected Collection<AgentProjectInfo> createProjects() {
+    public Pair<Collection<AgentProjectInfo>,StatusCode> createProjects() {
         if (projectPerSubFolder) {
-            Collection<AgentProjectInfo> projects = new LinkedList<>();
+            Pair <Collection<AgentProjectInfo>,StatusCode> projects = new Pair<>(new ArrayList<>(),StatusCode.SUCCESS);
             for (String directory : dependencyDirs) {
-                projects = getProjects(Collections.singletonList(directory));
-                if (projects.size() == 1) {
+                Pair <Collection<AgentProjectInfo>,StatusCode> tempProjects = getProjects(Collections.singletonList(directory));
+                if (tempProjects.getKey().size() == 1) {
                     String projectName = new File(directory).getName();
                     String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
-                    projects.stream().findFirst().get().setCoordinates(new Coordinates(null, projectName, projectVersion));
+                    tempProjects.getKey().stream().findFirst().get().setCoordinates(new Coordinates(null, projectName, projectVersion));
+                }
+
+                projects.getKey().addAll(tempProjects.getKey());
+
+                // return on the first project that fails
+                if(!tempProjects.getValue().equals(StatusCode.SUCCESS)){
+                    // return status code if there is a failure
+                    return new Pair<>(new ArrayList<>(),tempProjects.getValue());
                 }
             }
             return projects;
         } else {
-            Collection<AgentProjectInfo> projects = getProjects(dependencyDirs);
-
-            AgentProjectInfo projectInfo = projects.stream().findFirst().get();
+            Pair <Collection<AgentProjectInfo>,StatusCode> projects = getProjects(dependencyDirs);
+            AgentProjectInfo projectInfo = projects.getKey().stream().findFirst().get();
             if (projectInfo.getCoordinates() == null) {
                 // use token or name + version
                 String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
@@ -136,43 +136,11 @@ public class FileSystemAgent extends CommandLineAgent {
         }
     }
 
-    @Override
-    protected String getAgentType() {
-        return AGENT_TYPE;
-    }
-
-    @Override
-    protected String getAgentVersion() {
-        return getResource(AGENTS_VERSION);
-    }
-
-    @Override
-    protected String getPluginVersion() {
-        return getResource(VERSION);
-    }
-
-    private String getResource(String propertyName) {
-        String val = (properties.getProperty(propertyName));
-        if(StringUtils.isNotBlank(val)){
-            return val;
-        }
-        return "";
-    }
-
     /* --- Private methods --- */
 
-    private Properties getProperties() {
-        Properties properties = new Properties();
-        try (InputStream stream = Main.class.getResourceAsStream("/project.properties")) {
-            properties.load(stream);
-        } catch (IOException e) {
-            logger.error("Failed to get version ", e);
-        }
-        return properties;
-    }
-
-    private Collection<AgentProjectInfo> getProjects(List<String> scannerBaseDirs) {
+    private Pair <Collection<AgentProjectInfo>,StatusCode> getProjects(List<String> scannerBaseDirs) {
         // create scm connector
+        final StatusCode[] success = new StatusCode[]{StatusCode.SUCCESS};
         String scmType = config.getProperty(SCM_TYPE_PROPERTY_KEY);
         String url = config.getProperty(SCM_URL_PROPERTY_KEY);
         String username = config.getProperty(SCM_USER_PROPERTY_KEY);
@@ -182,30 +150,32 @@ public class FileSystemAgent extends CommandLineAgent {
         String repositoriesFile = config.getProperty(SCM_REPOSITORIES_FILE);
         String privateKey = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
         boolean isScmNpmInstall = getBooleanProperty(SCM_NPM_INSTALL, true);
-        int npmInstallTimeoutMinutes = getIntProperty(SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
+        int npmInstallTimeoutMinutes = configurationValidation.getIntProperty(config, SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
         //ScmConnector scmConnector = ScmConnector.create(scmType, url, privateKey, username, password, branch, tag);
         String separatorFiles = NpmLsJsonDependencyCollector.isWindows() ? "\\" : "/";
         Collection<String> scmPaths = new ArrayList<>();
         final boolean[] hasScmConnectors = new boolean[1];
 
         List<ScmConnector> scmConnectors = null;
-        if (StringUtils.isNotBlank(repositoriesFile)){
-            Collection<ScmConfiguration> scmConfigurations = ScmRepositoriesParser.parseRepositoriesFile(repositoriesFile , scmType, privateKey, username, password);
+        if (StringUtils.isNotBlank(repositoriesFile)) {
+            Collection<ScmConfiguration> scmConfigurations = ScmRepositoriesParser.parseRepositoriesFile(repositoriesFile, scmType, privateKey, username, password);
             scmConnectors = scmConfigurations.stream()
-                    .map(scm -> ScmConnector.create(scm.getType(), scm.getUrl(),scm.getPpk(),scm.getUser(), scm.getPass(), scm.getBranch(), scm.getTag()))
+                    .map(scm -> ScmConnector.create(scm.getType(), scm.getUrl(), scm.getPpk(), scm.getUser(), scm.getPass(), scm.getBranch(), scm.getTag()))
                     .collect(Collectors.toList());
-        }else {
+        } else {
             scmConnectors = Arrays.asList(ScmConnector.create(scmType, url, privateKey, username, password, branch, tag));
         }
 
-        if (scmConnectors != null && scmConnectors.stream().anyMatch(scm->scm!=null)) {
+        if (scmConnectors != null && scmConnectors.stream().anyMatch(scm -> scm != null)) {
             //scannerBaseDirs.clear();
             scmConnectors.stream().forEach(scmConnector -> {
                 if (scmConnector != null) {
                     logger.info("Connecting to SCM");
 
                     String scmPath = scmConnector.cloneRepository().getPath();
-                    scmPath = npmInstallScmRepository(isScmNpmInstall, npmInstallTimeoutMinutes, scmConnector, separatorFiles, scmPath);
+                    Pair<String, StatusCode> result = npmInstallScmRepository(isScmNpmInstall, npmInstallTimeoutMinutes, scmConnector, separatorFiles, scmPath);
+                    scmPath = result.getKey();
+                    success[0] = result.getValue();
                     scmPaths.add(scmPath);
                     scannerBaseDirs.add(scmPath);
                     hasScmConnectors[0] = true;
@@ -216,7 +186,7 @@ public class FileSystemAgent extends CommandLineAgent {
         // read all properties
         final String[] includes = config.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         final String[] excludes = config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        final int archiveExtractionDepth = getIntProperty(ARCHIVE_EXTRACTION_DEPTH_KEY, DEFAULT_ARCHIVE_DEPTH);
+        final int archiveExtractionDepth = configurationValidation.getIntProperty(config, ARCHIVE_EXTRACTION_DEPTH_KEY, DEFAULT_ARCHIVE_DEPTH);
         final String[] archiveIncludes = config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         final String[] archiveExcludes = config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         final boolean archiveFastUnpack = getBooleanProperty(ARCHIVE_FAST_UNPACK_KEY, false);
@@ -256,7 +226,7 @@ public class FileSystemAgent extends CommandLineAgent {
                 partialSha1Match, calculateHints, calculateMd5);
 
         // delete all temp scm files
-        scmPaths.forEach(directory->{
+        scmPaths.forEach(directory -> {
             if (directory != null) {
                 try {
                     FileUtils.forceDelete(new File(directory));
@@ -265,11 +235,18 @@ public class FileSystemAgent extends CommandLineAgent {
                 }
             }
         });
-        return  projects;
+        return new Pair<>(projects, success[0]);
     }
 
-    private String npmInstallScmRepository(boolean scmNpmInstall, int npmInstallTimeoutMinutes, ScmConnector scmConnector,
-                                           String separatorFiles, String pathToCloneRepoFiles) {
+    protected boolean getBooleanProperty(String propertyName, boolean defaultValue) {
+        return configurationValidation.getBooleanProperty(config, propertyName, defaultValue);
+    }
+
+    private Pair<String, StatusCode> npmInstallScmRepository(boolean scmNpmInstall, int npmInstallTimeoutMinutes, ScmConnector scmConnector,
+                                                          String separatorFiles, String pathToCloneRepoFiles) {
+
+        StatusCode success = StatusCode.SUCCESS;
+
         File packageJson = new File(pathToCloneRepoFiles + separatorFiles + PACKAGE_JSON);
         boolean npmInstallFailed = false;
         if (scmNpmInstall && packageJson.exists()) {
@@ -293,11 +270,11 @@ public class FileSystemAgent extends CommandLineAgent {
             }
             if (npmInstallFailed) {
                 // In case of error in 'npm install', delete and clone the repository to prevent wrong output
-                this.prepStepStatusCode = StatusCode.PREP_STEP_FAILURE;
+                success = StatusCode.PREP_STEP_FAILURE;
                 scmConnector.deleteCloneDirectory();
                 pathToCloneRepoFiles = scmConnector.cloneRepository().getPath();
             }
         }
-        return pathToCloneRepoFiles;
+        return new Pair<>(pathToCloneRepoFiles, success);
     }
 }
