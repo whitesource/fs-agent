@@ -52,7 +52,9 @@ public class MavenPomParser implements IBomParser {
 
         Model model = null;
         try {
-            model = reader.read(new FileReader(bomPath));
+            try(FileReader fileReader = new FileReader(bomPath)) {
+                model = reader.read(fileReader);
+            }
         } catch (IOException e) {
             logger.debug("Could not parse pom file " + bomPath);
         } catch (XmlPullParserException e) {

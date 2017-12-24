@@ -98,7 +98,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         }
 
         Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
-        Collection<AgentProjectInfo> projects = null;
+        Collection<AgentProjectInfo> projects = new ArrayList<>();
         try {
             CommandLineProcess mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParams());
             List<String> lines = mvnDependencies.executeProcess();
