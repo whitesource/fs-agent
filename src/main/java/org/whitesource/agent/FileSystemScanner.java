@@ -42,6 +42,7 @@ public class FileSystemScanner {
     /* --- Members --- */
 
     private final boolean showProgressBar;
+    private final boolean isSeparateProjects;
     private DependencyResolutionService dependencyResolutionService;
 
     /* --- Constructors --- */
@@ -49,6 +50,7 @@ public class FileSystemScanner {
     public FileSystemScanner(boolean showProgressBar, DependencyResolutionService dependencyResolutionService) {
         this.showProgressBar = showProgressBar;
         this.dependencyResolutionService = dependencyResolutionService;
+        this.isSeparateProjects = dependencyResolutionService.isSeparateProjects();
     }
 
     /* --- Public methods --- */
@@ -191,7 +193,7 @@ public class FileSystemScanner {
                             List<DependencyInfo> projectDependencies = filesDependencies.stream().filter(dependencyInfo -> dependencyInfo.getSystemPath().contains(subFolder.toString())).collect(Collectors.toList());
                             if (!projectDependencies.isEmpty()) {
                                 AgentProjectInfo subProject;
-                                if(dependencyResolutionService.isSeparateProjects()) {
+                                if(isSeparateProjects) {
                                     subProject = new AgentProjectInfo();
                                     allProjects.put(subProject, null);
                                     subProject.setCoordinates(new Coordinates(null, subFolder.toFile().getName(), null));
