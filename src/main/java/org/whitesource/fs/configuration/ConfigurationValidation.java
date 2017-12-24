@@ -71,7 +71,7 @@ public class ConfigurationValidation {
         }
 
         String projectToken = configProps.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
-        String projectName = project != null ? project : configProps.getProperty(PROJECT_NAME_PROPERTY_KEY);
+        String projectName = !StringUtils.isBlank(project) ? project : configProps.getProperty(PROJECT_NAME_PROPERTY_KEY);
         boolean noProjectToken = StringUtils.isBlank(projectToken);
         boolean noProjectName = StringUtils.isBlank(projectName);
         boolean projectPerFolder = getBooleanProperty(configProps, PROJECT_PER_SUBFOLDER, false);

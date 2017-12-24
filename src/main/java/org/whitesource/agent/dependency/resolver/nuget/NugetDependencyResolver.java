@@ -26,7 +26,6 @@ import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPacka
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackages;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackagesConfigXmlParser;
 import org.whitesource.fs.CommandLineArgs;
-import org.whitesource.fs.Main;
 
 import java.io.File;
 import java.util.*;
@@ -39,6 +38,17 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractDependencyResolver.class);
+
+    /* --- Members --- */
+
+    private final String whitesourceConfiguration;
+
+    /* --- Constructor --- */
+
+    public NugetDependencyResolver(String whitesourceConfiguration) {
+        super();
+        this.whitesourceConfiguration = whitesourceConfiguration;
+    }
 
     /* --- Overridden methods --- */
 
@@ -83,7 +93,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     private Collection<NugetPackages> parseNugetPackageFiles(List<String> configFilesPath) {
         // get configuration file path
-        String whitesourceConfigurationPath = new File(Main.commandLineArgs.getConfigFilePath()).getAbsolutePath();
+        String whitesourceConfigurationPath = new File(whitesourceConfiguration).getAbsolutePath();
 
         Collection<NugetPackages> nugetPackages = new ArrayList<>();
         for (String configFilePath : configFilesPath) {

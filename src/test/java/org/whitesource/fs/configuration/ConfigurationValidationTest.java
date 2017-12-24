@@ -1,8 +1,10 @@
 package org.whitesource.fs.configuration;
 import org.junit.Assert;
 import org.junit.Test;
+import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.fs.CommandLineArgs;
+import org.whitesource.fs.FileSystemAgentConfiguration;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -16,14 +18,7 @@ public class ConfigurationValidationTest {
     @Test
     public void shouldWorkWithProjectPerFolder() throws IOException {
 
-        // arrange
-        File file = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
-        final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
-
-        Path tmpPath = Paths.get(JAVA_TEMP_DIR, file.getName());
-        Files.copy(file.toPath(), tmpPath, StandardCopyOption.REPLACE_EXISTING);
-
-        replaceSelected(tmpPath.toString(), "#projectPerFolder=true", "projectPerFolder=true");
+        File tmpPath = getFileWithProjectPerFolder();
         ConfigurationValidation configurationValidation = new ConfigurationValidation();
 
         // act
@@ -31,6 +26,19 @@ public class ConfigurationValidationTest {
 
         // assert
         Assert.assertNotNull(configProperties);
+    }
+
+    @Test
+    public void shouldNotOverrideParametersFromCommandArgs() throws IOException {
+        // arrange
+        File tmpPath = getFileWithProjectPerFolder();
+
+        // act
+        String[] commandLineArgs = new String[]{"-c", tmpPath.getAbsolutePath(), "-d", new File(TestHelper.FOLDER_WITH_MIX_FOLDERS).getAbsolutePath()};
+        FileSystemAgentConfiguration fileSystemAgentConfiguration = new FileSystemAgentConfiguration(commandLineArgs);
+
+        // assert
+        Assert.assertTrue(fileSystemAgentConfiguration.getProperties().getProperty(ConfigPropertyKeys.PROJECT_PER_SUBFOLDER).equals("true"));
     }
 
     private void replaceSelected(String filename, String toFind, String replaceWith) {
@@ -63,5 +71,22 @@ public class ConfigurationValidationTest {
         } catch (Exception e) {
             System.out.println("Problem reading file.");
         }
+    }
+
+    public File getFileWithProjectPerFolder() {
+        // arrange
+        File file = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
+        final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
+
+        Path tmpPath = Paths.get(JAVA_TEMP_DIR, file.getName());
+        try {
+            Files.copy(file.toPath(), tmpPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        replaceSelected(tmpPath.toString(), "#projectPerFolder=true", "projectPerFolder=true");
+        return tmpPath.toFile();
     }
 }

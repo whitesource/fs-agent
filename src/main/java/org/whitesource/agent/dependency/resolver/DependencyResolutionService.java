@@ -74,7 +74,8 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector));
         }
         if (nugetResolveDependencies) {
-            dependencyResolvers.add(new NugetDependencyResolver());
+            String whitesourceConfiguration = config.getProperty(PROJECT_CONFIGURATION_PATH);
+            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration));
         }
         if (mavenResolveDependencies) {
             dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules,mavenIgnoredScopes, dependenciesOnly));

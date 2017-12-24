@@ -154,8 +154,8 @@ public class FileSystemAgentTest {
         Collection<AgentProjectInfo> projects = fileSystemAgent.createProjects().getKey();
         Collection<DependencyInfo> fsAgentDeps = projects.stream().findFirst().get().getDependencies();
 
-        ProjectsSender projectsSender = new ProjectsSender(props);
-        projectsSender.sendProjects(projects);
+        //ProjectsSender projectsSender = new ProjectsSender(props);
+        //projectsSender.sendProjects(projects);
 
         int npmPluginCount = getCount(dependencyInfosNPMPLugin);
         int fsAgentCount = getCount(fsAgentDeps);

@@ -29,6 +29,7 @@ import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
+import org.whitesource.fs.FileSystemAgentConfiguration;
 import org.whitesource.fs.Main;
 import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.ConfigurationValidation;
@@ -64,14 +65,14 @@ public class ProjectsSender {
     protected final Properties config;
     private final ConfigurationValidation configurationValidation;
     protected StatusCode prepStepStatusCode = StatusCode.SUCCESS;
-    private Properties properties;
+    private Properties artifactProperties;
 
     /* --- Constructors --- */
 
-    public ProjectsSender(Properties config) {
-        this.config = config;
+    public ProjectsSender(FileSystemAgentConfiguration fileSystemAgentConfiguration) {
+        this.config = fileSystemAgentConfiguration.getProperties();
         this.configurationValidation = new ConfigurationValidation();
-        this.properties = getProperties();
+        this.artifactProperties = getArtifactProperties();
     }
 
     /* --- Public methods --- */
@@ -330,14 +331,14 @@ public class ProjectsSender {
     }
 
     private String getResource(String propertyName) {
-        String val = (properties.getProperty(propertyName));
+        String val = (artifactProperties.getProperty(propertyName));
         if(StringUtils.isNotBlank(val)){
             return val;
         }
         return "";
     }
 
-    private Properties getProperties() {
+    private Properties getArtifactProperties() {
         Properties properties = new Properties();
         try (InputStream stream = Main.class.getResourceAsStream("/project.properties")) {
             properties.load(stream);

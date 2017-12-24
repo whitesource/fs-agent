@@ -77,7 +77,7 @@ public class CommandLineArgs {
     List<String> requestFiles = new LinkedList<>();
 
     @Parameter(names = "-projectPerFolder", description = "Creates a project for each subfolder, the subfolder's name is used as the project name")
-    String projectPerFolder = "false";
+    String projectPerFolder = "";
 
     @Parameter(names = "-updateType", description = "Specify if the project dependencies should be removed before adding the new ones")
     String updateType = "";
