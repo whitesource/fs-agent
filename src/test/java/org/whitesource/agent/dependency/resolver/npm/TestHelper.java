@@ -8,6 +8,10 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.fs.CommandLineArgs;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -35,6 +39,82 @@ public class TestHelper {
 
     /* --- Static Methods --- */
 
+    public static File getTempFileWithReplace( String from,String to ) {
+        // arrange
+        File file = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
+        final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
+
+        Path tmpPath = Paths.get(JAVA_TEMP_DIR, file.getName());
+        try {
+            Files.copy(file.toPath(), tmpPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        replaceSelected(tmpPath.toString(), from,to);
+        return tmpPath.toFile();
+    }
+
+    public static File getTempFileWithProperty(String propertyName, Object val) {
+        // arrange
+        File file = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
+        final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
+
+        Path tmpPath = Paths.get(JAVA_TEMP_DIR, file.getName());
+        try {
+            Files.copy(file.toPath(), tmpPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        insertProperty(tmpPath.toString(), propertyName, val.toString());
+        return tmpPath.toFile();
+    }
+
+    private static void insertProperty(String filename, String propertyName, String propertyValue) {
+        try (BufferedWriter output = new BufferedWriter(new FileWriter(filename, true))){
+            output.append(System.lineSeparator());
+            output.append(propertyName+"="+propertyValue);
+            output.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void replaceSelected(String filename, String toFind, String replaceWith) {
+        try {
+            // input the file content to the StringBuffer "input"
+            BufferedReader file = new BufferedReader(new FileReader(filename));
+            String line;
+            StringBuffer inputBuffer = new StringBuffer();
+
+            while ((line = file.readLine()) != null) {
+                inputBuffer.append(line);
+                inputBuffer.append('\n');
+            }
+            String inputStr = inputBuffer.toString();
+
+            file.close();
+
+            System.out.println(inputStr); // check that it's inputted right
+
+            inputStr = inputStr.replace(toFind, replaceWith);
+
+            // check if the new input is right
+            System.out.println("----------------------------------\n" + inputStr);
+
+            // write the new String with the replaced line OVER the same file
+            FileOutputStream fileOut = new FileOutputStream(filename);
+            fileOut.write(inputStr.getBytes());
+            fileOut.close();
+
+        } catch (Exception e) {
+            System.out.println("Problem reading file.");
+        }
+    }
+
     public static void testDependencyResult(boolean checkChildren, List<ResolutionResult> results) {
         results.forEach(resolutionResult -> {
             Assert.assertTrue(resolutionResult.getResolvedProjects().size() > 0);
@@ -55,7 +135,7 @@ public class TestHelper {
     }
 
     public static Stream<String> getDependenciesWithNpm(String dir) {
-        NpmLsJsonDependencyCollector collector = new NpmLsJsonDependencyCollector(false, 60);
+        NpmLsJsonDependencyCollector collector = new NpmLsJsonDependencyCollector(false, 60, false);
         AgentProjectInfo projectInfo = collector.collectDependencies(dir).stream().findFirst().get();
         Collection<DependencyInfo> dependencies = projectInfo.getDependencies();
         return dependencies.stream().map(dep -> getShortNameByTgz(dep)).sorted();

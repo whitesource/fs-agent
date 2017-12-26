@@ -15,7 +15,6 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
-import com.sun.org.apache.xerces.internal.impl.xs.util.LSInputListImpl;
 import org.eclipse.jgit.util.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -76,15 +75,15 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Constructor --- */
 
-    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector) {
+    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector,boolean runPreStep) {
         super();
-        bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector);
+        bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, runPreStep);
         bomParser = new NpmBomParser();
         this.ignoreJavaScriptFiles = ignoreJavaScriptFiles;
     }
 
     public NpmDependencyResolver() {
-        this(false,true, NPM_DEFAULT_LS_TIMEOUT);
+        this(false,true, NPM_DEFAULT_LS_TIMEOUT , false);
     }
 
     /* --- Overridden methods --- */
@@ -261,13 +260,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
                 logger.debug("Collect package.json of the dependency in the file: {}", dependency.getFilename());
             }
         }
-        try {
-            executorService.invokeAll(threadsCollection);
-            executorService.shutdown();
-        } catch (InterruptedException e) {
-            logger.error("One of the threads was interrupted, please try to scan again the project. Error: {}", e);
-            System.exit(StatusCode.ERROR.getValue());
-        }
+        runThreadCollection(executorService, threadsCollection);
         logger.debug("set hierarchy of the dependencies");
         // remove duplicates dependencies
         Map<String, DependencyInfo> existDependencies = new HashMap<>();
@@ -282,6 +275,16 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         }
         setHierarchy(dependencyPackageJsonMapWithoutDuplicates, existDependencies);
         return existDependencies.values();
+    }
+
+    private void runThreadCollection(ExecutorService executorService, Collection<EnrichDependency> threadsCollection) {
+        try {
+            executorService.invokeAll(threadsCollection);
+            executorService.shutdown();
+        } catch (InterruptedException e) {
+            logger.error("One of the threads was interrupted, please try to scan again the project. Error: {}", e);
+            System.exit(StatusCode.ERROR.getValue());
+        }
     }
 
     private boolean fileShouldBeParsed(File file) {
@@ -317,13 +320,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         Collection<EnrichDependency> threadsCollection = new LinkedList<>();
         dependencies.forEach(dependency -> handleLSDependencyRecursivelyImpl(dependency, resultFiles, threadsCollection));
         ExecutorService executorService = Executors.newWorkStealingPool(NUM_THREADS);
-        try {
-            executorService.invokeAll(threadsCollection);
-            executorService.shutdown();
-        } catch (InterruptedException e) {
-            logger.error("One of the threads was interrupted, please try to scan again the project. Error: {}", e);
-            System.exit(StatusCode.ERROR.getValue());
-        }
+        runThreadCollection(executorService, threadsCollection);
     }
 
     private void handleLSDependencyRecursivelyImpl(DependencyInfo dependency, Map<String, BomFile> resultFiles, Collection<EnrichDependency> threadsCollection) {

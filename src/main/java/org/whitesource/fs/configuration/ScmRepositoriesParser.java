@@ -29,7 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Author: Eugen.Horovitz
+ * Author: eugen.horovitz
  */
 public class ScmRepositoriesParser {
 

@@ -51,27 +51,30 @@ public class DependencyResolutionService {
     /* --- Constructors --- */
 
     public DependencyResolutionService(Properties config) {
+        final boolean npmRunPreStep = getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
         final boolean npmResolveDependencies = getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
         final boolean npmIncludeDevDependencies = getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
-        final boolean ignoreJavaScriptFiles = getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
+        final boolean npmIgnoreJavaScriptFiles = getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
         final long npmTimeoutDependenciesCollector = getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
+
         final boolean bowerResolveDependencies = getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
+        final boolean bowerRunPreStep = getBooleanProperty(config, BOWER_RUN_PRE_STEP, true);
 
         final boolean nugetResolveDependencies = getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
 
         final boolean mavenResolveDependencies = getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
         final String[] mavenIgnoredScopes = getListProperty(config, MAVEN_IGNORED_SCOPES, null);
-        final boolean mavenAggregateModules = getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
+        final boolean mavenAggregateModules = getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, false);
 
         dependenciesOnly = getBooleanProperty(config, DEPENDENCIES_ONLY, false);
 
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, ignoreJavaScriptFiles, npmTimeoutDependenciesCollector));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector ,npmRunPreStep));
         }
         if (bowerResolveDependencies) {
-            dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector));
+            dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector,bowerRunPreStep));
         }
         if (nugetResolveDependencies) {
             String whitesourceConfiguration = config.getProperty(PROJECT_CONFIGURATION_PATH);

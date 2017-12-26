@@ -65,11 +65,16 @@ public final class ConfigPropertyKeys {
     public static final String LOG_LEVEL_KEY = "log.level";
     public static final String FOLLOW_SYMBOLIC_LINKS = "followSymbolicLinks";
     public static final String SHOW_PROGRESS_BAR = "showProgressBar";
+
+    public static final String NPM_RUN_PRE_STEP = "npm.runPreStep";
     public static final String NPM_RESOLVE_DEPENDENCIES = "npm.resolveDependencies";
     public static final String NPM_INCLUDE_DEV_DEPENDENCIES = "npm.includeDevDependencies";
     public static final String NPM_IGNORE_JAVA_SCRIPT_FILES = "npm.ignoreJavaScriptFiles";
     public static final String NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS = "npm.timeoutDependenciesCollectorInSeconds";
+
     public static final String BOWER_RESOLVE_DEPENDENCIES = "bower.resolveDependencies";
+    public static final String BOWER_RUN_PRE_STEP = "BOWER.runPreStep";
+
     public static final String NUGET_RESOLVE_DEPENDENCIES = "nuget.resolveDependencies";
     public static final String MAVEN_IGNORED_SCOPES = "maven.ignoredScopes";
     public static final String MAVEN_RESOLVE_DEPENDENCIES = "maven.resolveDependencies";

@@ -16,7 +16,7 @@
 package org.whitesource.fs.configuration;
 
 /**
- * Author: Eugen.Horovitz
+ * Author: eugen.horovitz
  */
 public class ScmConfiguration {
 

@@ -7,7 +7,6 @@ import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
-import org.whitesource.agent.ProjectsSender;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -101,8 +100,6 @@ public class FileSystemAgentTest {
             // send to server via fs-agent
             //runMainOnDir(dir);
 
-            runCommand(dir.getAbsolutePath(), new String[]{"bower.cmd", "install"});
-
             // send to server via npm-plugin
             String pluginPath = TestHelper.getOsRelativePath("ws-bower\\bin\\ws-bower.js");
             runNpmPluginOnFolder(dir,pluginPath);
@@ -115,27 +112,12 @@ public class FileSystemAgentTest {
         });
     }
 
-    private void runCommand(String absolutePath, String[] args) {
-        CommandLineProcess commandLineProcess = new CommandLineProcess(absolutePath, args);
-        try {
-            commandLineProcess.executeProcess();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Test
     public void shouldReturnTheSameNumberOfDependenciesAsNpmPlugin() {
         File directory = new File(TestHelper.FOLDER_WITH_NPN_PROJECTS);
         Properties props = TestHelper.getPropertiesFromFile();
 
         Arrays.stream(directory.listFiles()).filter(dir -> dir.isDirectory()).forEach(dir -> {
-
-            runCommand(dir.getAbsolutePath(), new String[] { "npm.cmd", "install" });
-
-            // send to server via fs-agent
-            //runMainOnDir(dir);
-
             // send to server via npm-plugin
             String pluginPath = TestHelper.getOsRelativePath("whitesource/bin/whitesource.js");
             runNpmPluginOnFolder(dir,pluginPath);

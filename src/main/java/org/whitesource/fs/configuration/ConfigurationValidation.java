@@ -27,7 +27,7 @@ import java.util.Properties;
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 /**
- * Author: Eugen.Horovitz
+ * Author: eugen.horovitz
  */
 public class ConfigurationValidation {
         /* --- Static members --- */

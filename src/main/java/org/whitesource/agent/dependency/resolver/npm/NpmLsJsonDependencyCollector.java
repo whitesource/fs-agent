@@ -15,9 +15,6 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
-import com.google.gson.Gson;
-import org.apache.commons.compress.utils.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +25,7 @@ import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.utils.CommandLineProcess;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -51,6 +46,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     private static final Logger logger = LoggerFactory.getLogger(NpmLsJsonDependencyCollector.class);
 
     public static final String LS_COMMAND = "ls";
+    public static final String INSTALL_COMMAND = "install";
     public static final String LS_PARAMETER_JSON = "--json";
 
     private static final String NPM_COMMAND = isWindows() ? "npm.cmd" : "npm";
@@ -67,20 +63,26 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     /* --- Members --- */
 
     protected final boolean includeDevDependencies;
+    private final boolean runPreStep;
     private boolean showNpmLsError;
     private final long npmTimeoutDependenciesCollector;
 
     /* --- Constructors --- */
 
-    public NpmLsJsonDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector) {
+    public NpmLsJsonDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector, boolean runPreStep) {
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
         this.includeDevDependencies = includeDevDependencies;
+        this.runPreStep = runPreStep;
     }
 
     /* --- Public methods --- */
 
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
+        if(runPreStep) {
+            executePreparationStep(rootDirectory, getInstallParams());
+        }
+
         Collection<DependencyInfo> dependencies = new LinkedList<>();
         try {
             CommandLineProcess npmLs = new CommandLineProcess(rootDirectory, getLsCommandParams());
@@ -108,6 +110,17 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     }
 
     /* --- Private methods --- */
+
+    private boolean executePreparationStep(String folder , String[] command) {
+        CommandLineProcess npmInstall = new CommandLineProcess(folder, command);
+        try {
+            npmInstall.executeProcessWithoutOutput();
+        } catch (IOException e) {
+            logger.debug("Could not run " + command + " in folder " + folder);
+            return false;
+        }
+        return npmInstall.isErrorInProcess();
+    }
 
     private Collection<DependencyInfo> getDependencies(JSONObject jsonObject) {
         Collection<DependencyInfo> dependencies = new ArrayList<>();
@@ -151,6 +164,10 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     }
 
     /* --- Protected methods --- */
+
+    protected String[] getInstallParams() {
+        return new String[]{NPM_COMMAND, INSTALL_COMMAND};
+    }
 
     protected String[] getLsCommandParams() {
         if (includeDevDependencies) {
