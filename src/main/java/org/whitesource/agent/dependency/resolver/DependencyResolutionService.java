@@ -71,17 +71,17 @@ public class DependencyResolutionService {
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector ,npmRunPreStep));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep));
         }
         if (bowerResolveDependencies) {
-            dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector,bowerRunPreStep));
+            dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep));
         }
         if (nugetResolveDependencies) {
             String whitesourceConfiguration = config.getProperty(PROJECT_CONFIGURATION_PATH);
             dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration));
         }
         if (mavenResolveDependencies) {
-            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules,mavenIgnoredScopes, dependenciesOnly));
+            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, dependenciesOnly));
             separateProjects = !mavenAggregateModules;
         }
     }

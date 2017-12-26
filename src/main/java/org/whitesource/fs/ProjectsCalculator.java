@@ -44,6 +44,8 @@ public class ProjectsCalculator {
 
     private static final Logger logger = LoggerFactory.getLogger(ProjectsCalculator.class);
     private static final String INFO = "info";
+    public static final String UTF_8 = "UTF-8";
+    public static final String EMPTY_STRING = "";
 
     /* --- Public methods --- */
 
@@ -132,13 +134,13 @@ public class ProjectsCalculator {
 
     private static String decompress(File file) throws IOException {
         if (file == null || !file.exists()) {
-            return "";
+            return EMPTY_STRING;
         }
 
         byte[] bytes = new BASE64Decoder().decodeBuffer(new FileInputStream(file));
-        GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(bytes));
-        BufferedReader bf = new BufferedReader(new InputStreamReader(gis, "UTF-8"));
-        String outStr = "";
+        GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(bytes));
+        BufferedReader bf = new BufferedReader(new InputStreamReader(gzipInputStream, UTF_8));
+        String outStr = EMPTY_STRING;
         String line;
         while ((line = bf.readLine()) != null) {
             outStr += line;

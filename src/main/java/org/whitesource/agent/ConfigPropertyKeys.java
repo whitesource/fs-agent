@@ -73,7 +73,7 @@ public final class ConfigPropertyKeys {
     public static final String NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS = "npm.timeoutDependenciesCollectorInSeconds";
 
     public static final String BOWER_RESOLVE_DEPENDENCIES = "bower.resolveDependencies";
-    public static final String BOWER_RUN_PRE_STEP = "BOWER.runPreStep";
+    public static final String BOWER_RUN_PRE_STEP = "bower.runPreStep";
 
     public static final String NUGET_RESOLVE_DEPENDENCIES = "nuget.resolveDependencies";
     public static final String MAVEN_IGNORED_SCOPES = "maven.ignoredScopes";
