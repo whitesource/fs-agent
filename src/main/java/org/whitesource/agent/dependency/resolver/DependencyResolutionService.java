@@ -58,7 +58,7 @@ public class DependencyResolutionService {
         final long npmTimeoutDependenciesCollector = getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
 
         final boolean bowerResolveDependencies = getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
-        final boolean bowerRunPreStep = getBooleanProperty(config, BOWER_RUN_PRE_STEP, true);
+        final boolean bowerRunPreStep = getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
 
         final boolean nugetResolveDependencies = getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
 

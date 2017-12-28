@@ -72,18 +72,20 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private final NpmLsJsonDependencyCollector bomCollector;
     private final NpmBomParser bomParser;
     private final boolean ignoreJavaScriptFiles;
+    private final boolean runPreStep;
 
     /* --- Constructor --- */
 
     public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector,boolean runPreStep) {
         super();
-        bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, runPreStep);
+        bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector);
         bomParser = new NpmBomParser();
         this.ignoreJavaScriptFiles = ignoreJavaScriptFiles;
+        this.runPreStep = runPreStep;
     }
 
-    public NpmDependencyResolver() {
-        this(false,true, NPM_DEFAULT_LS_TIMEOUT , false);
+    public NpmDependencyResolver(boolean runPreStep) {
+        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep);
     }
 
     /* --- Overridden methods --- */
@@ -104,6 +106,11 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, List<String> bomFiles) {
+
+        if(runPreStep) {
+            getDependencyCollector().executePreparationStep(topLevelFolder);
+        }
+
         logger.debug("Attempting to parse package.json files");
         // parse package.json files
         Collection<BomFile> parsedBomFiles = new LinkedList<>();

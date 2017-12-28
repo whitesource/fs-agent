@@ -62,6 +62,7 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
         // try to collect dependencies via 'mvn dependency tree and parse'
 
         Collection<AgentProjectInfo> projects = dependencyCollector.collectDependencies(topLevelFolder);
+
         List<BomFile> files = bomFiles.stream().map(bomParser::parseBomFile)
                 .filter(bom -> !bom.getLocalFileName().contains(TEST)).collect(Collectors.toList());
         // create excludes for .JAVA files upon finding MAVEN dependencies

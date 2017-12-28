@@ -63,26 +63,20 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     /* --- Members --- */
 
     protected final boolean includeDevDependencies;
-    private final boolean runPreStep;
     private boolean showNpmLsError;
     private final long npmTimeoutDependenciesCollector;
 
     /* --- Constructors --- */
 
-    public NpmLsJsonDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector, boolean runPreStep) {
+    public NpmLsJsonDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector) {
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
         this.includeDevDependencies = includeDevDependencies;
-        this.runPreStep = runPreStep;
     }
 
     /* --- Public methods --- */
 
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
-        if(runPreStep) {
-            executePreparationStep(rootDirectory, getInstallParams());
-        }
-
         Collection<DependencyInfo> dependencies = new LinkedList<>();
         try {
             CommandLineProcess npmLs = new CommandLineProcess(rootDirectory, getLsCommandParams());
@@ -109,9 +103,9 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
         return getSingleProjectList(dependencies);
     }
 
-    /* --- Private methods --- */
-
-    private boolean executePreparationStep(String folder , String[] command) {
+    public boolean executePreparationStep(String folder ) {
+        String[] command = getInstallParams();
+        logger.debug("Running install command : " + command);
         CommandLineProcess npmInstall = new CommandLineProcess(folder, command);
         try {
             npmInstall.executeProcessWithoutOutput();
@@ -121,6 +115,8 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
         }
         return npmInstall.isErrorInProcess();
     }
+
+    /* --- Private methods --- */
 
     private Collection<DependencyInfo> getDependencies(JSONObject jsonObject) {
         Collection<DependencyInfo> dependencies = new ArrayList<>();

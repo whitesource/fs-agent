@@ -80,15 +80,9 @@ public class FileSystemAgentTest {
         Arrays.stream(dir10.listFiles()).filter(dir -> dir.isDirectory()).forEach(directory -> {
             FilesScanner fs = new FilesScanner();
 
-            Collection<ResolvedFolder> map = fs.findTopFolders(Arrays.asList(directory.getPath()), new NpmDependencyResolver().getBomPattern(), new LinkedList<>());
+            Collection<ResolvedFolder> map = fs.findTopFolders(Arrays.asList(directory.getPath()), new NpmDependencyResolver(true).getBomPattern(), new LinkedList<>());
             map.forEach((folder) -> Assert.assertTrue(folder.getTopFoldersFound().size() > 0));
         });
-    }
-
-    @Test
-    public void shouldRunMixedMainOnFolder() {
-        File directory = new File(TestHelper.FOLDER_WITH_MIX_FOLDERS);
-        Arrays.stream(directory.listFiles()).filter(dir -> dir.isDirectory()).forEach(dir -> runMainOnDir(dir));
     }
 
     @Test
@@ -238,14 +232,6 @@ public class FileSystemAgentTest {
 
     /* --- Private methods --- */
 
-    private void runMainOnDir(File directory) {
-
-        File file = TestHelper.getFileFromResources("whitesource-fs-agent.config");
-        String config = file.getAbsolutePath();
-        String[] args = ("-c "+ config + " -d " + directory.getPath() + " -product " + "fsAgentMain" + " -project " + directory.getName()).split(" ");
-        int result = Main.execute(args);
-        Assert.assertEquals(result, 0);
-    }
 
     private Stream<DependencyInfo> getDependenciesWithFilter(List<String> dirs, Properties p) {
         FileSystemAgent f = new FileSystemAgent(p, dirs);

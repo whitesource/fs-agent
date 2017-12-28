@@ -10,10 +10,40 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static org.whitesource.agent.ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY;
 import static org.whitesource.agent.ConfigPropertyKeys.NPM_RUN_PRE_STEP;
 import static org.whitesource.agent.ConfigPropertyKeys.PROJECT_PER_SUBFOLDER;
 
 public class MainTest {
+
+    @Test
+    public void shouldRunMixedMainOnFolder() {
+        File directory = new File(TestHelper.FOLDER_WITH_MIX_FOLDERS);
+        Arrays.stream(directory.listFiles()).filter(dir -> dir.isDirectory()).forEach(dir -> {
+            File file = TestHelper.getFileFromResources("whitesource-fs-agent.config");
+            String config = file.getAbsolutePath();
+            String[] args = ("-c " + config + " -d " + dir.getPath() + " -product " + "fsAgentMain" + " -project " + dir.getName()).split(" ");
+            int result = Main.execute(args);
+            Assert.assertEquals(result, 0);
+        });
+    }
+
+    @Test
+    public void shouldRunMavenWithoutName() {
+        File dir = new File(TestHelper.FOLDER_WITH_MVN_PROJECTS);
+        File file = TestHelper.getTempFileWithProperty(INCLUDES_PATTERN_PROPERTY_KEY,"**/*.java");
+        String config = file.getAbsolutePath();
+        String projectName = dir.getName();
+        String[] args = ("-c " + config + " -d " + dir.getPath() + " -product " + "fsAgentMain" + " -project " + projectName).split(" ");
+
+        // read configuration config
+        FileSystemAgentConfiguration fileSystemAgentConfiguration = new FileSystemAgentConfiguration(args);
+        ProjectsCalculator projectsCalculator = new ProjectsCalculator();
+        Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(fileSystemAgentConfiguration);
+
+        String nameActual = projects.getKey().stream().findFirst().get().getCoordinates().getArtifactId();
+        Assert.assertEquals(nameActual, projectName);
+    }
 
     @Test
     public void shouldWorkWithProjectPerFolder() throws IOException {
