@@ -21,13 +21,14 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.utils.Pair;
-import sun.misc.BASE64Decoder;
+import java.util.Base64;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -44,8 +45,8 @@ public class ProjectsCalculator {
 
     private static final Logger logger = LoggerFactory.getLogger(ProjectsCalculator.class);
     private static final String INFO = "info";
-    public static final String UTF_8 = "UTF-8";
-    public static final String EMPTY_STRING = "";
+    private static final String UTF_8 = "UTF-8";
+    private static final String EMPTY_STRING = "";
 
     /* --- Public methods --- */
 
@@ -137,15 +138,15 @@ public class ProjectsCalculator {
             return EMPTY_STRING;
         }
 
-        byte[] bytes = new BASE64Decoder().decodeBuffer(new FileInputStream(file));
+        byte[] bytes = Base64.getDecoder().decode(IOUtils.toByteArray(new FileInputStream(file)));
         GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(bytes));
         BufferedReader bf = new BufferedReader(new InputStreamReader(gzipInputStream, UTF_8));
-        String outStr = EMPTY_STRING;
+        StringBuilder outStr = new StringBuilder(EMPTY_STRING);
         String line;
         while ((line = bf.readLine()) != null) {
-            outStr += line;
+            outStr.append(line);
         }
-        return outStr;
+        return outStr.toString();
     }
 
 }
