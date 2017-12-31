@@ -57,18 +57,18 @@ public class FileSystemScanner {
 
     /**
      * This method is usually called from outside by different other tools
-     * @param scannerBaseDirs
-     * @param scmConnector
-     * @param includes
-     * @param excludes
-     * @param globCaseSensitive
-     * @param archiveExtractionDepth
-     * @param archiveIncludes
-     * @param archiveExcludes
-     * @param archiveFastUnpack
-     * @param followSymlinks
-     * @param excludedCopyrights
-     * @param partialSha1Match
+     * @param scannerBaseDirs folders to scan
+     * @param scmConnector use scmConnector
+     * @param includes includes glob patterns
+     * @param excludes excludes glob patterns
+     * @param globCaseSensitive global case sensitive
+     * @param archiveExtractionDepth depth of recursive extraction
+     * @param archiveIncludes includes glob patterns for extraction
+     * @param archiveExcludes exclude glob patterns for extraction
+     * @param archiveFastUnpack use fast extraction
+     * @param followSymlinks use followSymlinks
+     * @param excludedCopyrights use excludedCopyrights
+     * @param partialSha1Match use partialSha1Match
      * @return
      */
     public List<DependencyInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,

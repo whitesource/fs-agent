@@ -53,7 +53,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     /* --- Overridden methods --- */
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, List<String> configFiles) {
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles) {
         Collection<NugetPackages> allConfigNugetPackages = parseNugetPackageFiles(configFiles);
         Set<DependencyInfo> dependencies = new HashSet<>();
 
@@ -91,7 +91,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     /* --- Private methods --- */
 
-    private Collection<NugetPackages> parseNugetPackageFiles(List<String> configFilesPath) {
+    private Collection<NugetPackages> parseNugetPackageFiles(Set<String> configFilesPath) {
         // get configuration file path
         String whitesourceConfigurationPath = new File(whitesourceConfiguration).getAbsolutePath();
 

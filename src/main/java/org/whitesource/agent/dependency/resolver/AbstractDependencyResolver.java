@@ -35,7 +35,7 @@ public abstract class AbstractDependencyResolver {
 
     /* --- Abstract methods --- */
 
-    protected abstract ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, List<String> bomFiles);
+    protected abstract ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles);
 
     protected abstract Collection<String> getExcludes();
 

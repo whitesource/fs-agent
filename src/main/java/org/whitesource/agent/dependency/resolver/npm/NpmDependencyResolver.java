@@ -27,10 +27,12 @@ import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
+import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.StatusCode;
 
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -73,6 +75,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private final NpmBomParser bomParser;
     private final boolean ignoreJavaScriptFiles;
     private final boolean runPreStep;
+    private final FilesScanner filesScanner;
 
     /* --- Constructor --- */
 
@@ -82,6 +85,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         bomParser = new NpmBomParser();
         this.ignoreJavaScriptFiles = ignoreJavaScriptFiles;
         this.runPreStep = runPreStep;
+        this.filesScanner = new FilesScanner();
     }
 
     public NpmDependencyResolver(boolean runPreStep) {
@@ -105,10 +109,12 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, List<String> bomFiles) {
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
 
         if(runPreStep) {
             getDependencyCollector().executePreparationStep(topLevelFolder);
+            String[] otherBomFiles = filesScanner.getFileNames(topLevelFolder, new String[]{getBomPattern()}, new String[0], false, false);
+            Arrays.stream(otherBomFiles).forEach(file -> bomFiles.add(Paths.get(topLevelFolder, file).toString()));
         }
 
         logger.debug("Attempting to parse package.json files");

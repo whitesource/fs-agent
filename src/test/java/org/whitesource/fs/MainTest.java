@@ -1,5 +1,7 @@
 package org.whitesource.fs;
+import com.beust.jcommander.Strings;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.whitesource.agent.api.model.AgentProjectInfo;
@@ -9,6 +11,7 @@ import org.whitesource.agent.utils.Pair;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static org.whitesource.agent.ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY;
 import static org.whitesource.agent.ConfigPropertyKeys.NPM_RUN_PRE_STEP;
@@ -81,8 +84,9 @@ public class MainTest {
 
         FileSystemAgentConfiguration fileSystemAgentConfiguration = new FileSystemAgentConfiguration(commandLineArgs);
         ProjectsCalculator projectsCalculator = new ProjectsCalculator();
-        projectsCalculator.getAllProjects(fileSystemAgentConfiguration);
+        Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(fileSystemAgentConfiguration);
 
+        projects.getKey().stream().findFirst().get().getDependencies().stream().allMatch(dependencyInfo -> StringUtils.isNotBlank(dependencyInfo.getSha1()));
         long countAfter = Arrays.stream(npmDir.listFiles()).filter(x->x.isDirectory()).count();
         Assert.assertTrue(countAfter > 0);
     }

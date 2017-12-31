@@ -64,7 +64,7 @@ public class FilesScanner {
         // resolve dependencies
         pathToBomFilesMap.forEach((folder, bomFile) -> {
             // get top folders with boms (the parent of each project)
-            Map<String, List<String>> topFolders = getTopFoldersWithIncludedFiles(folder, bomFile);
+            Map<String, Set<String>> topFolders = getTopFoldersWithIncludedFiles(folder, bomFile);
             resolvedFolders.add(new ResolvedFolder(folder, topFolders));
         });
         return resolvedFolders;
@@ -82,7 +82,7 @@ public class FilesScanner {
         return pathToIncludedFilesMap;
     }
 
-    private Map<String, List<String>> getTopFoldersWithIncludedFiles(String rootFolder, String[] includedFiles) {
+    private Map<String, Set<String>> getTopFoldersWithIncludedFiles(String rootFolder, String[] includedFiles) {
         // collect all full paths
         List<String> fullPaths = Arrays.stream(includedFiles)
                 .map(file -> Paths.get(new File(rootFolder).getAbsolutePath(), file).toString())
@@ -93,7 +93,7 @@ public class FilesScanner {
                 .collect(Collectors.groupingBy(filename -> new File(filename).getParentFile().getParent()));
 
         // create result map with only the top folder and the corresponding bom files
-        Map<String, List<String>> resultMap = new HashMap<>();
+        Map<String, Set<String>> resultMap = new HashMap<>();
 
         logger.debug("found folders:" + System.lineSeparator());
         foldersGroupedByLengthMap.keySet().forEach(folder -> logger.debug(folder));
@@ -109,7 +109,7 @@ public class FilesScanner {
                     .map(file -> new File(file).getParent()).collect(Collectors.toList());
 
             topFolders.forEach(folder -> {
-                resultMap.put(folder, fullPaths.stream().filter(fileName -> fileName.contains(folder)).collect(Collectors.toList()));
+                resultMap.put(folder, fullPaths.stream().filter(fileName -> fileName.contains(folder)).collect(Collectors.toSet()));
 
                 // remove from list folders that are children of the one found so they will not be calculated twice
                 foldersGroupedByLengthMap.entrySet().removeIf(otherFolder -> {

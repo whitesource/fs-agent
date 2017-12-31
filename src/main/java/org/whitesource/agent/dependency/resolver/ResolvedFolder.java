@@ -15,8 +15,8 @@
  */
 package org.whitesource.agent.dependency.resolver;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author eugen.horovitz
@@ -26,11 +26,11 @@ public class ResolvedFolder {
     /* --- Members --- */
 
     private final String originalScanFolder;
-    private final Map<String, List<String>> topFoldersFound;
+    private final Map<String, Set<String>> topFoldersFound;
 
     /* --- Constructors --- */
 
-    public ResolvedFolder(String originalScanFolder, Map<String, List<String>> topFoldersFound) {
+    public ResolvedFolder(String originalScanFolder, Map<String, Set<String>> topFoldersFound) {
         this.originalScanFolder = originalScanFolder;
         this.topFoldersFound = topFoldersFound;
     }
@@ -41,7 +41,7 @@ public class ResolvedFolder {
         return originalScanFolder;
     }
 
-    public Map<String, List<String>> getTopFoldersFound() {
+    public Map<String, Set<String>> getTopFoldersFound() {
         return topFoldersFound;
     }
 }

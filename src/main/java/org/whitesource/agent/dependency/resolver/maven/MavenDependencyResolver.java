@@ -58,7 +58,7 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
     private final MavenTreeDependencyCollector dependencyCollector;
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, List<String> bomFiles) {
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         // try to collect dependencies via 'mvn dependency tree and parse'
 
         Collection<AgentProjectInfo> projects = dependencyCollector.collectDependencies(topLevelFolder);
