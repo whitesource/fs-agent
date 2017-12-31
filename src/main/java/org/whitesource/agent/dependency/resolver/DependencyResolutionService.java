@@ -64,7 +64,7 @@ public class DependencyResolutionService {
 
         final boolean mavenResolveDependencies = getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
         final String[] mavenIgnoredScopes = getListProperty(config, MAVEN_IGNORED_SCOPES, null);
-        final boolean mavenAggregateModules = getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, false);
+        final boolean mavenAggregateModules = getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
 
         dependenciesOnly = getBooleanProperty(config, DEPENDENCIES_ONLY, false);
 

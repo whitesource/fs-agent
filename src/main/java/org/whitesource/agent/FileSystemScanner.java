@@ -55,6 +55,22 @@ public class FileSystemScanner {
 
     /* --- Public methods --- */
 
+    /**
+     * This method is usually called from outside by different other tools
+     * @param scannerBaseDirs
+     * @param scmConnector
+     * @param includes
+     * @param excludes
+     * @param globCaseSensitive
+     * @param archiveExtractionDepth
+     * @param archiveIncludes
+     * @param archiveExcludes
+     * @param archiveFastUnpack
+     * @param followSymlinks
+     * @param excludedCopyrights
+     * @param partialSha1Match
+     * @return
+     */
     public List<DependencyInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
                                                String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
@@ -104,7 +120,8 @@ public class FileSystemScanner {
         // create dependencies from files - first project is always the default one
         logger.info("Starting Analysis");
         Map<AgentProjectInfo, Path> allProjects = new HashMap<>();
-        allProjects.put(new AgentProjectInfo(),null);
+        AgentProjectInfo mainProject = new AgentProjectInfo();
+        allProjects.put(mainProject, null);
 
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
         Map<File, Collection<String>> fileMapBeforeResolve = fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
@@ -129,8 +146,10 @@ public class FileSystemScanner {
                     // do not add projects with no dependencies
                     if(!dependencies.isEmpty()) {
                         AgentProjectInfo currentProject;
+
+                        // if it is single project threat it as the main
                         if(dependencyResolutionService.isSeparateProjects()) {
-                            if (result.getDependencyType().equals(DependencyType.MAVEN)) {
+                            if (result.getDependencyType().equals(DependencyType.MAVEN) && result.getResolvedProjects().size() > 1) {
                                 allProjects.put(project.getKey(), project.getValue());
                             }else{
                                 currentProject = allProjects.keySet().stream().findFirst().get();

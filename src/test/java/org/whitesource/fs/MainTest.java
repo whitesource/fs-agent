@@ -41,6 +41,7 @@ public class MainTest {
         ProjectsCalculator projectsCalculator = new ProjectsCalculator();
         Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(fileSystemAgentConfiguration);
 
+        Assert.assertEquals(projects.getKey().size(), 1);
         String nameActual = projects.getKey().stream().findFirst().get().getCoordinates().getArtifactId();
         Assert.assertEquals(nameActual, projectName);
     }
