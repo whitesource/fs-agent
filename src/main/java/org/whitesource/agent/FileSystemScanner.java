@@ -228,10 +228,6 @@ public class FileSystemScanner {
             }
         }
 
-        if (filesDependencies.size() > 0) {
-            logger.warn("Files not sent {}", System.lineSeparator() + String.join(System.lineSeparator(), filesDependencies.stream().map(file -> file.getSystemPath()).collect(Collectors.toList())));
-        }
-
         for (AgentProjectInfo innerProject : allProjects.keySet()) {
             // replace temp folder name with base dir
             for (DependencyInfo dependencyInfo : innerProject.getDependencies()) {
