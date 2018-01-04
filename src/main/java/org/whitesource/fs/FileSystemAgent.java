@@ -220,11 +220,16 @@ public class FileSystemAgent {
         excludedCopyrights.remove("");
 
         boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
-        Collection<AgentProjectInfo> projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createProjects(
-                scannerBaseDirs, hasScmConnectors[0], includes, excludes, globCaseSensitive, archiveExtractionDepth,
-                archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights,
-                partialSha1Match, calculateHints, calculateMd5);
-
+        Collection<AgentProjectInfo> projects = null;
+//        if(scanPackageManager) {
+//            //todo scanPackageManager
+              // project = new PackageManagerExtractor(showProgressBar, new DependencyResolutionService(config)).createProjects()
+//        } else {
+            projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createProjects(
+                    scannerBaseDirs, hasScmConnectors[0], includes, excludes, globCaseSensitive, archiveExtractionDepth,
+                    archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights,
+                    partialSha1Match, calculateHints, calculateMd5);
+//        }
         // delete all temp scm files
         scmPaths.forEach(directory -> {
             if (directory != null) {
