@@ -113,7 +113,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
         if(runPreStep) {
             getDependencyCollector().executePreparationStep(topLevelFolder);
-            String[] otherBomFiles = filesScanner.getFileNames(topLevelFolder, new String[]{getBomPattern()}, new String[0], false, false);
+            String[] excludesArray = new String[getExcludes().size()];
+            excludesArray = getExcludes().toArray(excludesArray);
+            String[] otherBomFiles = filesScanner.getFileNames(topLevelFolder, new String[]{getBomPattern()}, excludesArray, false, false);
             Arrays.stream(otherBomFiles).forEach(file -> bomFiles.add(Paths.get(topLevelFolder, file).toString()));
         }
 

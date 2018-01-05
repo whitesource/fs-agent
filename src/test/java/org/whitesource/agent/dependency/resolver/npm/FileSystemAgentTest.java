@@ -7,6 +7,7 @@ import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -14,7 +15,7 @@ import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.FileSystemAgent;
-import org.whitesource.fs.Main;
+import org.whitesource.fs.FSAConfiguration;
 
 import java.io.*;
 import java.net.URI;
@@ -23,9 +24,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.whitesource.agent.ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY;
-import static org.whitesource.agent.ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY;
 
 /**
  * Test class for npm-filter
@@ -124,14 +122,13 @@ public class FileSystemAgentTest {
 
     private void testResults(Properties props, File dir, Collection<DependencyInfo> dependencyInfosNPMPLugin) {
         // collect number of dependencies via npm-fs-agent
-        props.setProperty(PROJECT_NAME_PROPERTY_KEY, dir.getName());
-        props.setProperty(PRODUCT_NAME_PROPERTY_KEY, "bower_plugin_01");
-        FileSystemAgent fileSystemAgent = new FileSystemAgent(props, Arrays.asList(dir.getAbsolutePath()));
+        props.setProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, dir.getName());
+        props.setProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, "bower_plugin_01");
+
+        FSAConfiguration FSAConfiguration = new FSAConfiguration(props);
+        FileSystemAgent fileSystemAgent = new FileSystemAgent(FSAConfiguration, Arrays.asList(dir.getAbsolutePath()));
         Collection<AgentProjectInfo> projects = fileSystemAgent.createProjects().getKey();
         Collection<DependencyInfo> fsAgentDeps = projects.stream().findFirst().get().getDependencies();
-
-        //ProjectsSender projectsSender = new ProjectsSender(props);
-        //projectsSender.sendProjects(projects);
 
         int npmPluginCount = getCount(dependencyInfosNPMPLugin);
         int fsAgentCount = getCount(fsAgentDeps);
@@ -160,9 +157,6 @@ public class FileSystemAgentTest {
         String path = isWindows() ?
                 Paths.get(currentDir, TestHelper.getOsRelativePath("Application Data\\npm\\node_modules\\" + plugin)).toString() :
                 Paths.get(currentDirLinux, plugin).toString();
-
-
-        //String folder = isWindows() ? "Application Data\\npm\\node_modules\\" : "/usr/local/bin/";
 
         String[] args = new String[]{"node", path, "run"};
 
@@ -233,8 +227,9 @@ public class FileSystemAgentTest {
     /* --- Private methods --- */
 
 
-    private Stream<DependencyInfo> getDependenciesWithFilter(List<String> dirs, Properties p) {
-        FileSystemAgent f = new FileSystemAgent(p, dirs);
+    private Stream<DependencyInfo> getDependenciesWithFilter(List<String> dirs, Properties props) {
+        FSAConfiguration FSAConfiguration = new FSAConfiguration(props);
+        FileSystemAgent f = new FileSystemAgent(FSAConfiguration, dirs);
 
         Collection<AgentProjectInfo> projects = f.createProjects().getKey();
 

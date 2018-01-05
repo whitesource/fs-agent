@@ -15,7 +15,6 @@
  */
 package org.whitesource.agent.dependency.resolver;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
@@ -23,10 +22,9 @@ import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
+import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.util.*;
-
-import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 /**
  * Holds and initiates all {@link AbstractDependencyResolver}s.
@@ -50,23 +48,23 @@ public class DependencyResolutionService {
 
     /* --- Constructors --- */
 
-    public DependencyResolutionService(Properties config) {
-        final boolean npmRunPreStep = getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
-        final boolean npmResolveDependencies = getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
-        final boolean npmIncludeDevDependencies = getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
-        final boolean npmIgnoreJavaScriptFiles = getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
-        final long npmTimeoutDependenciesCollector = getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
+    public DependencyResolutionService(ResolverConfiguration config) {
+        final boolean npmRunPreStep = config.isDependencyResolverNpmRunPreStep();
+        final boolean npmResolveDependencies = config.isDependencyResolverNpmResolveDependencies();
+        final boolean npmIncludeDevDependencies = config.isDependencyResolverNpmIncludeDevDependencies();
+        final boolean npmIgnoreJavaScriptFiles = config.isDependencyResolverNpmIgnoreJavaScriptFiles();
+        final long npmTimeoutDependenciesCollector = config.getDependencyResolverNpmTimeoutDependenciesCollector();
 
-        final boolean bowerResolveDependencies = getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
-        final boolean bowerRunPreStep = getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
+        final boolean bowerResolveDependencies = config.isDependencyResolverBowerResolveDependencies();
+        final boolean bowerRunPreStep = config.isDependencyResolverBowerRunPreStep();
 
-        final boolean nugetResolveDependencies = getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
+        final boolean nugetResolveDependencies = config.isDependencyResolverNugetResolveDependencies();
 
-        final boolean mavenResolveDependencies = getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
-        final String[] mavenIgnoredScopes = getListProperty(config, MAVEN_IGNORED_SCOPES, null);
-        final boolean mavenAggregateModules = getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
+        final boolean mavenResolveDependencies = config.isDependencyResolverMavenResolveDependencies();
+        final String[] mavenIgnoredScopes = config.getDependencyResolverMavenIgnoredScopes();
+        final boolean mavenAggregateModules = config.isDependencyResolverMavenAggregateModules();
 
-        dependenciesOnly = getBooleanProperty(config, DEPENDENCIES_ONLY, false);
+        dependenciesOnly = config.isDependencyResolverDependenciesOnly();
 
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
@@ -77,7 +75,7 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep));
         }
         if (nugetResolveDependencies) {
-            String whitesourceConfiguration = config.getProperty(PROJECT_CONFIGURATION_PATH);
+            String whitesourceConfiguration = config.getDependencyResolverWhitesourceConfiguration();
             dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration));
         }
         if (mavenResolveDependencies) {
@@ -141,14 +139,6 @@ public class DependencyResolutionService {
 
     /* --- Private methods --- */
 
-    private String[] getListProperty(Properties config, String propertyName, String[] defaultValue) {
-        String property = config.getProperty(propertyName);
-        if (property == null){
-            return defaultValue;
-        }
-        return property.split(SPACE);
-    }
-
     private void reduceDependencies(Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap) {
         //reduce the dependencies and duplicates files
         Set<String> topFolders = new HashSet<>();
@@ -164,25 +154,5 @@ public class DependencyResolutionService {
     private boolean isChildFolder(String childFolder, String topFolderParent) {
         boolean result = childFolder.contains(topFolderParent) && !childFolder.equals(topFolderParent);
         return result;
-    }
-
-    /* --- Private Methods --- */
-
-    private boolean getBooleanProperty(Properties config, String propertyKey, boolean defaultValue) {
-        boolean property = defaultValue;
-        String propertyValue = config.getProperty(propertyKey);
-        if (StringUtils.isNotBlank(propertyValue)) {
-            property = Boolean.valueOf(propertyValue);
-        }
-        return property;
-    }
-
-    private long getLongProperty(Properties config, String propertyKey, long defaultValue) {
-        long property = defaultValue;
-        String propertyValue = config.getProperty(propertyKey);
-        if (StringUtils.isNotBlank(propertyValue)) {
-            property = Long.parseLong(propertyValue);
-        }
-        return property;
     }
 }

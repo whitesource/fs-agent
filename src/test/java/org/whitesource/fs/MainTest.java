@@ -1,5 +1,4 @@
 package org.whitesource.fs;
-import com.beust.jcommander.Strings;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
@@ -11,7 +10,6 @@ import org.whitesource.agent.utils.Pair;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 import static org.whitesource.agent.ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY;
 import static org.whitesource.agent.ConfigPropertyKeys.NPM_RUN_PRE_STEP;
@@ -40,9 +38,9 @@ public class MainTest {
         String[] args = ("-c " + config + " -d " + dir.getPath() + " -product " + "fsAgentMain" + " -project " + projectName).split(" ");
 
         // read configuration config
-        FileSystemAgentConfiguration fileSystemAgentConfiguration = new FileSystemAgentConfiguration(args);
+        FSAConfiguration FSAConfiguration = new FSAConfiguration(args);
         ProjectsCalculator projectsCalculator = new ProjectsCalculator();
-        Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(fileSystemAgentConfiguration);
+        Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(FSAConfiguration);
 
         Assert.assertEquals(projects.getKey().size(), 1);
         String nameActual = projects.getKey().stream().findFirst().get().getCoordinates().getArtifactId();
@@ -54,9 +52,9 @@ public class MainTest {
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
         String[] commandLineArgs = new String[]{"-c", config.getAbsolutePath(), "-d", new File(TestHelper.FOLDER_WITH_MIX_FOLDERS).getAbsolutePath(), "-"+ PROJECT_PER_SUBFOLDER, "true"};
 
-        FileSystemAgentConfiguration fileSystemAgentConfiguration = new FileSystemAgentConfiguration(commandLineArgs);
+        FSAConfiguration FSAConfiguration = new FSAConfiguration(commandLineArgs);
         ProjectsCalculator projectsCalculator = new ProjectsCalculator();
-        Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(fileSystemAgentConfiguration);
+        Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(FSAConfiguration);
 
         Assert.assertTrue(projects.getKey().size() > 1);
     }
@@ -82,9 +80,9 @@ public class MainTest {
 
         String[] commandLineArgs = new String[]{"-c", config.getAbsolutePath(), "-d", mainDir.getAbsolutePath()};
 
-        FileSystemAgentConfiguration fileSystemAgentConfiguration = new FileSystemAgentConfiguration(commandLineArgs);
+        FSAConfiguration FSAConfiguration = new FSAConfiguration(commandLineArgs);
         ProjectsCalculator projectsCalculator = new ProjectsCalculator();
-        Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(fileSystemAgentConfiguration);
+        Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(FSAConfiguration);
 
         projects.getKey().stream().findFirst().get().getDependencies().stream().allMatch(dependencyInfo -> StringUtils.isNotBlank(dependencyInfo.getSha1()));
         long countAfter = Arrays.stream(npmDir.listFiles()).filter(x->x.isDirectory()).count();

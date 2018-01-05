@@ -30,7 +30,7 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
  * Author: eugen.horovitz
  */
 public class ConfigurationValidation {
-        /* --- Static members --- */
+    /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationValidation.class);
 
@@ -63,7 +63,7 @@ public class ConfigurationValidation {
         return configProps;
     }
 
-    private boolean validateConfigProps(Properties configProps, String configFilePath, String project) {
+    public boolean validateConfigProps(Properties configProps, String configFilePath, String project) {
         boolean foundError = false;
         if (StringUtils.isBlank(configProps.getProperty(ORG_TOKEN_PROPERTY_KEY))) {
             foundError = true;
@@ -83,28 +83,18 @@ public class ConfigurationValidation {
             foundError = true;
             logger.error("Please choose just one of either {} or {} (and not both)", PROJECT_NAME_PROPERTY_KEY, PROJECT_TOKEN_PROPERTY_KEY);
         }
+        if (foundError) {
+            System.exit(-1); // TODO this may throw SecurityException. Return null instead
+        }
         return foundError;
     }
 
-    public boolean getBooleanProperty(Properties config, String propertyKey, boolean defaultValue) {
+    private boolean getBooleanProperty(Properties config, String propertyKey, boolean defaultValue) {
         boolean property = defaultValue;
         String propertyValue = config.getProperty(propertyKey);
         if (StringUtils.isNotBlank(propertyValue)) {
             property = Boolean.valueOf(propertyValue);
         }
         return property;
-    }
-
-    public int getIntProperty(Properties config, String propertyKey, int defaultValue) {
-        int value = defaultValue;
-        String propertyValue = config.getProperty(propertyKey);
-        if (StringUtils.isNotBlank(propertyValue)) {
-            try {
-                value = Integer.valueOf(propertyValue);
-            } catch (NumberFormatException e) {
-                // do nothing
-            }
-        }
-        return value;
     }
 }

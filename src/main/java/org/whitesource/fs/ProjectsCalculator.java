@@ -37,30 +37,27 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
-import static org.whitesource.agent.ConfigPropertyKeys.LOG_LEVEL_KEY;
-
 public class ProjectsCalculator {
 
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(ProjectsCalculator.class);
-    private static final String INFO = "info";
     private static final String UTF_8 = "UTF-8";
     private static final String EMPTY_STRING = "";
 
     /* --- Public methods --- */
 
-    public Pair<Collection<AgentProjectInfo>,StatusCode> getAllProjects(FileSystemAgentConfiguration fileSystemAgentConfiguration) {
+    public Pair<Collection<AgentProjectInfo>,StatusCode> getAllProjects(FSAConfiguration FSAConfiguration) {
         // read log level from configuration file
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-        String logLevel = fileSystemAgentConfiguration.getProperties().getProperty(LOG_LEVEL_KEY, INFO);
+        String logLevel = FSAConfiguration.getLogLevel();
         root.setLevel(Level.toLevel(logLevel, Level.INFO));
 
         // read directories and files from list-file
         List<String> files = new ArrayList<>();
-        if (StringUtils.isNotBlank(fileSystemAgentConfiguration.getFileListPath())) {
+        if (StringUtils.isNotBlank(FSAConfiguration.getFileListPath())) {
             try {
-                File listFile = new File(fileSystemAgentConfiguration.getFileListPath());
+                File listFile = new File(FSAConfiguration.getFileListPath());
                 if (listFile.exists()) {
                     files.addAll(FileUtils.readLines(listFile));
                 }
@@ -70,13 +67,13 @@ public class ProjectsCalculator {
         }
 
         // read csv directory list
-        files.addAll(fileSystemAgentConfiguration.getDependencyDirs());
+        files.addAll(FSAConfiguration.getDependencyDirs());
 
         // run the agent
-        FileSystemAgent agent = new FileSystemAgent(fileSystemAgentConfiguration.getProperties(), files);
+        FileSystemAgent agent = new FileSystemAgent(FSAConfiguration, files);
         //Collection<AgentProjectInfo> projects = agent.createProjects();
 
-        Collection<AgentProjectInfo> projects = getAgentProjectsFromRequests(fileSystemAgentConfiguration.getOfflineRequestFiles());
+        Collection<AgentProjectInfo> projects = getAgentProjectsFromRequests(FSAConfiguration.getOfflineRequestFiles());
         // create projects as usual
 
         Pair<Collection<AgentProjectInfo>,StatusCode> createdProjects = agent.createProjects();

@@ -8,8 +8,8 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
-import org.whitesource.agent.dependency.resolver.npm.DependencyResolversTest;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
+import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,8 +59,9 @@ public class MavenTreeDependencyCollectorTest {
         props.setProperty(ConfigPropertyKeys.BOWER_RESOLVE_DEPENDENCIES, "false");
 
         props.setProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY, "**/*.jar");
+        ResolverConfiguration resolverConfiguration = new ResolverConfiguration(props);
 
-        DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(props);
+        DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(resolverConfiguration);
         List<ResolutionResult> results = dependencyResolutionService.resolveDependencies(Arrays.asList(folderParent), new String[0]);
 
         TestHelper.testDependencyResult(true, results);

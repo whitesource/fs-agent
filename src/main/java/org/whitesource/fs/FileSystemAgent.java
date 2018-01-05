@@ -50,31 +50,26 @@ public class FileSystemAgent {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
-
-    private static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
     private static final String EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX = ",";
-    private static final int DEFAULT_ARCHIVE_DEPTH = 0;
-
     private static final String NPM_COMMAND = NpmLsJsonDependencyCollector.isWindows() ? "npm.cmd" : "npm";
     private static final String NPM_INSTALL_COMMAND = "install";
-    private static final String NPM_INSTALL_OUTPUT_DESTINATION = NpmLsJsonDependencyCollector.isWindows() ? "nul" : "/dev/null";
     private static final String PACKAGE_LOCK = "package-lock.json";
     private static final String PACKAGE_JSON = "package.json";
 
     /* --- Members --- */
 
     private final List<String> dependencyDirs;
-    private final Properties config;
+    private final FSAConfiguration config;
     private final ConfigurationValidation configurationValidation;
 
     private boolean projectPerSubFolder;
 
     /* --- Constructors --- */
 
-    public FileSystemAgent(Properties config, List<String> dependencyDirs) {
+    public FileSystemAgent(FSAConfiguration config, List<String> dependencyDirs) {
         this.config = config;
         this.configurationValidation = new ConfigurationValidation();
-        projectPerSubFolder = configurationValidation.getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
+        projectPerSubFolder = config.isProjectPerSubFolder();
         if (projectPerSubFolder) {
             this.dependencyDirs = new LinkedList<>();
             for (String directory : dependencyDirs) {
@@ -103,7 +98,7 @@ public class FileSystemAgent {
                 Pair <Collection<AgentProjectInfo>,StatusCode> tempProjects = getProjects(Collections.singletonList(directory));
                 if (tempProjects.getKey().size() == 1) {
                     String projectName = new File(directory).getName();
-                    String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
+                    String projectVersion = config.getProjectVersion();
                     tempProjects.getKey().stream().findFirst().get().setCoordinates(new Coordinates(null, projectName, projectVersion));
                 }
 
@@ -121,12 +116,12 @@ public class FileSystemAgent {
             AgentProjectInfo projectInfo = projects.getKey().stream().findFirst().get();
             if (projectInfo.getCoordinates() == null) {
                 // use token or name + version
-                String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
+                String projectToken = config.getProjectToken();
                 if (StringUtils.isNotBlank(projectToken)) {
                     projectInfo.setProjectToken(projectToken);
                 } else {
-                    String projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
-                    String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
+                    String projectName = config.getProjectName();
+                    String projectVersion = config.getProjectVersion();
                     projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
                 }
             }
@@ -141,17 +136,16 @@ public class FileSystemAgent {
     private Pair <Collection<AgentProjectInfo>,StatusCode> getProjects(List<String> scannerBaseDirs) {
         // create scm connector
         final StatusCode[] success = new StatusCode[]{StatusCode.SUCCESS};
-        String scmType = config.getProperty(SCM_TYPE_PROPERTY_KEY);
-        String url = config.getProperty(SCM_URL_PROPERTY_KEY);
-        String username = config.getProperty(SCM_USER_PROPERTY_KEY);
-        String password = config.getProperty(SCM_PASS_PROPERTY_KEY);
-        String branch = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
-        String tag = config.getProperty(SCM_TAG_PROPERTY_KEY);
-        String repositoriesFile = config.getProperty(SCM_REPOSITORIES_FILE);
-        String privateKey = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
-        boolean isScmNpmInstall = getBooleanProperty(SCM_NPM_INSTALL, true);
-        int npmInstallTimeoutMinutes = configurationValidation.getIntProperty(config, SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
-        //ScmConnector scmConnector = ScmConnector.create(scmType, url, privateKey, username, password, branch, tag);
+        String scmType = config.getScmType();
+        String url = config.getScmUrl();
+        String username = config.getScmUsername();
+        String password = config.getScmPassword();
+        String branch = config.getScmBranch();
+        String tag = config.getScmTag();
+        String repositoriesFile = config.getScmRepositoriesFile();
+        String privateKey = config.getScmPrivateKey();
+        boolean isScmNpmInstall = config.isScmNpmInstall();
+        int npmInstallTimeoutMinutes = config.getScmNpmInstallTimeoutMinutes();
         String separatorFiles = NpmLsJsonDependencyCollector.isWindows() ? "\\" : "/";
         Collection<String> scmPaths = new ArrayList<>();
         final boolean[] hasScmConnectors = new boolean[1];
@@ -184,21 +178,21 @@ public class FileSystemAgent {
         }
 
         // read all properties
-        final String[] includes = config.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        final String[] excludes = config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        final int archiveExtractionDepth = configurationValidation.getIntProperty(config, ARCHIVE_EXTRACTION_DEPTH_KEY, DEFAULT_ARCHIVE_DEPTH);
-        final String[] archiveIncludes = config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        final String[] archiveExcludes = config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        final boolean archiveFastUnpack = getBooleanProperty(ARCHIVE_FAST_UNPACK_KEY, false);
-        boolean followSymlinks = getBooleanProperty(FOLLOW_SYMBOLIC_LINKS, true);
+        final String[] includes = config.getIncludes();
+        final String[] excludes = config.getExcludes();
+        final int archiveExtractionDepth = config.getArchiveExtractionDepth();
+        final String[] archiveIncludes = config.getArchiveIncludes();
+        final String[] archiveExcludes = config.getArchiveExcludes();
+        final boolean archiveFastUnpack = config.isArchiveFastUnpack();
+        boolean followSymlinks = config.isFollowSymlinks();
         // check scan partial sha1s (false by default)
-        boolean partialSha1Match = getBooleanProperty(PARTIAL_SHA1_MATCH_KEY, false);
+        boolean partialSha1Match = config.isPartialSha1Match();
 
-        boolean calculateHints = getBooleanProperty(CALCULATE_HINTS, false);
-        boolean calculateMd5 = getBooleanProperty(CALCULATE_MD5, false);
+        boolean calculateHints = config.isCalculateHints();
+        boolean calculateMd5 = config.isCalculateMd5();
 
         // glob case sensitive
-        final String globCaseSensitiveValue = config.getProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY);
+        final String globCaseSensitiveValue = config.getGlobCaseSensitiveValue();
         boolean globCaseSensitive = false;
         if (StringUtils.isNotBlank(globCaseSensitiveValue)) {
             if (globCaseSensitiveValue.equalsIgnoreCase("true") || globCaseSensitiveValue.equalsIgnoreCase("y")) {
@@ -214,13 +208,13 @@ public class FileSystemAgent {
             }
         }
 
-        final String excludedCopyrightsValue = config.getProperty(EXCLUDED_COPYRIGHT_KEY, "");
+        final String excludedCopyrightsValue = config.getExcludedCopyrightsValue();
         // get excluded copyrights
         Collection<String> excludedCopyrights = new ArrayList<>(Arrays.asList(excludedCopyrightsValue.split(EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX)));
         excludedCopyrights.remove("");
 
-        boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
-        Collection<AgentProjectInfo> projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createProjects(
+        boolean showProgressBar = config.isShowProgressBar();
+        Collection<AgentProjectInfo> projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config.getResolverConfiguration())).createProjects(
                 scannerBaseDirs, hasScmConnectors[0], includes, excludes, globCaseSensitive, archiveExtractionDepth,
                 archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights,
                 partialSha1Match, calculateHints, calculateMd5);
@@ -236,10 +230,6 @@ public class FileSystemAgent {
             }
         });
         return new Pair<>(projects, success[0]);
-    }
-
-    protected boolean getBooleanProperty(String propertyName, boolean defaultValue) {
-        return configurationValidation.getBooleanProperty(config, propertyName, defaultValue);
     }
 
     private Pair<String, StatusCode> npmInstallScmRepository(boolean scmNpmInstall, int npmInstallTimeoutMinutes, ScmConnector scmConnector,

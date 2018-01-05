@@ -24,20 +24,16 @@ import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
-import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
-import org.whitesource.fs.FileSystemAgentConfiguration;
+import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.Main;
 import org.whitesource.fs.StatusCode;
-import org.whitesource.fs.configuration.ConfigurationValidation;
 
 import java.io.*;
 import java.util.*;
-
-import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 /**
  * Abstract class for all WhiteSource command line agents.
@@ -62,16 +58,14 @@ public class ProjectsSender {
 
     /* --- Members --- */
 
-    protected final Properties config;
-    private final ConfigurationValidation configurationValidation;
+    protected final FSAConfiguration config;
     protected StatusCode prepStepStatusCode = StatusCode.SUCCESS;
     private Properties artifactProperties;
 
     /* --- Constructors --- */
 
-    public ProjectsSender(FileSystemAgentConfiguration fileSystemAgentConfiguration) {
-        this.config = fileSystemAgentConfiguration.getProperties();
-        this.configurationValidation = new ConfigurationValidation();
+    public ProjectsSender(FSAConfiguration FSAConfiguration) {
+        this.config = FSAConfiguration;
         this.artifactProperties = getArtifactProperties();
     }
 
@@ -108,29 +102,29 @@ public class ProjectsSender {
 
     private StatusCode sendRequest(Collection<AgentProjectInfo> projects) {
         // org token
-        String orgToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
+        String orgToken = config.getOrgToken();
 
         // product token or name (and version)
-        String product = config.getProperty(PRODUCT_TOKEN_PROPERTY_KEY);
+        String product = config.getProjectToken();
         String productVersion = null;
         if (StringUtils.isBlank(product)) {
-            product = config.getProperty(PRODUCT_NAME_PROPERTY_KEY);
-            productVersion = config.getProperty(PRODUCT_VERSION_PROPERTY_KEY);
+            product = config.getProjectName();
+            productVersion = config.getProjectVersion();
         }
 
         // requester email
-        String requesterEmail = config.getProperty(REQUESTER_EMAIL);
+        String requesterEmail = config.getRequesterEmail();
 
         // send request
         logger.info("Initializing WhiteSource Client");
         WhitesourceService service = createService();
-        if (getBooleanProperty(OFFLINE_PROPERTY_KEY, false)) {
+        if (config.isOfflineState() ) {
             offlineUpdate(service, orgToken, requesterEmail, product, productVersion, projects);
             return this.prepStepStatusCode;
         } else {
             // update type
             UpdateType updateType = UpdateType.OVERRIDE;
-            String updateTypeValue = config.getProperty(UPDATE_TYPE, UpdateType.OVERRIDE.toString());
+            String updateTypeValue = config.getUpdateTypeValue();
             try {
                 updateType = UpdateType.valueOf(updateTypeValue);
             } catch (Exception e) {
@@ -141,7 +135,7 @@ public class ProjectsSender {
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
             try {
-                if (getBooleanProperty(CHECK_POLICIES_PROPERTY_KEY, false)) {
+                if (config.isCheckPolicies()) {
                     boolean policyCompliance = checkPolicies(service, orgToken, product, productVersion, projects);
                     statusCode = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
                 }
@@ -168,9 +162,6 @@ public class ProjectsSender {
         }
     }
 
-    private boolean getBooleanProperty(String propertyName, boolean defaultValue) {
-        return configurationValidation.getBooleanProperty(config, propertyName, defaultValue);
-    }
 
     private void checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
         int numberOfDependencies = projects.stream().map(x -> x.getDependencies()).mapToInt(x -> x.size()).sum();
@@ -180,21 +171,20 @@ public class ProjectsSender {
     }
 
     private WhitesourceService createService() {
-        String serviceUrl = config.getProperty(ClientConstants.SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
+        String serviceUrl = config.getSenderServiceUrl();
         logger.info("Service URL is " + serviceUrl);
         boolean setProxy = false;
-        final String proxyHost = config.getProperty(PROXY_HOST_PROPERTY_KEY);
-        if (StringUtils.isNotBlank(proxyHost) || !getBooleanProperty(OFFLINE_PROPERTY_KEY, false)) {
+        final String proxyHost = config.getSenderProxyHost();
+        if (StringUtils.isNotBlank(proxyHost) || !config.isOfflineState()) {
             setProxy = true;
         }
-        int connectionTimeoutMinutes = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
-                String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
+        int connectionTimeoutMinutes = config.getSenderConnectionTimeOut();
         final WhitesourceService service = new WhitesourceService(getAgentType(), getAgentVersion(), getPluginVersion(),
                 serviceUrl, setProxy, connectionTimeoutMinutes);
         if (StringUtils.isNotBlank(proxyHost)) {
-            final int proxyPort = Integer.parseInt(config.getProperty(PROXY_PORT_PROPERTY_KEY));
-            final String proxyUser = config.getProperty(PROXY_USER_PROPERTY_KEY);
-            final String proxyPass = config.getProperty(PROXY_PASS_PROPERTY_KEY);
+            final int proxyPort = config.getSenderProxyPort();
+            final String proxyUser = config.getSenderProxyUser();
+            final String proxyPass = config.getSenderProxyPassword();
             service.getClient().setProxy(proxyHost, proxyPort, proxyUser, proxyPass);
         }
         return service;
@@ -203,12 +193,12 @@ public class ProjectsSender {
     private boolean checkPolicies(WhitesourceService service, String orgToken, String product, String productVersion,
                                   Collection<AgentProjectInfo> projects) throws WssServiceException {
         boolean policyCompliance = true;
-        boolean forceCheckAllDependencies = getBooleanProperty(FORCE_CHECK_ALL_DEPENDENCIES, false);
+        boolean forceCheckAllDependencies = config.isForceCheckAllDependencies();
         logger.info("Checking policies");
         CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(orgToken, product, productVersion, projects, forceCheckAllDependencies);
         boolean hasRejections = checkPoliciesResult.hasRejections();
         if (hasRejections) {
-            if (getBooleanProperty(FORCE_UPDATE, false)) {
+            if (config.isForceUpdate()) {
                 logger.info("Some dependencies violate open source policies, however all were force " +
                         "updated to organization inventory.");
             } else {
@@ -245,8 +235,8 @@ public class ProjectsSender {
                                Collection<AgentProjectInfo> projects) {
         logger.info("Generating offline update request");
 
-        boolean zip = getBooleanProperty(OFFLINE_ZIP_PROPERTY_KEY, false);
-        boolean prettyJson = getBooleanProperty(OFFLINE_PRETTY_JSON_KEY, false);
+        boolean zip = config.isOfflineZip();
+        boolean prettyJson = config.isOfflinePrettyJson();
 
         // generate offline request
         UpdateInventoryRequest updateRequest = service.offlineUpdate(orgToken, product, productVersion, projects);
@@ -258,8 +248,8 @@ public class ProjectsSender {
             UpdateType updateTypeFinal;
 
             // if the update type was forced by command or config -> set it
-            if (StringUtils.isNotBlank(config.getProperty(UPDATE_TYPE))){
-                String updateTypeValue = config.getProperty(UPDATE_TYPE) ;
+            if (StringUtils.isNotBlank(config.getUpdateTypeValue())){
+                String updateTypeValue = config.getUpdateTypeValue() ;
                 try {
                     updateTypeFinal = UpdateType.valueOf(updateTypeValue);
                 } catch (Exception e) {

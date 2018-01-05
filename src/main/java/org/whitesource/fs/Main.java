@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.agent.ProjectsSender;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.utils.Pair;
+
 import java.util.*;
 
 /**
@@ -47,16 +48,16 @@ public class Main {
 
     public static int execute(String[] args) {
         // read configuration config
-        FileSystemAgentConfiguration fileSystemAgentConfiguration = new FileSystemAgentConfiguration(args);
+        FSAConfiguration FSAConfiguration = new FSAConfiguration(args);
 
         ProjectsCalculator projectsCalculator = new ProjectsCalculator();
 
-        Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(fileSystemAgentConfiguration);
+        Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(FSAConfiguration);
         if(!projects.getValue().equals(StatusCode.SUCCESS)){
             return projects.getValue().getValue();
         }
 
-        ProjectsSender projectsSender = new ProjectsSender(fileSystemAgentConfiguration);
+        ProjectsSender projectsSender = new ProjectsSender(FSAConfiguration);
         StatusCode processExitCode = projectsSender.sendProjects(projects.getKey());
         logger.info("Process finished with exit code {} ({})", processExitCode, processExitCode.getValue());
         return processExitCode.getValue();
