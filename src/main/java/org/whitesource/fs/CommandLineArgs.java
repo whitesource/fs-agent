@@ -88,6 +88,9 @@ public class CommandLineArgs {
     @Parameter(names = "-offline", description = "Whether or not to create an offline update request instead of sending one to WhiteSource")
     String offline = null;
 
+    @Parameter(names = "-web", description = "Whether or not to create a web service on startup that receives requests from outside")
+    String web = "false";
+
     /* --- Public methods --- */
 
     public String getConfigFilePath() {

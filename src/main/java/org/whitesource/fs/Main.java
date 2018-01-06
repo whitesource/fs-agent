@@ -15,11 +15,14 @@
  */
 package org.whitesource.fs;
 
+import com.beust.jcommander.JCommander;
+import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.ProjectsSender;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.utils.Pair;
+import org.whitesource.web.FsaVerticle;
 
 import java.util.*;
 
@@ -34,30 +37,43 @@ public class Main {
 
     /* --- Main --- */
 
+    private static Vertx vertx;
+
+    /* --- Main --- */
+
     public static void main(String[] args) {
-        int processExitCode;
-        try {
-            processExitCode = execute(args);
-        } catch (Exception e) {
-            // catch any exception that may be thrown, return error code
-            logger.warn("Process encountered an error: {}" + e.getMessage(), e);
-            processExitCode = StatusCode.ERROR.getValue();
+
+        CommandLineArgs commandLineArgs = new CommandLineArgs();
+        new JCommander(commandLineArgs, args);
+
+        if(commandLineArgs.web.equals("false")) {
+            int processExitCode;
+            try {
+                processExitCode = execute(args);
+            } catch (Exception e) {
+                // catch any exception that may be thrown, return error code
+                logger.warn("Process encountered an error: {}" + e.getMessage(), e);
+                processExitCode = StatusCode.ERROR.getValue();
+            }
+            System.exit(processExitCode);
+        }else {
+            vertx = Vertx.vertx();
+            vertx.deployVerticle(FsaVerticle.class.getName());
         }
-        System.exit(processExitCode);
     }
 
     public static int execute(String[] args) {
         // read configuration config
-        FSAConfiguration FSAConfiguration = new FSAConfiguration(args);
+        FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
 
         ProjectsCalculator projectsCalculator = new ProjectsCalculator();
 
-        Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(FSAConfiguration);
+        Pair<Collection<AgentProjectInfo>,StatusCode> projects = projectsCalculator.getAllProjects(fsaConfiguration);
         if(!projects.getValue().equals(StatusCode.SUCCESS)){
             return projects.getValue().getValue();
         }
 
-        ProjectsSender projectsSender = new ProjectsSender(FSAConfiguration);
+        ProjectsSender projectsSender = new ProjectsSender(fsaConfiguration);
         StatusCode processExitCode = projectsSender.sendProjects(projects.getKey());
         logger.info("Process finished with exit code {} ({})", processExitCode, processExitCode.getValue());
         return processExitCode.getValue();
