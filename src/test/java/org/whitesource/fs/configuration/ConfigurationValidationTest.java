@@ -16,7 +16,7 @@ public class ConfigurationValidationTest {
         ConfigurationValidation configurationValidation = new ConfigurationValidation();
 
         // act
-        Properties configProperties = configurationValidation.readAndValidateConfigFile(tmpPath.toString(), "");
+        Properties configProperties = configurationValidation.readWithError(tmpPath.toString(), "").getKey();
 
         // assert
         Assert.assertNotNull(configProperties);

@@ -28,6 +28,7 @@ import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
+import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.Main;
 import org.whitesource.fs.StatusCode;
@@ -48,7 +49,7 @@ public class ProjectsSender {
 
     private static final Logger logger = LoggerFactory.getLogger(ProjectsSender.class);
 
-    private static final String NEW_LINE = "\n";
+    private static final String NEW_LINE = System.lineSeparator();
     private static final String DOT = ".";
     private static final String JAVA_NETWORKING = "java.net";
     private static final int MAX_NUMBER_OF_DEPENDENCIES = 1000000;
@@ -71,7 +72,7 @@ public class ProjectsSender {
 
     /* --- Public methods --- */
 
-    public StatusCode sendProjects(Collection<AgentProjectInfo> projects) {
+    public Pair<String,StatusCode> sendProjects(Collection<AgentProjectInfo> projects) {
         Iterator<AgentProjectInfo> iterator = projects.iterator();
         while (iterator.hasNext()) {
             AgentProjectInfo project = iterator.next();
@@ -92,7 +93,7 @@ public class ProjectsSender {
 
         if (projects.isEmpty()) {
             logger.info("Exiting, nothing to update");
-            return StatusCode.SUCCESS;
+            return  new Pair<>("Exiting, nothing to update",StatusCode.SUCCESS);
         } else {
             return sendRequest(projects);
         }
@@ -100,7 +101,7 @@ public class ProjectsSender {
 
     /* --- Private methods --- */
 
-    private StatusCode sendRequest(Collection<AgentProjectInfo> projects) {
+    private Pair<String, StatusCode> sendRequest(Collection<AgentProjectInfo> projects) {
         // org token
         String orgToken = config.getOrgToken();
 
@@ -118,9 +119,10 @@ public class ProjectsSender {
         // send request
         logger.info("Initializing WhiteSource Client");
         WhitesourceService service = createService();
-        if (config.isOfflineState() ) {
-            offlineUpdate(service, orgToken, requesterEmail, product, productVersion, projects);
-            return this.prepStepStatusCode;
+        String resultInfo = "";
+        if (config.isOfflineState()) {
+            resultInfo = offlineUpdate(service, orgToken, requesterEmail, product, productVersion, projects);
+            return new Pair<>(resultInfo, this.prepStepStatusCode);
         } else {
             // update type
             UpdateType updateType = UpdateType.OVERRIDE;
@@ -140,7 +142,10 @@ public class ProjectsSender {
                     statusCode = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
                 }
                 if (statusCode == StatusCode.SUCCESS) {
-                    update(service, orgToken, updateType, requesterEmail, product, productVersion, projects);
+                    resultInfo = update(service, orgToken, updateType, requesterEmail, product, productVersion, projects);
+                    logger.info(resultInfo);
+                    //strip line separators
+                    resultInfo = resultInfo.replace(System.lineSeparator(),"");
                 }
             } catch (WssServiceException e) {
                 if (e.getCause() != null &&
@@ -149,16 +154,18 @@ public class ProjectsSender {
                 } else {
                     statusCode = StatusCode.SERVER_FAILURE;
                 }
-                logger.error("Failed to send request to WhiteSource server: " + e.getMessage(), e);
+
+                resultInfo = "Failed to send request to WhiteSource server: " + e.getMessage();
+                logger.error(resultInfo, e);
             } finally {
                 if (service != null) {
                     service.shutdown();
                 }
             }
             if (statusCode == StatusCode.SUCCESS) {
-                return this.prepStepStatusCode;
+                return new Pair<>(resultInfo, this.prepStepStatusCode);
             }
-            return statusCode;
+            return new Pair<>(resultInfo, statusCode);
         }
     }
 
@@ -224,15 +231,16 @@ public class ProjectsSender {
         return policyCompliance;
     }
 
-    private void update(WhitesourceService service, String orgToken, UpdateType updateType, String requesterEmail, String product, String productVersion,
+    private String update(WhitesourceService service, String orgToken, UpdateType updateType, String requesterEmail, String product, String productVersion,
                         Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
         UpdateInventoryResult updateResult = service.update(orgToken, requesterEmail, updateType, product, productVersion, projects);
-        logResult(updateResult);
+        return logResult(updateResult);
     }
 
-    private void offlineUpdate(WhitesourceService service, String orgToken, String requesterEmail, String product, String productVersion,
+    private String offlineUpdate(WhitesourceService service, String orgToken, String requesterEmail, String product, String productVersion,
                                Collection<AgentProjectInfo> projects) {
+        String resultInfo = "";
         logger.info("Generating offline update request");
 
         boolean zip = config.isOfflineZip();
@@ -265,17 +273,21 @@ public class ProjectsSender {
             updateRequest.setUpdateType(updateTypeFinal);
             File outputDir = new File(".");
             File file = offlineUpdateRequest.generate(outputDir, zip, prettyJson);
-            logger.info("Offline request generated successfully at {}", file.getPath());
+
+            resultInfo = "Offline request generated successfully at " + file.getPath();
+            logger.info(resultInfo);
         } catch (IOException e) {
-            logger.error("Error generating offline update request: " + e.getMessage());
+            resultInfo ="Error generating offline update request: " + e.getMessage();
+            logger.error(resultInfo);
         } finally {
             if (service != null) {
                 service.shutdown();
             }
         }
+        return resultInfo;
     }
 
-    private void logResult(UpdateInventoryResult updateResult) {
+    private String logResult(UpdateInventoryResult updateResult) {
         StringBuilder resultLogMsg = new StringBuilder("Inventory update results for ").append(updateResult.getOrganization()).append(NEW_LINE);
 
         // newly created projects
@@ -305,7 +317,7 @@ public class ProjectsSender {
         if (StringUtils.isNotBlank(requestToken)) {
             resultLogMsg.append(NEW_LINE).append("Support Token: ").append(requestToken).append(NEW_LINE);
         }
-        logger.info(resultLogMsg.toString());
+        return resultLogMsg.toString();
     }
 
     private String getAgentType() {

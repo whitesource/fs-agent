@@ -204,7 +204,7 @@ public class FileSystemAgent {
                 if (scmConnectors != null) {
                     scmConnectors.forEach(scmConnector -> scmConnector.deleteCloneDirectory());
                 }
-                System.exit(-1); // TODO this is within a try frame. Throw an exception instead
+                return new Pair<>(null,StatusCode.ERROR); // TODO this is within a try frame. Throw an exception instead
             }
         }
 

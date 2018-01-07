@@ -24,8 +24,8 @@ public class MainTest {
             File file = TestHelper.getFileFromResources("whitesource-fs-agent.config");
             String config = file.getAbsolutePath();
             String[] args = ("-c " + config + " -d " + dir.getPath() + " -product " + "fsAgentMain" + " -project " + dir.getName()).split(" ");
-            int result = Main.execute(args);
-            Assert.assertEquals(result, 0);
+            StatusCode result = new Main().scanAndSend(args).getValue();
+            Assert.assertEquals(result, StatusCode.SUCCESS);
         });
     }
 

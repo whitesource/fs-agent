@@ -20,6 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
+import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.ConfigurationValidation;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
@@ -39,8 +40,8 @@ public class FSAConfiguration {
 
     private static final String FALSE = "false";
     private static final String INFO = "info";
-    private static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
-    private static final int DEFAULT_ARCHIVE_DEPTH = 0;
+    public static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
+    public static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
     public static final String DEFAULT_API_TOKEN = "apiToken";
     public static final String DAFAULT_SAMPLE_PROJECT = "sampleProject";
@@ -49,6 +50,12 @@ public class FSAConfiguration {
     /* --- Private fields --- */
 
     private final String projectName;
+
+    public boolean getHasErrors() {
+        return hasErrors;
+    }
+
+    private final boolean hasErrors;
 
     /* --- Private final fields --- */
 
@@ -135,7 +142,9 @@ public class FSAConfiguration {
             new JCommander(commandLineArgs, args);
 
             if (config == null) {
-                config = configurationValidation.readAndValidateConfigFile(commandLineArgs.configFilePath, commandLineArgs.project);
+                Pair<Properties,Boolean> validationResult = configurationValidation.readWithError(commandLineArgs.configFilePath, commandLineArgs.project);
+                config = validationResult.getKey();
+                hasErrors = validationResult.getValue();
                 if(StringUtils.isNotEmpty(commandLineArgs.project)) {
                     projectName = commandLineArgs.project;
                     config.setProperty(PROJECT_NAME_PROPERTY_KEY, projectName);
@@ -145,7 +154,7 @@ public class FSAConfiguration {
             }
             else{
                 projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
-                configurationValidation.validateConfigProps(config, NONE, projectName);
+                hasErrors = configurationValidation.isConfigurationInError(config, NONE, projectName);
             }
 
             config.setProperty(PROJECT_CONFIGURATION_PATH, commandLineArgs.configFilePath);
@@ -167,7 +176,7 @@ public class FSAConfiguration {
                 String apiKey = DEFAULT_API_TOKEN;
                 config.setProperty(ORG_TOKEN_PROPERTY_KEY, apiKey);
             }
-            configurationValidation.validateConfigProps(config, NONE, projectName);
+            hasErrors = configurationValidation.isConfigurationInError(config, NONE, projectName);
 
             offlineRequestFiles = new ArrayList<>();
             fileListPath = null;
@@ -189,9 +198,9 @@ public class FSAConfiguration {
 
 
         // read all properties
-        includes = config.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        includes = getIncludes(config);
         excludes = config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        archiveExtractionDepth = getIntProperty(config, ARCHIVE_EXTRACTION_DEPTH_KEY, DEFAULT_ARCHIVE_DEPTH);
+        archiveExtractionDepth = getArchiveDepth(config);
         archiveIncludes = config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         archiveExcludes = config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         archiveFastUnpack = getBooleanProperty(config, ARCHIVE_FAST_UNPACK_KEY, false);
@@ -379,10 +388,6 @@ public class FSAConfiguration {
         return projectPerSubFolder;
     }
 
-    public ConfigurationValidation getConfigurationValidation() {
-        return configurationValidation;
-    }
-
     public String getRequesterEmail() {
         return requesterEmail;
     }
@@ -437,6 +442,19 @@ public class FSAConfiguration {
 
     /* --- Public static methods--- */
 
+    public static int getIntProperty(Properties config, String propertyKey, int defaultValue) {
+        int value = defaultValue;
+        String propertyValue = config.getProperty(propertyKey);
+        if (StringUtils.isNotBlank(propertyValue)) {
+            try {
+                value = Integer.valueOf(propertyValue);
+            } catch (NumberFormatException e) {
+                // do nothing
+            }
+        }
+        return value;
+    }
+
     public static boolean getBooleanProperty(Properties config, String propertyKey, boolean defaultValue) {
         boolean property = defaultValue;
         String propertyValue = config.getProperty(propertyKey);
@@ -464,19 +482,6 @@ public class FSAConfiguration {
     }
 
     /* --- Private methods --- */
-
-    private int getIntProperty(Properties config, String propertyKey, int defaultValue) {
-        int value = defaultValue;
-        String propertyValue = config.getProperty(propertyKey);
-        if (StringUtils.isNotBlank(propertyValue)) {
-            try {
-                value = Integer.valueOf(propertyValue);
-            } catch (NumberFormatException e) {
-                // do nothing
-            }
-        }
-        return value;
-    }
 
     private List<String> updateProperties(Properties configProps, String project, CommandLineArgs commandLineArgs) {
         // Check whether the user inserted api key, project OR/AND product via command line
@@ -516,5 +521,13 @@ public class FSAConfiguration {
         if (StringUtils.isNotBlank(propertyValue)) {
             configProps.put(propertyKey, propertyValue);
         }
+    }
+
+    public static int getArchiveDepth(Properties configProps) {
+        return getIntProperty(configProps, ARCHIVE_EXTRACTION_DEPTH_KEY,  FSAConfiguration.DEFAULT_ARCHIVE_DEPTH);
+    }
+
+    public static String[] getIncludes(Properties configProps) {
+        return configProps.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
     }
 }

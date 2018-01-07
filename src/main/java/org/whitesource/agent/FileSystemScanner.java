@@ -1,7 +1,6 @@
 package org.whitesource.agent;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.AgentProjectInfo;
@@ -34,9 +33,6 @@ public class FileSystemScanner {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
-
-
-    private static final int MAX_EXTRACTION_DEPTH = 7;
     private static String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
 
     /* --- Members --- */
@@ -91,8 +87,8 @@ public class FileSystemScanner {
         // get canonical paths
         Set<String> pathsToScan = getCanonicalPaths(scannerBaseDirs);
 
-        // validate parameters
-        validateParams(archiveExtractionDepth, includes);
+        // todo: consider adding exit since this can be called from other components
+        //validateParams(archiveExtractionDepth, includes);
 
         // scan directories
         int totalFiles = 0;
@@ -320,22 +316,6 @@ public class FileSystemScanner {
     private void increaseCount(DependencyInfo dependency, int[] totalDependencies) {
         totalDependencies[0] += dependency.getChildren().size();
         dependency.getChildren().forEach(dependencyInfo -> increaseCount(dependencyInfo, totalDependencies));
-    }
-
-    private void validateParams(int archiveExtractionDepth, String[] includes) {
-        boolean isShutDown = false;
-        if (archiveExtractionDepth < 0 || archiveExtractionDepth > MAX_EXTRACTION_DEPTH) {
-            logger.warn("Error: archiveExtractionDepth value should be greater than 0 and less than 4");
-            isShutDown = true;
-        }
-        if (includes.length < 1 || StringUtils.isBlank(includes[0])) {
-            logger.warn("Error: includes parameter must have at list one scanning pattern");
-            isShutDown = true;
-        }
-        if (isShutDown) {
-            logger.warn("Exiting");
-            System.exit(1);
-        }
     }
 
     private String[] excludeFileSystemAgent(String[] excludes) {

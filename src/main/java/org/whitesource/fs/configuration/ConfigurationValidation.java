@@ -18,6 +18,8 @@ package org.whitesource.fs.configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.Pair;
+import org.whitesource.fs.FSAConfiguration;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -33,15 +35,16 @@ public class ConfigurationValidation {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationValidation.class);
+    private static final int MAX_EXTRACTION_DEPTH = 7;
 
-    public Properties readAndValidateConfigFile(String configFilePath, String projectName) {
+    public Pair<Properties,Boolean> readWithError(String configFilePath, String projectName) {
         Properties configProps = new Properties();
         InputStream inputStream = null;
         boolean foundError = false;
         try {
             inputStream = new FileInputStream(configFilePath);
             configProps.load(inputStream);
-            foundError = validateConfigProps(configProps, configFilePath, projectName);
+            foundError = isConfigurationInError(configProps, configFilePath, projectName);
         } catch (FileNotFoundException e) {
             logger.error("Failed to open " + configFilePath + " for reading", e);
             foundError = true;
@@ -56,14 +59,11 @@ public class ConfigurationValidation {
                     logger.warn("Failed to close " + configFilePath + "InputStream", e);
                 }
             }
-            if (foundError) {
-                System.exit(-1); // TODO this may throw SecurityException. Return null instead
-            }
         }
-        return configProps;
+        return new Pair<>(configProps, foundError);
     }
 
-    public boolean validateConfigProps(Properties configProps, String configFilePath, String project) {
+    public boolean isConfigurationInError(Properties configProps, String configFilePath, String project) {
         boolean foundError = false;
         if (StringUtils.isBlank(configProps.getProperty(ORG_TOKEN_PROPERTY_KEY))) {
             foundError = true;
@@ -74,7 +74,7 @@ public class ConfigurationValidation {
         String projectName = !StringUtils.isBlank(project) ? project : configProps.getProperty(PROJECT_NAME_PROPERTY_KEY);
         boolean noProjectToken = StringUtils.isBlank(projectToken);
         boolean noProjectName = StringUtils.isBlank(projectName);
-        boolean projectPerFolder = getBooleanProperty(configProps, PROJECT_PER_SUBFOLDER, false);
+        boolean projectPerFolder = FSAConfiguration.getBooleanProperty(configProps, PROJECT_PER_SUBFOLDER, false);
         if (noProjectToken && noProjectName && !projectPerFolder) {
             foundError = true;
             logger.error("Could not retrieve properties {} and {} from {}",
@@ -83,18 +83,26 @@ public class ConfigurationValidation {
             foundError = true;
             logger.error("Please choose just one of either {} or {} (and not both)", PROJECT_NAME_PROPERTY_KEY, PROJECT_TOKEN_PROPERTY_KEY);
         }
-        if (foundError) {
-            System.exit(-1); // TODO this may throw SecurityException. Return null instead
-        }
-        return foundError;
+
+        int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(configProps);
+        String[] includes = FSAConfiguration.getIncludes(configProps);
+        return foundError || shouldShutDown(archiveExtractionDepth, includes);
     }
 
-    private boolean getBooleanProperty(Properties config, String propertyKey, boolean defaultValue) {
-        boolean property = defaultValue;
-        String propertyValue = config.getProperty(propertyKey);
-        if (StringUtils.isNotBlank(propertyValue)) {
-            property = Boolean.valueOf(propertyValue);
+
+    private boolean shouldShutDown(int archiveExtractionDepth, String[] includes) {
+        boolean isShutDown = false;
+        if (archiveExtractionDepth < 0 || archiveExtractionDepth > MAX_EXTRACTION_DEPTH) {
+            logger.warn("Error: archiveExtractionDepth value should be greater than 0 and less than " + MAX_EXTRACTION_DEPTH);
+            isShutDown = true;
         }
-        return property;
+        if (includes.length < 1 || StringUtils.isBlank(includes[0])) {
+            logger.warn("Error: includes parameter must have at list one scanning pattern");
+            isShutDown = true;
+        }
+        if (isShutDown) {
+            logger.warn("Exiting");
+        }
+        return isShutDown;
     }
 }
