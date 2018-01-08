@@ -24,6 +24,7 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
+import org.whitesource.agent.dependency.resolver.packageManger.PackageManagerExtractor;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.Pair;
@@ -60,6 +61,7 @@ public class FileSystemAgent {
     private static final String NPM_INSTALL_OUTPUT_DESTINATION = NpmLsJsonDependencyCollector.isWindows() ? "nul" : "/dev/null";
     private static final String PACKAGE_LOCK = "package-lock.json";
     private static final String PACKAGE_JSON = "package.json";
+    public static final String SCAN_PROJECT_MANAGER = "scanProjectManager";
 
     /* --- Members --- */
 
@@ -221,15 +223,16 @@ public class FileSystemAgent {
 
         boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
         Collection<AgentProjectInfo> projects = null;
-//        if(scanPackageManager) {
-//            //todo scanPackageManager
-              // project = new PackageManagerExtractor(showProgressBar, new DependencyResolutionService(config)).createProjects()
-//        } else {
+        final String scanProjectManager = config.getProperty(SCAN_PROJECT_MANAGER);
+        if(StringUtils.isNotBlank(scanProjectManager)) {
+           //todo scanPackageManager
+            projects = new PackageManagerExtractor(showProgressBar, new DependencyResolutionService(config)).createProjects();
+        } else {
             projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createProjects(
                     scannerBaseDirs, hasScmConnectors[0], includes, excludes, globCaseSensitive, archiveExtractionDepth,
                     archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights,
                     partialSha1Match, calculateHints, calculateMd5);
-//        }
+        }
         // delete all temp scm files
         scmPaths.forEach(directory -> {
             if (directory != null) {
