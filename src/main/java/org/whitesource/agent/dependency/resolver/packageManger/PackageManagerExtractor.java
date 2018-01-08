@@ -65,31 +65,30 @@ public class PackageManagerExtractor {
         //Foreach loop on every flavor command object
         for (LinuxPkgManagerCommand linuxPkgManagerCommand : LinuxPkgManagerCommand.values()) {
             try {
-                logger.info("Trying to run command {}",linuxPkgManagerCommand.getCommand());
+                logger.info("Trying to run command {}", linuxPkgManagerCommand.getCommand());
                 p = Runtime.getRuntime().exec(linuxPkgManagerCommand.getCommand());
                 inputStream = p.getInputStream();
                 if (inputStream.read() == -1) {
                     logger.error("Unable to execute - {} , flavor does not support this command ", linuxPkgManagerCommand.getCommand());
-                    return null;
                 } else {
                     bytes = ByteStreams.toByteArray(inputStream);
                     //Get the installed packages (name,version,architecture) from the inputStream
                     logger.info("Succeed to run the command - {} ", linuxPkgManagerCommand.getCommand());
                     switch (linuxPkgManagerCommand) {
                         case DEBIAN_COMMAND:
-                            logger.info("Creating Debian Project");
+                            logger.info("Trying to create Debian Project");
                             createDebianProject(bytes, packages);
                             break;
                         case RPM_COMMAND:
-                            logger.info("Creating Rpm Project");
+                            logger.info("Trying to create Rpm Project");
                             createRpmProject(bytes, packages);
                             break;
                         case ARCH_LINUX_COMMAND:
-                            logger.info("Creating Arch Linux Project");
+                            logger.info("Trying to create Arch Linux Project");
                             createArchLinuxProject(bytes, packages);
                             break;
                         case ALPINE_COMMAND:
-                            logger.info("Creating Alpine Project");
+                            logger.info("Trying to create Alpine Project");
                             createAlpineProject(bytes, packages);
                             break;
                         default:
@@ -97,10 +96,14 @@ public class PackageManagerExtractor {
                     }
                 }
                 //Create new AgentProjectInfo object and add him into the list of AgentProjectInfo
-                logger.info("Creating new AgentProjectInfo");
-                AgentProjectInfo projectInfo = new AgentProjectInfo();
-                projectInfo.setDependencies(packages);
-                projectInfos.add(projectInfo);
+                if (packages.size() > 0) {
+                    logger.info("Creating new AgentProjectInfo");
+                    AgentProjectInfo projectInfo = new AgentProjectInfo();
+                    projectInfo.setDependencies(packages);
+                    projectInfos.add(projectInfo);
+                    packages = new LinkedList<>();
+                }
+
             } catch (IOException e) {
 
             }
