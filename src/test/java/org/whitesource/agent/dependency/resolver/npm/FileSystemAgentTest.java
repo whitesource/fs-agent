@@ -94,7 +94,7 @@ public class FileSystemAgentTest {
 
             // send to server via npm-plugin
             String pluginPath = TestHelper.getOsRelativePath("ws-bower\\bin\\ws-bower.js");
-            runNpmPluginOnFolder(dir,pluginPath);
+            runNpmPluginOnFolder(dir, pluginPath);
 
             // collect number of dependencies via npm-plugin
             Collection<DependencyInfo> bowerPluginDependencies = readNpmPluginFile(dir, "ws-log-bower-report-post.json");
@@ -112,7 +112,7 @@ public class FileSystemAgentTest {
         Arrays.stream(directory.listFiles()).filter(dir -> dir.isDirectory()).forEach(dir -> {
             // send to server via npm-plugin
             String pluginPath = TestHelper.getOsRelativePath("whitesource/bin/whitesource.js");
-            runNpmPluginOnFolder(dir,pluginPath);
+            runNpmPluginOnFolder(dir, pluginPath);
 
             // collect number of dependencies via npm-plugin
             Collection<DependencyInfo> dependencyInfosNPMPLugin = readNpmPluginFile(dir, "ws-log-report-post.json");
@@ -127,7 +127,7 @@ public class FileSystemAgentTest {
 
         FSAConfiguration FSAConfiguration = new FSAConfiguration(props);
         FileSystemAgent fileSystemAgent = new FileSystemAgent(FSAConfiguration, Arrays.asList(dir.getAbsolutePath()));
-        Collection<AgentProjectInfo> projects = fileSystemAgent.createProjects().getKey();
+        Collection<AgentProjectInfo> projects = fileSystemAgent.createProjects().getProjects();
         Collection<DependencyInfo> fsAgentDeps = projects.stream().findFirst().get().getDependencies();
 
         int npmPluginCount = getCount(dependencyInfosNPMPLugin);
@@ -160,7 +160,7 @@ public class FileSystemAgentTest {
 
         String[] args = new String[]{"node", path, "run"};
 
-        CommandLineProcess commandLineProcess = new CommandLineProcess(dir.toString(),args);
+        CommandLineProcess commandLineProcess = new CommandLineProcess(dir.toString(), args);
         try {
             List<String> lines = commandLineProcess.executeProcess();
             Assert.assertFalse(commandLineProcess.isErrorInProcess());
@@ -175,7 +175,7 @@ public class FileSystemAgentTest {
 
     private Collection<DependencyInfo> readNpmPluginFile(File dir, String fileLog) {
         Collection<DependencyInfo> dependenciesInfo = new ArrayList<>();
-        String fileName = Paths.get(dir.getAbsolutePath(),"WhiteSource-log-files", fileLog).toString();
+        String fileName = Paths.get(dir.getAbsolutePath(), "WhiteSource-log-files", fileLog).toString();
         String json;
         try (InputStream is = new FileInputStream(fileName)) {
             json = IOUtils.toString(is);
@@ -231,7 +231,7 @@ public class FileSystemAgentTest {
         FSAConfiguration FSAConfiguration = new FSAConfiguration(props);
         FileSystemAgent f = new FileSystemAgent(FSAConfiguration, dirs);
 
-        Collection<AgentProjectInfo> projects = f.createProjects().getKey();
+        Collection<AgentProjectInfo> projects = f.createProjects().getProjects();
 
         Stream<DependencyInfo> dependenciesOrig = projects.stream().map(x -> x.getDependencies()).flatMap(d -> d.stream());
         return dependenciesOrig;

@@ -15,7 +15,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.AgentProjectInfo;
-import org.whitesource.agent.utils.Pair;
+import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
 
 import java.io.IOException;
@@ -102,6 +102,8 @@ public class FsaVerticleTest {
                         //final Pair<Collection<AgentProjectInfo>,StatusCode> projects = getProjects(body);
                         //context.assertNotNull(projects.getKey().size()>0);
                         context.assertTrue(body.length() > 20000);
+                        Collection<AgentProjectInfo> projects = getProjects(body).getResult().getProjects();
+                        context.assertTrue(projects.size() >= 0);
                         async.complete();
                     });
                 })
@@ -109,10 +111,11 @@ public class FsaVerticleTest {
                 .end();
     }
 
-    private Pair<Collection<AgentProjectInfo>,StatusCode> getProjects(Buffer body) {
+    private ResultDto<ProjectsDetails, StatusCode> getProjects(Buffer body) {
         String result = body.toString();
         try {
-            return new ObjectMapper().readValue(result, new TypeReference<Pair<Collection<AgentProjectInfo>,StatusCode>>() {});
+            return new ObjectMapper().readValue(result, new TypeReference<ResultDto<ProjectsDetails, StatusCode>>() {
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -91,38 +91,37 @@ public class FileSystemAgent {
 
     /* --- Overridden methods --- */
 
-    public Pair<Collection<AgentProjectInfo>,StatusCode> createProjects() {
+    public ProjectsDetails createProjects() {
+        ProjectsDetails projects = null;
         if (projectPerSubFolder) {
-            Pair <Collection<AgentProjectInfo>,StatusCode> projects = new Pair<>(new ArrayList<>(),StatusCode.SUCCESS);
             for (String directory : dependencyDirs) {
-                Pair <Collection<AgentProjectInfo>,StatusCode> tempProjects = getProjects(Collections.singletonList(directory));
-                if (tempProjects.getKey().size() == 1) {
+                projects = getProjects(Collections.singletonList(directory));
+                if (projects.getProjects().size() == 1) {
                     String projectName = new File(directory).getName();
                     String projectVersion = config.getProjectVersion();
-                    tempProjects.getKey().stream().findFirst().get().setCoordinates(new Coordinates(null, projectName, projectVersion));
+                    projects.getProjects().stream().findFirst().get().setCoordinates(new Coordinates(null, projectName, projectVersion));
                 }
-
-                projects.getKey().addAll(tempProjects.getKey());
-
                 // return on the first project that fails
-                if(!tempProjects.getValue().equals(StatusCode.SUCCESS)){
+                if (!projects.getStatusCode().equals(StatusCode.SUCCESS)) {
                     // return status code if there is a failure
-                    return new Pair<>(new ArrayList<>(),tempProjects.getValue());
+                    return new ProjectsDetails(new ArrayList<>(), projects.getStatusCode(), projects.getDetails());
                 }
             }
             return projects;
         } else {
-            Pair <Collection<AgentProjectInfo>,StatusCode> projects = getProjects(dependencyDirs);
-            AgentProjectInfo projectInfo = projects.getKey().stream().findFirst().get();
-            if (projectInfo.getCoordinates() == null) {
-                // use token or name + version
-                String projectToken = config.getProjectToken();
-                if (StringUtils.isNotBlank(projectToken)) {
-                    projectInfo.setProjectToken(projectToken);
-                } else {
-                    String projectName = config.getProjectName();
-                    String projectVersion = config.getProjectVersion();
-                    projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+            projects = getProjects(dependencyDirs);
+            if (projects.getProjects().size() > 0) {
+                AgentProjectInfo projectInfo = projects.getProjects().stream().findFirst().get();
+                if (projectInfo.getCoordinates() == null) {
+                    // use token or name + version
+                    String projectToken = config.getProjectToken();
+                    if (StringUtils.isNotBlank(projectToken)) {
+                        projectInfo.setProjectToken(projectToken);
+                    } else {
+                        String projectName = config.getProjectName();
+                        String projectVersion = config.getProjectVersion();
+                        projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+                    }
                 }
             }
 
@@ -133,7 +132,7 @@ public class FileSystemAgent {
 
     /* --- Private methods --- */
 
-    private Pair <Collection<AgentProjectInfo>,StatusCode> getProjects(List<String> scannerBaseDirs) {
+    private ProjectsDetails getProjects(List<String> scannerBaseDirs) {
         // create scm connector
         final StatusCode[] success = new StatusCode[]{StatusCode.SUCCESS};
         String scmType = config.getScmType();
@@ -200,11 +199,12 @@ public class FileSystemAgent {
             } else if (globCaseSensitiveValue.equalsIgnoreCase("false") || globCaseSensitiveValue.equalsIgnoreCase("n")) {
                 globCaseSensitive = false;
             } else {
-                logger.error("Bad {}. Received {}, required true/false or y/n", CASE_SENSITIVE_GLOB_PROPERTY_KEY, globCaseSensitiveValue);
+                String error = "Bad " + CASE_SENSITIVE_GLOB_PROPERTY_KEY + ". Received " + globCaseSensitiveValue + ", required true/false or y/n";
+                logger.error(error);
                 if (scmConnectors != null) {
                     scmConnectors.forEach(scmConnector -> scmConnector.deleteCloneDirectory());
                 }
-                return new Pair<>(null,StatusCode.ERROR); // TODO this is within a try frame. Throw an exception instead
+                return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, error); // TODO this is within a try frame. Throw an exception instead
             }
         }
 
@@ -229,11 +229,11 @@ public class FileSystemAgent {
                 }
             }
         });
-        return new Pair<>(projects, success[0]);
+        return new ProjectsDetails(projects, success[0], "");
     }
 
     private Pair<String, StatusCode> npmInstallScmRepository(boolean scmNpmInstall, int npmInstallTimeoutMinutes, ScmConnector scmConnector,
-                                                          String separatorFiles, String pathToCloneRepoFiles) {
+                                                             String separatorFiles, String pathToCloneRepoFiles) {
 
         StatusCode success = StatusCode.SUCCESS;
 

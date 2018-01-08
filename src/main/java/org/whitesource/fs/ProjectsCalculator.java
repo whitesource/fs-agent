@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.model.AgentProjectInfo;
-import org.whitesource.agent.utils.Pair;
+
 import java.util.Base64;
 
 import java.io.*;
@@ -47,7 +47,7 @@ public class ProjectsCalculator {
 
     /* --- Public methods --- */
 
-    public Pair<Collection<AgentProjectInfo>,StatusCode> getAllProjects(FSAConfiguration FSAConfiguration) {
+    public ProjectsDetails getAllProjects(FSAConfiguration FSAConfiguration) {
         // read log level from configuration file
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         String logLevel = FSAConfiguration.getLogLevel();
@@ -76,10 +76,10 @@ public class ProjectsCalculator {
         Collection<AgentProjectInfo> projects = getAgentProjectsFromRequests(FSAConfiguration.getOfflineRequestFiles());
         // create projects as usual
 
-        Pair<Collection<AgentProjectInfo>,StatusCode> createdProjects = agent.createProjects();
-        projects.addAll(createdProjects.getKey());
+        ProjectsDetails createdProjects = agent.createProjects();
+        projects.addAll(createdProjects.getProjects());
 
-        return new Pair<>(projects,createdProjects.getValue());
+        return new ProjectsDetails(projects, createdProjects.getStatusCode(), createdProjects.getDetails());
     }
 
     /* --- Private methods --- */
@@ -105,7 +105,8 @@ public class ProjectsCalculator {
                 UpdateInventoryRequest updateRequest;
                 logger.debug("Converting offline request to JSON");
                 try {
-                    updateRequest = gson.fromJson(new JsonReader(new FileReader(requestFile)), new TypeToken<UpdateInventoryRequest>() {}.getType());
+                    updateRequest = gson.fromJson(new JsonReader(new FileReader(requestFile)), new TypeToken<UpdateInventoryRequest>() {
+                    }.getType());
                     logger.info("Reading information from request file {}", requestFile);
                     projects.addAll(updateRequest.getProjects());
                 } catch (JsonSyntaxException e) {

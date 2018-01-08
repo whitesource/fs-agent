@@ -2,7 +2,6 @@ package org.whitesource.fs.configuration;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.whitesource.fs.ConfigurationSerializer;
 import org.whitesource.fs.FSAConfiguration;
 
 import java.io.IOException;

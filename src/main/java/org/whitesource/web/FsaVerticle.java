@@ -1,3 +1,18 @@
+/**
+ * Copyright (C) 2014 WhiteSource Ltd.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.whitesource.web;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -9,16 +24,12 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.ProjectsSender;
-import org.whitesource.agent.api.model.AgentProjectInfo;
-import org.whitesource.agent.utils.Pair;
-import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.Main;
 import org.whitesource.fs.StatusCode;
+import org.whitesource.fs.ProjectsDetails;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Collection;
 import java.util.Properties;
 
 public class FsaVerticle extends AbstractVerticle {
@@ -60,15 +71,13 @@ public class FsaVerticle extends AbstractVerticle {
     }
 
     private void send(RoutingContext context) {
-        Pair<Collection<AgentProjectInfo>, StatusCode> projects = getProjects(context, true);
-        if (projects.getValue().equals(StatusCode.SUCCESS)) {
-            Properties props = getPropertiesFromBody(context);
-            FSAConfiguration fsaConfiguration = new FSAConfiguration(props);
-            ProjectsSender projectsSender = new ProjectsSender(fsaConfiguration);
-            Pair<String, StatusCode> resultProjects = projectsSender.sendProjects(projects.getKey());
+        ProjectsDetails projects = getProjects(context, true);
+        if (projects.getStatusCode().equals(StatusCode.SUCCESS)) {
+            ProjectsDetails resultProjects = getProjects(context,true);
+            ResultDto resultDto = new ResultDto(resultProjects.getProjects(),resultProjects.getStatusCode());
             String result = null;
             try {
-                result = new ObjectMapper().writeValueAsString(resultProjects);
+                result = new ObjectMapper().writeValueAsString(resultDto);
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
             }
@@ -83,21 +92,19 @@ public class FsaVerticle extends AbstractVerticle {
     }
 
     public void analyze(RoutingContext context) {
-        Pair<Collection<AgentProjectInfo>,StatusCode> projects = getProjects(context,false);
-        if(projects.getValue().equals(StatusCode.SUCCESS)){
-            String result = "error";
-            try {
-                result = new ObjectMapper().writeValueAsString(projects);
-            } catch (JsonProcessingException e) {
-                logger.error("error writing json:", e);
-            }
-            context.response().end(result);
-        }else {
+        ProjectsDetails resultProjects = getProjects(context, false);
+        ResultDto resultDto = new ResultDto(resultProjects, resultProjects.getStatusCode());
+        String result = "error";
+        try {
+            result = new ObjectMapper().writeValueAsString(resultDto);
+        } catch (JsonProcessingException e) {
+            logger.error("error writing json:", e);
             context.response().end("scanning has failed");
         }
+        context.response().end(result);
     }
 
-    private Pair<Collection<AgentProjectInfo>,StatusCode> getProjects(RoutingContext context, boolean shouldSend) {
+    private ProjectsDetails getProjects(RoutingContext context, boolean shouldSend) {
         // the POSTed content is available in context.getBodyAsJson()
         //JsonObject body = context.getBodyAsJson();
         // a JsonObject wraps a map and it exposes type-aware getters

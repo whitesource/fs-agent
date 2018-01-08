@@ -20,7 +20,6 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.ProjectsSender;
-import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.web.FsaVerticle;
 
@@ -47,50 +46,49 @@ public class Main {
         CommandLineArgs commandLineArgs = new CommandLineArgs();
         new JCommander(commandLineArgs, args);
 
-        if(commandLineArgs.web.equals("false")) {
+        if (commandLineArgs.web.equals("false")) {
             StatusCode processExitCode;
             try {
-                processExitCode = new Main().scanAndSend(args).getValue();
+                processExitCode = new Main().scanAndSend(args).getStatusCode();
             } catch (Exception e) {
                 // catch any exception that may be thrown, return error code
                 logger.warn("Process encountered an error: {}" + e.getMessage(), e);
                 processExitCode = StatusCode.ERROR;
             }
             System.exit(processExitCode.getValue());
-        }else {
+        } else {
             vertx = Vertx.vertx();
             vertx.deployVerticle(FsaVerticle.class.getName());
         }
     }
 
-    public Pair<Collection<AgentProjectInfo>,StatusCode> scanAndSend(Properties properties, boolean shouldSend) {
+    public ProjectsDetails scanAndSend(Properties properties, boolean shouldSend) {
         // read configuration config
         FSAConfiguration fsaConfiguration = new FSAConfiguration(properties);
         return scanAndSend(fsaConfiguration, shouldSend);
     }
 
-    private Pair<Collection<AgentProjectInfo>,StatusCode> scanAndSend(FSAConfiguration fsaConfiguration, boolean shouldSend) {
+    private ProjectsDetails scanAndSend(FSAConfiguration fsaConfiguration, boolean shouldSend) {
         if (fsaConfiguration.getHasErrors()) {
-            return new Pair<>(new ArrayList<>(), StatusCode.ERROR);
+            return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, "");
         }
 
-        Pair<Collection<AgentProjectInfo>, StatusCode> projects = projectsCalculator.getAllProjects(fsaConfiguration);
-        if (!projects.getValue().equals(StatusCode.SUCCESS)) {
-            return projects;
+        ProjectsDetails result = projectsCalculator.getAllProjects(fsaConfiguration);
+        if (!result.getProjects().equals(StatusCode.SUCCESS)) {
+            return new ProjectsDetails(result.getProjects(), result.getStatusCode(), "");
         }
 
         if (shouldSend) {
             ProjectsSender projectsSender = new ProjectsSender(fsaConfiguration);
-            StatusCode processExitCode = projectsSender.sendProjects(projects.getKey()).getValue();
-            logger.info("Process finished with exit code {} ({})", processExitCode, processExitCode.getValue());
-
-            return new Pair<>(new ArrayList<>(), processExitCode);
+            Pair<String, StatusCode> processExitCode = projectsSender.sendProjects(result.getProjects());
+            logger.info("Process finished with exit code {} ({})", processExitCode.getKey(), processExitCode.getValue());
+            return new ProjectsDetails(new ArrayList<>(), processExitCode.getValue(), processExitCode.getKey());
+        } else {
+            return new ProjectsDetails(result.getProjects(), result.getStatusCode(), "");
         }
-
-        return projects;
     }
 
-    public Pair<Collection<AgentProjectInfo>,StatusCode> scanAndSend(String[] args) {
+    public ProjectsDetails scanAndSend(String[] args) {
         // read configuration config
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
         return scanAndSend(fsaConfiguration, true);
