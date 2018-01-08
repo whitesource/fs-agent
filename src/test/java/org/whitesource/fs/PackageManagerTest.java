@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Text.NEW_LINE;
 
 public class PackageManagerTest {
 

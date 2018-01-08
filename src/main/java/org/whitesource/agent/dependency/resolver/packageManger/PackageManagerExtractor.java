@@ -65,6 +65,7 @@ public class PackageManagerExtractor {
         //Foreach loop on every flavor command object
         for (LinuxPkgManagerCommand linuxPkgManagerCommand : LinuxPkgManagerCommand.values()) {
             try {
+                logger.info("Trying to run command {}",linuxPkgManagerCommand.getCommand());
                 p = Runtime.getRuntime().exec(linuxPkgManagerCommand.getCommand());
                 inputStream = p.getInputStream();
                 if (inputStream.read() == -1) {
@@ -73,7 +74,7 @@ public class PackageManagerExtractor {
                 } else {
                     bytes = ByteStreams.toByteArray(inputStream);
                     //Get the installed packages (name,version,architecture) from the inputStream
-                    logger.info("Succeed to run the command - {} ",linuxPkgManagerCommand.getCommand());
+                    logger.info("Succeed to run the command - {} ", linuxPkgManagerCommand.getCommand());
                     switch (linuxPkgManagerCommand) {
                         case DEBIAN_COMMAND:
                             logger.info("Creating Debian Project");
@@ -105,7 +106,10 @@ public class PackageManagerExtractor {
             }
         }
         try {
-            inputStream.close();
+            if (inputStream != null) {
+                inputStream.close();
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -32,11 +32,13 @@ import org.whitesource.fs.configuration.ConfigurationValidation;
 import org.whitesource.fs.configuration.ScmConfiguration;
 import org.whitesource.fs.configuration.ScmRepositoriesParser;
 import org.whitesource.scm.ScmConnector;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 /**
@@ -195,7 +197,7 @@ public class FileSystemAgent {
         boolean followSymlinks = getBooleanProperty(FOLLOW_SYMBOLIC_LINKS, true);
         // check scan partial sha1s (false by default)
         boolean partialSha1Match = getBooleanProperty(PARTIAL_SHA1_MATCH_KEY, false);
-
+        boolean projectScannerManager = getBooleanProperty(SCAN_PROJECT_MANAGER,true);
         boolean calculateHints = getBooleanProperty(CALCULATE_HINTS, false);
         boolean calculateMd5 = getBooleanProperty(CALCULATE_MD5, false);
 
@@ -223,8 +225,8 @@ public class FileSystemAgent {
 
         boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
         Collection<AgentProjectInfo> projects = null;
-        final String scanProjectManager = config.getProperty(SCAN_PROJECT_MANAGER);
-        if(StringUtils.isNotBlank(scanProjectManager)) {
+        boolean scanProjectManager = getBooleanProperty(SCAN_PROJECT_MANAGER,false);
+        if (scanProjectManager) {
            //todo scanPackageManager
             projects = new PackageManagerExtractor(showProgressBar, new DependencyResolutionService(config)).createProjects();
         } else {
