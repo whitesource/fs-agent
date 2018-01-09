@@ -3,6 +3,7 @@ package org.whitesource.agent.dependency.resolver.nuget;
 import org.junit.Assert;
 import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
+import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackage;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackages;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackagesConfigXmlParser;
@@ -38,7 +39,7 @@ public class NugetPackagesConfigXmlParserTest {
 //        jaxbMarshaller.marshal(testNugetPackages, System.out); // // console output pretty printed
 
 
-        NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(xmlFile);
+        NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(xmlFile, NugetConfigFileType.CONFIG_FILE_TYPE);
 
         NugetPackages packages = parser.parsePackagesConfigFile();
         Assert.assertNotNull("Object was deserialized", packages);

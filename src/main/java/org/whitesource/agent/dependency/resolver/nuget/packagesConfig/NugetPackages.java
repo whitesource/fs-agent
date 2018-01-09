@@ -17,6 +17,7 @@ package org.whitesource.agent.dependency.resolver.nuget.packagesConfig;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -27,7 +28,7 @@ public class NugetPackages {
 
     /* --- Members --- */
 
-    private List<NugetPackage> nugets;
+    private List<NugetPackage> nugets = new LinkedList<>();
 
     /* --- Getters / Setters --- */
 
@@ -36,7 +37,7 @@ public class NugetPackages {
         return nugets;
     }
 
-    public void setNugets(List<NugetPackage> nugets) {
-        this.nugets = nugets;
+    public void setNugets(List<? extends NugetPackageInterface> nugets) {
+        this.nugets = (List<NugetPackage>) nugets;
     }
 }
