@@ -8,13 +8,11 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by anna.rozin
@@ -40,6 +38,7 @@ public class PackageManagerExtractor {
     private static final String ARCH_LINUX_PACKAGE_SPLIT_PATTERN = " ";
     private static final String WHITE_SPACE = " ";
     private static final String NEW_LINE = "\\r?\\n";
+    private static final List<String> SYSTEM_ARCHITECTURES = Arrays.asList("x86_64", "i686", "any");
 
     /* --- Members --- */
 
@@ -60,14 +59,14 @@ public class PackageManagerExtractor {
         Collection<AgentProjectInfo> projectInfos = new LinkedList<>();
         InputStream inputStream = null;
         byte[] bytes = null;
-        Process p = null;
+        Process process = null;
 
         //Foreach loop on every flavor command object
         for (LinuxPkgManagerCommand linuxPkgManagerCommand : LinuxPkgManagerCommand.values()) {
             try {
                 logger.info("Trying to run command {}", linuxPkgManagerCommand.getCommand());
-                p = Runtime.getRuntime().exec(linuxPkgManagerCommand.getCommand());
-                inputStream = p.getInputStream();
+                process = Runtime.getRuntime().exec(linuxPkgManagerCommand.getCommand());
+                inputStream = process.getInputStream();
                 if (inputStream.read() == -1) {
                     logger.error("Unable to execute - {} , flavor does not support this command ", linuxPkgManagerCommand.getCommand());
                 } else {
@@ -164,11 +163,14 @@ public class PackageManagerExtractor {
 
         String linesStr = new String(bytes);
         String[] lines = linesStr.split("\\r?\\n");
-        for (String line : lines) {
-            line = line.replaceAll(NON_ASCII_CHARS, EMPTY_STRING);
-            String[] split = line.split(ARCH_LINUX_PACKAGE_SPLIT_PATTERN);
-            if (split.length == 2) {
-                //packages.add(new DependencyInfo(null, MessageFormat.format(ARCH_LINUX_PACKAGE_PATTERN, split[0], split[1], arch), null));
+        String arch = getSystemArchitecture();
+        if(StringUtils.isNotBlank(arch)) {
+            for (String line : lines) {
+                line = line.replaceAll(NON_ASCII_CHARS, EMPTY_STRING);
+                String[] split = line.split(ARCH_LINUX_PACKAGE_SPLIT_PATTERN);
+                if (split.length == 2) {
+                    packages.add(new DependencyInfo(null, MessageFormat.format(ARCH_LINUX_PACKAGE_PATTERN, split[0], split[1], arch), null));
+                }
             }
         }
     }
@@ -185,5 +187,36 @@ public class PackageManagerExtractor {
                 }
             }
         }
+    }
+
+    private static String getSystemArchitecture() {
+        String arch = "";
+        InputStream inputStream = null;
+        byte[] bytes = null;
+        Process process = null;
+        try {
+            process = Runtime.getRuntime().exec(String.valueOf(LinuxPkgManagerCommand.ARCH_LINUX_COMMAND));
+            inputStream = process.getInputStream();
+            if (inputStream.read() == -1) {
+                logger.error("Unable to execute - {} , flavor does not support this command ", String.valueOf(LinuxPkgManagerCommand.ARCH_LINUX_COMMAND));
+            }
+            else {
+                bytes = ByteStreams.toByteArray(inputStream);
+                String linesStr = new String(bytes);
+                if (StringUtils.isNotBlank(linesStr) && SYSTEM_ARCHITECTURES.contains(linesStr)) {
+                    arch = linesStr;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            if(inputStream!=null) {
+                inputStream.close();
+            }
+        } catch (IOException e) {
+            logger.warn("Error reading output: {}", e.getMessage());
+        }
+        return arch;
     }
 }
