@@ -23,33 +23,26 @@ public class PackageManagerExtractor {
 
     private static final Logger logger = LoggerFactory.getLogger(PackageManagerExtractor.class);
 
-    private static final String COLON = ":";
-    private static final String NON_ASCII_CHARS = "[^\\x20-\\x7e]";
-    private static final String EMPTY_STRING = "";
-    private static final String DEBIAN_INSTALLED_PACKAGE_PREFIX = "ii";
     private static final int DEBIAN_PACKAGE_NAME_INDEX = 0;
     private static final int DEBIAN_PACKAGE_VERSION_INDEX = 1;
     private static final int DEBIAN_PACKAGE_ARCH_INDEX = 2;
+    private static final String DEBIAN_INSTALLED_PACKAGE_PREFIX = "ii";
     private static final String DEBIAN_PACKAGE_PATTERN = "{0}_{1}_{2}.deb";
     private static final String RPM_PACKAGE_PATTERN = "{0}.rpm";
     private static final String ALPINE_PACKAGE_PATTERN = "{0}.apk";
     private static final String ALPINE_PACKAGE_SPLIT_PATTERN = " - ";
     private static final String ARCH_LINUX_PACKAGE_PATTERN = "{0}-{1}-{2}.pkg.tar.xz";
+    private static final List<String> SYSTEM_ARCHITECTURES = Arrays.asList("x86_64", "i686", "any");
     private static final String ARCH_LINUX_PACKAGE_SPLIT_PATTERN = " ";
     private static final String WHITE_SPACE = " ";
     private static final String NEW_LINE = "\\r?\\n";
-    private static final List<String> SYSTEM_ARCHITECTURES = Arrays.asList("x86_64", "i686", "any");
-
-    /* --- Members --- */
-
-    private final boolean showProgressBar;
-    private DependencyResolutionService dependencyResolutionService;
+    private static final String COLON = ":";
+    private static final String NON_ASCII_CHARS = "[^\\x20-\\x7e]";
+    private static final String EMPTY_STRING = "";
 
     /* --- Constructors --- */
 
-    public PackageManagerExtractor(boolean showProgressBar, DependencyResolutionService dependencyResolutionService) {
-        this.showProgressBar = showProgressBar;
-        this.dependencyResolutionService = dependencyResolutionService;
+    public PackageManagerExtractor() {
     }
 
     /* --- Public methods --- */
@@ -61,7 +54,7 @@ public class PackageManagerExtractor {
         byte[] bytes = null;
         Process process = null;
 
-        //Foreach loop on every flavor command object
+        //For each flavor command check installed packages
         for (LinuxPkgManagerCommand linuxPkgManagerCommand : LinuxPkgManagerCommand.values()) {
             try {
                 logger.info("Trying to run command {}", linuxPkgManagerCommand.getCommand());
@@ -71,49 +64,47 @@ public class PackageManagerExtractor {
                     logger.error("Unable to execute - {} , flavor does not support this command ", linuxPkgManagerCommand.getCommand());
                 } else {
                     bytes = ByteStreams.toByteArray(inputStream);
-                    //Get the installed packages (name,version,architecture) from the inputStream
+                    //Get the installed packages (name,version,architecture) from inputStream
                     logger.info("Succeed to run the command - {} ", linuxPkgManagerCommand.getCommand());
                     switch (linuxPkgManagerCommand) {
                         case DEBIAN_COMMAND:
-                            logger.info("Trying to create Debian Project");
+                            logger.debug("Getting Debian installed Packages");
                             createDebianProject(bytes, packages);
                             break;
                         case RPM_COMMAND:
-                            logger.info("Trying to create Rpm Project");
+                            logger.debug("Getting RPM installed Packages");
                             createRpmProject(bytes, packages);
                             break;
                         case ARCH_LINUX_COMMAND:
-                            logger.info("Trying to create Arch Linux Project");
+                            logger.debug("Getting Arch Linux installed Packages");
                             createArchLinuxProject(bytes, packages);
                             break;
                         case ALPINE_COMMAND:
-                            logger.info("Trying to create Alpine Project");
+                            logger.debug("Getting Alpine installed Packages");
                             createAlpineProject(bytes, packages);
                             break;
                         default:
                             break;
                     }
                 }
-                //Create new AgentProjectInfo object and add him into the list of AgentProjectInfo
+                //Create new AgentProjectInfo object and add it into a list of AgentProjectInfo
                 if (packages.size() > 0) {
-                    logger.info("Creating new AgentProjectInfo");
+                    logger.debug("Creating new AgentProjectInfo object");
                     AgentProjectInfo projectInfo = new AgentProjectInfo();
                     projectInfo.setDependencies(packages);
                     projectInfos.add(projectInfo);
                     packages = new LinkedList<>();
                 }
-
             } catch (IOException e) {
-
+                logger.warn("Command line error : {}", e.getMessage());
             }
         }
         try {
             if (inputStream != null) {
                 inputStream.close();
             }
-
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("InputStream exception : {}", e.getMessage());
         }
         return projectInfos;
     }
@@ -151,7 +142,7 @@ public class PackageManagerExtractor {
 
     public void createRpmProject(byte[] bytes, List<DependencyInfo> packages) {
         String linesStr = new String(bytes);
-        String[] lines = linesStr.split("\\r?\\n");
+        String[] lines = linesStr.split(NEW_LINE);
         for (String line : lines) {
             if (StringUtils.isNotBlank(line)) {
                 packages.add(new DependencyInfo(null, MessageFormat.format(RPM_PACKAGE_PATTERN, line), null));
@@ -162,7 +153,7 @@ public class PackageManagerExtractor {
     public void createArchLinuxProject(byte[] bytes, List<DependencyInfo> packages) {
 
         String linesStr = new String(bytes);
-        String[] lines = linesStr.split("\\r?\\n");
+        String[] lines = linesStr.split(NEW_LINE);
         String arch = getSystemArchitecture();
         if(StringUtils.isNotBlank(arch)) {
             for (String line : lines) {
@@ -177,7 +168,7 @@ public class PackageManagerExtractor {
 
     public void createAlpineProject(byte[] bytes, List<DependencyInfo> packages) {
         String linesStr = new String(bytes);
-        String[] lines = linesStr.split("\\r?\\n");
+        String[] lines = linesStr.split(NEW_LINE);
         for (String line : lines) {
             line = line.replaceAll(NON_ASCII_CHARS, EMPTY_STRING);
             if (line.contains(ALPINE_PACKAGE_SPLIT_PATTERN)) {
@@ -188,6 +179,9 @@ public class PackageManagerExtractor {
             }
         }
     }
+
+
+    /* --- Private  methods --- */
 
     private static String getSystemArchitecture() {
         String arch = "";
@@ -208,7 +202,7 @@ public class PackageManagerExtractor {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+           logger.warn("Error processing arch linux command {}, error : {}", LinuxPkgManagerCommand.ARCH_LINUX_COMMAND, e.getMessage());
         }
         try {
             if(inputStream!=null) {
@@ -219,4 +213,5 @@ public class PackageManagerExtractor {
         }
         return arch;
     }
+
 }

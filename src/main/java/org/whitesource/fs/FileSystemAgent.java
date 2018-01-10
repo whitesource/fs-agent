@@ -227,8 +227,7 @@ public class FileSystemAgent {
         Collection<AgentProjectInfo> projects = null;
         boolean scanProjectManager = getBooleanProperty(SCAN_PROJECT_MANAGER,false);
         if (scanProjectManager) {
-           //todo scanPackageManager
-            projects = new PackageManagerExtractor(showProgressBar, new DependencyResolutionService(config)).createProjects();
+            projects = new PackageManagerExtractor().createProjects();
         } else {
             projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createProjects(
                     scannerBaseDirs, hasScmConnectors[0], includes, excludes, globCaseSensitive, archiveExtractionDepth,
