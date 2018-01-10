@@ -17,6 +17,7 @@ import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
+import org.whitesource.fs.configuration.EndPointConfiguration;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -33,7 +34,6 @@ public class FsaVerticleTest {
         //VertxOptions options = new VertxOptions();
         //options.setMaxEventLoopExecuteTime(Long.MAX_VALUE);
         //vertx = Vertx.vertx(options);
-
         //new DeploymentOptions().setWorker(true);
         vertx = Vertx.vertx();
 
@@ -51,7 +51,7 @@ public class FsaVerticleTest {
     public void testHome(TestContext context) {
         final Async async = context.async();
 
-        vertx.createHttpClient().getNow(FsaVerticle.DEFAULT_PORT, "localhost", FsaVerticle.HOME,
+        vertx.createHttpClient().getNow(EndPointConfiguration.DEFAULT_PORT, "localhost", FsaVerticle.HOME,
                 response -> {
                     response.handler(body -> {
                         context.assertTrue(body.toString().equals(FsaVerticle.WELCOME_MESSAGE));
@@ -63,7 +63,7 @@ public class FsaVerticleTest {
     @Test
     public void testAnalyzeApi(TestContext context) {
         final Async async = context.async();
-        vertx.createHttpClient().post("localhost:8383\\analyze",
+        vertx.createHttpClient().post("localhost:"+EndPointConfiguration.DEFAULT_PORT+"\\analyze",
                 response -> {
                     response.handler(body -> {
                         context.assertTrue(body.toString().contains("Hello"));
@@ -75,7 +75,7 @@ public class FsaVerticleTest {
         Properties properties = new Properties();
         properties.setProperty(ConfigPropertyKeys.SCM_TYPE_PROPERTY_KEY, "git");
         properties.setProperty(ConfigPropertyKeys.SCM_USER_PROPERTY_KEY, "euhoro");
-        properties.setProperty(ConfigPropertyKeys.SCM_PASS_PROPERTY_KEY, "github2006");
+        properties.setProperty(ConfigPropertyKeys.SCM_PASS_PROPERTY_KEY, "pass");
         properties.setProperty(ConfigPropertyKeys.SCM_URL_PROPERTY_KEY, GIT_SAMPLE);
 
         // just to validate
@@ -92,7 +92,7 @@ public class FsaVerticleTest {
         options.setKeepAlive(true);
         options.setMaxPoolSize(500);
 
-        vertx.createHttpClient(options).post(FsaVerticle.DEFAULT_PORT, "localhost", FsaVerticle.API_ANALYZE)
+        vertx.createHttpClient(options).post(EndPointConfiguration.DEFAULT_PORT, "localhost", FsaVerticle.API_ANALYZE)
                 .putHeader("content-type", "application/json")
                 .putHeader("content-length", length)
                 .handler(response -> {

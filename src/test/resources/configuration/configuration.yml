@@ -1,0 +1,66 @@
+---
+projectName: sampleProject
+hasErrors: true
+offlineRequestFiles: []
+fileListPath: null
+dependencyDirs: []
+includes:
+-
+excludes:
+-
+archiveExtractionDepth: 0
+archiveIncludes:
+-
+archiveExcludes:
+-
+archiveFastUnpack: false
+followSymlinks: true
+partialSha1Match: false
+calculateHints: false
+calculateMd5: false
+projectVersion: null
+projectToken: null
+projectPerSubFolder: false
+orgToken: apiToken
+requesterEmail: null
+checkPolicies: false
+senderServiceUrl: https://saas.whitesourcesoftware.com/agent
+senderProxyHost: null
+senderConnectionTimeOut: 60
+senderProxyPort: -1
+senderProxyUser: null
+senderProxyPassword: null
+forceCheckAllDependencies: false
+forceUpdate: false
+offlineState: false
+offlinePrettyJson: false
+offlineZip: false
+showProgressBar: true
+updateTypeValue: OVERRIDE
+excludedCopyrightsValue:
+globCaseSensitiveValue: null
+logLevel: info
+scmType: null
+scmUrl: null
+scmUsername: null
+scmPassword: null
+scmBranch: null
+scmTag: null
+scmRepositoriesFile: null
+scmPrivateKey: null
+scmNpmInstall: true
+scmNpmInstallTimeoutMinutes: 15
+resolverConfiguration:
+  dependencyResolverNpmRunPreStep: true
+  dependencyResolverNpmResolveDependencies: true
+  dependencyResolverNpmIncludeDevDependencies: false
+  dependencyResolverNpmIgnoreJavaScriptFiles: true
+  dependencyResolverNpmTimeoutDependenciesCollector: 60
+  dependencyResolverBowerResolveDependencies: true
+  dependencyResolverBowerRunPreStep: false
+  dependencyResolverNugetResolveDependencies: true
+  dependencyResolverMavenResolveDependencies: true
+  dependencyResolverMavenIgnoredScopes: null
+  dependencyResolverMavenAggregateModules: true
+  dependencyResolverDependenciesOnly: false
+  dependencyResolverWhitesourceConfiguration: null

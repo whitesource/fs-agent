@@ -62,7 +62,7 @@ public class NugetPackagesConfigXmlParser {
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             packages = (NugetPackages) unmarshaller.unmarshal(xml);
         } catch (Exception e) {
-            logger.warn("Unable to parse suspected Nuget package config file {}", xml);
+            logger.warn("Unable to parse suspected Nuget package senderConfiguration file {}", xml);
         }
         return packages;
     }

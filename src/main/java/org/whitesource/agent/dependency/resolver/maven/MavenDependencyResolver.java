@@ -22,6 +22,7 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,8 +38,6 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
 
     private static final String POM_XML = "**/*pom.xml";
     private static final List<String> JAVA_EXTENSIONS = Arrays.asList(".java", ".jar", ".war", ".ear", ".car", ".class");
-
-    private static final String TARGET = "target";
     private static final String TEST = String.join(File.separator, new String[]{"src", "test"});
     private final boolean mavenAggregateModules;
     private final boolean dependenciesOnly;
@@ -81,8 +80,12 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
                     excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), JAVA_EXTENSIONS, null));
                 }
                 return topFolderFound.toPath();
+            }else {
+                if (dependenciesOnly) {
+                    excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder.toString(), JAVA_EXTENSIONS, null));
+                }
             }
-            return null;
+            return Paths.get(topLevelFolder);
         }));
 
         ResolutionResult resolutionResult;

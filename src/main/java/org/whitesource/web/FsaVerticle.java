@@ -24,13 +24,17 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.Main;
 import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.ProjectsDetails;
+import org.whitesource.fs.configuration.EndPointConfiguration;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Properties;
+
+import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class FsaVerticle extends AbstractVerticle {
 
@@ -38,7 +42,6 @@ public class FsaVerticle extends AbstractVerticle {
     public static final String API_ANALYZE = "/analyze";
     public static final String API_SEND = "/send";
     public static final String HOME = "/";
-    public static final int DEFAULT_PORT = 8383;
     public static final String WELCOME_MESSAGE = "<h1>File system agent is up and running </h1>";
 
     @Override
@@ -55,26 +58,35 @@ public class FsaVerticle extends AbstractVerticle {
 
         router.get(HOME).handler(this::welcome);
 
+
+        boolean useSsl = config().getBoolean(ENDPOINT_SSL_ENABLED, EndPointConfiguration.DEFAULT_SSL);
+        String certificate = config().getString(ENDPOINT_CERTIFICATE, EndPointConfiguration.DEFAULT_CERTIFICATE);
+        String pass = config().getString(ENDPOINT_PASS, EndPointConfiguration.DEFAULT_PASS);
+
         // Create Http server and pass the 'accept' method to the request handler
-        vertx.createHttpServer().requestHandler(router::accept).
-                listen(config().getInteger("http.port", DEFAULT_PORT),
-                        result -> {
-                            if (result.succeeded()) {
-                                System.out.println("Http server completed..");
-                                fut.complete();
-                            } else {
-                                fut.fail(result.cause());
-                                System.out.println("Http server failed..");
-                            }
+       //vertx.createHttpServer(new HttpServerOptions().setSsl(useSsl).setKeyStoreOptions(
+       //        new JksOptions().setPath(certificate).setPassword(pass)
+       //)).requestHandler(router::accept).
+
+        vertx.createHttpServer().requestHandler(router::accept).requestHandler(router::accept).
+            listen(config().getInteger(ENDPOINT_PORT, EndPointConfiguration.DEFAULT_PORT),
+                    result -> {
+                        if (result.succeeded()) {
+                            System.out.println("Http server completed..");
+                            fut.complete();
+                        } else {
+                            fut.fail(result.cause());
+                            System.out.println("Http server failed..");
                         }
-                );
+                    }
+            );
     }
 
     private void send(RoutingContext context) {
         ProjectsDetails projects = getProjects(context, true);
         if (projects.getStatusCode().equals(StatusCode.SUCCESS)) {
             ProjectsDetails resultProjects = getProjects(context,true);
-            ResultDto resultDto = new ResultDto(resultProjects.getProjects(),resultProjects.getStatusCode());
+            ResultDto resultDto = new ResultDto(resultProjects.getDetails(),resultProjects.getStatusCode());
             String result = null;
             try {
                 result = new ObjectMapper().writeValueAsString(resultDto);
@@ -110,8 +122,9 @@ public class FsaVerticle extends AbstractVerticle {
         // a JsonObject wraps a map and it exposes type-aware getters
         //String postedText = body.getString("text");
         Properties props = getPropertiesFromBody(context);
+        FSAConfiguration fsaConfiguration = new FSAConfiguration(props);
         Main main = new Main();
-        return main.scanAndSend(props, shouldSend);
+        return main.scanAndSend(fsaConfiguration, shouldSend);
     }
 
     private Properties getPropertiesFromBody(RoutingContext context) {

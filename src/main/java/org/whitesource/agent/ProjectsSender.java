@@ -23,15 +23,14 @@ import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.model.AgentProjectInfo;
-import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 import org.whitesource.agent.utils.Pair;
-import org.whitesource.fs.FSAConfiguration;
-import org.whitesource.fs.Main;
-import org.whitesource.fs.StatusCode;
+import org.whitesource.fs.*;
+import org.whitesource.fs.configuration.OfflineConfiguration;
+import org.whitesource.fs.configuration.SenderConfiguration;
 
 import java.io.*;
 import java.util.*;
@@ -59,74 +58,33 @@ public class ProjectsSender {
 
     /* --- Members --- */
 
-    protected final FSAConfiguration config;
+    protected final SenderConfiguration senderConfiguration;
+    private final OfflineConfiguration offlineConfiguration;
     protected StatusCode prepStepStatusCode = StatusCode.SUCCESS;
     private Properties artifactProperties;
 
     /* --- Constructors --- */
 
-    public ProjectsSender(FSAConfiguration FSAConfiguration) {
-        this.config = FSAConfiguration;
+    public ProjectsSender(SenderConfiguration senderConfiguration , OfflineConfiguration offlineConfiguration) {
+        this.senderConfiguration = senderConfiguration;
+        this.offlineConfiguration =offlineConfiguration;
         this.artifactProperties = getArtifactProperties();
     }
 
     /* --- Public methods --- */
 
-    public Pair<String,StatusCode> sendProjects(Collection<AgentProjectInfo> projects) {
-        Iterator<AgentProjectInfo> iterator = projects.iterator();
-        while (iterator.hasNext()) {
-            AgentProjectInfo project = iterator.next();
-            if (project.getDependencies().isEmpty()) {
-                iterator.remove();
-
-                // if coordinates are null, then use token
-                String projectIdentifier;
-                Coordinates coordinates = project.getCoordinates();
-                if (coordinates == null) {
-                    projectIdentifier = project.getProjectToken();
-                } else {
-                    projectIdentifier = coordinates.getArtifactId();
-                }
-                logger.info("Removing empty project {} from update (found 0 matching files)", projectIdentifier);
-            }
-        }
-
-        if (projects.isEmpty()) {
-            logger.info("Exiting, nothing to update");
-            return  new Pair<>("Exiting, nothing to update",StatusCode.SUCCESS);
-        } else {
-            return sendRequest(projects);
-        }
-    }
-
-    /* --- Private methods --- */
-
-    private Pair<String, StatusCode> sendRequest(Collection<AgentProjectInfo> projects) {
-        // org token
-        String orgToken = config.getOrgToken();
-
-        // product token or name (and version)
-        String product = config.getProjectToken();
-        String productVersion = null;
-        if (StringUtils.isBlank(product)) {
-            product = config.getProjectName();
-            productVersion = config.getProjectVersion();
-        }
-
-        // requester email
-        String requesterEmail = config.getRequesterEmail();
-
+    public Pair<String, StatusCode> sendRequest(Collection<AgentProjectInfo> projects,String orgToken,String requesterEmail,String productNameOrToken, String productVersion) {
         // send request
         logger.info("Initializing WhiteSource Client");
         WhitesourceService service = createService();
         String resultInfo = "";
-        if (config.isOfflineState()) {
-            resultInfo = offlineUpdate(service, orgToken, requesterEmail, product, productVersion, projects);
+        if (offlineConfiguration.isEnabled()) {
+            resultInfo = offlineUpdate(service, orgToken, requesterEmail, productNameOrToken, productVersion, projects);
             return new Pair<>(resultInfo, this.prepStepStatusCode);
         } else {
             // update type
             UpdateType updateType = UpdateType.OVERRIDE;
-            String updateTypeValue = config.getUpdateTypeValue();
+            String updateTypeValue = senderConfiguration.getUpdateTypeValue();
             try {
                 updateType = UpdateType.valueOf(updateTypeValue);
             } catch (Exception e) {
@@ -137,12 +95,12 @@ public class ProjectsSender {
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
             try {
-                if (config.isCheckPolicies()) {
-                    boolean policyCompliance = checkPolicies(service, orgToken, product, productVersion, projects);
+                if (senderConfiguration.isCheckPolicies()) {
+                    boolean policyCompliance = checkPolicies(service, orgToken, productNameOrToken, productVersion, projects);
                     statusCode = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
                 }
                 if (statusCode == StatusCode.SUCCESS) {
-                    resultInfo = update(service, orgToken, updateType, requesterEmail, product, productVersion, projects);
+                    resultInfo = update(service, orgToken, updateType, requesterEmail, productNameOrToken, productVersion, projects);
                     logger.info(resultInfo);
                     //strip line separators
                     resultInfo = resultInfo.replace(System.lineSeparator(),"");
@@ -178,20 +136,20 @@ public class ProjectsSender {
     }
 
     private WhitesourceService createService() {
-        String serviceUrl = config.getSenderServiceUrl();
+        String serviceUrl = senderConfiguration.getSenderServiceUrl();
         logger.info("Service URL is " + serviceUrl);
         boolean setProxy = false;
-        final String proxyHost = config.getSenderProxyHost();
-        if (StringUtils.isNotBlank(proxyHost) || !config.isOfflineState()) {
+        final String proxyHost = senderConfiguration.getSenderProxyHost();
+        if (StringUtils.isNotBlank(proxyHost) || !offlineConfiguration.isEnabled()) {
             setProxy = true;
         }
-        int connectionTimeoutMinutes = config.getSenderConnectionTimeOut();
+        int connectionTimeoutMinutes = senderConfiguration.getSenderConnectionTimeOut();
         final WhitesourceService service = new WhitesourceService(getAgentType(), getAgentVersion(), getPluginVersion(),
                 serviceUrl, setProxy, connectionTimeoutMinutes);
         if (StringUtils.isNotBlank(proxyHost)) {
-            final int proxyPort = config.getSenderProxyPort();
-            final String proxyUser = config.getSenderProxyUser();
-            final String proxyPass = config.getSenderProxyPassword();
+            final int proxyPort = senderConfiguration.getSenderProxyPort();
+            final String proxyUser = senderConfiguration.getSenderProxyUser();
+            final String proxyPass = senderConfiguration.getSenderProxyPassword();
             service.getClient().setProxy(proxyHost, proxyPort, proxyUser, proxyPass);
         }
         return service;
@@ -200,12 +158,12 @@ public class ProjectsSender {
     private boolean checkPolicies(WhitesourceService service, String orgToken, String product, String productVersion,
                                   Collection<AgentProjectInfo> projects) throws WssServiceException {
         boolean policyCompliance = true;
-        boolean forceCheckAllDependencies = config.isForceCheckAllDependencies();
+        boolean forceCheckAllDependencies = senderConfiguration.isForceCheckAllDependencies();
         logger.info("Checking policies");
         CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(orgToken, product, productVersion, projects, forceCheckAllDependencies);
         boolean hasRejections = checkPoliciesResult.hasRejections();
         if (hasRejections) {
-            if (config.isForceUpdate()) {
+            if (senderConfiguration.isForceUpdate()) {
                 logger.info("Some dependencies violate open source policies, however all were force " +
                         "updated to organization inventory.");
             } else {
@@ -243,8 +201,8 @@ public class ProjectsSender {
         String resultInfo = "";
         logger.info("Generating offline update request");
 
-        boolean zip = config.isOfflineZip();
-        boolean prettyJson = config.isOfflinePrettyJson();
+        boolean zip = offlineConfiguration.isZip();
+        boolean prettyJson = offlineConfiguration.isPrettyJson();
 
         // generate offline request
         UpdateInventoryRequest updateRequest = service.offlineUpdate(orgToken, product, productVersion, projects);
@@ -256,8 +214,8 @@ public class ProjectsSender {
             UpdateType updateTypeFinal;
 
             // if the update type was forced by command or config -> set it
-            if (StringUtils.isNotBlank(config.getUpdateTypeValue())){
-                String updateTypeValue = config.getUpdateTypeValue() ;
+            if (StringUtils.isNotBlank(senderConfiguration.getUpdateTypeValue())){
+                String updateTypeValue = senderConfiguration.getUpdateTypeValue() ;
                 try {
                     updateTypeFinal = UpdateType.valueOf(updateTypeValue);
                 } catch (Exception e) {

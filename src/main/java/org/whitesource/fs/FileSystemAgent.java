@@ -94,15 +94,18 @@ public class FileSystemAgent {
     public ProjectsDetails createProjects() {
         ProjectsDetails projects = null;
         if (projectPerSubFolder) {
+            projects = new ProjectsDetails(new ArrayList<>(),StatusCode.SUCCESS,"");
             for (String directory : dependencyDirs) {
-                projects = getProjects(Collections.singletonList(directory));
-                if (projects.getProjects().size() == 1) {
+                ProjectsDetails projectsDetails = getProjects(Collections.singletonList(directory));
+                if (projectsDetails.getProjects().size() == 1) {
                     String projectName = new File(directory).getName();
                     String projectVersion = config.getProjectVersion();
-                    projects.getProjects().stream().findFirst().get().setCoordinates(new Coordinates(null, projectName, projectVersion));
+                    AgentProjectInfo projectInfo = projectsDetails.getProjects().stream().findFirst().get();
+                    projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+                    projects.getProjects().add(projectInfo);
                 }
                 // return on the first project that fails
-                if (!projects.getStatusCode().equals(StatusCode.SUCCESS)) {
+                if (!projectsDetails.getStatusCode().equals(StatusCode.SUCCESS)) {
                     // return status code if there is a failure
                     return new ProjectsDetails(new ArrayList<>(), projects.getStatusCode(), projects.getDetails());
                 }
@@ -133,30 +136,22 @@ public class FileSystemAgent {
     /* --- Private methods --- */
 
     private ProjectsDetails getProjects(List<String> scannerBaseDirs) {
-        // create scm connector
+        // create getScm connector
         final StatusCode[] success = new StatusCode[]{StatusCode.SUCCESS};
-        String scmType = config.getScmType();
-        String url = config.getScmUrl();
-        String username = config.getScmUsername();
-        String password = config.getScmPassword();
-        String branch = config.getScmBranch();
-        String tag = config.getScmTag();
-        String repositoriesFile = config.getScmRepositoriesFile();
-        String privateKey = config.getScmPrivateKey();
-        boolean isScmNpmInstall = config.isScmNpmInstall();
-        int npmInstallTimeoutMinutes = config.getScmNpmInstallTimeoutMinutes();
         String separatorFiles = NpmLsJsonDependencyCollector.isWindows() ? "\\" : "/";
         Collection<String> scmPaths = new ArrayList<>();
         final boolean[] hasScmConnectors = new boolean[1];
 
         List<ScmConnector> scmConnectors = null;
-        if (StringUtils.isNotBlank(repositoriesFile)) {
-            Collection<ScmConfiguration> scmConfigurations = ScmRepositoriesParser.parseRepositoriesFile(repositoriesFile, scmType, privateKey, username, password);
+        if (StringUtils.isNotBlank(config.getScm().getRepositoriesfile())) {
+            Collection<ScmConfiguration> scmConfigurations = ScmRepositoriesParser.parseRepositoriesFile(
+                    config.getScm().getRepositoriesfile(), config.getScm().getType(), config.getScm().getPpk(), config.getScm().getUser(), config.getScm().getPass());
             scmConnectors = scmConfigurations.stream()
                     .map(scm -> ScmConnector.create(scm.getType(), scm.getUrl(), scm.getPpk(), scm.getUser(), scm.getPass(), scm.getBranch(), scm.getTag()))
                     .collect(Collectors.toList());
         } else {
-            scmConnectors = Arrays.asList(ScmConnector.create(scmType, url, privateKey, username, password, branch, tag));
+            scmConnectors = Arrays.asList(ScmConnector.create(
+                    config.getScm().getType(), config.getScm().getUrl(), config.getScm().getPpk(), config.getScm().getUser(), config.getScm().getPass(), config.getScm().getBranch(), config.getScm().getTag()));
         }
 
         if (scmConnectors != null && scmConnectors.stream().anyMatch(scm -> scm != null)) {
@@ -166,7 +161,7 @@ public class FileSystemAgent {
                     logger.info("Connecting to SCM");
 
                     String scmPath = scmConnector.cloneRepository().getPath();
-                    Pair<String, StatusCode> result = npmInstallScmRepository(isScmNpmInstall, npmInstallTimeoutMinutes, scmConnector, separatorFiles, scmPath);
+                    Pair<String, StatusCode> result = npmInstallScmRepository(config.getScm().isNpmInstall(), config.getScm().getNpmInstallTimeoutMinutes(), scmConnector, separatorFiles, scmPath);
                     scmPath = result.getKey();
                     success[0] = result.getValue();
                     scmPaths.add(scmPath);
@@ -214,7 +209,7 @@ public class FileSystemAgent {
         excludedCopyrights.remove("");
 
         boolean showProgressBar = config.isShowProgressBar();
-        Collection<AgentProjectInfo> projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config.getResolverConfiguration())).createProjects(
+        Collection<AgentProjectInfo> projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config.getResolver())).createProjects(
                 scannerBaseDirs, hasScmConnectors[0], includes, excludes, globCaseSensitive, archiveExtractionDepth,
                 archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights,
                 partialSha1Match, calculateHints, calculateMd5);

@@ -15,6 +15,14 @@
  */
 package org.whitesource.fs.configuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.whitesource.fs.FSAConfiguration;
+
+import java.util.Properties;
+
+import static org.whitesource.agent.ConfigPropertyKeys.*;
+
 /**
  * Author: eugen.horovitz
  */
@@ -22,10 +30,15 @@ public class ScmConfiguration {
 
     /* --- Constructors --- */
 
-    public ScmConfiguration() {
-    }
-
-    public ScmConfiguration(String type, String user, String pass, String ppk, String url, String branch, String tag) {
+    @JsonCreator
+    public ScmConfiguration(
+            @JsonProperty("type") String type,
+            @JsonProperty("user") String user,
+            @JsonProperty("pass") String pass,
+            @JsonProperty("ppk") String ppk,
+            @JsonProperty("url") String url,
+            @JsonProperty("branch") String branch,
+            @JsonProperty("tag") String tag) {
         this.type = type;
         this.user = user;
         this.pass = pass;
@@ -33,6 +46,26 @@ public class ScmConfiguration {
         this.url = url;
         this.branch = branch;
         this.tag = tag;
+
+        //defaults
+        this.repositoriesfile = null;
+        this.npmInstall = false;
+        this.npmInstallTimeoutMinutes = 1;
+    }
+
+    public ScmConfiguration(Properties config) {
+        this.type = config.getProperty(SCM_TYPE_PROPERTY_KEY);
+        this.url = config.getProperty(SCM_URL_PROPERTY_KEY);
+        this.user = config.getProperty(SCM_USER_PROPERTY_KEY);
+        this.pass = config.getProperty(SCM_PASS_PROPERTY_KEY);
+        this.branch = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
+        this.tag = config.getProperty(SCM_TAG_PROPERTY_KEY);
+        this.ppk = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
+
+        //defaults
+        this.repositoriesfile = config.getProperty(SCM_REPOSITORIES_FILE);
+        npmInstall = FSAConfiguration.getBooleanProperty(config, SCM_NPM_INSTALL, true);
+        npmInstallTimeoutMinutes = FSAConfiguration.getIntProperty(config, SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
     }
 
     /* --- Members --- */
@@ -44,6 +77,10 @@ public class ScmConfiguration {
     private String url;
     private String branch;
     private String tag;
+
+    private String repositoriesfile;
+    private boolean npmInstall;
+    private int npmInstallTimeoutMinutes;
 
     /* --- Properties --- */
 
@@ -110,4 +147,17 @@ public class ScmConfiguration {
         this.tag = tag;
     }
 
+    public String getRepositoriesfile() {
+        return repositoriesfile;
+    }
+
+    //@JsonProperty("scm.npmInstall")
+    public boolean isNpmInstall() {
+        return npmInstall;
+    }
+
+    //@JsonProperty("scm.npmInstallTimeoutMinutes")
+    public int getNpmInstallTimeoutMinutes() {
+        return npmInstallTimeoutMinutes;
+    }
 }

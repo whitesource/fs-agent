@@ -18,11 +18,8 @@ package org.whitesource.fs;
 import com.beust.jcommander.JCommander;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
-import org.whitesource.agent.api.dispatch.UpdateType;
-import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.utils.Pair;
-import org.whitesource.fs.configuration.ConfigurationValidation;
-import org.whitesource.fs.configuration.ResolverConfiguration;
+import org.whitesource.fs.configuration.*;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -40,20 +37,22 @@ public class FSAConfiguration {
 
     private static final String FALSE = "false";
     private static final String INFO = "info";
-    public static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
-    public static final int DEFAULT_ARCHIVE_DEPTH = 0;
+    private static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
+    private static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
-    public static final String DEFAULT_API_TOKEN = "apiToken";
-    public static final String DAFAULT_SAMPLE_PROJECT = "sampleProject";
-    public static final String SPACE =" ";
+    private static final String DEFAULT_API_TOKEN = "apiToken";
+    private static final String DAFAULT_SAMPLE_PROJECT = "sampleProject";
+    private static final String SPACE =" ";
 
     /* --- Private fields --- */
 
     private final String projectName;
-
-    public boolean getHasErrors() {
-        return hasErrors;
-    }
+    private final ScmConfiguration scm;
+    private final SenderConfiguration sender;
+    private final OfflineConfiguration offline;
+    private final ResolverConfiguration resolver;
+    private final ConfigurationValidation configurationValidation;
+    private final EndPointConfiguration endpoint;
 
     private final boolean hasErrors;
 
@@ -77,43 +76,14 @@ public class FSAConfiguration {
     private final String projectVersion;
     private final String projectToken;
     private final boolean projectPerSubFolder;
-
-    private final ConfigurationValidation configurationValidation;
-
     private final String orgToken;
     private final String requesterEmail;
 
-    private final boolean checkPolicies;
-    private final String senderServiceUrl;
-    private final String senderProxyHost;
-    private final int senderConnectionTimeOut;
-    private final int senderProxyPort;
-    private final String senderProxyUser;
-    private final String senderProxyPassword;
-    private final boolean forceCheckAllDependencies;
-    private final boolean forceUpdate;
-
-    private final boolean offlineState;
-    private final boolean offlinePrettyJson;
-    private final boolean offlineZip;
-
     private final boolean showProgressBar;
-    private final String updateTypeValue;
     private final String excludedCopyrightsValue;
     private final String globCaseSensitiveValue;
+
     private String logLevel;
-
-    private final String scmType;
-    private final String scmUrl;
-    private final String scmUsername;
-    private final String scmPassword;
-    private final String scmBranch;
-    private final String scmTag;
-    private final String scmRepositoriesFile;
-
-    private final String scmPrivateKey;
-    private final boolean scmNpmInstall;
-    private final int scmNpmInstallTimeoutMinutes;
 
     /* --- Constructors --- */
 
@@ -133,8 +103,9 @@ public class FSAConfiguration {
 
         configurationValidation = new ConfigurationValidation();
 
-        //args provided and config not provided
-        if ((args != null && args.length !=0)) {
+        //args provided and getSender not provided
+        //if ((args != null && args.length !=0)) {
+        if ((args != null)) {
             // read command line args
             // validate args // TODO use jCommander validators
             // TODO add usage command
@@ -149,7 +120,7 @@ public class FSAConfiguration {
                     projectName = commandLineArgs.project;
                     config.setProperty(PROJECT_NAME_PROPERTY_KEY, projectName);
                 }else{
-                    projectName = null;
+                    projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
                 }
             }
             else{
@@ -172,7 +143,6 @@ public class FSAConfiguration {
                 config = new Properties();
                 projectName = DAFAULT_SAMPLE_PROJECT;
                 config.setProperty(PROJECT_NAME_PROPERTY_KEY, projectName);
-
                 String apiKey = DEFAULT_API_TOKEN;
                 config.setProperty(ORG_TOKEN_PROPERTY_KEY, apiKey);
             }
@@ -185,25 +155,17 @@ public class FSAConfiguration {
 
         logLevel = config.getProperty(LOG_LEVEL_KEY, INFO);
 
-        scmType = config.getProperty(SCM_TYPE_PROPERTY_KEY);
-        scmUrl = config.getProperty(SCM_URL_PROPERTY_KEY);
-        scmUsername = config.getProperty(SCM_USER_PROPERTY_KEY);
-        scmPassword = config.getProperty(SCM_PASS_PROPERTY_KEY);
-        scmBranch = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
-        scmTag = config.getProperty(SCM_TAG_PROPERTY_KEY);
-        scmRepositoriesFile = config.getProperty(SCM_REPOSITORIES_FILE);
-        scmPrivateKey = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
-        scmNpmInstall = getBooleanProperty(config, SCM_NPM_INSTALL, true);
-        scmNpmInstallTimeoutMinutes = getIntProperty(config, SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
-
+        scm = new ScmConfiguration(config);
 
         // read all properties
         includes = getIncludes(config);
         excludes = config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+
         archiveExtractionDepth = getArchiveDepth(config);
         archiveIncludes = config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         archiveExcludes = config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         archiveFastUnpack = getBooleanProperty(config, ARCHIVE_FAST_UNPACK_KEY, false);
+
         followSymlinks = getBooleanProperty(config, FOLLOW_SYMBOLIC_LINKS, true);
         // check scan partial sha1s (false by default)
         partialSha1Match = getBooleanProperty(config, PARTIAL_SHA1_MATCH_KEY, false);
@@ -220,43 +182,36 @@ public class FSAConfiguration {
         projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         requesterEmail = config.getProperty(REQUESTER_EMAIL);
 
-        offlineState = getBooleanProperty(config, OFFLINE_PROPERTY_KEY, false);
-        offlineZip = getBooleanProperty(config, OFFLINE_ZIP_PROPERTY_KEY, false);
-        offlinePrettyJson = getBooleanProperty(config, OFFLINE_PRETTY_JSON_KEY, false);
+        offline = new OfflineConfiguration(config);
+        sender = new SenderConfiguration(config);
+        resolver = new ResolverConfiguration(config);
 
-        updateTypeValue = config.getProperty(UPDATE_TYPE, UpdateType.OVERRIDE.toString());
-        checkPolicies = getBooleanProperty(config, CHECK_POLICIES_PROPERTY_KEY, false);
-        forceCheckAllDependencies = getBooleanProperty(config, FORCE_CHECK_ALL_DEPENDENCIES, false);
-        forceUpdate = getBooleanProperty(config, FORCE_UPDATE, false);
-
-        resolverConfiguration = new ResolverConfiguration(config);
-
-        senderServiceUrl = config.getProperty(ClientConstants.SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
-        senderProxyHost = config.getProperty(PROXY_HOST_PROPERTY_KEY);
-        senderConnectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
-                String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
-
-        String senderPort = config.getProperty(PROXY_PORT_PROPERTY_KEY);
-        if(StringUtils.isNotEmpty(senderPort)){
-            senderProxyPort = Integer.parseInt(senderPort);
-        }else{
-            senderProxyPort = -1;
-        }
-
-        senderProxyUser = config.getProperty(PROXY_USER_PROPERTY_KEY);
-        senderProxyPassword = config.getProperty(PROXY_PASS_PROPERTY_KEY);
+        endpoint = new EndPointConfiguration(config);
     }
 
     /* --- Public getters --- */
-
-    public ResolverConfiguration getResolverConfiguration() {
-        return resolverConfiguration;
+    public EndPointConfiguration getEndpoint() {
+        return endpoint;
     }
 
-    private final ResolverConfiguration resolverConfiguration;
+    public SenderConfiguration getSender() {
+        return sender;
+    }
 
-    public String getUpdateTypeValue() {
-        return updateTypeValue;
+    public ScmConfiguration getScm() {
+        return scm;
+    }
+
+    public OfflineConfiguration getOffline() {
+        return offline;
+    }
+
+    public ResolverConfiguration getResolver() {
+        return resolver;
+    }
+
+    public boolean getHasErrors() {
+        return hasErrors;
     }
 
     public boolean isShowProgressBar() {
@@ -271,61 +226,12 @@ public class FSAConfiguration {
         return globCaseSensitiveValue;
     }
 
-    public String getSenderServiceUrl() {
-        return senderServiceUrl;
-    }
-
-    public String getScmType() {
-        return scmType;
-    }
-
-    public String getScmUrl() {
-        return scmUrl;
-    }
-
-    public String getScmUsername() {
-        return scmUsername;
-    }
-
-    public String getScmPassword() {
-        return scmPassword;
-    }
-
-    public String getScmBranch() {
-        return scmBranch;
-    }
-
-    public String getScmTag() {
-        return scmTag;
-    }
-
-    public String getScmRepositoriesFile() {
-        return scmRepositoriesFile;
-    }
-
-    public String getScmPrivateKey() {
-        return scmPrivateKey;
-    }
-
-    public boolean isScmNpmInstall() {
-        return scmNpmInstall;
-    }
-
-    public int getScmNpmInstallTimeoutMinutes() {
-        return scmNpmInstallTimeoutMinutes;
-    }
-
     public List<String> getOfflineRequestFiles() {
         return offlineRequestFiles;
     }
 
-    public boolean isOfflineState() {
-        return offlineState;
-    }
-
     public String getFileListPath() {
         return fileListPath;
-
     }
 
     public List<String> getDependencyDirs() {
@@ -394,46 +300,6 @@ public class FSAConfiguration {
 
     public String getOrgToken() {
         return orgToken;
-    }
-
-    public boolean isCheckPolicies() {
-        return checkPolicies;
-    }
-
-    public String getSenderProxyHost() {
-        return senderProxyHost;
-    }
-
-    public int getSenderConnectionTimeOut() {
-        return senderConnectionTimeOut;
-    }
-
-    public int getSenderProxyPort() {
-        return senderProxyPort;
-    }
-
-    public String getSenderProxyUser() {
-        return senderProxyUser;
-    }
-
-    public String getSenderProxyPassword() {
-        return senderProxyPassword;
-    }
-
-    public boolean isForceCheckAllDependencies() {
-        return forceCheckAllDependencies;
-    }
-
-    public boolean isForceUpdate() {
-        return forceUpdate;
-    }
-
-    public boolean isOfflinePrettyJson() {
-        return offlinePrettyJson;
-    }
-
-    public boolean isOfflineZip() {
-        return offlineZip;
     }
 
     public String getLogLevel() {

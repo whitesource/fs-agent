@@ -16,6 +16,8 @@
 package org.whitesource.fs.configuration;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.whitesource.fs.FSAConfiguration;
 
 import java.util.Properties;
@@ -26,8 +28,39 @@ public class ResolverConfiguration {
 
     /* --- Constructors --- */
 
-    public ResolverConfiguration(){
-        this(new Properties());
+    //private ResolverConfiguration(){
+    //    this(new Properties());
+    //}
+
+    @JsonCreator
+    public ResolverConfiguration(
+             @JsonProperty("dependencyResolverNpmRunPreStep") boolean dependencyResolverNpmRunPreStep,
+             @JsonProperty("dependencyResolverNpmResolveDependencies") boolean dependencyResolverNpmResolveDependencies,
+             @JsonProperty("dependencyResolverNpmIncludeDevDependencies") boolean dependencyResolverNpmIncludeDevDependencies,
+             @JsonProperty("dependencyResolverNpmIgnoreJavaScriptFiles") boolean dependencyResolverNpmIgnoreJavaScriptFiles,
+             @JsonProperty("dependencyResolverNpmTimeoutDependenciesCollector") long dependencyResolverNpmTimeoutDependenciesCollector,
+             @JsonProperty("dependencyResolverBowerResolveDependencies") boolean dependencyResolverBowerResolveDependencies,
+             @JsonProperty("dependencyResolverBowerRunPreStep") boolean dependencyResolverBowerRunPreStep,
+             @JsonProperty("dependencyResolverNugetResolveDependencies") boolean dependencyResolverNugetResolveDependencies,
+             @JsonProperty("dependencyResolverMavenResolveDependencies") boolean dependencyResolverMavenResolveDependencies,
+             @JsonProperty("dependencyResolverMavenIgnoredScopes") String[] dependencyResolverMavenIgnoredScopes,
+             @JsonProperty("dependencyResolverMavenAggregateModules") boolean dependencyResolverMavenAggregateModules ,
+             @JsonProperty("dependencyResolverDependenciesOnly") boolean dependencyResolverDependenciesOnly ,
+             @JsonProperty("dependencyResolverWhitesourceConfiguration") String dependencyResolverWhitesourceConfiguration
+    ) {
+        this.dependencyResolverNpmRunPreStep = dependencyResolverNpmRunPreStep;
+        this.dependencyResolverNpmResolveDependencies = dependencyResolverNpmResolveDependencies;
+        this.dependencyResolverNpmIncludeDevDependencies = dependencyResolverNpmIncludeDevDependencies;
+        this.dependencyResolverNpmIgnoreJavaScriptFiles = dependencyResolverNpmIgnoreJavaScriptFiles;
+        this.dependencyResolverNpmTimeoutDependenciesCollector = dependencyResolverNpmTimeoutDependenciesCollector;
+        this.dependencyResolverBowerResolveDependencies = dependencyResolverBowerResolveDependencies;
+        this.dependencyResolverBowerRunPreStep = dependencyResolverBowerRunPreStep;
+        this.dependencyResolverNugetResolveDependencies = dependencyResolverNugetResolveDependencies;
+        this.dependencyResolverMavenResolveDependencies = dependencyResolverMavenResolveDependencies;
+        this.dependencyResolverMavenIgnoredScopes = dependencyResolverMavenIgnoredScopes;
+        this.dependencyResolverMavenAggregateModules = dependencyResolverMavenAggregateModules;
+        this.dependencyResolverDependenciesOnly = dependencyResolverDependenciesOnly;
+        this.dependencyResolverWhitesourceConfiguration = dependencyResolverWhitesourceConfiguration;
     }
 
     public ResolverConfiguration(Properties config) {
@@ -48,19 +81,19 @@ public class ResolverConfiguration {
 
     /* --- Members --- */
 
-    private final boolean dependencyResolverNpmRunPreStep;
-    private final boolean dependencyResolverNpmResolveDependencies;
-    private final boolean dependencyResolverNpmIncludeDevDependencies;
-    private final boolean dependencyResolverNpmIgnoreJavaScriptFiles;
-    private final long dependencyResolverNpmTimeoutDependenciesCollector;
-    private final boolean dependencyResolverBowerResolveDependencies;
-    private final boolean dependencyResolverBowerRunPreStep;
-    private final boolean dependencyResolverNugetResolveDependencies;
-    private final boolean dependencyResolverMavenResolveDependencies;
-    private final String[] dependencyResolverMavenIgnoredScopes;
-    private final boolean dependencyResolverMavenAggregateModules;
-    private final boolean dependencyResolverDependenciesOnly;
-    private final String dependencyResolverWhitesourceConfiguration;
+    private boolean dependencyResolverNpmRunPreStep;
+    private boolean dependencyResolverNpmResolveDependencies;
+    private boolean dependencyResolverNpmIncludeDevDependencies;
+    private boolean dependencyResolverNpmIgnoreJavaScriptFiles;
+    private long dependencyResolverNpmTimeoutDependenciesCollector;
+    private boolean dependencyResolverBowerResolveDependencies;
+    private boolean dependencyResolverBowerRunPreStep;
+    private boolean dependencyResolverNugetResolveDependencies;
+    private boolean dependencyResolverMavenResolveDependencies;
+    private String[] dependencyResolverMavenIgnoredScopes;
+    private boolean dependencyResolverMavenAggregateModules;
+    private boolean dependencyResolverDependenciesOnly;
+    private String dependencyResolverWhitesourceConfiguration;
 
     /* --- Public getters --- */
 

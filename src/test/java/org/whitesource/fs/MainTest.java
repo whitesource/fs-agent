@@ -22,8 +22,10 @@ public class MainTest {
             File file = TestHelper.getFileFromResources("whitesource-fs-agent.config");
             String config = file.getAbsolutePath();
             String[] args = ("-c " + config + " -d " + dir.getPath() + " -product " + "fsAgentMain" + " -project " + dir.getName()).split(" ");
-            StatusCode result = new Main().scanAndSend(args).getStatusCode();
-            Assert.assertEquals(result, StatusCode.SUCCESS);
+
+            FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
+            StatusCode processExitCode = new Main().scanAndSend(fsaConfiguration, false).getStatusCode();
+            Assert.assertEquals(processExitCode, StatusCode.SUCCESS);
         });
     }
 
@@ -50,11 +52,11 @@ public class MainTest {
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
         String[] commandLineArgs = new String[]{"-c", config.getAbsolutePath(), "-d", new File(TestHelper.FOLDER_WITH_MIX_FOLDERS).getAbsolutePath(), "-" + PROJECT_PER_SUBFOLDER, "true"};
 
-        FSAConfiguration FSAConfiguration = new FSAConfiguration(commandLineArgs);
+        FSAConfiguration fsaConfiguration = new FSAConfiguration(commandLineArgs);
         ProjectsCalculator projectsCalculator = new ProjectsCalculator();
-        ProjectsDetails projects = projectsCalculator.getAllProjects(FSAConfiguration);
+        ProjectsDetails projects = projectsCalculator.getAllProjects(fsaConfiguration);
 
-        Assert.assertTrue(projects.getProjects().size() > 1);
+        Assert.assertTrue(projects.getProjects().size() == 4);
     }
 
     @Test
