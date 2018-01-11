@@ -46,6 +46,10 @@ public class FSAConfiguration {
 
     /* --- Private fields --- */
 
+    private final String productToken;
+    private final String productName;
+    private final String productVersion;
+
     private final String projectName;
     private final ScmConfiguration scm;
     private final SenderConfiguration sender;
@@ -116,20 +120,14 @@ public class FSAConfiguration {
                 Pair<Properties,Boolean> validationResult = configurationValidation.readWithError(commandLineArgs.configFilePath, commandLineArgs.project);
                 config = validationResult.getKey();
                 if(StringUtils.isNotEmpty(commandLineArgs.project)) {
-                    projectName = commandLineArgs.project;
-                    config.setProperty(PROJECT_NAME_PROPERTY_KEY, projectName);
-                }else{
-                    projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
+                    config.setProperty(PROJECT_NAME_PROPERTY_KEY, commandLineArgs.project);
                 }
             }
-            else{
-                projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
-            }
-
             config.setProperty(PROJECT_CONFIGURATION_PATH, commandLineArgs.configFilePath);
 
             //override
-            offlineRequestFiles = updateProperties(config, projectName, commandLineArgs);
+            offlineRequestFiles = updateProperties(config, commandLineArgs);
+            projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             hasErrors = configurationValidation.isConfigurationInError(config, NONE, projectName);
             fileListPath = commandLineArgs.fileListPath;
             dependencyDirs = commandLineArgs.dependencyDirs;
@@ -150,6 +148,10 @@ public class FSAConfiguration {
             fileListPath = null;
             dependencyDirs = new ArrayList<>();
         }
+
+        productToken = config.getProperty(ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY);
+        productName = config.getProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY);
+        productVersion =config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
 
         logLevel = config.getProperty(LOG_LEVEL_KEY, INFO);
 
@@ -288,6 +290,18 @@ public class FSAConfiguration {
         return projectToken;
     }
 
+    public String getProductToken() {
+        return productToken;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public String getProductVersion() {
+        return productVersion;
+    }
+
     public boolean isProjectPerSubFolder() {
         return projectPerSubFolder;
     }
@@ -355,13 +369,12 @@ public class FSAConfiguration {
 
     /* --- Private methods --- */
 
-    private List<String> updateProperties(Properties configProps, String project, CommandLineArgs commandLineArgs) {
+    private List<String> updateProperties(Properties configProps, CommandLineArgs commandLineArgs) {
         // Check whether the user inserted api key, project OR/AND product via command line
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY, commandLineArgs.apiKey);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.UPDATE_TYPE, commandLineArgs.updateType);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, commandLineArgs.product);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY, commandLineArgs.productVersion);
-        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, project);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_VERSION_PROPERTY_KEY, commandLineArgs.projectVersion);
         // request file
         List<String> offlineRequestFiles = new LinkedList<>();

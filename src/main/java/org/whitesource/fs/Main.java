@@ -62,12 +62,12 @@ public class Main {
         if (isStandalone) {
             try {
                 processExitCode = new Main().scanAndSend(fsaConfiguration, true).getStatusCode();
-                System.exit(processExitCode.getValue());
             } catch (Exception e) {
                 // catch any exception that may be thrown, return error code
                 logger.warn("Process encountered an error: {}" + e.getMessage(), e);
                 processExitCode = StatusCode.ERROR;
             }
+            System.exit(processExitCode.getValue());
         } else {
             vertx = Vertx.vertx();
             if (fsaConfiguration != null && fsaConfiguration.getEndpoint() != null && fsaConfiguration.getEndpoint().isEnabled()) {
@@ -126,10 +126,10 @@ public class Main {
             return  new Pair<>("Exiting, nothing to update",StatusCode.SUCCESS);
         } else {
             String productVersion = null;
-            String productNameOrToken = fsaConfiguration.getProjectToken();
+            String productNameOrToken = fsaConfiguration.getProductToken();
             if (StringUtils.isBlank(productNameOrToken)) {
-                productNameOrToken = fsaConfiguration.getProjectName();
-                productVersion = fsaConfiguration.getProjectVersion();
+                productNameOrToken = fsaConfiguration.getProductName();
+                productVersion = fsaConfiguration.getProductVersion();
             }
             return projectsSender.sendRequest(projects, fsaConfiguration.getOrgToken(),fsaConfiguration.getRequesterEmail(),productNameOrToken, productVersion);
         }

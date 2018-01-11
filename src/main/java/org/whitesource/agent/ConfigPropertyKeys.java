@@ -48,9 +48,9 @@ public final class ConfigPropertyKeys {
     public static final String PROXY_PORT_PROPERTY_KEY = "proxy.port";
     public static final String PROXY_USER_PROPERTY_KEY = "proxy.user";
     public static final String PROXY_PASS_PROPERTY_KEY = "proxy.pass";
-    public static final String OFFLINE_PROPERTY_KEY = "getOffline";
-    public static final String OFFLINE_ZIP_PROPERTY_KEY = "getOffline.zip";
-    public static final String OFFLINE_PRETTY_JSON_KEY = "getOffline.prettyJson";
+    public static final String OFFLINE_PROPERTY_KEY = "offline";
+    public static final String OFFLINE_ZIP_PROPERTY_KEY = "offline.zip";
+    public static final String OFFLINE_PRETTY_JSON_KEY = "offline.prettyJson";
     public static final String SCM_TYPE_PROPERTY_KEY = "scm.type";
     public static final String SCM_URL_PROPERTY_KEY = "scm.url";
     public static final String SCM_PPK_PROPERTY_KEY = "scm.ppk";
