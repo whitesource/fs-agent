@@ -115,7 +115,6 @@ public class FsaVerticle extends AbstractVerticle {
         }
         context.response().end(result);
     }
-
     private ProjectsDetails getProjects(RoutingContext context, boolean shouldSend) {
         // the POSTed content is available in context.getBodyAsJson()
         //JsonObject body = context.getBodyAsJson();

@@ -29,10 +29,20 @@ public class ConfigurationValidationTest {
 
         // act
         String[] commandLineArgs = new String[]{"-c", tmpPath.getAbsolutePath(), "-d", new File(TestHelper.FOLDER_WITH_MIX_FOLDERS).getAbsolutePath()};
-        FSAConfiguration FSAConfiguration = new FSAConfiguration(commandLineArgs);
+        FSAConfiguration fsaConfiguration = new FSAConfiguration(commandLineArgs);
 
         // assert
-        Assert.assertTrue(FSAConfiguration.isProjectPerSubFolder());
+        Assert.assertTrue(fsaConfiguration.isProjectPerSubFolder());
+
+        // assert
+        Assert.assertTrue(fsaConfiguration.isProjectPerSubFolder());
+
+        // act
+        commandLineArgs = new String[]{"-apiKey", "token"};
+        fsaConfiguration = new FSAConfiguration(commandLineArgs);
+
+        // assert
+        Assert.assertFalse(fsaConfiguration.getHasErrors());
     }
 
 }

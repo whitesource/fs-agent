@@ -115,7 +115,6 @@ public class FSAConfiguration {
             if (config == null) {
                 Pair<Properties,Boolean> validationResult = configurationValidation.readWithError(commandLineArgs.configFilePath, commandLineArgs.project);
                 config = validationResult.getKey();
-                hasErrors = validationResult.getValue();
                 if(StringUtils.isNotEmpty(commandLineArgs.project)) {
                     projectName = commandLineArgs.project;
                     config.setProperty(PROJECT_NAME_PROPERTY_KEY, projectName);
@@ -125,13 +124,13 @@ public class FSAConfiguration {
             }
             else{
                 projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
-                hasErrors = configurationValidation.isConfigurationInError(config, NONE, projectName);
             }
 
             config.setProperty(PROJECT_CONFIGURATION_PATH, commandLineArgs.configFilePath);
 
             //override
             offlineRequestFiles = updateProperties(config, projectName, commandLineArgs);
+            hasErrors = configurationValidation.isConfigurationInError(config, NONE, projectName);
             fileListPath = commandLineArgs.fileListPath;
             dependencyDirs = commandLineArgs.dependencyDirs;
 
@@ -147,7 +146,6 @@ public class FSAConfiguration {
                 config.setProperty(ORG_TOKEN_PROPERTY_KEY, apiKey);
             }
             hasErrors = configurationValidation.isConfigurationInError(config, NONE, projectName);
-
             offlineRequestFiles = new ArrayList<>();
             fileListPath = null;
             dependencyDirs = new ArrayList<>();
@@ -347,6 +345,14 @@ public class FSAConfiguration {
         return property.split(SPACE);
     }
 
+    public static int getArchiveDepth(Properties configProps) {
+        return getIntProperty(configProps, ARCHIVE_EXTRACTION_DEPTH_KEY,  FSAConfiguration.DEFAULT_ARCHIVE_DEPTH);
+    }
+
+    public static String[] getIncludes(Properties configProps) {
+        return configProps.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+    }
+
     /* --- Private methods --- */
 
     private List<String> updateProperties(Properties configProps, String project, CommandLineArgs commandLineArgs) {
@@ -387,13 +393,5 @@ public class FSAConfiguration {
         if (StringUtils.isNotBlank(propertyValue)) {
             configProps.put(propertyKey, propertyValue);
         }
-    }
-
-    public static int getArchiveDepth(Properties configProps) {
-        return getIntProperty(configProps, ARCHIVE_EXTRACTION_DEPTH_KEY,  FSAConfiguration.DEFAULT_ARCHIVE_DEPTH);
-    }
-
-    public static String[] getIncludes(Properties configProps) {
-        return configProps.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
     }
 }
