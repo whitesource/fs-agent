@@ -6,11 +6,11 @@ import com.google.common.io.ByteStreams;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -39,7 +39,7 @@ public class PackageManagerExtractor {
     private static final String COLON = ":";
     private static final String NON_ASCII_CHARS = "[^\\x20-\\x7e]";
     private static final String EMPTY_STRING = "";
-
+    private static final String ARCH_LINUX_ARCHITECTURE_COMMAND = "uname -m";
     /* --- Constructors --- */
 
     public PackageManagerExtractor() {
@@ -155,12 +155,14 @@ public class PackageManagerExtractor {
         String linesStr = new String(bytes);
         String[] lines = linesStr.split(NEW_LINE);
         String arch = getSystemArchitecture();
-        if(StringUtils.isNotBlank(arch)) {
+        if (StringUtils.isNotBlank(arch)) {
             for (String line : lines) {
                 line = line.replaceAll(NON_ASCII_CHARS, EMPTY_STRING);
                 String[] split = line.split(ARCH_LINUX_PACKAGE_SPLIT_PATTERN);
+                logger.info(split[0]);
                 if (split.length == 2) {
                     packages.add(new DependencyInfo(null, MessageFormat.format(ARCH_LINUX_PACKAGE_PATTERN, split[0], split[1], arch), null));
+
                 }
             }
         }
@@ -183,33 +185,24 @@ public class PackageManagerExtractor {
 
     /* --- Private  methods --- */
 
-    private static String getSystemArchitecture() {
+    public static String getSystemArchitecture() {
         String arch = "";
-        InputStream inputStream = null;
-        byte[] bytes = null;
+        String outputStr = null;
+        BufferedReader bufferedReader = null;
         Process process = null;
         try {
-            process = Runtime.getRuntime().exec(String.valueOf(LinuxPkgManagerCommand.ARCH_LINUX_COMMAND));
-            inputStream = process.getInputStream();
-            if (inputStream.read() == -1) {
-                logger.error("Unable to execute - {} , flavor does not support this command ", String.valueOf(LinuxPkgManagerCommand.ARCH_LINUX_COMMAND));
+            process = Runtime.getRuntime().exec(ARCH_LINUX_ARCHITECTURE_COMMAND);
+            process.waitFor();
+            bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            outputStr = bufferedReader.readLine();
+            if (StringUtils.isNotBlank(outputStr) && SYSTEM_ARCHITECTURES.contains(outputStr)) {
+                arch = outputStr;
             }
-            else {
-                bytes = ByteStreams.toByteArray(inputStream);
-                String linesStr = new String(bytes);
-                if (StringUtils.isNotBlank(linesStr) && SYSTEM_ARCHITECTURES.contains(linesStr)) {
-                    arch = linesStr;
-                }
-            }
+            bufferedReader.close();
         } catch (IOException e) {
-           logger.warn("Error processing arch linux command {}, error : {}", LinuxPkgManagerCommand.ARCH_LINUX_COMMAND, e.getMessage());
-        }
-        try {
-            if(inputStream!=null) {
-                inputStream.close();
-            }
-        } catch (IOException e) {
-            logger.warn("Error reading output: {}", e.getMessage());
+            logger.warn("Error processing arch linux command {}, error : {}", LinuxPkgManagerCommand.ARCH_LINUX_COMMAND, e.getMessage());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         return arch;
     }
