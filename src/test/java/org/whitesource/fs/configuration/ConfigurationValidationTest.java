@@ -1,4 +1,5 @@
 package org.whitesource.fs.configuration;
+import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
@@ -37,12 +38,17 @@ public class ConfigurationValidationTest {
         // assert
         Assert.assertTrue(fsaConfiguration.isProjectPerSubFolder());
 
+        // assert
+        Assert.assertTrue(StringUtils.isEmpty(fsaConfiguration.getProductName()));
+
         // act
-        commandLineArgs = new String[]{"-apiKey", "token"};
+        commandLineArgs = new String[]{"-apiKey", "token" , "-product", "productName"};
         fsaConfiguration = new FSAConfiguration(commandLineArgs);
 
         // assert
-        Assert.assertFalse(fsaConfiguration.getHasErrors());
+        Assert.assertTrue(fsaConfiguration.getHasErrors());
+        // assert
+        Assert.assertEquals("productName",fsaConfiguration.getProductName());
     }
 
 }

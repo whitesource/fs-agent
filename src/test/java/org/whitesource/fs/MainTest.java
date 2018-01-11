@@ -21,11 +21,11 @@ public class MainTest {
         Arrays.stream(directory.listFiles()).filter(dir -> dir.isDirectory()).forEach(dir -> {
             File file = TestHelper.getFileFromResources("whitesource-fs-agent.config");
             String config = file.getAbsolutePath();
-            String[] args = ("-c " + config + " -d " + dir.getPath() + " -product " + "fsAgentMain" + " -project " + dir.getName()).split(" ");
+            String[] args = ("-apiKey " + "token " +"-c " + config + " -d " + dir.getPath() + " -product " + "fsAgentMain" + " -project " + dir.getName()).split(" ");
 
             FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
-            StatusCode processExitCode = new Main().scanAndSend(fsaConfiguration, false).getStatusCode();
-            Assert.assertEquals(processExitCode, StatusCode.SUCCESS);
+            ProjectsDetails projectsDetails = new Main().scanAndSend(fsaConfiguration, false);
+            Assert.assertEquals(projectsDetails.getStatusCode(), StatusCode.SUCCESS);
         });
     }
 
