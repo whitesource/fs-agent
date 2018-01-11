@@ -37,7 +37,7 @@ public class FSAConfiguration {
 
     private static final String FALSE = "false";
     private static final String INFO = "info";
-    private static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
+    public static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
     private static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
     private static final String DEFAULT_API_TOKEN = "apiToken";

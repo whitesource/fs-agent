@@ -29,7 +29,7 @@ public class ConfigurationSerializer <T>{
         //mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         //mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         mapper = new ObjectMapper();
-        //mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         yamlFactory.enable(YAMLGenerator.Feature.MINIMIZE_QUOTES);
     }
 
