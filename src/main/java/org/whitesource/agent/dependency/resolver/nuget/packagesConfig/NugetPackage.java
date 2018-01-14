@@ -20,7 +20,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 /**
  * @author yossi.weinberg
  */
-public class NugetPackage {
+public class NugetPackage implements NugetPackageInterface {
 
     /* --- Members --- */
 

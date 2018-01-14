@@ -22,6 +22,7 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
+import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackage;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackages;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackagesConfigXmlParser;
@@ -37,17 +38,28 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractDependencyResolver.class);
+    private static final Logger logger = LoggerFactory.getLogger(NugetDependencyResolver.class);
+    public static final String CONFIG = ".config";
+    public static final String CSPROJ = ".csproj";
+    public static final String PATTERN = "**/*";
 
     /* --- Members --- */
 
     private final String whitesourceConfiguration;
+    private final String bomPattern;
+    private final NugetConfigFileType nugetConfigFileType;
 
     /* --- Constructor --- */
 
-    public NugetDependencyResolver(String whitesourceConfiguration) {
+    public NugetDependencyResolver(String whitesourceConfiguration, NugetConfigFileType nugetConfigFileType) {
         super();
         this.whitesourceConfiguration = whitesourceConfiguration;
+        this.nugetConfigFileType = nugetConfigFileType;
+        if (this.nugetConfigFileType == NugetConfigFileType.CONFIG_FILE_TYPE) {
+            bomPattern = PATTERN + CONFIG;
+        } else {
+            bomPattern = PATTERN + CSPROJ;
+        }
     }
 
     /* --- Overridden methods --- */
@@ -81,7 +93,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     @Override
     protected String getBomPattern() {
-        return "**/*" + ".config";
+        return this.bomPattern;
     }
 
     @Override
@@ -102,7 +114,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
                 File configFile = new File(configFilePath);
                 // check filename again (just in case)
                 if (!configFile.getName().equals(CommandLineArgs.CONFIG_FILE_NAME)) {
-                    NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(configFile);
+                    NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(configFile, this.nugetConfigFileType);
                     NugetPackages packagesFromSingleFile = parser.parsePackagesConfigFile();
                     if (packagesFromSingleFile != null) {
                         nugetPackages.add(packagesFromSingleFile);

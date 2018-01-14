@@ -23,17 +23,21 @@ import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
+import org.whitesource.agent.dependency.resolver.packageManger.PackageManagerExtractor;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.ScmConfiguration;
 import org.whitesource.fs.configuration.ScmRepositoriesParser;
 import org.whitesource.scm.ScmConnector;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 /**
  * File System Agent.
@@ -52,6 +56,7 @@ public class FileSystemAgent {
     private static final String NPM_INSTALL_COMMAND = "install";
     private static final String PACKAGE_LOCK = "package-lock.json";
     private static final String PACKAGE_JSON = "package.json";
+    public static final String SCAN_PROJECT_MANAGER = "scanProjectManager";
 
     /* --- Members --- */
 
@@ -174,9 +179,15 @@ public class FileSystemAgent {
             return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, config.getAgent().getError()); // TODO this is within a try frame. Throw an exception instead
         }
 
-        Collection<AgentProjectInfo> projects = new FileSystemScanner(config.getResolver(), config.getAgent())
-                .createProjects(scannerBaseDirs, hasScmConnectors[0]);
 
+        Collection<AgentProjectInfo> projects = null;
+        boolean scanProjectManager = getBooleanProperty(SCAN_PROJECT_MANAGER,false);
+        if (scanProjectManager) {
+            projects = new PackageManagerExtractor().createProjects();
+        } else {
+            projects =new FileSystemScanner(config.getResolver(), config.getAgent())
+                .createProjects(scannerBaseDirs, hasScmConnectors[0]);
+}
         // delete all temp scm files
         scmPaths.forEach(directory -> {
             if (directory != null) {

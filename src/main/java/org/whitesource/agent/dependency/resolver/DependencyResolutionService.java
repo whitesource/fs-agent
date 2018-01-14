@@ -21,6 +21,7 @@ import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
+import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
@@ -76,7 +77,8 @@ public class DependencyResolutionService {
         }
         if (nugetResolveDependencies) {
             String whitesourceConfiguration = config.getWhitesourceConfiguration();
-            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration));
+            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE));
+            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE));
         }
         if (mavenResolveDependencies) {
             dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, dependenciesOnly));
