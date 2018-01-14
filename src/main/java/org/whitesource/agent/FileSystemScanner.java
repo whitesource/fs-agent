@@ -1,3 +1,18 @@
+/**
+ * Copyright (C) 2014 WhiteSource Ltd.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.whitesource.agent;
 
 import org.apache.commons.io.FileUtils;
@@ -13,7 +28,9 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.MemoryUsageHelper;
+import org.whitesource.fs.configuration.AgentConfiguration;
 import org.whitesource.fs.FileSystemAgent;
+import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,16 +54,18 @@ public class FileSystemScanner {
 
     /* --- Members --- */
 
-    private final boolean showProgressBar;
     private final boolean isSeparateProjects;
+    private final AgentConfiguration agent;
+    private final boolean showProgressBar;
     private DependencyResolutionService dependencyResolutionService;
 
     /* --- Constructors --- */
 
-    public FileSystemScanner(boolean showProgressBar, DependencyResolutionService dependencyResolutionService) {
-        this.showProgressBar = showProgressBar;
-        this.dependencyResolutionService = dependencyResolutionService;
+    public FileSystemScanner(ResolverConfiguration resolver, AgentConfiguration agentConfiguration) {
+        this.dependencyResolutionService = new DependencyResolutionService(resolver);
         this.isSeparateProjects = dependencyResolutionService.isSeparateProjects();
+        this.agent = agentConfiguration;
+        this.showProgressBar = agentConfiguration.isShowProgressBar();
     }
 
     /* --- Public methods --- */
@@ -74,6 +93,12 @@ public class FileSystemScanner {
         Collection<AgentProjectInfo> projects = createProjects(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
                 archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match, false, false);
         return projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
+    }
+
+    public Collection<AgentProjectInfo> createProjects(List<String> scannerBaseDirs, boolean hasScmConnector) {
+        return createProjects(scannerBaseDirs,hasScmConnector,agent.getIncludes(),agent.getExcludes(), agent.getGlobCaseSensitive(),agent.getArchiveExtractionDepth(),
+        agent.getArchiveIncludes(), agent.getArchiveExcludes(),agent.isArchiveFastUnpack(),agent.isFollowSymlinks(),
+                agent.getExcludedCopyrights(), agent.isPartialSha1Match(), agent.isCalculateHints(), agent.isCalculateMd5());
     }
 
     public Collection<AgentProjectInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,

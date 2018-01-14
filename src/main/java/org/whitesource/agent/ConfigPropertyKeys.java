@@ -90,4 +90,5 @@ public final class ConfigPropertyKeys {
     public static final String ENDPOINT_PASS = "endpoint.pass";
     public static final String ENDPOINT_SSL_ENABLED = "endpoint.ssl";
 
+    public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 }

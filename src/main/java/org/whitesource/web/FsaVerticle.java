@@ -19,6 +19,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.net.JksOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -26,12 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.Main;
-import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.ProjectsDetails;
+import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.EndPointConfiguration;
-
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.Properties;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
@@ -43,6 +42,8 @@ public class FsaVerticle extends AbstractVerticle {
     public static final String API_SEND = "/send";
     public static final String HOME = "/";
     public static final String WELCOME_MESSAGE = "<h1>File system agent is up and running </h1>";
+    public static final String CONFIGURATION = "configuration";
+    private FSAConfiguration localFsaConfiguration;
 
     @Override
     public void start(Future<Void> fut) {
@@ -58,45 +59,41 @@ public class FsaVerticle extends AbstractVerticle {
 
         router.get(HOME).handler(this::welcome);
 
-
-        boolean useSsl = config().getBoolean(ENDPOINT_SSL_ENABLED, EndPointConfiguration.DEFAULT_SSL);
-        String certificate = config().getString(ENDPOINT_CERTIFICATE, EndPointConfiguration.DEFAULT_CERTIFICATE);
-        String pass = config().getString(ENDPOINT_PASS, EndPointConfiguration.DEFAULT_PASS);
+        String config = config().getString(CONFIGURATION);
+        if (config == null) {
+            localFsaConfiguration = new FSAConfiguration();
+        } else {
+            localFsaConfiguration = ConfigurationSerializer.getFromString(config, FSAConfiguration.class, false);
+        }
 
         // Create Http server and pass the 'accept' method to the request handler
-       //vertx.createHttpServer(new HttpServerOptions().setSsl(useSsl).setKeyStoreOptions(
-       //        new JksOptions().setPath(certificate).setPassword(pass)
-       //)).requestHandler(router::accept).
-
-        vertx.createHttpServer().requestHandler(router::accept).requestHandler(router::accept).
-            listen(config().getInteger(ENDPOINT_PORT, EndPointConfiguration.DEFAULT_PORT),
-                    result -> {
-                        if (result.succeeded()) {
-                            System.out.println("Http server completed..");
-                            fut.complete();
-                        } else {
-                            fut.fail(result.cause());
-                            System.out.println("Http server failed..");
+        //vertx.createHttpServer().requestHandler(router::accept).requestHandler(router::accept).
+        vertx.createHttpServer(new HttpServerOptions().setSsl(localFsaConfiguration.getEndpoint().isSsl()).setKeyStoreOptions(
+                new JksOptions().setPath(localFsaConfiguration.getEndpoint().getCertificate()).setPassword(localFsaConfiguration.getEndpoint().getPass())
+        )).requestHandler(router::accept).
+                listen(config().getInteger(ENDPOINT_PORT, EndPointConfiguration.DEFAULT_PORT),
+                        result -> {
+                            if (result.succeeded()) {
+                                System.out.println("Http server completed..");
+                                fut.complete();
+                            } else {
+                                fut.fail(result.cause());
+                                System.out.println("Http server failed..");
+                            }
                         }
-                    }
-            );
+                );
     }
 
     private void send(RoutingContext context) {
-        ProjectsDetails projects = getProjects(context, true);
-        if (projects.getStatusCode().equals(StatusCode.SUCCESS)) {
-            ProjectsDetails resultProjects = getProjects(context,true);
-            ResultDto resultDto = new ResultDto(resultProjects.getDetails(),resultProjects.getStatusCode());
-            String result = null;
-            try {
-                result = new ObjectMapper().writeValueAsString(resultDto);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-            context.response().end(result);
-        } else {
-            context.response().end("scanning has failed");
+        ProjectsDetails resultProjects = getProjects(context, true);
+        ResultDto resultDto = new ResultDto(resultProjects.getDetails(), resultProjects.getStatusCode());
+        String result = null;
+        try {
+            result = new ObjectMapper().writeValueAsString(resultDto);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         }
+        context.response().end(result);
     }
 
     private void welcome(RoutingContext context) {
@@ -115,32 +112,23 @@ public class FsaVerticle extends AbstractVerticle {
         }
         context.response().end(result);
     }
+
     private ProjectsDetails getProjects(RoutingContext context, boolean shouldSend) {
-        // the POSTed content is available in context.getBodyAsJson()
-        //JsonObject body = context.getBodyAsJson();
-        // a JsonObject wraps a map and it exposes type-aware getters
-        //String postedText = body.getString("text");
-        Properties props = getPropertiesFromBody(context);
-        FSAConfiguration fsaConfiguration = new FSAConfiguration(props);
-        Main main = new Main();
-        return main.scanAndSend(fsaConfiguration, shouldSend);
-    }
+        final FSAConfiguration webFsaConfiguration = ConfigurationSerializer.getFromString(context.getBodyAsString(), FSAConfiguration.class, false);
 
-    private Properties getPropertiesFromBody(RoutingContext context) {
-        String postedText = context.getBodyAsString();
-        logger.debug(postedText);
-        Properties properties = null;
-        try {
-            properties = parsePropertiesString(postedText);
-        } catch (IOException e) {
-            logger.error("error parsing properties:", e);
+        if (webFsaConfiguration != null) {
+            Properties properties = ConfigurationSerializer.getAsProperties(webFsaConfiguration, FSAConfiguration.class);
+            Properties propertiesLocal = ConfigurationSerializer.getAsProperties(localFsaConfiguration, FSAConfiguration.class);
+
+            Properties merged = new Properties();
+            merged.putAll(propertiesLocal);
+            merged.putAll(properties);
+
+            FSAConfiguration mergedFsaConfiguration = new FSAConfiguration(merged);
+
+            Main main = new Main();
+            return main.scanAndSend(mergedFsaConfiguration, shouldSend);
         }
-        return properties;
-    }
-
-    private Properties parsePropertiesString(String strProperties) throws IOException {
-        final Properties properties = new Properties();
-        properties.load(new StringReader(strProperties));
-        return properties;
+        return null;
     }
 }

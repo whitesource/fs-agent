@@ -22,12 +22,10 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
-import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.Pair;
-import org.whitesource.fs.configuration.ConfigurationValidation;
 import org.whitesource.fs.configuration.ScmConfiguration;
 import org.whitesource.fs.configuration.ScmRepositoriesParser;
 import org.whitesource.scm.ScmConnector;
@@ -36,7 +34,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
-import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 /**
  * File System Agent.
@@ -50,7 +47,7 @@ public class FileSystemAgent {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
-    private static final String EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX = ",";
+    public static final String EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX = ",";
     private static final String NPM_COMMAND = NpmLsJsonDependencyCollector.isWindows() ? "npm.cmd" : "npm";
     private static final String NPM_INSTALL_COMMAND = "install";
     private static final String PACKAGE_LOCK = "package-lock.json";
@@ -60,7 +57,6 @@ public class FileSystemAgent {
 
     private final List<String> dependencyDirs;
     private final FSAConfiguration config;
-    private final ConfigurationValidation configurationValidation;
 
     private boolean projectPerSubFolder;
 
@@ -68,8 +64,7 @@ public class FileSystemAgent {
 
     public FileSystemAgent(FSAConfiguration config, List<String> dependencyDirs) {
         this.config = config;
-        this.configurationValidation = new ConfigurationValidation();
-        projectPerSubFolder = config.isProjectPerSubFolder();
+        projectPerSubFolder = config.getRequest().isProjectPerSubFolder();
         if (projectPerSubFolder) {
             this.dependencyDirs = new LinkedList<>();
             for (String directory : dependencyDirs) {
@@ -94,12 +89,12 @@ public class FileSystemAgent {
     public ProjectsDetails createProjects() {
         ProjectsDetails projects = null;
         if (projectPerSubFolder) {
-            projects = new ProjectsDetails(new ArrayList<>(),StatusCode.SUCCESS,"");
+            projects = new ProjectsDetails(new ArrayList<>(), StatusCode.SUCCESS, "");
             for (String directory : dependencyDirs) {
                 ProjectsDetails projectsDetails = getProjects(Collections.singletonList(directory));
                 if (projectsDetails.getProjects().size() == 1) {
                     String projectName = new File(directory).getName();
-                    String projectVersion = config.getProjectVersion();
+                    String projectVersion = config.getRequest().getProjectVersion();
                     AgentProjectInfo projectInfo = projectsDetails.getProjects().stream().findFirst().get();
                     projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
                     projects.getProjects().add(projectInfo);
@@ -117,12 +112,12 @@ public class FileSystemAgent {
                 AgentProjectInfo projectInfo = projects.getProjects().stream().findFirst().get();
                 if (projectInfo.getCoordinates() == null) {
                     // use token or name + version
-                    String projectToken = config.getProjectToken();
+                    String projectToken = config.getRequest().getProjectToken();
                     if (StringUtils.isNotBlank(projectToken)) {
                         projectInfo.setProjectToken(projectToken);
                     } else {
-                        String projectName = config.getProjectName();
-                        String projectVersion = config.getProjectVersion();
+                        String projectName = config.getRequest().getProjectName();
+                        String projectVersion = config.getRequest().getProjectVersion();
                         projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
                     }
                 }
@@ -143,9 +138,9 @@ public class FileSystemAgent {
         final boolean[] hasScmConnectors = new boolean[1];
 
         List<ScmConnector> scmConnectors = null;
-        if (StringUtils.isNotBlank(config.getScm().getRepositoriesfile())) {
+        if (StringUtils.isNotBlank(config.getScm().getRepositoriesPath())) {
             Collection<ScmConfiguration> scmConfigurations = ScmRepositoriesParser.parseRepositoriesFile(
-                    config.getScm().getRepositoriesfile(), config.getScm().getType(), config.getScm().getPpk(), config.getScm().getUser(), config.getScm().getPass());
+                    config.getScm().getRepositoriesPath(), config.getScm().getType(), config.getScm().getPpk(), config.getScm().getUser(), config.getScm().getPass());
             scmConnectors = scmConfigurations.stream()
                     .map(scm -> ScmConnector.create(scm.getType(), scm.getUrl(), scm.getPpk(), scm.getUser(), scm.getPass(), scm.getBranch(), scm.getTag()))
                     .collect(Collectors.toList());
@@ -171,48 +166,16 @@ public class FileSystemAgent {
             });
         }
 
-        // read all properties
-        final String[] includes = config.getIncludes();
-        final String[] excludes = config.getExcludes();
-        final int archiveExtractionDepth = config.getArchiveExtractionDepth();
-        final String[] archiveIncludes = config.getArchiveIncludes();
-        final String[] archiveExcludes = config.getArchiveExcludes();
-        final boolean archiveFastUnpack = config.isArchiveFastUnpack();
-        boolean followSymlinks = config.isFollowSymlinks();
-        // check scan partial sha1s (false by default)
-        boolean partialSha1Match = config.isPartialSha1Match();
-
-        boolean calculateHints = config.isCalculateHints();
-        boolean calculateMd5 = config.isCalculateMd5();
-
-        // glob case sensitive
-        final String globCaseSensitiveValue = config.getGlobCaseSensitiveValue();
-        boolean globCaseSensitive = false;
-        if (StringUtils.isNotBlank(globCaseSensitiveValue)) {
-            if (globCaseSensitiveValue.equalsIgnoreCase("true") || globCaseSensitiveValue.equalsIgnoreCase("y")) {
-                globCaseSensitive = true;
-            } else if (globCaseSensitiveValue.equalsIgnoreCase("false") || globCaseSensitiveValue.equalsIgnoreCase("n")) {
-                globCaseSensitive = false;
-            } else {
-                String error = "Bad " + CASE_SENSITIVE_GLOB_PROPERTY_KEY + ". Received " + globCaseSensitiveValue + ", required true/false or y/n";
-                logger.error(error);
-                if (scmConnectors != null) {
-                    scmConnectors.forEach(scmConnector -> scmConnector.deleteCloneDirectory());
-                }
-                return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, error); // TODO this is within a try frame. Throw an exception instead
+        if (StringUtils.isNotBlank(config.getAgent().getError())) {
+            logger.error(config.getAgent().getError());
+            if (scmConnectors != null) {
+                scmConnectors.forEach(scmConnector -> scmConnector.deleteCloneDirectory());
             }
+            return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, config.getAgent().getError()); // TODO this is within a try frame. Throw an exception instead
         }
 
-        final String excludedCopyrightsValue = config.getExcludedCopyrightsValue();
-        // get excluded copyrights
-        Collection<String> excludedCopyrights = new ArrayList<>(Arrays.asList(excludedCopyrightsValue.split(EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX)));
-        excludedCopyrights.remove("");
-
-        boolean showProgressBar = config.isShowProgressBar();
-        Collection<AgentProjectInfo> projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config.getResolver())).createProjects(
-                scannerBaseDirs, hasScmConnectors[0], includes, excludes, globCaseSensitive, archiveExtractionDepth,
-                archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights,
-                partialSha1Match, calculateHints, calculateMd5);
+        Collection<AgentProjectInfo> projects = new FileSystemScanner(config.getResolver(), config.getAgent())
+                .createProjects(scannerBaseDirs, hasScmConnectors[0]);
 
         // delete all temp scm files
         scmPaths.forEach(directory -> {

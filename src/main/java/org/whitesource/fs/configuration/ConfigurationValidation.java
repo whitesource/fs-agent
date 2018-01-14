@@ -23,7 +23,8 @@ import org.whitesource.fs.FSAConfiguration;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
@@ -37,37 +38,33 @@ public class ConfigurationValidation {
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationValidation.class);
     private static final int MAX_EXTRACTION_DEPTH = 7;
 
-    public Pair<Properties,Boolean> readWithError(String configFilePath, String projectName) {
+    public Pair<Properties, List<String>> readWithError(String configFilePath, String projectName) {
         Properties configProps = new Properties();
-        InputStream inputStream = null;
-        boolean foundError = false;
+        List<String> errors = new ArrayList<>();
         try {
-            inputStream = new FileInputStream(configFilePath);
-            configProps.load(inputStream);
-            foundError = isConfigurationInError(configProps, configFilePath, projectName);
-        } catch (FileNotFoundException e) {
-            logger.error("Failed to open " + configFilePath + " for reading", e);
-            foundError = true;
+            try (FileInputStream inputStream = new FileInputStream(configFilePath)) {
+                try {
+                    configProps.load(inputStream);
+                } catch (FileNotFoundException e) {
+                    logger.error("Failed to open " + configFilePath + " for reading", e);
+                } catch (IOException e) {
+                    logger.error("Error occurred when reading from " + configFilePath, e);
+                }
+                errors.addAll(getConfigurationErrors(configProps, configFilePath, projectName));
+                errors.forEach(error -> logger.error(error));
+            }
         } catch (IOException e) {
             logger.error("Error occurred when reading from " + configFilePath, e);
-            foundError = true;
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    logger.warn("Failed to close " + configFilePath + "InputStream", e);
-                }
-            }
         }
-        return new Pair<>(configProps, foundError);
+        return new Pair<>(configProps, errors);
     }
 
-    public boolean isConfigurationInError(Properties configProps, String configFilePath, String project) {
-        boolean foundError = false;
+    public List<String> getConfigurationErrors(Properties configProps, String configFilePath, String project) {
+        List<String> errors = new ArrayList<>();
+
         if (StringUtils.isBlank(configProps.getProperty(ORG_TOKEN_PROPERTY_KEY))) {
-            foundError = true;
-            logger.error("Could not retrieve {} property from {}", ORG_TOKEN_PROPERTY_KEY, configFilePath);
+            String error = "Could not retrieve " + ORG_TOKEN_PROPERTY_KEY + "property from " + configFilePath;
+            errors.add(error);
         }
 
         String projectToken = configProps.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
@@ -76,33 +73,22 @@ public class ConfigurationValidation {
         boolean noProjectName = StringUtils.isBlank(projectName);
         boolean projectPerFolder = FSAConfiguration.getBooleanProperty(configProps, PROJECT_PER_SUBFOLDER, false);
         if (noProjectToken && noProjectName && !projectPerFolder) {
-            foundError = true;
-            logger.error("Could not retrieve properties {} and {} from {}",
-                    PROJECT_NAME_PROPERTY_KEY, PROJECT_TOKEN_PROPERTY_KEY, configFilePath);
+            String error = "Could not retrieve properties " + PROJECT_NAME_PROPERTY_KEY + " and " + PROJECT_TOKEN_PROPERTY_KEY + " from " + configFilePath;
+            errors.add(error);
         } else if (!noProjectToken && !noProjectName) {
-            foundError = true;
-            logger.error("Please choose just one of either {} or {} (and not both)", PROJECT_NAME_PROPERTY_KEY, PROJECT_TOKEN_PROPERTY_KEY);
+            String error = "Please choose just one of either " + PROJECT_NAME_PROPERTY_KEY + " or " + PROJECT_TOKEN_PROPERTY_KEY + " (and not both)";
+            errors.add(error);
         }
 
         int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(configProps);
         String[] includes = FSAConfiguration.getIncludes(configProps);
-        return foundError || shouldShutDown(archiveExtractionDepth, includes);
-    }
 
-
-    private boolean shouldShutDown(int archiveExtractionDepth, String[] includes) {
-        boolean isShutDown = false;
         if (archiveExtractionDepth < 0 || archiveExtractionDepth > MAX_EXTRACTION_DEPTH) {
-            logger.warn("Error: archiveExtractionDepth value should be greater than 0 and less than " + MAX_EXTRACTION_DEPTH);
-            isShutDown = true;
+            errors.add("Error: archiveExtractionDepth value should be greater than 0 and less than " + MAX_EXTRACTION_DEPTH);
         }
         if (includes.length < 1 || StringUtils.isBlank(includes[0])) {
-            logger.warn("Error: includes parameter must have at list one scanning pattern");
-            isShutDown = true;
+            errors.add("Error: includes parameter must have at list one scanning pattern");
         }
-        if (isShutDown) {
-            logger.warn("Exiting");
-        }
-        return isShutDown;
+        return errors;
     }
 }

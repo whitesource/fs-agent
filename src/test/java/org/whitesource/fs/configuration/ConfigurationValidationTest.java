@@ -33,22 +33,22 @@ public class ConfigurationValidationTest {
         FSAConfiguration fsaConfiguration = new FSAConfiguration(commandLineArgs);
 
         // assert
-        Assert.assertTrue(fsaConfiguration.isProjectPerSubFolder());
+        Assert.assertTrue(fsaConfiguration.getRequest().isProjectPerSubFolder());
 
         // assert
-        Assert.assertTrue(fsaConfiguration.isProjectPerSubFolder());
+        Assert.assertTrue(fsaConfiguration.getRequest().isProjectPerSubFolder());
 
         // assert
-        Assert.assertTrue(StringUtils.isEmpty(fsaConfiguration.getProductName()));
+        Assert.assertTrue(StringUtils.isEmpty(fsaConfiguration.getRequest().getProductName()));
 
         // act
         commandLineArgs = new String[]{"-apiKey", "token" , "-product", "productName"};
         fsaConfiguration = new FSAConfiguration(commandLineArgs);
 
         // assert
-        Assert.assertTrue(fsaConfiguration.getHasErrors());
+        //Assert.assertTrue(fsaConfiguration.getErrors().size()>0);
         // assert
-        Assert.assertEquals("productName",fsaConfiguration.getProductName());
+        Assert.assertEquals("productName",fsaConfiguration.getRequest().getProductName());
     }
 
 }

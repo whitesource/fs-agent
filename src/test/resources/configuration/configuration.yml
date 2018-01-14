@@ -1,66 +1,74 @@
 ---
-projectName: sampleProject
-hasErrors: true
+scm:
+  scm.npmInstall: true
+  scm.npmInstallTimeoutMinutes: 15
+sender:
+  checkPolicies: false
+  wss.url: https://saas.whitesourcesoftware.com/agent
+  wss.connectionTimeoutMinutes: 60
+  proxy.port: -1
+  forceCheckAllDependencies: false
+  forceUpdate: false
+  updateType: OVERRIDE
+offline:
+  offline: false
+  offline.zip: false
+  offline.prettyJson: false
+resolver:
+  npm.runPreStep: false
+  npm.resolveDependencies: true
+  npm.includeDevDependencies: false
+  npm.ignoreJavaScriptFiles: true
+  npm.timeoutDependenciesCollectorInSeconds: 60
+  bower.resolveDependencies: true
+  bower.runPreStep: false
+  nuget.resolveDependencies: true
+  maven.resolveDependencies: true
+  maven.aggregateModules: true
+  dependenciesOnly: false
+endpoint:
+  endpoint.port: 443
+  endpoint.certificate: test.jks
+  endpoint.pass: 123456
+  endpoint.enabled: false
+  endpoint.ssl: false
 offlineRequestFiles: []
-fileListPath: null
 dependencyDirs: []
-includes:
--
-excludes:
--
-archiveExtractionDepth: 0
-archiveIncludes:
--
-archiveExcludes:
--
-archiveFastUnpack: false
-followSymlinks: true
-partialSha1Match: false
-calculateHints: false
-calculateMd5: false
-projectVersion: null
-projectToken: null
-projectPerSubFolder: false
-orgToken: apiToken
-requesterEmail: null
-checkPolicies: false
-senderServiceUrl: https://saas.whitesourcesoftware.com/agent
-senderProxyHost: null
-senderConnectionTimeOut: 60
-senderProxyPort: -1
-senderProxyUser: null
-senderProxyPassword: null
-forceCheckAllDependencies: false
-forceUpdate: false
-offlineState: false
-offlinePrettyJson: false
-offlineZip: false
-showProgressBar: true
-updateTypeValue: OVERRIDE
-excludedCopyrightsValue:
-globCaseSensitiveValue: null
-logLevel: info
-scmType: null
-scmUrl: null
-scmUsername: null
-scmPassword: null
-scmBranch: null
-scmTag: null
-scmRepositoriesFile: null
-scmPrivateKey: null
-scmNpmInstall: true
-scmNpmInstallTimeoutMinutes: 15
-resolverConfiguration:
-  dependencyResolverNpmRunPreStep: true
-  dependencyResolverNpmResolveDependencies: true
-  dependencyResolverNpmIncludeDevDependencies: false
-  dependencyResolverNpmIgnoreJavaScriptFiles: true
-  dependencyResolverNpmTimeoutDependenciesCollector: 60
-  dependencyResolverBowerResolveDependencies: true
-  dependencyResolverBowerRunPreStep: false
-  dependencyResolverNugetResolveDependencies: true
-  dependencyResolverMavenResolveDependencies: true
-  dependencyResolverMavenIgnoredScopes: null
-  dependencyResolverMavenAggregateModules: true
-  dependencyResolverDependenciesOnly: false
-  dependencyResolverWhitesourceConfiguration: null
+agent:
+  includes:
+  - '**/*.c'
+  - '**/*.cc'
+  - '**/*.cp'
+  - '**/*.cpp'
+  - '**/*.cxx'
+  - '**/*.c++'
+  - '**/*.h'
+  - '**/*.hpp'
+  - '**/*.hxx'
+  - '**/*.js'
+  excludes:
+  - '**/*sources.jar'
+  - '**/*javadoc.jar'
+  archiveExtractionDepth: 0
+  archiveIncludes:
+  -
+  archiveExcludes:
+  -
+  archiveFastUnpack: false
+  followSymbolicLinks: true
+  partialSha1Match: false
+  calculate.hints: false
+  calculate.md5: false
+  showProgressBar: true
+  case.sensitive.glob: false
+  copyright.excludes: []
+request:
+  apiKey: token
+  projectPerFolder: false
+  projectName: testProject
+  projectToken:
+  projectVersion:
+  productName:
+  productToken:
+  productVersion:
+log.level: info
