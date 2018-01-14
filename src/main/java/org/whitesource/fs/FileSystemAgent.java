@@ -63,7 +63,7 @@ public class FileSystemAgent {
     private static final String NPM_INSTALL_OUTPUT_DESTINATION = NpmLsJsonDependencyCollector.isWindows() ? "nul" : "/dev/null";
     private static final String PACKAGE_LOCK = "package-lock.json";
     private static final String PACKAGE_JSON = "package.json";
-    public static final String SCAN_PROJECT_MANAGER = "scanProjectManager";
+    public static final String SCAN_PACKAGE_MANAGER = "scanPackageManager";
 
     /* --- Members --- */
 
@@ -197,7 +197,7 @@ public class FileSystemAgent {
         boolean followSymlinks = getBooleanProperty(FOLLOW_SYMBOLIC_LINKS, true);
         // check scan partial sha1s (false by default)
         boolean partialSha1Match = getBooleanProperty(PARTIAL_SHA1_MATCH_KEY, false);
-        boolean projectScannerManager = getBooleanProperty(SCAN_PROJECT_MANAGER,true);
+        boolean projectScannerManager = getBooleanProperty(SCAN_PACKAGE_MANAGER,true);
         boolean calculateHints = getBooleanProperty(CALCULATE_HINTS, false);
         boolean calculateMd5 = getBooleanProperty(CALCULATE_MD5, false);
 
@@ -225,8 +225,8 @@ public class FileSystemAgent {
 
         boolean showProgressBar = getBooleanProperty(SHOW_PROGRESS_BAR, true);
         Collection<AgentProjectInfo> projects = null;
-        boolean scanProjectManager = getBooleanProperty(SCAN_PROJECT_MANAGER,false);
-        if (scanProjectManager) {
+        boolean scanPackageManager = getBooleanProperty(SCAN_PACKAGE_MANAGER,false);
+        if (scanPackageManager) {
             projects = new PackageManagerExtractor().createProjects();
         } else {
             projects = new FileSystemScanner(showProgressBar, new DependencyResolutionService(config)).createProjects(

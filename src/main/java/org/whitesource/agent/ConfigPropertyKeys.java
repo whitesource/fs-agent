@@ -83,6 +83,6 @@ public final class ConfigPropertyKeys {
     public static final String PROJECT_PER_SUBFOLDER = "projectPerFolder";
     public static final String UPDATE_TYPE = "updateType";
     public static final String PROJECT_CONFIGURATION_PATH = "configFilePath";
-    public static final String SCAN_PROJECT_MANAGER = "scanProjectManager";
+    public static final String SCAN_PROJECT_MANAGER = "scanPackageManager";
 
 }
