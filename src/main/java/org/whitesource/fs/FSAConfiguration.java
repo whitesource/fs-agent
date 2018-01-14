@@ -63,6 +63,8 @@ public class FSAConfiguration {
     private final AgentConfiguration agent;
     private final RequestConfiguration request;
 
+    private final boolean scanProjectManager;
+
     private String logLevel;
 
     /* --- Constructors --- */
@@ -114,6 +116,7 @@ public class FSAConfiguration {
             dependencyDirs = new ArrayList<>();
         }
 
+        scanProjectManager = getBooleanProperty(config, SCAN_PROJECT_MANAGER,false);
         errors = configurationValidation.getConfigurationErrors(config, configFilePath, projectName);
         logLevel = config.getProperty(LOG_LEVEL_KEY, INFO);
 
@@ -179,6 +182,11 @@ public class FSAConfiguration {
 
     public List<String> getDependencyDirs() {
         return dependencyDirs;
+    }
+
+    @JsonProperty(SCAN_PROJECT_MANAGER)
+    public boolean isScanProjectManager() {
+        return scanProjectManager;
     }
 
     @JsonProperty(LOG_LEVEL_KEY)

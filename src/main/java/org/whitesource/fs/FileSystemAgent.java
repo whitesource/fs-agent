@@ -181,8 +181,8 @@ public class FileSystemAgent {
 
 
         Collection<AgentProjectInfo> projects = null;
-        boolean scanProjectManager = getBooleanProperty(SCAN_PROJECT_MANAGER,false);
-        if (scanProjectManager) {
+
+        if (config.isScanProjectManager()) {
             projects = new PackageManagerExtractor().createProjects();
         } else {
             projects =new FileSystemScanner(config.getResolver(), config.getAgent())
