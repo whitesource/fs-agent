@@ -116,7 +116,7 @@ public class FSAConfiguration {
             dependencyDirs = new ArrayList<>();
         }
 
-        scanProjectManager = getBooleanProperty(config, SCAN_PROJECT_MANAGER,false);
+        scanProjectManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER,false);
         errors = configurationValidation.getConfigurationErrors(config, configFilePath, projectName);
         logLevel = config.getProperty(LOG_LEVEL_KEY, INFO);
 
@@ -184,7 +184,7 @@ public class FSAConfiguration {
         return dependencyDirs;
     }
 
-    @JsonProperty(SCAN_PROJECT_MANAGER)
+    @JsonProperty(SCAN_PACKAGE_MANAGER)
     public boolean isScanProjectManager() {
         return scanProjectManager;
     }
