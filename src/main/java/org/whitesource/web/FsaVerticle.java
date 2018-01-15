@@ -29,8 +29,12 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.Main;
 import org.whitesource.fs.ProjectsDetails;
+import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.EndPointConfiguration;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Properties;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
@@ -117,8 +121,9 @@ public class FsaVerticle extends AbstractVerticle {
         final FSAConfiguration webFsaConfiguration = ConfigurationSerializer.getFromString(context.getBodyAsString(), FSAConfiguration.class, false);
 
         if (webFsaConfiguration != null) {
-            Properties properties = ConfigurationSerializer.getAsProperties(webFsaConfiguration, FSAConfiguration.class);
-            Properties propertiesLocal = ConfigurationSerializer.getAsProperties(localFsaConfiguration, FSAConfiguration.class);
+            HashMap<String, Object> result = ConfigurationSerializer.getFromString(context.getBodyAsString(), HashMap.class, false);
+            Properties properties = ConfigurationSerializer.getAsProperties(result);
+            Properties propertiesLocal = ConfigurationSerializer.getAsProperties(localFsaConfiguration);
 
             Properties merged = new Properties();
             merged.putAll(propertiesLocal);
@@ -129,6 +134,6 @@ public class FsaVerticle extends AbstractVerticle {
             Main main = new Main();
             return main.scanAndSend(mergedFsaConfiguration, shouldSend);
         }
-        return null;
+        return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, "Error parsing the request");
     }
 }

@@ -90,7 +90,7 @@ public class ConfigurationSerializer <T> {
         }
     }
 
-    public static <T> Properties getAsProperties(T object, Class<T> typeParameterClass) {
+    public static <T> Properties getAsProperties(T object) {
         Map<String, Object> map = jsonMapper.convertValue(object, Map.class);
         Properties properties = new Properties();
         fillProperties(map, properties);
