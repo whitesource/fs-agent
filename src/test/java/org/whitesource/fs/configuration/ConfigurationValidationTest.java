@@ -14,10 +14,9 @@ public class ConfigurationValidationTest {
     public void shouldWorkWithProjectPerFolder() throws IOException {
 
         File tmpPath = TestHelper.getTempFileWithReplace("#projectPerFolder=true", "projectPerFolder=true");
-        ConfigurationValidation configurationValidation = new ConfigurationValidation();
 
         // act
-        Properties configProperties = configurationValidation.readWithError(tmpPath.toString(), "").getKey();
+        Properties configProperties = FSAConfiguration.readWithError(tmpPath.toString(), "").getKey();
 
         // assert
         Assert.assertNotNull(configProperties);

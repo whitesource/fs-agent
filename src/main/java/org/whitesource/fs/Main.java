@@ -60,6 +60,7 @@ public class Main {
             try {
                 if (fsaConfiguration.getErrors() == null || fsaConfiguration.getErrors().size() > 0) {
                     processExitCode = StatusCode.ERROR;
+                    fsaConfiguration.getErrors().forEach(error -> logger.error(error));
                     logger.warn("Exiting");
                 } else {
                     processExitCode = new Main().scanAndSend(fsaConfiguration, true).getStatusCode();

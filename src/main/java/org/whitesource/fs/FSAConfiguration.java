@@ -22,6 +22,9 @@ import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.*;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -85,6 +88,7 @@ public class FSAConfiguration {
         configurationValidation = new ConfigurationValidation();
 
         String projectName;
+        errors = new ArrayList<>();
         if ((args != null)) {
             // read command line args
             // validate args // TODO use jCommander validators
@@ -93,8 +97,9 @@ public class FSAConfiguration {
             new JCommander(commandLineArgs, args);
 
             if (config == null) {
-                Pair<Properties, List<String>> validationResult = configurationValidation.readWithError(commandLineArgs.configFilePath, commandLineArgs.project);
-                config = validationResult.getKey();
+                Pair<Properties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath, commandLineArgs.project);
+                errors.addAll(propertiesWithErrors.getValue());
+                config = propertiesWithErrors.getKey();
                 if (StringUtils.isNotEmpty(commandLineArgs.project)) {
                     config.setProperty(PROJECT_NAME_PROPERTY_KEY, commandLineArgs.project);
                 }
@@ -117,7 +122,7 @@ public class FSAConfiguration {
         }
 
         scanProjectManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER,false);
-        errors = configurationValidation.getConfigurationErrors(config, configFilePath, projectName);
+        errors.addAll(configurationValidation.getConfigurationErrors(config, configFilePath, projectName));
         logLevel = config.getProperty(LOG_LEVEL_KEY, INFO);
 
         String productToken = config.getProperty(ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY);
@@ -136,6 +141,25 @@ public class FSAConfiguration {
         sender = new SenderConfiguration(config);
         resolver = new ResolverConfiguration(config);
         endpoint = new EndPointConfiguration(config);
+    }
+
+    public static Pair<Properties, List<String>> readWithError(String configFilePath, String projectName) {
+        Properties configProps = new Properties();
+        List<String> errors = new ArrayList<>();
+        try {
+            try (FileInputStream inputStream = new FileInputStream(configFilePath)) {
+                try {
+                    configProps.load(inputStream);
+                } catch (FileNotFoundException e) {
+                    errors.add("Failed to open " + configFilePath + " for reading " + e);
+                } catch (IOException e) {
+                    errors.add("Error occurred when reading from " + configFilePath + e);
+                }
+            }
+        } catch (IOException e) {
+            errors.add("Error occurred when reading from " + configFilePath + e);
+        }
+        return new Pair<>(configProps, errors);
     }
 
     /* --- Public getters --- */
@@ -240,7 +264,11 @@ public class FSAConfiguration {
     }
 
     public static String[] getIncludes(Properties configProps) {
-        return configProps.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String includesString = configProps.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "");
+        if (StringUtils.isNotBlank(includesString)){
+            return configProps.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        }
+        return new String[0];
     }
 
     /* --- Private methods --- */
