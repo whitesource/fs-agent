@@ -47,16 +47,6 @@ public class ConfigurationSerializer <T> {
 
     /* --- Constructors --- */
 
-    public ConfigurationSerializer() {
-        yamlFactory = new YAMLFactory();
-        //mapper = new ObjectMapper(yamlFactory);
-        //mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        //mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        yamlFactory.enable(YAMLGenerator.Feature.MINIMIZE_QUOTES);
-    }
-
     public FSAConfiguration load(String fileInput) throws IOException {
         //todo: add support to load from properties file
         FSAConfiguration config = jsonMapper.readValue(new File(fileInput), FSAConfiguration.class);
