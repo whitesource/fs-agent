@@ -2,10 +2,14 @@ package org.whitesource.fs.configuration;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.fs.FSAConfiguration;
-
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Paths;
+import java.util.Properties;
 import java.util.UUID;
 
 public class FSAConfigurationTest {
@@ -16,19 +20,36 @@ public class FSAConfigurationTest {
     public void shouldLoadSave() throws IOException {
         ConfigurationSerializer configurationSerializer = new ConfigurationSerializer();
 
-        FSAConfiguration fsaConfiguration = new FSAConfiguration();
+        File file = TestHelper.getFileFromResources("whitesource-fs-agent.config");
+        Properties properties = new Properties();
+
+        try (InputStream stream = new FileInputStream(file.toString())) {
+            properties.load(stream);
+        } catch (IOException e) {
+            String error = e.getMessage();
+        }
+
+        FSAConfiguration fsaConfiguration = new FSAConfiguration(properties);
+        Properties propertiesAfterConfig = ConfigurationSerializer.getAsProperties(fsaConfiguration,FSAConfiguration.class);
+
+        checkSubsetProperties(properties, propertiesAfterConfig);
 
         String tempCofig = getTempFile();
-        configurationSerializer.save(fsaConfiguration, tempCofig);
+        configurationSerializer.save(fsaConfiguration,tempCofig,false);
+
         FSAConfiguration fsaConfigurationResult = configurationSerializer.load(tempCofig);
+        Properties sameProperties = ConfigurationSerializer.getAsProperties(fsaConfigurationResult,FSAConfiguration.class);
 
-//        Assert.assertTrue(fsaConfigurationResult.getResolver().isDependencyResolverNpmRunPreStep());
-//        fsaConfiguration = new FSAConfiguration();
-//        Path tmpPath = Paths.get(JAVA_TEMP_DIR, tempCofig);
-//        configurationSerializer.save(fsaConfiguration,tmpPath.toString());
-//        fsaConfigurationResult = configurationSerializer.load(tmpPath.toString());
+        checkSubsetProperties(propertiesAfterConfig, sameProperties);
 
-        Assert.assertNotNull(fsaConfigurationResult);
+        configurationSerializer.saveYaml(fsaConfigurationResult,"c:\\temp\\config2.yml");
+    }
+
+    private void checkSubsetProperties(Properties subsetProperties, Properties bigSetProperties) {
+        subsetProperties.stringPropertyNames().stream().forEach(prop->{
+            Assert.assertTrue(bigSetProperties.containsKey(prop));
+            Assert.assertEquals(bigSetProperties.get(prop).toString(), subsetProperties.get(prop).toString());
+        });
     }
 
     public String getTempFile() {

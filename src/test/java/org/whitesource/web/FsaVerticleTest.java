@@ -15,8 +15,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
+import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.EndPointConfiguration;
 
 import java.io.IOException;
@@ -63,7 +65,7 @@ public class FsaVerticleTest {
     @Test
     public void testAnalyzeApi(TestContext context) {
         final Async async = context.async();
-        vertx.createHttpClient().post("localhost:"+EndPointConfiguration.DEFAULT_PORT+"\\analyze",
+        vertx.createHttpClient().post("localhost:" + EndPointConfiguration.DEFAULT_PORT + "\\analyze",
                 response -> {
                     response.handler(body -> {
                         context.assertTrue(body.toString().contains("Hello"));
@@ -83,7 +85,9 @@ public class FsaVerticleTest {
         properties.setProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, "projectName");
         properties.setProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY, "**/*.java");
 
-        String json = getPropertyAsString(properties);
+        FSAConfiguration fsaConfiguration = new FSAConfiguration(properties);
+
+        String json = ConfigurationSerializer.getAsString(fsaConfiguration,false);
         Assert.assertTrue(json.contains(GIT_SAMPLE));
         final String length = Integer.toString(json.length());
 

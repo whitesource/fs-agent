@@ -27,7 +27,6 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
-import org.whitesource.fs.configuration.EndPointConfiguration;
 import org.whitesource.web.FsaVerticle;
 import java.util.*;
 
@@ -44,7 +43,6 @@ public class Main {
 
     private static Vertx vertx;
     ProjectsCalculator projectsCalculator = new ProjectsCalculator();
-    private static ConfigurationSerializer<EndPointConfiguration> configurationSerializer = new ConfigurationSerializer<>();
 
     /* --- Main --- */
 
@@ -56,12 +54,16 @@ public class Main {
 
         // read configuration senderConfiguration
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
-
         boolean isStandalone = commandLineArgs.web.equals("false");
 
         if (isStandalone) {
             try {
-                processExitCode = new Main().scanAndSend(fsaConfiguration, true).getStatusCode();
+                if (fsaConfiguration.getErrors() == null || fsaConfiguration.getErrors().size() > 0) {
+                    processExitCode = StatusCode.ERROR;
+                    logger.warn("Exiting");
+                } else {
+                    processExitCode = new Main().scanAndSend(fsaConfiguration, true).getStatusCode();
+                }
             } catch (Exception e) {
                 // catch any exception that may be thrown, return error code
                 logger.warn("Process encountered an error: {}" + e.getMessage(), e);
@@ -70,21 +72,16 @@ public class Main {
             System.exit(processExitCode.getValue());
         } else {
             vertx = Vertx.vertx();
-            if (fsaConfiguration != null && fsaConfiguration.getEndpoint() != null && fsaConfiguration.getEndpoint().isEnabled()) {
-                JsonObject config = new JsonObject(configurationSerializer.getAsString(fsaConfiguration.getEndpoint()));
-                DeploymentOptions options = new DeploymentOptions().setConfig(config);
-                vertx.deployVerticle(FsaVerticle.class.getName(), options);
-            } else {
-                vertx.deployVerticle(FsaVerticle.class.getName());
-            }
-            //todo: check ctrl+c scenario
-            //processExitCode = StatusCode.SUCCESS;
+            JsonObject config = new JsonObject();
+            config.put(FsaVerticle.CONFIGURATION, ConfigurationSerializer.getAsString(fsaConfiguration, false));
+            DeploymentOptions options = new DeploymentOptions().setConfig(config);
+            vertx.deployVerticle(FsaVerticle.class.getName(), options);
         }
     }
 
     public ProjectsDetails scanAndSend(FSAConfiguration fsaConfiguration, boolean shouldSend) {
-        if (fsaConfiguration.getHasErrors()) {
-            return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, "");
+        if (fsaConfiguration.getErrors()!= null && fsaConfiguration.getErrors().size() > 0) {
+            return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, String.join(System.lineSeparator(),fsaConfiguration.getErrors()));
         }
 
         ProjectsDetails result = projectsCalculator.getAllProjects(fsaConfiguration);
@@ -126,12 +123,12 @@ public class Main {
             return  new Pair<>("Exiting, nothing to update",StatusCode.SUCCESS);
         } else {
             String productVersion = null;
-            String productNameOrToken = fsaConfiguration.getProductToken();
+            String productNameOrToken = fsaConfiguration.getRequest().getProductToken();
             if (StringUtils.isBlank(productNameOrToken)) {
-                productNameOrToken = fsaConfiguration.getProductName();
-                productVersion = fsaConfiguration.getProductVersion();
+                productNameOrToken = fsaConfiguration.getRequest().getProductName();
+                productVersion = fsaConfiguration.getRequest().getProductVersion();
             }
-            return projectsSender.sendRequest(projects, fsaConfiguration.getOrgToken(),fsaConfiguration.getRequesterEmail(),productNameOrToken, productVersion);
+            return projectsSender.sendRequest(projects, fsaConfiguration.getRequest().getApiToken(),fsaConfiguration.getRequest().getRequesterEmail(),productNameOrToken, productVersion);
         }
     }
 }

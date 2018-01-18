@@ -16,6 +16,7 @@
 package org.whitesource.fs;
 
 import com.beust.jcommander.JCommander;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.utils.Pair;
@@ -40,17 +41,10 @@ public class FSAConfiguration {
     public static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
     private static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
-    private static final String DEFAULT_API_TOKEN = "apiToken";
-    private static final String DAFAULT_SAMPLE_PROJECT = "sampleProject";
     private static final String SPACE =" ";
 
     /* --- Private fields --- */
 
-    private final String productToken;
-    private final String productName;
-    private final String productVersion;
-
-    private final String projectName;
     private final ScmConfiguration scm;
     private final SenderConfiguration sender;
     private final OfflineConfiguration offline;
@@ -58,34 +52,18 @@ public class FSAConfiguration {
     private final ConfigurationValidation configurationValidation;
     private final EndPointConfiguration endpoint;
 
-    private final boolean hasErrors;
+    private final List<String> errors;
 
     /* --- Private final fields --- */
 
     private final List<String> offlineRequestFiles;
     private final String fileListPath;
     private final List<String> dependencyDirs;
+    private final String configFilePath;
+    private final AgentConfiguration agent;
+    private final RequestConfiguration request;
 
-    private final String[] includes;
-    private final String[] excludes;
-    private final int archiveExtractionDepth;
-    private final String[] archiveIncludes;
-    private final String[] archiveExcludes;
-    private final boolean archiveFastUnpack;
-    private final boolean followSymlinks;
-    private final boolean partialSha1Match;
-    private final boolean calculateHints;
-    private final boolean calculateMd5;
-
-    private final String projectVersion;
-    private final String projectToken;
-    private final boolean projectPerSubFolder;
-    private final String orgToken;
-    private final String requesterEmail;
-
-    private final boolean showProgressBar;
-    private final String excludedCopyrightsValue;
-    private final String globCaseSensitiveValue;
+    private final boolean scanProjectManager;
 
     private String logLevel;
 
@@ -96,7 +74,7 @@ public class FSAConfiguration {
     }
 
     public FSAConfiguration() {
-        this(null,null);
+        this(new Properties(),null);
     }
 
     public FSAConfiguration(String[] args) {
@@ -104,11 +82,9 @@ public class FSAConfiguration {
     }
 
     public FSAConfiguration(Properties config , String [] args) {
-
         configurationValidation = new ConfigurationValidation();
 
-        //args provided and getSender not provided
-        //if ((args != null && args.length !=0)) {
+        String projectName;
         if ((args != null)) {
             // read command line args
             // validate args // TODO use jCommander validators
@@ -117,79 +93,57 @@ public class FSAConfiguration {
             new JCommander(commandLineArgs, args);
 
             if (config == null) {
-                Pair<Properties,Boolean> validationResult = configurationValidation.readWithError(commandLineArgs.configFilePath, commandLineArgs.project);
+                Pair<Properties, List<String>> validationResult = configurationValidation.readWithError(commandLineArgs.configFilePath, commandLineArgs.project);
                 config = validationResult.getKey();
-                if(StringUtils.isNotEmpty(commandLineArgs.project)) {
+                if (StringUtils.isNotEmpty(commandLineArgs.project)) {
                     config.setProperty(PROJECT_NAME_PROPERTY_KEY, commandLineArgs.project);
                 }
             }
+
+            configFilePath = commandLineArgs.configFilePath;
             config.setProperty(PROJECT_CONFIGURATION_PATH, commandLineArgs.configFilePath);
 
             //override
             offlineRequestFiles = updateProperties(config, commandLineArgs);
             projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
-            hasErrors = configurationValidation.isConfigurationInError(config, NONE, projectName);
             fileListPath = commandLineArgs.fileListPath;
             dependencyDirs = commandLineArgs.dependencyDirs;
-
-        }else {
-            if (config != null) {
-                projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
-            }
-            else {
-                config = new Properties();
-                projectName = DAFAULT_SAMPLE_PROJECT;
-                config.setProperty(PROJECT_NAME_PROPERTY_KEY, projectName);
-                String apiKey = DEFAULT_API_TOKEN;
-                config.setProperty(ORG_TOKEN_PROPERTY_KEY, apiKey);
-            }
-            hasErrors = configurationValidation.isConfigurationInError(config, NONE, projectName);
+        } else {
+            projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
+            configFilePath = NONE;
             offlineRequestFiles = new ArrayList<>();
             fileListPath = null;
             dependencyDirs = new ArrayList<>();
         }
 
-        productToken = config.getProperty(ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY);
-        productName = config.getProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY);
-        productVersion =config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
-
+        scanProjectManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER,false);
+        errors = configurationValidation.getConfigurationErrors(config, configFilePath, projectName);
         logLevel = config.getProperty(LOG_LEVEL_KEY, INFO);
 
+        String productToken = config.getProperty(ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY);
+        String productName = config.getProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY);
+        String productVersion = config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
+        String apiToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
+        String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
+        String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
+        boolean projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
+        String requesterEmail = config.getProperty(REQUESTER_EMAIL);
+
+        request = new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken, projectVersion, productName, productToken, productVersion);
         scm = new ScmConfiguration(config);
-
-        // read all properties
-        includes = getIncludes(config);
-        excludes = config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-
-        archiveExtractionDepth = getArchiveDepth(config);
-        archiveIncludes = config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        archiveExcludes = config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, "").split(INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        archiveFastUnpack = getBooleanProperty(config, ARCHIVE_FAST_UNPACK_KEY, false);
-
-        followSymlinks = getBooleanProperty(config, FOLLOW_SYMBOLIC_LINKS, true);
-        // check scan partial sha1s (false by default)
-        partialSha1Match = getBooleanProperty(config, PARTIAL_SHA1_MATCH_KEY, false);
-        calculateHints = getBooleanProperty(config, CALCULATE_HINTS, false);
-        calculateMd5 = getBooleanProperty(config, CALCULATE_MD5, false);
-        globCaseSensitiveValue = config.getProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY);
-        excludedCopyrightsValue = config.getProperty(EXCLUDED_COPYRIGHT_KEY, "");
-        showProgressBar = getBooleanProperty(config, SHOW_PROGRESS_BAR, true);
-
-
-        orgToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
-        projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
-        projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
-        projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
-        requesterEmail = config.getProperty(REQUESTER_EMAIL);
-
+        agent = new AgentConfiguration(config);
         offline = new OfflineConfiguration(config);
         sender = new SenderConfiguration(config);
         resolver = new ResolverConfiguration(config);
-
         endpoint = new EndPointConfiguration(config);
     }
 
     /* --- Public getters --- */
+
+    public RequestConfiguration getRequest() {
+        return request;
+    }
+
     public EndPointConfiguration getEndpoint() {
         return endpoint;
     }
@@ -202,6 +156,10 @@ public class FSAConfiguration {
         return scm;
     }
 
+    public AgentConfiguration getAgent() {
+        return agent;
+    }
+
     public OfflineConfiguration getOffline() {
         return offline;
     }
@@ -210,20 +168,8 @@ public class FSAConfiguration {
         return resolver;
     }
 
-    public boolean getHasErrors() {
-        return hasErrors;
-    }
-
-    public boolean isShowProgressBar() {
-        return showProgressBar;
-    }
-
-    public String getExcludedCopyrightsValue() {
-        return excludedCopyrightsValue;
-    }
-
-    public String getGlobCaseSensitiveValue() {
-        return globCaseSensitiveValue;
+    List<String> getErrors() {
+        return errors;
     }
 
     public List<String> getOfflineRequestFiles() {
@@ -238,82 +184,12 @@ public class FSAConfiguration {
         return dependencyDirs;
     }
 
-    public String[] getIncludes() {
-        return includes;
+    @JsonProperty(SCAN_PACKAGE_MANAGER)
+    public boolean isScanProjectManager() {
+        return scanProjectManager;
     }
 
-    public String[] getExcludes() {
-        return excludes;
-    }
-
-    public int getArchiveExtractionDepth() {
-        return archiveExtractionDepth;
-    }
-
-    public String[] getArchiveIncludes() {
-        return archiveIncludes;
-    }
-
-    public String[] getArchiveExcludes() {
-        return archiveExcludes;
-    }
-
-    public boolean isArchiveFastUnpack() {
-        return archiveFastUnpack;
-    }
-
-    public boolean isFollowSymlinks() {
-        return followSymlinks;
-    }
-
-    public boolean isPartialSha1Match() {
-        return partialSha1Match;
-    }
-
-    public boolean isCalculateHints() {
-        return calculateHints;
-    }
-
-    public boolean isCalculateMd5() {
-        return calculateMd5;
-    }
-
-    public String getProjectVersion() {
-        return projectVersion;
-    }
-
-    public String getProjectName() {
-        return projectName;
-    }
-
-    public String getProjectToken() {
-        return projectToken;
-    }
-
-    public String getProductToken() {
-        return productToken;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
-    public String getProductVersion() {
-        return productVersion;
-    }
-
-    public boolean isProjectPerSubFolder() {
-        return projectPerSubFolder;
-    }
-
-    public String getRequesterEmail() {
-        return requesterEmail;
-    }
-
-    public String getOrgToken() {
-        return orgToken;
-    }
-
+    @JsonProperty(LOG_LEVEL_KEY)
     public String getLogLevel() {
         return logLevel;
     }

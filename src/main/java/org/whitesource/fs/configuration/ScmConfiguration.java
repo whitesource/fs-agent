@@ -32,13 +32,16 @@ public class ScmConfiguration {
 
     @JsonCreator
     public ScmConfiguration(
-            @JsonProperty("type") String type,
-            @JsonProperty("user") String user,
-            @JsonProperty("pass") String pass,
-            @JsonProperty("ppk") String ppk,
-            @JsonProperty("url") String url,
-            @JsonProperty("branch") String branch,
-            @JsonProperty("tag") String tag) {
+            @JsonProperty(SCM_TYPE_PROPERTY_KEY) String type,
+            @JsonProperty(SCM_USER_PROPERTY_KEY) String user,
+            @JsonProperty(SCM_PASS_PROPERTY_KEY) String pass,
+            @JsonProperty(SCM_PPK_PROPERTY_KEY) String ppk,
+            @JsonProperty(SCM_URL_PROPERTY_KEY) String url,
+            @JsonProperty(SCM_BRANCH_PROPERTY_KEY) String branch,
+            @JsonProperty(SCM_TAG_PROPERTY_KEY) String tag,
+            @JsonProperty(SCM_REPOSITORIES_FILE) String repositoriesPath,
+            @JsonProperty(SCM_NPM_INSTALL) boolean npmInstall,
+            @JsonProperty(SCM_NPM_INSTALL_TIMEOUT_MINUTES) int npmInstallTimeoutMinutes) {
         this.type = type;
         this.user = user;
         this.pass = pass;
@@ -48,9 +51,9 @@ public class ScmConfiguration {
         this.tag = tag;
 
         //defaults
-        this.repositoriesfile = null;
-        this.npmInstall = false;
-        this.npmInstallTimeoutMinutes = 1;
+        this.repositoriesPath = repositoriesPath;
+        this.npmInstall = npmInstall;
+        this.npmInstallTimeoutMinutes = npmInstallTimeoutMinutes;
     }
 
     public ScmConfiguration(Properties config) {
@@ -63,7 +66,7 @@ public class ScmConfiguration {
         this.ppk = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
 
         //defaults
-        this.repositoriesfile = config.getProperty(SCM_REPOSITORIES_FILE);
+        this.repositoriesPath = config.getProperty(SCM_REPOSITORIES_FILE);
         npmInstall = FSAConfiguration.getBooleanProperty(config, SCM_NPM_INSTALL, true);
         npmInstallTimeoutMinutes = FSAConfiguration.getIntProperty(config, SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
     }
@@ -78,13 +81,13 @@ public class ScmConfiguration {
     private String branch;
     private String tag;
 
-    private String repositoriesfile;
+    private String repositoriesPath;
     private boolean npmInstall;
     private int npmInstallTimeoutMinutes;
 
     /* --- Properties --- */
 
-    //@JsonProperty("scm.type")
+    @JsonProperty("scm.type")
     public String getType() {
         return type;
     }
@@ -93,70 +96,48 @@ public class ScmConfiguration {
         this.type = type;
     }
 
-    //@JsonProperty("scm.user")
+    @JsonProperty("scm.user")
     public String getUser() {
         return user;
     }
 
-    public void setUser(String user) {
-        this.user = user;
-    }
 
-    //@JsonProperty("scm.pass")
+    @JsonProperty(SCM_PASS_PROPERTY_KEY)
     public String getPass() {
         return pass;
     }
 
-    public void setPass(String pass) {
-        this.pass = pass;
-    }
-
-    //@JsonProperty("scm.ppk")
+    @JsonProperty(SCM_PPK_PROPERTY_KEY)
     public String getPpk() {
         return ppk;
     }
 
-    public void setPpk(String ppk) {
-        this.ppk = ppk;
-    }
-
-    //@JsonProperty("scm.url")
+    @JsonProperty(SCM_URL_PROPERTY_KEY)
     public String getUrl() {
         return url;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    //@JsonProperty("scm.branch")
+    @JsonProperty(SCM_BRANCH_PROPERTY_KEY)
     public String getBranch() {
         return branch;
     }
 
-    public void setBranch(String branch) {
-        this.branch = branch;
-    }
-
-    //@JsonProperty("scm.tag")
+    @JsonProperty(SCM_TAG_PROPERTY_KEY)
     public String getTag() {
         return tag;
     }
 
-    public void setTag(String tag) {
-        this.tag = tag;
+    @JsonProperty(SCM_REPOSITORIES_FILE)
+    public String getRepositoriesPath() {
+        return repositoriesPath;
     }
 
-    public String getRepositoriesfile() {
-        return repositoriesfile;
-    }
-
-    //@JsonProperty("scm.npmInstall")
+    @JsonProperty(SCM_NPM_INSTALL)
     public boolean isNpmInstall() {
         return npmInstall;
     }
 
-    //@JsonProperty("scm.npmInstallTimeoutMinutes")
+    @JsonProperty(SCM_NPM_INSTALL_TIMEOUT_MINUTES)
     public int getNpmInstallTimeoutMinutes() {
         return npmInstallTimeoutMinutes;
     }

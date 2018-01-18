@@ -28,124 +28,141 @@ public class ResolverConfiguration {
 
     /* --- Constructors --- */
 
-    //private ResolverConfiguration(){
-    //    this(new Properties());
-    //}
-
     @JsonCreator
     public ResolverConfiguration(
-             @JsonProperty("dependencyResolverNpmRunPreStep") boolean dependencyResolverNpmRunPreStep,
-             @JsonProperty("dependencyResolverNpmResolveDependencies") boolean dependencyResolverNpmResolveDependencies,
-             @JsonProperty("dependencyResolverNpmIncludeDevDependencies") boolean dependencyResolverNpmIncludeDevDependencies,
-             @JsonProperty("dependencyResolverNpmIgnoreJavaScriptFiles") boolean dependencyResolverNpmIgnoreJavaScriptFiles,
-             @JsonProperty("dependencyResolverNpmTimeoutDependenciesCollector") long dependencyResolverNpmTimeoutDependenciesCollector,
-             @JsonProperty("dependencyResolverBowerResolveDependencies") boolean dependencyResolverBowerResolveDependencies,
-             @JsonProperty("dependencyResolverBowerRunPreStep") boolean dependencyResolverBowerRunPreStep,
-             @JsonProperty("dependencyResolverNugetResolveDependencies") boolean dependencyResolverNugetResolveDependencies,
-             @JsonProperty("dependencyResolverMavenResolveDependencies") boolean dependencyResolverMavenResolveDependencies,
-             @JsonProperty("dependencyResolverMavenIgnoredScopes") String[] dependencyResolverMavenIgnoredScopes,
-             @JsonProperty("dependencyResolverMavenAggregateModules") boolean dependencyResolverMavenAggregateModules ,
-             @JsonProperty("dependencyResolverDependenciesOnly") boolean dependencyResolverDependenciesOnly ,
-             @JsonProperty("dependencyResolverWhitesourceConfiguration") String dependencyResolverWhitesourceConfiguration
+             @JsonProperty(NPM_RUN_PRE_STEP) boolean npmRunPreStep,
+             @JsonProperty(NPM_RESOLVE_DEPENDENCIES) boolean npmResolveDependencies,
+             @JsonProperty(NPM_INCLUDE_DEV_DEPENDENCIES) boolean npmIncludeDevDependencies,
+             @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES) boolean npmIgnoreJavaScriptFiles,
+             @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS) long npmTimeoutDependenciesCollector,
+
+             @JsonProperty(BOWER_RESOLVE_DEPENDENCIES) boolean bowerResolveDependencies,
+             @JsonProperty(BOWER_RUN_PRE_STEP) boolean bowerRunPreStep,
+
+             @JsonProperty(NUGET_RESOLVE_DEPENDENCIES) boolean nugetResolveDependencies,
+
+             @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES) boolean mavenResolveDependencies,
+             @JsonProperty(MAVEN_IGNORED_SCOPES) String[] mavenIgnoredScopes,
+             @JsonProperty(MAVEN_AGGREGATE_MODULES) boolean mavenAggregateModules,
+
+             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
+             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration
     ) {
-        this.dependencyResolverNpmRunPreStep = dependencyResolverNpmRunPreStep;
-        this.dependencyResolverNpmResolveDependencies = dependencyResolverNpmResolveDependencies;
-        this.dependencyResolverNpmIncludeDevDependencies = dependencyResolverNpmIncludeDevDependencies;
-        this.dependencyResolverNpmIgnoreJavaScriptFiles = dependencyResolverNpmIgnoreJavaScriptFiles;
-        this.dependencyResolverNpmTimeoutDependenciesCollector = dependencyResolverNpmTimeoutDependenciesCollector;
-        this.dependencyResolverBowerResolveDependencies = dependencyResolverBowerResolveDependencies;
-        this.dependencyResolverBowerRunPreStep = dependencyResolverBowerRunPreStep;
-        this.dependencyResolverNugetResolveDependencies = dependencyResolverNugetResolveDependencies;
-        this.dependencyResolverMavenResolveDependencies = dependencyResolverMavenResolveDependencies;
-        this.dependencyResolverMavenIgnoredScopes = dependencyResolverMavenIgnoredScopes;
-        this.dependencyResolverMavenAggregateModules = dependencyResolverMavenAggregateModules;
-        this.dependencyResolverDependenciesOnly = dependencyResolverDependenciesOnly;
-        this.dependencyResolverWhitesourceConfiguration = dependencyResolverWhitesourceConfiguration;
+        this.npmRunPreStep = npmRunPreStep;
+        this.npmResolveDependencies = npmResolveDependencies;
+        this.npmIncludeDevDependencies = npmIncludeDevDependencies;
+        this.npmIgnoreJavaScriptFiles = npmIgnoreJavaScriptFiles;
+        this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
+
+        this.bowerResolveDependencies = bowerResolveDependencies;
+        this.bowerRunPreStep = bowerRunPreStep;
+
+        this.nugetResolveDependencies = nugetResolveDependencies;
+
+        this.mavenResolveDependencies = mavenResolveDependencies;
+        this.mavenIgnoredScopes = mavenIgnoredScopes;
+        this.mavenAggregateModules = mavenAggregateModules;
+
+        this.dependenciesOnly = dependenciesOnly;
+        this.whitesourceConfiguration = whitesourceConfiguration;
     }
 
     public ResolverConfiguration(Properties config) {
-        dependencyResolverNpmRunPreStep = FSAConfiguration.getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
-        dependencyResolverNpmResolveDependencies = FSAConfiguration.getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
-        dependencyResolverNpmIncludeDevDependencies = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
-        dependencyResolverNpmIgnoreJavaScriptFiles = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
-        dependencyResolverNpmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
-        dependencyResolverBowerResolveDependencies = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
-        dependencyResolverBowerRunPreStep = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
-        dependencyResolverNugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
-        dependencyResolverMavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
-        dependencyResolverMavenIgnoredScopes = FSAConfiguration.getListProperty(config, MAVEN_IGNORED_SCOPES, null);
-        dependencyResolverMavenAggregateModules = FSAConfiguration.getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
-        dependencyResolverDependenciesOnly = FSAConfiguration.getBooleanProperty(config, DEPENDENCIES_ONLY, false);
-        dependencyResolverWhitesourceConfiguration = config.getProperty(PROJECT_CONFIGURATION_PATH);
+        npmRunPreStep = FSAConfiguration.getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
+        npmResolveDependencies = FSAConfiguration.getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
+        npmIncludeDevDependencies = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
+        npmIgnoreJavaScriptFiles = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
+        npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
+        bowerResolveDependencies = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
+        bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
+        nugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
+        mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
+        mavenIgnoredScopes = FSAConfiguration.getListProperty(config, MAVEN_IGNORED_SCOPES, null);
+        mavenAggregateModules = FSAConfiguration.getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
+        dependenciesOnly = FSAConfiguration.getBooleanProperty(config, DEPENDENCIES_ONLY, false);
+        whitesourceConfiguration = config.getProperty(PROJECT_CONFIGURATION_PATH);
     }
 
     /* --- Members --- */
 
-    private boolean dependencyResolverNpmRunPreStep;
-    private boolean dependencyResolverNpmResolveDependencies;
-    private boolean dependencyResolverNpmIncludeDevDependencies;
-    private boolean dependencyResolverNpmIgnoreJavaScriptFiles;
-    private long dependencyResolverNpmTimeoutDependenciesCollector;
-    private boolean dependencyResolverBowerResolveDependencies;
-    private boolean dependencyResolverBowerRunPreStep;
-    private boolean dependencyResolverNugetResolveDependencies;
-    private boolean dependencyResolverMavenResolveDependencies;
-    private String[] dependencyResolverMavenIgnoredScopes;
-    private boolean dependencyResolverMavenAggregateModules;
-    private boolean dependencyResolverDependenciesOnly;
-    private String dependencyResolverWhitesourceConfiguration;
+    private boolean npmRunPreStep;
+    private boolean npmResolveDependencies;
+    private boolean npmIncludeDevDependencies;
+    private boolean npmIgnoreJavaScriptFiles;
+    private long npmTimeoutDependenciesCollector;
+    private boolean bowerResolveDependencies;
+    private boolean bowerRunPreStep;
+    private boolean nugetResolveDependencies;
+    private boolean mavenResolveDependencies;
+    private String[] mavenIgnoredScopes;
+    private boolean mavenAggregateModules;
+    private boolean dependenciesOnly;
+    private String whitesourceConfiguration;
 
     /* --- Public getters --- */
 
-    public boolean isDependencyResolverNpmRunPreStep() {
-        return dependencyResolverNpmRunPreStep;
+    @JsonProperty(NPM_RUN_PRE_STEP)
+    public boolean isNpmRunPreStep() {
+        return npmRunPreStep;
     }
 
-    public boolean isDependencyResolverNpmResolveDependencies() {
-        return dependencyResolverNpmResolveDependencies;
+    @JsonProperty(NPM_RESOLVE_DEPENDENCIES)
+    public boolean isNpmResolveDependencies() {
+        return npmResolveDependencies;
     }
 
-    public boolean isDependencyResolverNpmIncludeDevDependencies() {
-        return dependencyResolverNpmIncludeDevDependencies;
+    @JsonProperty(NPM_INCLUDE_DEV_DEPENDENCIES)
+    public boolean isNpmIncludeDevDependencies() {
+        return npmIncludeDevDependencies;
     }
 
-    public boolean isDependencyResolverNpmIgnoreJavaScriptFiles() {
-        return dependencyResolverNpmIgnoreJavaScriptFiles;
+    @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES)
+    public boolean isNpmIgnoreJavaScriptFiles() {
+        return npmIgnoreJavaScriptFiles;
     }
 
-    public long getDependencyResolverNpmTimeoutDependenciesCollector() {
-        return dependencyResolverNpmTimeoutDependenciesCollector;
+    @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS)
+    public long getNpmTimeoutDependenciesCollector() {
+        return npmTimeoutDependenciesCollector;
     }
 
-    public boolean isDependencyResolverBowerResolveDependencies() {
-        return dependencyResolverBowerResolveDependencies;
+    @JsonProperty(BOWER_RESOLVE_DEPENDENCIES)
+    public boolean isBowerResolveDependencies() {
+        return bowerResolveDependencies;
     }
 
-    public boolean isDependencyResolverBowerRunPreStep() {
-        return dependencyResolverBowerRunPreStep;
+    @JsonProperty(BOWER_RUN_PRE_STEP)
+    public boolean isBowerRunPreStep() {
+        return bowerRunPreStep;
     }
 
-    public boolean isDependencyResolverNugetResolveDependencies() {
-        return dependencyResolverNugetResolveDependencies;
+    @JsonProperty(NUGET_RESOLVE_DEPENDENCIES)
+    public boolean isNugetResolveDependencies() {
+        return nugetResolveDependencies;
     }
 
-    public boolean isDependencyResolverMavenResolveDependencies() {
-        return dependencyResolverMavenResolveDependencies;
+    @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES)
+    public boolean isMavenResolveDependencies() {
+        return mavenResolveDependencies;
     }
 
-    public String[] getDependencyResolverMavenIgnoredScopes() {
-        return dependencyResolverMavenIgnoredScopes;
+    @JsonProperty(MAVEN_IGNORED_SCOPES)
+    public String[] getMavenIgnoredScopes() {
+        return mavenIgnoredScopes;
     }
 
-    public boolean isDependencyResolverMavenAggregateModules() {
-        return dependencyResolverMavenAggregateModules;
+    @JsonProperty(MAVEN_AGGREGATE_MODULES)
+    public boolean isMavenAggregateModules() {
+        return mavenAggregateModules;
     }
 
-    public boolean isDependencyResolverDependenciesOnly() {
-        return dependencyResolverDependenciesOnly;
+    @JsonProperty(DEPENDENCIES_ONLY)
+    public boolean isDependenciesOnly() {
+        return dependenciesOnly;
     }
 
-    public String getDependencyResolverWhitesourceConfiguration() {
-        return dependencyResolverWhitesourceConfiguration;
+    @JsonProperty(WHITESOURCE_CONFIGURATION)
+    public String getWhitesourceConfiguration() {
+        return whitesourceConfiguration;
     }
 }

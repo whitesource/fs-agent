@@ -57,7 +57,7 @@ public class ScmRepositoriesParser {
                 String branch = obj.getString(BRANCH);
                 String tag = obj.getString(TAG);
 
-                configurationList.add(new ScmConfiguration(scmType, scmUser, scmPassword, scmPpk, url, branch, tag));
+                configurationList.add(new ScmConfiguration(scmType, scmUser, scmPassword, scmPpk, url, branch, tag, null, false ,1));
             });
 
             return configurationList;

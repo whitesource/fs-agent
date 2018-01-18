@@ -136,20 +136,20 @@ public class ProjectsSender {
     }
 
     private WhitesourceService createService() {
-        String serviceUrl = senderConfiguration.getSenderServiceUrl();
+        String serviceUrl = senderConfiguration.getServiceUrl();
         logger.info("Service URL is " + serviceUrl);
         boolean setProxy = false;
-        final String proxyHost = senderConfiguration.getSenderProxyHost();
+        final String proxyHost = senderConfiguration.getProxyHost();
         if (StringUtils.isNotBlank(proxyHost) || !offlineConfiguration.isEnabled()) {
             setProxy = true;
         }
-        int connectionTimeoutMinutes = senderConfiguration.getSenderConnectionTimeOut();
+        int connectionTimeoutMinutes = senderConfiguration.getConnectionTimeOut();
         final WhitesourceService service = new WhitesourceService(getAgentType(), getAgentVersion(), getPluginVersion(),
                 serviceUrl, setProxy, connectionTimeoutMinutes);
         if (StringUtils.isNotBlank(proxyHost)) {
-            final int proxyPort = senderConfiguration.getSenderProxyPort();
-            final String proxyUser = senderConfiguration.getSenderProxyUser();
-            final String proxyPass = senderConfiguration.getSenderProxyPassword();
+            final int proxyPort = senderConfiguration.getProxyPort();
+            final String proxyUser = senderConfiguration.getProxyUser();
+            final String proxyPass = senderConfiguration.getProxyPassword();
             service.getClient().setProxy(proxyHost, proxyPort, proxyUser, proxyPass);
         }
         return service;
