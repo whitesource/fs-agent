@@ -57,22 +57,22 @@ public class ComponentScan {
                     Boolean.valueOf(config.getProperty(ConfigPropertyKeys.CASE_SENSITIVE_GLOB_PROPERTY_KEY)) : false;
             boolean followSymlinks = config.getProperty(ConfigPropertyKeys.CASE_SENSITIVE_GLOB_PROPERTY_KEY) != null ?
                     Boolean.valueOf(config.getProperty(ConfigPropertyKeys.CASE_SENSITIVE_GLOB_PROPERTY_KEY)) : false;
-            Collection<String> excludedCopyrights = new ArrayList<>(Arrays.asList(fsaConfiguration.getExcludedCopyrightsValue().split(",")));
+            Collection<String> excludedCopyrights = fsaConfiguration.getAgent().getExcludedCopyrights();
             excludedCopyrights.remove("");
             //todo hasScmConnectors[0] in future - no need for cx
             // Resolving dependencies
             logger.info("Resolving dependencies");
-            Collection<AgentProjectInfo> projects = new FileSystemScanner(true, new DependencyResolutionService(resolverConfiguration)).createProjects(
-                    scannerBaseDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getArchiveExtractionDepth(),
-                    fsaConfiguration.getArchiveIncludes(), fsaConfiguration.getArchiveExcludes(), fsaConfiguration.isArchiveFastUnpack(), followSymlinks, excludedCopyrights,
-                    fsaConfiguration.isPartialSha1Match(), fsaConfiguration.isCalculateHints(), fsaConfiguration.isCalculateMd5());
+            Collection<AgentProjectInfo> projects = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent()).createProjects(
+                    scannerBaseDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getAgent().getArchiveExtractionDepth(),
+                    fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(), followSymlinks, excludedCopyrights,
+                    fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(), fsaConfiguration.getAgent().isCalculateMd5());
             logger.info("Finished dependency resolution");
             for (AgentProjectInfo project : projects) {
 //                project.setCoordinates(new Coordinates());
                 project.setProjectToken(EMPTY_PROJECT_TOKEN);
             }
 //             Return dependencies
-            String jsonString = new ConfigurationSerializer<>().getAsString((Collection<AgentProjectInfo>)projects);
+            String jsonString = ConfigurationSerializer.getAsString(projects, true);
             return jsonString;
         } else
             return "";// new ConfigurationSerializer<>().getAsString(new Collection<AgentProjectInfo>);
