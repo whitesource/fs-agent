@@ -56,7 +56,6 @@ public class FileSystemAgent {
     private static final String NPM_INSTALL_COMMAND = "install";
     private static final String PACKAGE_LOCK = "package-lock.json";
     private static final String PACKAGE_JSON = "package.json";
-    public static final String SCAN_PACKAGE_MANAGER = "scanPackageManager";
 
     /* --- Members --- */
 
