@@ -29,12 +29,19 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.Main;
 import org.whitesource.fs.ProjectsDetails;
+import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.EndPointConfiguration;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Properties;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
+/**
+ * Blocking Verticle that does the work on top of the FSA
+ */
 public class FsaVerticle extends AbstractVerticle {
 
     private static final Logger logger = LoggerFactory.getLogger(FsaVerticle.class);
@@ -54,7 +61,7 @@ public class FsaVerticle extends AbstractVerticle {
         // expose a POST method endpoint on the URI: /analyze
         router.post(API_ANALYZE).blockingHandler(this::analyze);
 
-        // expose a POST method endpoint on the URI: /analyze
+        // expose a POST method endpoint on the URI: /send
         router.post(API_SEND).blockingHandler(this::send);
 
         router.get(HOME).handler(this::welcome);
@@ -68,8 +75,9 @@ public class FsaVerticle extends AbstractVerticle {
 
         // Create Http server and pass the 'accept' method to the request handler
         //vertx.createHttpServer().requestHandler(router::accept).requestHandler(router::accept).
-        vertx.createHttpServer(new HttpServerOptions().setSsl(localFsaConfiguration.getEndpoint().isSsl()).setKeyStoreOptions(
-                new JksOptions().setPath(localFsaConfiguration.getEndpoint().getCertificate()).setPassword(localFsaConfiguration.getEndpoint().getPass())
+        vertx.createHttpServer(new HttpServerOptions().setSsl(localFsaConfiguration.getEndpoint().isSsl()).setKeyStoreOptions(new JksOptions()
+                .setPath(localFsaConfiguration.getEndpoint().getCertificate())
+                .setPassword(localFsaConfiguration.getEndpoint().getPass())
         )).requestHandler(router::accept).
                 listen(config().getInteger(ENDPOINT_PORT, EndPointConfiguration.DEFAULT_PORT),
                         result -> {
@@ -87,23 +95,17 @@ public class FsaVerticle extends AbstractVerticle {
     private void send(RoutingContext context) {
         ProjectsDetails resultProjects = getProjects(context, true);
         ResultDto resultDto = new ResultDto(resultProjects.getDetails(), resultProjects.getStatusCode());
-        String result = null;
-        try {
-            result = new ObjectMapper().writeValueAsString(resultDto);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-        context.response().end(result);
-    }
-
-    private void welcome(RoutingContext context) {
-        context.response().end(WELCOME_MESSAGE);
+        handleResponse(context, resultDto);
     }
 
     public void analyze(RoutingContext context) {
-        ProjectsDetails resultProjects = getProjects(context, false);
-        ResultDto resultDto = new ResultDto(resultProjects, resultProjects.getStatusCode());
-        String result = "error";
+        ProjectsDetails result = getProjects(context, false);
+        ResultDto resultDto = new ResultDto(new ProjectsDetails(result.getProjects(),result.getStatusCode(),result.getDetails()), result.getStatusCode());
+        handleResponse(context, resultDto);
+    }
+
+    private void handleResponse(RoutingContext context, ResultDto resultDto) {
+        String result = null;
         try {
             result = new ObjectMapper().writeValueAsString(resultDto);
         } catch (JsonProcessingException e) {
@@ -113,22 +115,31 @@ public class FsaVerticle extends AbstractVerticle {
         context.response().end(result);
     }
 
+    private void welcome(RoutingContext context) {
+        context.response().end(WELCOME_MESSAGE);
+    }
+
     private ProjectsDetails getProjects(RoutingContext context, boolean shouldSend) {
         final FSAConfiguration webFsaConfiguration = ConfigurationSerializer.getFromString(context.getBodyAsString(), FSAConfiguration.class, false);
 
         if (webFsaConfiguration != null) {
-            Properties properties = ConfigurationSerializer.getAsProperties(webFsaConfiguration, FSAConfiguration.class);
-            Properties propertiesLocal = ConfigurationSerializer.getAsProperties(localFsaConfiguration, FSAConfiguration.class);
-
-            Properties merged = new Properties();
-            merged.putAll(propertiesLocal);
-            merged.putAll(properties);
-
-            FSAConfiguration mergedFsaConfiguration = new FSAConfiguration(merged);
+            HashMap<String, Object> result = ConfigurationSerializer.getFromString(context.getBodyAsString(), HashMap.class, false);
+            FSAConfiguration mergedFsaConfiguration = mergeConfigurations(localFsaConfiguration, result);
 
             Main main = new Main();
             return main.scanAndSend(mergedFsaConfiguration, shouldSend);
         }
-        return null;
+        return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, "Error parsing the request");
+    }
+
+    private FSAConfiguration mergeConfigurations(FSAConfiguration baseFsaConfiguration, HashMap<String, Object> parameterMap) {
+        Properties properties = ConfigurationSerializer.getAsProperties(parameterMap);
+        Properties propertiesLocal = ConfigurationSerializer.getAsProperties(baseFsaConfiguration);
+
+        Properties merged = new Properties();
+        merged.putAll(propertiesLocal);
+        merged.putAll(properties);
+
+        return new FSAConfiguration(merged);
     }
 }

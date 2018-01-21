@@ -38,6 +38,7 @@ public class Main {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    public static final long MAX_TIMEOUT = 61L;//120000
 
     /* --- Main --- */
 
@@ -60,6 +61,7 @@ public class Main {
             try {
                 if (fsaConfiguration.getErrors() == null || fsaConfiguration.getErrors().size() > 0) {
                     processExitCode = StatusCode.ERROR;
+                    fsaConfiguration.getErrors().forEach(error -> logger.error(error));
                     logger.warn("Exiting");
                 } else {
                     processExitCode = new Main().scanAndSend(fsaConfiguration, true).getStatusCode();
@@ -72,16 +74,23 @@ public class Main {
             System.exit(processExitCode.getValue());
         } else {
             vertx = Vertx.vertx();
+            // work-arround for not printing timeout errors
+            // https://github.com/eclipse/vert.x/pull/2235
+            vertx.createSharedWorkerExecutor("share2", 10, MAX_TIMEOUT);
+
             JsonObject config = new JsonObject();
             config.put(FsaVerticle.CONFIGURATION, ConfigurationSerializer.getAsString(fsaConfiguration, false));
-            DeploymentOptions options = new DeploymentOptions().setConfig(config);
+            DeploymentOptions options = new DeploymentOptions()
+                    .setConfig(config)
+                    .setWorker(true)
+                    .setMaxWorkerExecuteTime(MAX_TIMEOUT);
             vertx.deployVerticle(FsaVerticle.class.getName(), options);
         }
     }
 
     public ProjectsDetails scanAndSend(FSAConfiguration fsaConfiguration, boolean shouldSend) {
-        if (fsaConfiguration.getErrors()!= null && fsaConfiguration.getErrors().size() > 0) {
-            return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, String.join(System.lineSeparator(),fsaConfiguration.getErrors()));
+        if (fsaConfiguration.getErrors() != null && fsaConfiguration.getErrors().size() > 0) {
+            return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, String.join(System.lineSeparator(), fsaConfiguration.getErrors()));
         }
 
         ProjectsDetails result = projectsCalculator.getAllProjects(fsaConfiguration);
@@ -90,7 +99,7 @@ public class Main {
         }
 
         if (shouldSend) {
-            ProjectsSender projectsSender = new ProjectsSender(fsaConfiguration.getSender(),fsaConfiguration.getOffline());
+            ProjectsSender projectsSender = new ProjectsSender(fsaConfiguration.getSender(), fsaConfiguration.getOffline());
             Pair<String, StatusCode> processExitCode = sendProjects(projectsSender, result.getProjects(), fsaConfiguration);
             logger.debug("Process finished with exit code {} ({})", processExitCode.getKey(), processExitCode.getValue());
             return new ProjectsDetails(new ArrayList<>(), processExitCode.getValue(), processExitCode.getKey());
@@ -99,7 +108,7 @@ public class Main {
         }
     }
 
-    private Pair<String,StatusCode> sendProjects(ProjectsSender projectsSender, Collection<AgentProjectInfo> projects, FSAConfiguration fsaConfiguration) {
+    private Pair<String, StatusCode> sendProjects(ProjectsSender projectsSender, Collection<AgentProjectInfo> projects, FSAConfiguration fsaConfiguration) {
         Iterator<AgentProjectInfo> iterator = projects.iterator();
         while (iterator.hasNext()) {
             AgentProjectInfo project = iterator.next();
@@ -120,7 +129,7 @@ public class Main {
 
         if (projects.isEmpty()) {
             logger.info("Exiting, nothing to update");
-            return  new Pair<>("Exiting, nothing to update",StatusCode.SUCCESS);
+            return new Pair<>("Exiting, nothing to update", StatusCode.SUCCESS);
         } else {
             String productVersion = null;
             String productNameOrToken = fsaConfiguration.getRequest().getProductToken();
@@ -128,8 +137,7 @@ public class Main {
                 productNameOrToken = fsaConfiguration.getRequest().getProductName();
                 productVersion = fsaConfiguration.getRequest().getProductVersion();
             }
-            return projectsSender.sendRequest(projects, fsaConfiguration.getRequest().getApiToken(),fsaConfiguration.getRequest().getRequesterEmail(),
-                    productNameOrToken, productVersion, fsaConfiguration.getWhiteSourceFolderPath());
+            return projectsSender.sendRequest(projects, fsaConfiguration.getRequest().getApiToken(),fsaConfiguration.getRequest().getRequesterEmail(),productNameOrToken, productVersion, fsaConfiguration.getWhiteSourceFolderPath());
         }
     }
 }

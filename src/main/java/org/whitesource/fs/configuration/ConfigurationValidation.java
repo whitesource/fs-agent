@@ -18,11 +18,7 @@ package org.whitesource.fs.configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.FSAConfiguration;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -38,32 +34,11 @@ public class ConfigurationValidation {
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationValidation.class);
     private static final int MAX_EXTRACTION_DEPTH = 7;
 
-    public Pair<Properties, List<String>> readWithError(String configFilePath, String projectName) {
-        Properties configProps = new Properties();
-        List<String> errors = new ArrayList<>();
-        try {
-            try (FileInputStream inputStream = new FileInputStream(configFilePath)) {
-                try {
-                    configProps.load(inputStream);
-                } catch (FileNotFoundException e) {
-                    logger.error("Failed to open " + configFilePath + " for reading", e);
-                } catch (IOException e) {
-                    logger.error("Error occurred when reading from " + configFilePath, e);
-                }
-                errors.addAll(getConfigurationErrors(configProps, configFilePath, projectName));
-                errors.forEach(error -> logger.error(error));
-            }
-        } catch (IOException e) {
-            logger.error("Error occurred when reading from " + configFilePath, e);
-        }
-        return new Pair<>(configProps, errors);
-    }
-
     public List<String> getConfigurationErrors(Properties configProps, String configFilePath, String project) {
         List<String> errors = new ArrayList<>();
 
         if (StringUtils.isBlank(configProps.getProperty(ORG_TOKEN_PROPERTY_KEY))) {
-            String error = "Could not retrieve " + ORG_TOKEN_PROPERTY_KEY + "property from " + configFilePath;
+            String error = "Could not retrieve " + ORG_TOKEN_PROPERTY_KEY + " property from " + configFilePath;
             errors.add(error);
         }
 

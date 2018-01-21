@@ -30,7 +30,7 @@ public class FSAConfigurationTest {
         }
 
         FSAConfiguration fsaConfiguration = new FSAConfiguration(properties);
-        Properties propertiesAfterConfig = ConfigurationSerializer.getAsProperties(fsaConfiguration,FSAConfiguration.class);
+        Properties propertiesAfterConfig = ConfigurationSerializer.getAsProperties(fsaConfiguration);
 
         checkSubsetProperties(properties, propertiesAfterConfig);
 
@@ -38,7 +38,7 @@ public class FSAConfigurationTest {
         configurationSerializer.save(fsaConfiguration,tempCofig,false);
 
         FSAConfiguration fsaConfigurationResult = configurationSerializer.load(tempCofig);
-        Properties sameProperties = ConfigurationSerializer.getAsProperties(fsaConfigurationResult,FSAConfiguration.class);
+        Properties sameProperties = ConfigurationSerializer.getAsProperties(fsaConfigurationResult);
 
         checkSubsetProperties(propertiesAfterConfig, sameProperties);
 
