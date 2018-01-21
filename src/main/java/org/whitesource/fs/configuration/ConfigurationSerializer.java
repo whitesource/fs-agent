@@ -35,6 +35,7 @@ public class ConfigurationSerializer <T> {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationSerializer.class);
+    public static final String DELIMITER_SPACE = " ";
 
     /* --- Members --- */
 
@@ -98,15 +99,16 @@ public class ConfigurationSerializer <T> {
     }
 
     private static void fillProperties(Map<String, Object> map, Properties properties) {
+        // notice that this is only
         map.entrySet().forEach(entry -> {
             if (entry.getValue() != null)
                 if (entry.getValue() instanceof Map) {
                     fillProperties((Map<String, Object>) entry.getValue(), properties);
                 } else {
                     if (entry.getValue() instanceof ArrayList) {
-                        properties.put(entry.getKey(), String.join(" ", (ArrayList) entry.getValue()));
+                        properties.put(entry.getKey(), String.join(DELIMITER_SPACE, (ArrayList) entry.getValue()));
                     } else {
-                        properties.put(entry.getKey(), entry.getValue());
+                        properties.put(entry.getKey(), entry.getValue().toString());
                     }
                 }
         });

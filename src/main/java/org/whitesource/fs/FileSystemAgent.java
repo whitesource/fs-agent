@@ -37,8 +37,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.whitesource.agent.ConfigPropertyKeys.*;
-
 /**
  * File System Agent.
  *
@@ -56,7 +54,6 @@ public class FileSystemAgent {
     private static final String NPM_INSTALL_COMMAND = "install";
     private static final String PACKAGE_LOCK = "package-lock.json";
     private static final String PACKAGE_JSON = "package.json";
-    public static final String SCAN_PACKAGE_MANAGER = "scanPackageManager";
 
     /* --- Members --- */
 

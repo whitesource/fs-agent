@@ -28,7 +28,7 @@ import java.util.Properties;
 @RunWith(VertxUnitRunner.class)
 public class FsaVerticleTest {
 
-    public static final String GIT_SAMPLE = "https://github.com/eugenhoro/maven-dependency-tree-parser";
+    public static final String GIT_SAMPLE = "https://github.com/adutra/maven-dependency-tree-parser.git";
     private Vertx vertx;
 
     @Before
@@ -76,8 +76,8 @@ public class FsaVerticleTest {
 
         Properties properties = new Properties();
         properties.setProperty(ConfigPropertyKeys.SCM_TYPE_PROPERTY_KEY, "git");
-        properties.setProperty(ConfigPropertyKeys.SCM_USER_PROPERTY_KEY, "euhoro");
-        properties.setProperty(ConfigPropertyKeys.SCM_PASS_PROPERTY_KEY, "pass");
+        properties.setProperty(ConfigPropertyKeys.SCM_USER_PROPERTY_KEY, "");
+        properties.setProperty(ConfigPropertyKeys.SCM_PASS_PROPERTY_KEY, "");
         properties.setProperty(ConfigPropertyKeys.SCM_URL_PROPERTY_KEY, GIT_SAMPLE);
 
         // just to validate

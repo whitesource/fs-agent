@@ -65,21 +65,22 @@ public class ProjectsSender {
 
     /* --- Constructors --- */
 
-    public ProjectsSender(SenderConfiguration senderConfiguration , OfflineConfiguration offlineConfiguration) {
+    public ProjectsSender(SenderConfiguration senderConfiguration, OfflineConfiguration offlineConfiguration) {
         this.senderConfiguration = senderConfiguration;
-        this.offlineConfiguration =offlineConfiguration;
+        this.offlineConfiguration = offlineConfiguration;
         this.artifactProperties = getArtifactProperties();
     }
 
     /* --- Public methods --- */
 
-    public Pair<String, StatusCode> sendRequest(Collection<AgentProjectInfo> projects,String orgToken,String requesterEmail,String productNameOrToken, String productVersion) {
+    public Pair<String, StatusCode> sendRequest(Collection<AgentProjectInfo> projects, String orgToken, String requesterEmail,
+                                                String productNameOrToken, String productVersion, String whiteSourceFolderPath) {
         // send request
         logger.info("Initializing WhiteSource Client");
         WhitesourceService service = createService();
         String resultInfo = "";
         if (offlineConfiguration.isEnabled()) {
-            resultInfo = offlineUpdate(service, orgToken, requesterEmail, productNameOrToken, productVersion, projects);
+            resultInfo = offlineUpdate(service, orgToken, requesterEmail, productNameOrToken, productVersion, projects, whiteSourceFolderPath);
             return new Pair<>(resultInfo, this.prepStepStatusCode);
         } else {
             // update type
@@ -96,14 +97,14 @@ public class ProjectsSender {
             StatusCode statusCode = StatusCode.SUCCESS;
             try {
                 if (senderConfiguration.isCheckPolicies()) {
-                    boolean policyCompliance = checkPolicies(service, orgToken, productNameOrToken, productVersion, projects);
+                    boolean policyCompliance = checkPolicies(service, orgToken, productNameOrToken, productVersion, projects, whiteSourceFolderPath);
                     statusCode = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
                 }
                 if (statusCode == StatusCode.SUCCESS) {
                     resultInfo = update(service, orgToken, updateType, requesterEmail, productNameOrToken, productVersion, projects);
                     logger.info(resultInfo);
                     //strip line separators
-                    resultInfo = resultInfo.replace(System.lineSeparator(),"");
+                    resultInfo = resultInfo.replace(System.lineSeparator(), "");
                 }
             } catch (WssServiceException e) {
                 if (e.getCause() != null &&
@@ -156,7 +157,7 @@ public class ProjectsSender {
     }
 
     private boolean checkPolicies(WhitesourceService service, String orgToken, String product, String productVersion,
-                                  Collection<AgentProjectInfo> projects) throws WssServiceException {
+                                  Collection<AgentProjectInfo> projects, String whiteSourceFolderPath) throws WssServiceException {
         boolean policyCompliance = true;
         boolean forceCheckAllDependencies = senderConfiguration.isForceCheckAllDependencies();
         logger.info("Checking policies");
@@ -178,7 +179,8 @@ public class ProjectsSender {
         try {
             // generate report
             PolicyCheckReport report = new PolicyCheckReport(checkPoliciesResult);
-            File outputDir = new File(".");
+
+            File outputDir = new File(whiteSourceFolderPath);
             report.generate(outputDir, false);
             report.generateJson(outputDir);
             logger.info("Policies report generated successfully");
@@ -190,14 +192,14 @@ public class ProjectsSender {
     }
 
     private String update(WhitesourceService service, String orgToken, UpdateType updateType, String requesterEmail, String product, String productVersion,
-                        Collection<AgentProjectInfo> projects) throws WssServiceException {
+                          Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
         UpdateInventoryResult updateResult = service.update(orgToken, requesterEmail, updateType, product, productVersion, projects);
         return logResult(updateResult);
     }
 
     private String offlineUpdate(WhitesourceService service, String orgToken, String requesterEmail, String product, String productVersion,
-                               Collection<AgentProjectInfo> projects) {
+                                 Collection<AgentProjectInfo> projects, String whiteSourceFolderPath) {
         String resultInfo = "";
         logger.info("Generating offline update request");
 
@@ -214,28 +216,29 @@ public class ProjectsSender {
             UpdateType updateTypeFinal;
 
             // if the update type was forced by command or config -> set it
-            if (StringUtils.isNotBlank(senderConfiguration.getUpdateTypeValue())){
-                String updateTypeValue = senderConfiguration.getUpdateTypeValue() ;
+            if (StringUtils.isNotBlank(senderConfiguration.getUpdateTypeValue())) {
+                String updateTypeValue = senderConfiguration.getUpdateTypeValue();
                 try {
                     updateTypeFinal = UpdateType.valueOf(updateTypeValue);
                 } catch (Exception e) {
                     logger.info("Invalid value {} for updateType, defaulting to {}", updateTypeValue, UpdateType.OVERRIDE);
                     updateTypeFinal = UpdateType.OVERRIDE;
                 }
-            }else {
+            } else {
                 // Otherwise use the parameter in the file
                 updateTypeFinal = updateRequest.getUpdateType();
             }
 
             logger.info("UpdateType offline set to {} ", updateTypeFinal);
             updateRequest.setUpdateType(updateTypeFinal);
-            File outputDir = new File(".");
+
+            File outputDir = new File(whiteSourceFolderPath);
             File file = offlineUpdateRequest.generate(outputDir, zip, prettyJson);
 
             resultInfo = "Offline request generated successfully at " + file.getPath();
             logger.info(resultInfo);
         } catch (IOException e) {
-            resultInfo ="Error generating offline update request: " + e.getMessage();
+            resultInfo = "Error generating offline update request: " + e.getMessage();
             logger.error(resultInfo);
         } finally {
             if (service != null) {
@@ -292,7 +295,7 @@ public class ProjectsSender {
 
     private String getResource(String propertyName) {
         String val = (artifactProperties.getProperty(propertyName));
-        if(StringUtils.isNotBlank(val)){
+        if (StringUtils.isNotBlank(val)) {
             return val;
         }
         return "";
