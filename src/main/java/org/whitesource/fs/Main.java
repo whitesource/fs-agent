@@ -128,7 +128,8 @@ public class Main {
                 productNameOrToken = fsaConfiguration.getRequest().getProductName();
                 productVersion = fsaConfiguration.getRequest().getProductVersion();
             }
-            return projectsSender.sendRequest(projects, fsaConfiguration.getRequest().getApiToken(),fsaConfiguration.getRequest().getRequesterEmail(),productNameOrToken, productVersion);
+            return projectsSender.sendRequest(projects, fsaConfiguration.getRequest().getApiToken(),fsaConfiguration.getRequest().getRequesterEmail(),
+                    productNameOrToken, productVersion, fsaConfiguration.getWhiteSourceFolderPath());
         }
     }
 }

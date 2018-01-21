@@ -89,6 +89,9 @@ public class CommandLineArgs {
     @Parameter(names = "-web", description = "Whether or not to create a web service on startup that receives requests from outside")
     String web = "false";
 
+    @Parameter(names = "-whiteSourceFolder", description = "WhiteSource folder path for offlineRequest/checkPolicies")
+    String whiteSourceFolder = null;
+
     /* --- Public methods --- */
 
     public String getConfigFilePath() {

@@ -41,7 +41,8 @@ public class FSAConfiguration {
     public static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
     private static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
-    private static final String SPACE =" ";
+    private static final String SPACE = " ";
+    public static final String WHITE_SOURCE_DEFAULT_FOLDER_PATH = ".";
 
     /* --- Private fields --- */
 
@@ -62,28 +63,28 @@ public class FSAConfiguration {
     private final String configFilePath;
     private final AgentConfiguration agent;
     private final RequestConfiguration request;
-
-    private final boolean scanProjectManager;
+    private final String whiteSourceFolderPath;
+    private final boolean scanPackageManager;
 
     private String logLevel;
 
     /* --- Constructors --- */
 
     public FSAConfiguration(Properties config) {
-        this(config,null);
+        this(config, null);
     }
 
     public FSAConfiguration() {
-        this(new Properties(),null);
+        this(new Properties(), null);
     }
 
     public FSAConfiguration(String[] args) {
-        this(null,args);
+        this(null, args);
     }
 
-    public FSAConfiguration(Properties config , String [] args) {
+    public FSAConfiguration(Properties config, String[] args) {
         configurationValidation = new ConfigurationValidation();
-
+        String wsFolder;
         String projectName;
         if ((args != null)) {
             // read command line args
@@ -108,15 +109,26 @@ public class FSAConfiguration {
             projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             fileListPath = commandLineArgs.fileListPath;
             dependencyDirs = commandLineArgs.dependencyDirs;
+            config.setProperty(WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
+
         } else {
             projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             configFilePath = NONE;
             offlineRequestFiles = new ArrayList<>();
             fileListPath = null;
             dependencyDirs = new ArrayList<>();
+
+
         }
 
-        scanProjectManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER,false);
+        wsFolder = config.getProperty(WHITESOURCE_FOLDER_PATH);
+        if (StringUtils.isBlank(wsFolder)) {
+            whiteSourceFolderPath = WHITE_SOURCE_DEFAULT_FOLDER_PATH;
+        } else {
+            whiteSourceFolderPath = wsFolder;
+        }
+
+        scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);
         errors = configurationValidation.getConfigurationErrors(config, configFilePath, projectName);
         logLevel = config.getProperty(LOG_LEVEL_KEY, INFO);
 
@@ -139,6 +151,10 @@ public class FSAConfiguration {
     }
 
     /* --- Public getters --- */
+
+    public String getWhiteSourceFolderPath() {
+        return whiteSourceFolderPath;
+    }
 
     public RequestConfiguration getRequest() {
         return request;
@@ -186,13 +202,14 @@ public class FSAConfiguration {
 
     @JsonProperty(SCAN_PACKAGE_MANAGER)
     public boolean isScanProjectManager() {
-        return scanProjectManager;
+        return scanPackageManager;
     }
 
     @JsonProperty(LOG_LEVEL_KEY)
     public String getLogLevel() {
         return logLevel;
     }
+
 
     /* --- Public static methods--- */
 
@@ -229,14 +246,14 @@ public class FSAConfiguration {
 
     public static String[] getListProperty(Properties config, String propertyName, String[] defaultValue) {
         String property = config.getProperty(propertyName);
-        if (property == null){
+        if (property == null) {
             return defaultValue;
         }
         return property.split(SPACE);
     }
 
     public static int getArchiveDepth(Properties configProps) {
-        return getIntProperty(configProps, ARCHIVE_EXTRACTION_DEPTH_KEY,  FSAConfiguration.DEFAULT_ARCHIVE_DEPTH);
+        return getIntProperty(configProps, ARCHIVE_EXTRACTION_DEPTH_KEY, FSAConfiguration.DEFAULT_ARCHIVE_DEPTH);
     }
 
     public static String[] getIncludes(Properties configProps) {
