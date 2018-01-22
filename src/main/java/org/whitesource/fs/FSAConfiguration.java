@@ -16,6 +16,7 @@
 package org.whitesource.fs;
 
 import com.beust.jcommander.JCommander;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
@@ -32,6 +33,7 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
 /**
  * Author: eugen.horovitz
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FSAConfiguration {
 
     /* --- Static members --- */
@@ -111,8 +113,9 @@ public class FSAConfiguration {
             projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             fileListPath = commandLineArgs.fileListPath;
             dependencyDirs = commandLineArgs.dependencyDirs;
-            config.setProperty(WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
-
+            if(commandLineArgs.whiteSourceFolder!=null) {
+                config.setProperty(WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
+            }
         } else {
             projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             configFilePath = NONE;

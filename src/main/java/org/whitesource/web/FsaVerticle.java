@@ -32,10 +32,7 @@ import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.EndPointConfiguration;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Properties;
+import java.util.*;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
@@ -51,6 +48,9 @@ public class FsaVerticle extends AbstractVerticle {
     public static final String WELCOME_MESSAGE = "<h1>File system agent is up and running </h1>";
     public static final String CONFIGURATION = "configuration";
     private FSAConfiguration localFsaConfiguration;
+    private Collection<String> invalidProperties = Arrays.asList(
+            SCM_REPOSITORIES_FILE,LOG_LEVEL_KEY,FOLLOW_SYMBOLIC_LINKS,SHOW_PROGRESS_BAR,PROJECT_CONFIGURATION_PATH,SCAN_PACKAGE_MANAGER,WHITESOURCE_FOLDER_PATH,
+            ENDPOINT_ENABLED,ENDPOINT_PORT,ENDPOINT_CERTIFICATE,ENDPOINT_PASS,ENDPOINT_SSL_ENABLED,OFFLINE_PROPERTY_KEY,OFFLINE_ZIP_PROPERTY_KEY,OFFLINE_PRETTY_JSON_KEY);
 
     @Override
     public void start(Future<Void> fut) {
@@ -93,9 +93,19 @@ public class FsaVerticle extends AbstractVerticle {
     }
 
     private void send(RoutingContext context) {
-        ProjectsDetails resultProjects = getProjects(context, true);
-        ResultDto resultDto = new ResultDto(resultProjects.getDetails(), resultProjects.getStatusCode());
-        handleResponse(context, resultDto);
+        vertx.executeBlocking(future -> {
+            ProjectsDetails resultProjects = getProjects(context, true);
+            future.complete(resultProjects);
+        }, false, res -> {
+            if (res.failed()) {
+                logger.error("error running blocking request:", res.cause().getMessage());
+            } else {
+                ProjectsDetails resultProjects = (ProjectsDetails)res.result();
+                ResultDto resultDto = new ResultDto(resultProjects.getDetails(), resultProjects.getStatusCode());
+                handleResponse(context, resultDto);
+            }
+        });
+
     }
 
     public void analyze(RoutingContext context) {
@@ -134,6 +144,14 @@ public class FsaVerticle extends AbstractVerticle {
 
     private FSAConfiguration mergeConfigurations(FSAConfiguration baseFsaConfiguration, HashMap<String, Object> parameterMap) {
         Properties properties = ConfigurationSerializer.getAsProperties(parameterMap);
+
+        invalidProperties.forEach(property->{
+            if (properties.containsKey(property)) {
+                logger.info("Property "+ property +" will be ignored");
+                properties.remove(property);
+            }
+        });
+
         Properties propertiesLocal = ConfigurationSerializer.getAsProperties(baseFsaConfiguration);
 
         Properties merged = new Properties();

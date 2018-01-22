@@ -18,6 +18,7 @@ package org.whitesource.fs;
 import com.beust.jcommander.JCommander;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -38,7 +39,7 @@ public class Main {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-    public static final long MAX_TIMEOUT = 61L;//120000
+    public static final long MAX_TIMEOUT = 1000*60*60;
 
     /* --- Main --- */
 
@@ -73,17 +74,15 @@ public class Main {
             }
             System.exit(processExitCode.getValue());
         } else {
-            vertx = Vertx.vertx();
-            // work-arround for not printing timeout errors
-            // https://github.com/eclipse/vert.x/pull/2235
-            vertx.createSharedWorkerExecutor("share2", 10, MAX_TIMEOUT);
+            //this is a work around
+            vertx = Vertx.vertx(new VertxOptions()
+                    .setBlockedThreadCheckInterval(MAX_TIMEOUT));
 
             JsonObject config = new JsonObject();
             config.put(FsaVerticle.CONFIGURATION, ConfigurationSerializer.getAsString(fsaConfiguration, false));
             DeploymentOptions options = new DeploymentOptions()
                     .setConfig(config)
-                    .setWorker(true)
-                    .setMaxWorkerExecuteTime(MAX_TIMEOUT);
+                    .setWorker(true);
             vertx.deployVerticle(FsaVerticle.class.getName(), options);
         }
     }
