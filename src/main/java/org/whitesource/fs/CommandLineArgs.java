@@ -90,7 +90,7 @@ public class CommandLineArgs {
     String web = "false";
 
     @Parameter(names = "-whiteSourceFolder", description = "WhiteSource folder path for offlineRequest/checkPolicies")
-    String whiteSourceFolder = null;
+    String whiteSourceFolder = "";
 
     /* --- Public methods --- */
 
