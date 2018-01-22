@@ -20,7 +20,6 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.ProjectsSender;
@@ -54,7 +53,7 @@ public class Main {
 
         StatusCode processExitCode;
 
-        // read configuration senderConfiguration
+        // read configuration senderConfig
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
         boolean isStandalone = commandLineArgs.web.equals("false");
 
@@ -98,8 +97,8 @@ public class Main {
         }
 
         if (shouldSend) {
-            ProjectsSender projectsSender = new ProjectsSender(fsaConfiguration.getSender(), fsaConfiguration.getOffline());
-            Pair<String, StatusCode> processExitCode = sendProjects(projectsSender, result.getProjects(), fsaConfiguration);
+            ProjectsSender projectsSender = new ProjectsSender(fsaConfiguration.getSender(), fsaConfiguration.getOffline() ,fsaConfiguration.getRequest(), new FileSystemAgentInfo());
+            Pair<String, StatusCode> processExitCode = sendProjects(projectsSender, result.getProjects());
             logger.debug("Process finished with exit code {} ({})", processExitCode.getKey(), processExitCode.getValue());
             return new ProjectsDetails(new ArrayList<>(), processExitCode.getValue(), processExitCode.getKey());
         } else {
@@ -107,7 +106,7 @@ public class Main {
         }
     }
 
-    private Pair<String, StatusCode> sendProjects(ProjectsSender projectsSender, Collection<AgentProjectInfo> projects, FSAConfiguration fsaConfiguration) {
+    private Pair<String, StatusCode> sendProjects(ProjectsSender projectsSender, Collection<AgentProjectInfo> projects) {
         Iterator<AgentProjectInfo> iterator = projects.iterator();
         while (iterator.hasNext()) {
             AgentProjectInfo project = iterator.next();
@@ -130,13 +129,7 @@ public class Main {
             logger.info("Exiting, nothing to update");
             return new Pair<>("Exiting, nothing to update", StatusCode.SUCCESS);
         } else {
-            String productVersion = null;
-            String productNameOrToken = fsaConfiguration.getRequest().getProductToken();
-            if (StringUtils.isBlank(productNameOrToken)) {
-                productNameOrToken = fsaConfiguration.getRequest().getProductName();
-                productVersion = fsaConfiguration.getRequest().getProductVersion();
-            }
-            return projectsSender.sendRequest(projects, fsaConfiguration.getRequest().getApiToken(),fsaConfiguration.getRequest().getRequesterEmail(),productNameOrToken, productVersion, fsaConfiguration.getWhiteSourceFolderPath());
+            return projectsSender.sendRequest(projects);
         }
     }
 }

@@ -15,12 +15,15 @@
  */
 package org.whitesource.fs.configuration;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang.StringUtils;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 import static org.whitesource.agent.ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY;
 import static org.whitesource.agent.ConfigPropertyKeys.REQUESTER_EMAIL;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RequestConfiguration {
 
     private final String projectVersion;
@@ -96,5 +99,12 @@ public class RequestConfiguration {
     @JsonProperty(ORG_TOKEN_PROPERTY_KEY)
     public String getApiToken() {
         return apiToken;
+    }
+
+    public String getProductNameOrToken() {
+        if (StringUtils.isBlank(getProductToken())) {
+            return getProductName();
+        }
+        return getProductToken();
     }
 }

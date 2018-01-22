@@ -44,7 +44,6 @@ public class FSAConfiguration {
     private static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
     private static final String SPACE = " ";
-    public static final String WHITE_SOURCE_DEFAULT_FOLDER_PATH = ".";
 
     /* --- Private fields --- */
 
@@ -65,7 +64,6 @@ public class FSAConfiguration {
     private final String configFilePath;
     private final AgentConfiguration agent;
     private final RequestConfiguration request;
-    private final String whiteSourceFolderPath;
     private final boolean scanPackageManager;
 
     private String logLevel;
@@ -86,7 +84,6 @@ public class FSAConfiguration {
 
     public FSAConfiguration(Properties config, String[] args) {
         configurationValidation = new ConfigurationValidation();
-        String wsFolder;
         String projectName;
         errors = new ArrayList<>();
         if ((args != null)) {
@@ -124,13 +121,6 @@ public class FSAConfiguration {
             dependencyDirs = new ArrayList<>();
 
 
-        }
-
-        wsFolder = config.getProperty(WHITESOURCE_FOLDER_PATH);
-        if (StringUtils.isBlank(wsFolder)) {
-            whiteSourceFolderPath = WHITE_SOURCE_DEFAULT_FOLDER_PATH;
-        } else {
-            whiteSourceFolderPath = wsFolder;
         }
 
         scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);
@@ -175,10 +165,6 @@ public class FSAConfiguration {
     }
 
     /* --- Public getters --- */
-
-    public String getWhiteSourceFolderPath() {
-        return whiteSourceFolderPath;
-    }
 
     public RequestConfiguration getRequest() {
         return request;

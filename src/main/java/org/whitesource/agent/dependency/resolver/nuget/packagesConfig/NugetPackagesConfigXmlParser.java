@@ -78,7 +78,7 @@ public class NugetPackagesConfigXmlParser {
                 packages = getNugetPackagesFromCsproj(csprojPackages);
             }
         } catch (JAXBException | IOException | SAXException e) {
-            logger.warn("Unable to parse suspected Nuget package senderConfiguration file {}", xml, e.getMessage());
+            logger.warn("Unable to parse suspected Nuget package configuration file {}", xml, e.getMessage());
         }
         return packages;
     }
