@@ -35,6 +35,7 @@ public class RequestConfiguration {
     private final String productName;
     private final String productVersion;
     private final String projectName;
+    private final String appPath;
 
     public RequestConfiguration(@JsonProperty(ORG_TOKEN_PROPERTY_KEY) String apiToken,
                                 @JsonProperty(REQUESTER_EMAIL) String requesterEmail,
@@ -44,7 +45,8 @@ public class RequestConfiguration {
                                 @JsonProperty(PROJECT_VERSION_PROPERTY_KEY) String projectVersion,
                                 @JsonProperty(PRODUCT_NAME_PROPERTY_KEY) String productName,
                                 @JsonProperty(PRODUCT_TOKEN_PROPERTY_KEY) String productToken,
-                                @JsonProperty(PRODUCT_VERSION_PROPERTY_KEY) String productVersion) {
+                                @JsonProperty(PRODUCT_VERSION_PROPERTY_KEY) String productVersion,
+                                @JsonProperty(APP_PATH) String appPath) {
         this.apiToken = apiToken;
         this.requesterEmail = requesterEmail;
         this.projectPerSubFolder = projectPerSubFolder;
@@ -54,6 +56,7 @@ public class RequestConfiguration {
         this.productName = productName;
         this.productToken = productToken;
         this.productVersion = productVersion;
+        this.appPath = appPath;
     }
 
     @JsonProperty(PROJECT_NAME_PROPERTY_KEY)
@@ -99,6 +102,11 @@ public class RequestConfiguration {
     @JsonProperty(ORG_TOKEN_PROPERTY_KEY)
     public String getApiToken() {
         return apiToken;
+    }
+
+    @JsonProperty(APP_PATH)
+    public String getAppPath() {
+        return appPath;
     }
 
     public String getProductNameOrToken() {

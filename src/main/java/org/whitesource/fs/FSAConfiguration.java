@@ -44,6 +44,7 @@ public class FSAConfiguration {
     private static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
     private static final String SPACE = " ";
+    private static final String BLANK = "";
 
     /* --- Private fields --- */
 
@@ -133,10 +134,11 @@ public class FSAConfiguration {
         String apiToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
         String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
         String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
+        String appPath = config.getProperty(APP_PATH, BLANK);
         boolean projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(REQUESTER_EMAIL);
 
-        request = new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken, projectVersion, productName, productToken, productVersion);
+        request = new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken, projectVersion, productName, productToken, productVersion, appPath);
         scm = new ScmConfiguration(config);
         agent = new AgentConfiguration(config);
         offline = new OfflineConfiguration(config);
@@ -283,6 +285,7 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, commandLineArgs.product);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY, commandLineArgs.productVersion);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_VERSION_PROPERTY_KEY, commandLineArgs.projectVersion);
+
         // request file
         List<String> offlineRequestFiles = new LinkedList<>();
         offlineRequestFiles.addAll(commandLineArgs.requestFiles);
@@ -290,7 +293,9 @@ public class FSAConfiguration {
             configProps.put(ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, FALSE);
         }
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, commandLineArgs.offline);
-
+        //Impact Analysis parameters
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.APP_PATH, commandLineArgs.appPath);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, commandLineArgs.enableImpactAnalysis);
         // proxy
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PORT_PROPERTY_KEY, commandLineArgs.proxyPass);

@@ -39,6 +39,7 @@ public class Main {
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     public static final long MAX_TIMEOUT = 1000*60*60;
+    public static final String FALSE = "false";
 
     /* --- Main --- */
 
@@ -55,7 +56,7 @@ public class Main {
 
         // read configuration senderConfig
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
-        boolean isStandalone = commandLineArgs.web.equals("false");
+        boolean isStandalone = commandLineArgs.web.equals(FALSE);
 
         if (isStandalone) {
             try {

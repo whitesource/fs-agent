@@ -117,7 +117,10 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                     dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
 
                     Map<String, String> pathToSha1Map = pathToDependenciesMap.keySet().stream().distinct().parallel().collect(Collectors.toMap(file -> file, file -> getSha1(file)));
-                    pathToSha1Map.entrySet().forEach(pathSha1Pair -> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency -> dependency.setSha1(pathSha1Pair.getValue())));
+                    pathToSha1Map.entrySet().forEach(pathSha1Pair -> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency -> {
+                        dependency.setSha1(pathSha1Pair.getValue());
+//                        dependency.setSystemPath(pathSha1Pair.getKey());//todo
+                    }));
 
                     AgentProjectInfo projectInfo = new AgentProjectInfo();
                     projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
