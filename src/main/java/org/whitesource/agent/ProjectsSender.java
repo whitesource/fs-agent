@@ -155,6 +155,7 @@ public class ProjectsSender {
             try {
                 String appPath = requestConfig.getAppPath();
                 // check language for scan according to user file
+                logger.info("Starting VIA impact analysis");
                 if (appPath.matches(ImpactAnalysisExtensionUtils.JAVA_EXTENSIONS_PATTERN)) {
                     vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(JAVA);
                 } else if (appPath.matches(ImpactAnalysisExtensionUtils.JAVA_SCRIPT_EXTENSIONS_PATTERN)) {
@@ -164,7 +165,8 @@ public class ProjectsSender {
                 }
                 if (vulnerabilitiesAnalysis != null) {
                     result = vulnerabilitiesAnalysis.startAnalysis(server, appPath, project.getDependencies());
-                    Set<VulnerabilityAnalysisResult> run = ApiTranslator.run(result);
+                    logger.info("Got impact analysis from server");
+                    Set<VulnerabilityAnalysisResult> run = ApiTranslator.globalVulnerabilityToVulnerabilityAnalysis(result);
                     Map<String, DependencyInfo> stringDependencyInfoMap = Utils.sha1ToDependencyInfo(project.getDependencies());
                     for (VulnerabilityAnalysisResult vulnerabilityAnalysisResult : run) {
                         stringDependencyInfoMap.get(vulnerabilityAnalysisResult.getMatchValue()).setVulnerabilityAnalysisResult(vulnerabilityAnalysisResult);
