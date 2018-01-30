@@ -97,11 +97,6 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     private final Collection<String> excludes = Arrays.asList("**/*" + PY_EXT);
 
-
-    public PythonDependencyResolver() {
-        super();
-    }
-
     /* --- Overridden methods --- */
 
     @Override
