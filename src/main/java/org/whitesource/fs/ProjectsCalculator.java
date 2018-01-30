@@ -74,6 +74,7 @@ public class ProjectsCalculator {
         //Collection<AgentProjectInfo> projects = agent.createProjects();
 
         Collection<AgentProjectInfo> projects = getAgentProjectsFromRequests(FSAConfiguration.getOfflineRequestFiles());
+        setProjectNamesFromCommandLine(projects, FSAConfiguration.getRequest().getProjectName());
         // create projects as usual
 
         ProjectsDetails createdProjects = agent.createProjects();
@@ -83,6 +84,15 @@ public class ProjectsCalculator {
     }
 
     /* --- Private methods --- */
+
+    private void setProjectNamesFromCommandLine(Collection<AgentProjectInfo> projects, String projectName) {
+    // change project name from command line in case the user sent name via commandLine
+        if(projects.size() == 1 && projectName != null) {
+            for (AgentProjectInfo project : projects) {
+                project.getCoordinates().setArtifactId(projectName);
+            }
+        }
+    }
 
     private Collection<AgentProjectInfo> getAgentProjectsFromRequests(List<String> offlineRequestFiles) {
         Collection<AgentProjectInfo> projects = new LinkedList<>();
