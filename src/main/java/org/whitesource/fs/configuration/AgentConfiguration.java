@@ -62,11 +62,11 @@ public class AgentConfiguration {
                               @JsonProperty(SHOW_PROGRESS_BAR) boolean showProgressBar,
                               @JsonProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY) boolean globCaseSensitive,
                               @JsonProperty(EXCLUDED_COPYRIGHT_KEY) Collection<String> excludedCopyrights){
-        this.includes = includes;
-        this.excludes = excludes;
+        this.includes = includes == null? new String[0] : includes;
+        this.excludes = excludes == null? new String[0] : excludes;
         this.archiveExtractionDepth = archiveExtractionDepth;
-        this.archiveIncludes = archiveIncludes;
-        this.archiveExcludes = archiveExcludes;
+        this.archiveIncludes = archiveIncludes == null? new String[0] : archiveIncludes;
+        this.archiveExcludes = archiveExcludes == null? new String[0] : archiveExcludes;
         this.archiveFastUnpack = archiveFastUnpack;
         this.followSymlinks = followSymlinks;
 

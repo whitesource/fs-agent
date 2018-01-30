@@ -48,9 +48,6 @@ public class FsaVerticle extends AbstractVerticle {
     public static final String WELCOME_MESSAGE = "<h1>File system agent is up and running </h1>";
     public static final String CONFIGURATION = "configuration";
     private FSAConfiguration localFsaConfiguration;
-    private Collection<String> invalidProperties = Arrays.asList(
-            SCM_REPOSITORIES_FILE,LOG_LEVEL_KEY,FOLLOW_SYMBOLIC_LINKS,SHOW_PROGRESS_BAR,PROJECT_CONFIGURATION_PATH,SCAN_PACKAGE_MANAGER,WHITESOURCE_FOLDER_PATH,
-            ENDPOINT_ENABLED,ENDPOINT_PORT,ENDPOINT_CERTIFICATE,ENDPOINT_PASS,ENDPOINT_SSL_ENABLED,OFFLINE_PROPERTY_KEY,OFFLINE_ZIP_PROPERTY_KEY,OFFLINE_PRETTY_JSON_KEY);
 
     @Override
     public void start(Future<Void> fut) {
@@ -145,7 +142,7 @@ public class FsaVerticle extends AbstractVerticle {
     private FSAConfiguration mergeConfigurations(FSAConfiguration baseFsaConfiguration, HashMap<String, Object> parameterMap) {
         Properties properties = ConfigurationSerializer.getAsProperties(parameterMap);
 
-        invalidProperties.forEach(property->{
+        FSAConfiguration.ignoredWebProperties.forEach(property->{
             if (properties.containsKey(property)) {
                 logger.info("Property "+ property +" will be ignored");
                 properties.remove(property);

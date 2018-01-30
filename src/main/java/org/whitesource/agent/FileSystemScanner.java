@@ -344,9 +344,10 @@ public class FileSystemScanner {
     }
 
     private String[] excludeFileSystemAgent(String[] excludes) {
-        String[] excludesFSA = new String[excludes.length + 1];
-        System.arraycopy(excludes, 0, excludesFSA, 0, excludes.length);
-        excludesFSA[excludes.length] = FSA_FILE;
+        String[] allExcludes = excludes == null ? new String[0] : excludes;
+        String[] excludesFSA = new String[allExcludes.length + 1];
+        System.arraycopy(allExcludes, 0, excludesFSA, 0, allExcludes.length);
+        excludesFSA[allExcludes.length] = FSA_FILE;
         return excludesFSA;
     }
 }
