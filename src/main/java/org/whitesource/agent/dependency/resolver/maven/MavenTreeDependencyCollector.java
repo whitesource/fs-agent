@@ -117,7 +117,10 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                     dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
 
                     Map<String, String> pathToSha1Map = pathToDependenciesMap.keySet().stream().distinct().parallel().collect(Collectors.toMap(file -> file, file -> getSha1(file)));
-                    pathToSha1Map.entrySet().forEach(pathSha1Pair -> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency -> dependency.setSha1(pathSha1Pair.getValue())));
+                    pathToSha1Map.entrySet().forEach(pathSha1Pair -> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency -> {
+                        dependency.setSha1(pathSha1Pair.getValue());
+                        dependency.setSystemPath(pathSha1Pair.getKey());
+                    }));
 
                     AgentProjectInfo projectInfo = new AgentProjectInfo();
                     projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
@@ -128,7 +131,8 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 logger.error("Failed to scanAndSend {}", getLsCommandParams());
             }
         } catch (IOException e) {
-            logger.info("Error getting dependencies after running " + getLsCommandParams() + " on " + rootDirectory, e);
+            logger.warn("Error getting dependencies after running {} on {},   {}" , getLsCommandParams() , rootDirectory, e.getMessage());
+            logger.debug("Error: {}", e.getStackTrace());
         }
 
         if (projects != null && projects.isEmpty()) {

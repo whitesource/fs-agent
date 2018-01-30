@@ -11,7 +11,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <agent.api.version>2.5.3</agent.api.version>
+        <agent.api.version>2.5.8</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
     </properties>
 
@@ -48,11 +48,12 @@
             <version>3.5.2</version>
         </dependency>
         <dependency>
-            <groupId>fr.dutra.tools.maven.deptree</groupId>
+            <groupId>org.whitesource</groupId>
             <artifactId>maven-dependency-tree-parser</artifactId>
-            <version>1.0.3-WSS</version>
+            <version>1.0.4</version>
         </dependency>
-        <!-- White Source -->
+
+        <!-- WhiteSource -->
         <dependency>
             <groupId>org.whitesource</groupId>
             <artifactId>wss-agent-api-client</artifactId>

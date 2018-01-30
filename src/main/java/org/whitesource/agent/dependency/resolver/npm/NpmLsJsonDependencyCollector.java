@@ -91,7 +91,8 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
                 dependencies.addAll(getDependencies(new JSONObject(json.toString())));
             }
         } catch (IOException e) {
-            logger.info("Error getting dependencies after running 'npm ls --json' on {}", rootDirectory);
+            logger.warn("Error getting dependencies after running 'npm ls --json' on {}, error : {}", rootDirectory, e.getMessage());
+            logger.debug("Error: {}", e.getStackTrace());
         }
 
         if (dependencies.isEmpty()) {
