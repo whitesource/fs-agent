@@ -117,8 +117,6 @@ public class FSAConfiguration {
             offlineRequestFiles = new ArrayList<>();
             fileListPath = null;
             dependencyDirs = new ArrayList<>();
-
-
         }
 
         scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);

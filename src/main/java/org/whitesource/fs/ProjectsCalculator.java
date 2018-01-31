@@ -28,13 +28,8 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 
-import java.util.Base64;
-
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 public class ProjectsCalculator {
@@ -47,17 +42,17 @@ public class ProjectsCalculator {
 
     /* --- Public methods --- */
 
-    public ProjectsDetails getAllProjects(FSAConfiguration FSAConfiguration) {
+    public ProjectsDetails getAllProjects(FSAConfiguration fsaConfiguration) {
         // read log level from configuration file
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-        String logLevel = FSAConfiguration.getLogLevel();
+        String logLevel = fsaConfiguration.getLogLevel();
         root.setLevel(Level.toLevel(logLevel, Level.INFO));
 
         // read directories and files from list-file
         List<String> files = new ArrayList<>();
-        if (StringUtils.isNotBlank(FSAConfiguration.getFileListPath())) {
+        if (StringUtils.isNotBlank(fsaConfiguration.getFileListPath())) {
             try {
-                File listFile = new File(FSAConfiguration.getFileListPath());
+                File listFile = new File(fsaConfiguration.getFileListPath());
                 if (listFile.exists()) {
                     files.addAll(FileUtils.readLines(listFile));
                 }
@@ -67,18 +62,22 @@ public class ProjectsCalculator {
         }
 
         // read csv directory list
-        files.addAll(FSAConfiguration.getDependencyDirs());
+        files.addAll(fsaConfiguration.getDependencyDirs());
 
         // run the agent
-        FileSystemAgent agent = new FileSystemAgent(FSAConfiguration, files);
+        FileSystemAgent agent = new FileSystemAgent(fsaConfiguration, files);
         //Collection<AgentProjectInfo> projects = agent.createProjects();
 
-        Collection<AgentProjectInfo> projects = getAgentProjectsFromRequests(FSAConfiguration.getOfflineRequestFiles());
-        setProjectNamesFromCommandLine(projects, FSAConfiguration.getRequest().getProjectName());
-        // create projects as usual
+        Collection<AgentProjectInfo> projects = getAgentProjectsFromRequests(fsaConfiguration);
+        setProjectNamesFromCommandLine(projects, fsaConfiguration.getRequest().getProjectName());
 
+        // create projects as usual
         ProjectsDetails createdProjects = agent.createProjects();
-        projects.addAll(createdProjects.getProjects());
+        // WSE-207
+        List<String> offlineRequestFiles = fsaConfiguration.getOfflineRequestFiles();
+        if (offlineRequestFiles ==  null || offlineRequestFiles.size() == 0) {
+            projects.addAll(createdProjects.getProjects());
+        }
 
         return new ProjectsDetails(projects, createdProjects.getStatusCode(), createdProjects.getDetails());
     }
@@ -94,10 +93,11 @@ public class ProjectsCalculator {
         }
     }
 
-    private Collection<AgentProjectInfo> getAgentProjectsFromRequests(List<String> offlineRequestFiles) {
+    private Collection<AgentProjectInfo> getAgentProjectsFromRequests(FSAConfiguration fsaConfiguration) {
         Collection<AgentProjectInfo> projects = new LinkedList<>();
 
         List<File> requestFiles = new LinkedList<>();
+        List<String> offlineRequestFiles = fsaConfiguration.getOfflineRequestFiles();
         if (offlineRequestFiles != null) {
             for (String requestFilePath : offlineRequestFiles) {
                 if (StringUtils.isNotBlank(requestFilePath)) {
@@ -119,6 +119,9 @@ public class ProjectsCalculator {
                     }.getType());
                     logger.info("Reading information from request file {}", requestFile);
                     projects.addAll(updateRequest.getProjects());
+                    // WSE-207
+                    fsaConfiguration.getRequest().setProductName(updateRequest.product());
+                    fsaConfiguration.getRequest().setProductVersion(updateRequest.productVersion());
                 } catch (JsonSyntaxException e) {
                     // try to decompress file content
                     try {
