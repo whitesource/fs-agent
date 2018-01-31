@@ -51,7 +51,6 @@ public class FSAConfiguration {
     private final SenderConfiguration sender;
     private final OfflineConfiguration offline;
     private final ResolverConfiguration resolver;
-    private final ConfigurationValidation configurationValidation;
     private final EndPointConfiguration endpoint;
 
     private final List<String> errors;
@@ -61,7 +60,6 @@ public class FSAConfiguration {
     private final List<String> offlineRequestFiles;
     private final String fileListPath;
     private final List<String> dependencyDirs;
-    private final String configFilePath;
     private final AgentConfiguration agent;
     private final RequestConfiguration request;
     private final boolean scanPackageManager;
@@ -83,8 +81,8 @@ public class FSAConfiguration {
     }
 
     public FSAConfiguration(Properties config, String[] args) {
-        configurationValidation = new ConfigurationValidation();
-        String projectName;
+        ConfigurationValidation configurationValidation = new ConfigurationValidation();
+        String projectName, configFilePath;
         errors = new ArrayList<>();
         if ((args != null)) {
             // read command line args
@@ -94,7 +92,7 @@ public class FSAConfiguration {
             new JCommander(commandLineArgs, args);
 
             if (config == null) {
-                Pair<Properties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath, commandLineArgs.project);
+                Pair<Properties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath);
                 errors.addAll(propertiesWithErrors.getValue());
                 config = propertiesWithErrors.getKey();
                 if (StringUtils.isNotEmpty(commandLineArgs.project)) {
@@ -145,7 +143,7 @@ public class FSAConfiguration {
         endpoint = new EndPointConfiguration(config);
     }
 
-    public static Pair<Properties, List<String>> readWithError(String configFilePath, String projectName) {
+    public static Pair<Properties, List<String>> readWithError(String configFilePath) {
         Properties configProps = new Properties();
         List<String> errors = new ArrayList<>();
         try {
@@ -159,7 +157,7 @@ public class FSAConfiguration {
                 }
             }
         } catch (IOException e) {
-            errors.add("Error occurred when reading from " + configFilePath + e);
+            errors.add("Error occurred when reading from " + configFilePath + " - " + e);
         }
         return new Pair<>(configProps, errors);
     }
