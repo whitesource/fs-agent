@@ -71,7 +71,6 @@ public class FsaVerticle extends AbstractVerticle {
         }
 
         // Create Http server and pass the 'accept' method to the request handler
-        //vertx.createHttpServer().requestHandler(router::accept).requestHandler(router::accept).
         vertx.createHttpServer(new HttpServerOptions().setSsl(localFsaConfiguration.getEndpoint().isSsl()).setKeyStoreOptions(new JksOptions()
                 .setPath(localFsaConfiguration.getEndpoint().getCertificate())
                 .setPassword(localFsaConfiguration.getEndpoint().getPass())
@@ -79,11 +78,11 @@ public class FsaVerticle extends AbstractVerticle {
                 listen(config().getInteger(ENDPOINT_PORT, EndPointConfiguration.DEFAULT_PORT),
                         result -> {
                             if (result.succeeded()) {
-                                System.out.println("Http server completed..");
+                                logger.info("Http server completed..");
                                 fut.complete();
                             } else {
                                 fut.fail(result.cause());
-                                System.out.println("Http server failed..");
+                                logger.warn("Http server failed..");
                             }
                         }
                 );
@@ -116,8 +115,8 @@ public class FsaVerticle extends AbstractVerticle {
         try {
             result = new ObjectMapper().writeValueAsString(resultDto);
         } catch (JsonProcessingException e) {
-            logger.error("error writing json:", e);
-            context.response().end("scanning has failed");
+            logger.error("Error writing json:", e);
+            context.response().end("Scanning has failed");
         }
         context.response().end(result);
     }
