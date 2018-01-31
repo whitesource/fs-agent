@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 /**
  * This class holds all components for connecting to repositories using git/svm/mercurial protocol.
@@ -19,7 +20,7 @@ public abstract class ScmConnector {
 
     private static final Logger logger = LoggerFactory.getLogger(ScmConnector.class);
 
-    private static final String SCM_CONNECTOR_TMP_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator + "WhiteSource-ScmConnector";
+    public static final String SCM_CONNECTOR_TMP_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir"), "WhiteSource-ScmConnector").toString();
 
     public static final String MASTER = "master";
 

@@ -182,9 +182,9 @@ public class FileSystemAgent {
         if (config.isScanProjectManager()) {
             projects = new PackageManagerExtractor().createProjects();
         } else {
-            projects =new FileSystemScanner(config.getResolver(), config.getAgent())
-                .createProjects(scannerBaseDirs, hasScmConnectors[0]);
-}
+            projects = new FileSystemScanner(config.getResolver(), config.getAgent())
+                    .createProjects(scannerBaseDirs, hasScmConnectors[0]);
+        }
         // delete all temp scm files
         scmPaths.forEach(directory -> {
             if (directory != null) {

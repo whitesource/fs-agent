@@ -69,6 +69,7 @@ public class ResolverConfiguration {
 
     public ResolverConfiguration(Properties config) {
         npmRunPreStep = FSAConfiguration.getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
+        pythonResolveDependencies = FSAConfiguration.getBooleanProperty(config, PYTHON_RESOLVE_DEPENDENCIES, true);
         npmResolveDependencies = FSAConfiguration.getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
         npmIncludeDevDependencies = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
         npmIgnoreJavaScriptFiles = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
@@ -98,6 +99,7 @@ public class ResolverConfiguration {
     private boolean mavenAggregateModules;
     private boolean dependenciesOnly;
     private String whitesourceConfiguration;
+    private boolean pythonResolveDependencies;
 
     /* --- Public getters --- */
 
@@ -164,5 +166,10 @@ public class ResolverConfiguration {
     @JsonProperty(WHITESOURCE_CONFIGURATION)
     public String getWhitesourceConfiguration() {
         return whitesourceConfiguration;
+    }
+
+    @JsonProperty(PYTHON_RESOLVE_DEPENDENCIES)
+    public boolean isPythonResolveDependencies() {
+        return pythonResolveDependencies;
     }
 }

@@ -35,14 +35,14 @@ public class FSAConfigurationTest {
         checkSubsetProperties(properties, propertiesAfterConfig);
 
         String tempCofig = getTempFile();
-        configurationSerializer.save(fsaConfiguration,tempCofig,false);
+        configurationSerializer.save(fsaConfiguration, tempCofig, true);
 
         FSAConfiguration fsaConfigurationResult = configurationSerializer.load(tempCofig);
         Properties sameProperties = ConfigurationSerializer.getAsProperties(fsaConfigurationResult);
 
         checkSubsetProperties(propertiesAfterConfig, sameProperties);
 
-        configurationSerializer.saveYaml(fsaConfigurationResult,"c:\\temp\\config2.yml");
+        configurationSerializer.saveYaml(fsaConfigurationResult, Paths.get(JAVA_TEMP_DIR,"config2.yml").toString());
     }
 
     private void checkSubsetProperties(Properties subsetProperties, Properties bigSetProperties) {
