@@ -22,6 +22,7 @@ import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
+import org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
@@ -65,6 +66,8 @@ public class DependencyResolutionService {
         final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
         final boolean mavenAggregateModules = config.isMavenAggregateModules();
 
+        boolean pythonResolveDependecies = config.isPythonResolveDependencies();
+
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
@@ -83,6 +86,9 @@ public class DependencyResolutionService {
         if (mavenResolveDependencies) {
             dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, dependenciesOnly));
             separateProjects = !mavenAggregateModules;
+        }
+        if (pythonResolveDependecies) {
+            dependencyResolvers.add(new PythonDependencyResolver());
         }
     }
 

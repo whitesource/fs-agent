@@ -11,7 +11,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <agent.api.version>2.5.8</agent.api.version>
+        <agent.api.version>2.5.9-SNAPSHOT</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
     </properties>
 
@@ -112,6 +112,13 @@
             <artifactId>plexus-archiver</artifactId>
             <version>2.2</version>
         </dependency>
+
+        <!-- VIA test -->
+        <!--<dependency>-->
+            <!--<groupId>org.whitesource.analysis</groupId>-->
+            <!--<artifactId>whitesource-analysis-via</artifactId>-->
+            <!--<version>0.0.1-SNAPSHOT</version>-->
+        <!--</dependency>-->
 
         <!-- LZMA -->
         <dependency>

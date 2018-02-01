@@ -38,12 +38,17 @@ public class FSAConfiguration {
 
     /* --- Static members --- */
 
+    public static Collection<String> ignoredWebProperties = Arrays.asList(
+            SCM_REPOSITORIES_FILE, LOG_LEVEL_KEY, FOLLOW_SYMBOLIC_LINKS, SHOW_PROGRESS_BAR, PROJECT_CONFIGURATION_PATH, SCAN_PACKAGE_MANAGER, WHITESOURCE_FOLDER_PATH,
+            ENDPOINT_ENABLED, ENDPOINT_PORT, ENDPOINT_CERTIFICATE, ENDPOINT_PASS, ENDPOINT_SSL_ENABLED, OFFLINE_PROPERTY_KEY, OFFLINE_ZIP_PROPERTY_KEY, OFFLINE_PRETTY_JSON_KEY, WHITESOURCE_CONFIGURATION);
+
     private static final String FALSE = "false";
     private static final String INFO = "info";
     public static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
     private static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
     private static final String SPACE = " ";
+    private static final String BLANK = "";
 
     /* --- Private fields --- */
 
@@ -51,6 +56,7 @@ public class FSAConfiguration {
     private final SenderConfiguration sender;
     private final OfflineConfiguration offline;
     private final ResolverConfiguration resolver;
+    private final ConfigurationValidation configurationValidation;
     private final EndPointConfiguration endpoint;
 
     private final List<String> errors;
@@ -83,7 +89,7 @@ public class FSAConfiguration {
     }
 
     public FSAConfiguration(Properties config, String[] args) {
-        ConfigurationValidation configurationValidation = new ConfigurationValidation();
+        configurationValidation = new ConfigurationValidation();
         String projectName, configFilePath;
         errors = new ArrayList<>();
         if ((args != null)) {
@@ -110,7 +116,7 @@ public class FSAConfiguration {
             projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             fileListPath = commandLineArgs.fileListPath;
             dependencyDirs = commandLineArgs.dependencyDirs;
-            if(commandLineArgs.whiteSourceFolder!=null) {
+            if (commandLineArgs.whiteSourceFolder != null) {
                 config.setProperty(WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
             }
             commandLineArgsOverride(commandLineArgs);
@@ -120,25 +126,33 @@ public class FSAConfiguration {
             offlineRequestFiles = new ArrayList<>();
             fileListPath = null;
             dependencyDirs = new ArrayList<>();
-            useCommandLineProjectName = false;
-            useCommandLineProductName = false;
             commandLineArgsOverride(null);
         }
 
         scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);
-        errors.addAll(configurationValidation.getConfigurationErrors(config, configFilePath, projectName));
+
+        // validate config
+        String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
+        String projectNameFinal = !StringUtils.isBlank(projectName) ? projectName : config.getProperty(PROJECT_NAME_PROPERTY_KEY);
+        boolean projectPerFolder = FSAConfiguration.getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
+        String apiToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
+        int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(config);
+        String[] includes = FSAConfiguration.getIncludes(config);
+
+        // todo: check possibility to get the errors only in the end
+        errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal, apiToken, configFilePath, archiveExtractionDepth, includes));
+
         logLevel = config.getProperty(LOG_LEVEL_KEY, INFO);
 
         String productToken = config.getProperty(ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY);
         String productName = config.getProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY);
         String productVersion = config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
-        String apiToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
         String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
-        String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
+        String appPath = config.getProperty(APP_PATH, BLANK);
         boolean projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(REQUESTER_EMAIL);
 
-        request = new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken, projectVersion, productName, productToken, productVersion);
+        request = new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken, projectVersion, productName, productToken, productVersion, appPath);
         scm = new ScmConfiguration(config);
         agent = new AgentConfiguration(config);
         offline = new OfflineConfiguration(config);
@@ -293,6 +307,7 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, commandLineArgs.product);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY, commandLineArgs.productVersion);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_VERSION_PROPERTY_KEY, commandLineArgs.projectVersion);
+
         // request file
         List<String> offlineRequestFiles = new LinkedList<>();
         offlineRequestFiles.addAll(commandLineArgs.requestFiles);
@@ -300,7 +315,9 @@ public class FSAConfiguration {
             configProps.put(ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, FALSE);
         }
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, commandLineArgs.offline);
-
+        //Impact Analysis parameters
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.APP_PATH, commandLineArgs.appPath);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, commandLineArgs.enableImpactAnalysis);
         // proxy
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PORT_PROPERTY_KEY, commandLineArgs.proxyPass);
@@ -328,5 +345,11 @@ public class FSAConfiguration {
     private void commandLineArgsOverride(CommandLineArgs commandLineArgs){
         useCommandLineProductName = commandLineArgs != null && StringUtils.isNotBlank(commandLineArgs.product);
         useCommandLineProjectName = commandLineArgs != null && StringUtils.isNotBlank(commandLineArgs.project);
+    }
+
+    public void validate() {
+        getErrors().clear();
+        errors.addAll(configurationValidation.getConfigurationErrors(getRequest().isProjectPerSubFolder(),getRequest().getProjectToken(),
+                getRequest().getProjectName(), getRequest().getApiToken(), configFilePath, getAgent().getArchiveExtractionDepth(), getAgent().getIncludes()));
     }
 }

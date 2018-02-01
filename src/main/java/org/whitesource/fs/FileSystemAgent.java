@@ -54,6 +54,7 @@ public class FileSystemAgent {
     private static final String NPM_INSTALL_COMMAND = "install";
     private static final String PACKAGE_LOCK = "package-lock.json";
     private static final String PACKAGE_JSON = "package.json";
+    public static final String EMPTY_STRING = "";
 
     /* --- Members --- */
 
@@ -182,9 +183,9 @@ public class FileSystemAgent {
         if (config.isScanProjectManager()) {
             projects = new PackageManagerExtractor().createProjects();
         } else {
-            projects =new FileSystemScanner(config.getResolver(), config.getAgent())
-                .createProjects(scannerBaseDirs, hasScmConnectors[0]);
-}
+            projects = new FileSystemScanner(config.getResolver(), config.getAgent())
+                    .createProjects(scannerBaseDirs, hasScmConnectors[0]);
+        }
         // delete all temp scm files
         scmPaths.forEach(directory -> {
             if (directory != null) {
@@ -195,7 +196,7 @@ public class FileSystemAgent {
                 }
             }
         });
-        return new ProjectsDetails(projects, success[0], "");
+        return new ProjectsDetails(projects, success[0], EMPTY_STRING);
     }
 
     private Pair<String, StatusCode> npmInstallScmRepository(boolean scmNpmInstall, int npmInstallTimeoutMinutes, ScmConnector scmConnector,

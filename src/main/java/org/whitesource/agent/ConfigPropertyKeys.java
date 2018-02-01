@@ -26,11 +26,13 @@ public final class ConfigPropertyKeys {
     public static final String CHECK_POLICIES_PROPERTY_KEY = "checkPolicies";
     public static final String FORCE_UPDATE = "forceUpdate";
     public static final String FORCE_CHECK_ALL_DEPENDENCIES = "forceCheckAllDependencies"; // optional
+    public static final String ENABLE_IMPACT_ANALYSIS = "enableImpactAnalysis"; // optional
     public static final String ORG_TOKEN_PROPERTY_KEY = "apiKey";
     public static final String PARTIAL_SHA1_MATCH_KEY = "partialSha1Match";
     public static final String PRODUCT_TOKEN_PROPERTY_KEY = "productToken"; // optional
     public static final String PRODUCT_NAME_PROPERTY_KEY = "productName"; // optional
     public static final String PRODUCT_VERSION_PROPERTY_KEY = "productVersion"; // optional
+    public static final String APP_PATH = "appPath"; // optional
     public static final String PROJECT_TOKEN_PROPERTY_KEY = "projectToken";
     public static final String PROJECT_NAME_PROPERTY_KEY = "projectName";
     public static final String PROJECT_VERSION_PROPERTY_KEY = "projectVersion"; // optional
@@ -75,6 +77,7 @@ public final class ConfigPropertyKeys {
     public static final String BOWER_RESOLVE_DEPENDENCIES = "bower.resolveDependencies";
     public static final String BOWER_RUN_PRE_STEP = "bower.runPreStep";
 
+    public static final String PYTHON_RESOLVE_DEPENDENCIES = "python.resolveDependencies";
     public static final String NUGET_RESOLVE_DEPENDENCIES = "nuget.resolveDependencies";
     public static final String MAVEN_IGNORED_SCOPES = "maven.ignoredScopes";
     public static final String MAVEN_RESOLVE_DEPENDENCIES = "maven.resolveDependencies";

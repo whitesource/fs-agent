@@ -90,7 +90,13 @@ public class CommandLineArgs {
     String web = "false";
 
     @Parameter(names = "-whiteSourceFolderPath", description = "WhiteSource folder path for offlineRequest/checkPolicies")
-    String whiteSourceFolder = null;
+    String whiteSourceFolder = "";
+
+    @Parameter(names = "-appPath", description = "Impact Analysis application path")
+    String appPath = null;
+
+    @Parameter(names = "-enableImpactAnalysis", description = "Whether or not to enable impact analysis")
+    String enableImpactAnalysis = null;
 
     /* --- Public methods --- */
 

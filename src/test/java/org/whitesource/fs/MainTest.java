@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 
 import java.io.*;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import static org.whitesource.agent.ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY;
@@ -56,7 +57,9 @@ public class MainTest {
         ProjectsCalculator projectsCalculator = new ProjectsCalculator();
         ProjectsDetails projects = projectsCalculator.getAllProjects(fsaConfiguration);
 
-        Assert.assertTrue(projects.getProjects().size() == 4);
+        File resolverFolder = Paths.get(config.getParent(),"resolver").toFile();
+
+        Assert.assertEquals(projects.getProjects().size() , resolverFolder.listFiles().length);
     }
 
     @Test

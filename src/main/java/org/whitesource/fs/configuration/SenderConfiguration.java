@@ -40,6 +40,7 @@ public class SenderConfiguration {
     private final boolean forceCheckAllDependencies;
     private final boolean forceUpdate;
     private final String updateTypeValue;
+    private final boolean enableImpactAnalysis;
 
     public SenderConfiguration(
             @JsonProperty(CHECK_POLICIES_PROPERTY_KEY) boolean checkPolicies,
@@ -51,7 +52,8 @@ public class SenderConfiguration {
             @JsonProperty(PROXY_PASS_PROPERTY_KEY) String proxyPassword,
             @JsonProperty(FORCE_CHECK_ALL_DEPENDENCIES) boolean forceCheckAllDependencies,
             @JsonProperty(FORCE_UPDATE) boolean forceUpdate,
-            @JsonProperty(UPDATE_TYPE) String updateTypeValue) {
+            @JsonProperty(UPDATE_TYPE) String updateTypeValue,
+            @JsonProperty(ENABLE_IMPACT_ANALYSIS) boolean enableImpactAnalysis){
         this.checkPolicies = checkPolicies;
         this.serviceUrl = serviceUrl;
         this.proxyHost = proxyHost;
@@ -62,6 +64,7 @@ public class SenderConfiguration {
         this.forceCheckAllDependencies = forceCheckAllDependencies;
         this.forceUpdate = forceUpdate;
         this.updateTypeValue = updateTypeValue;
+        this.enableImpactAnalysis = enableImpactAnalysis;
     }
 
     public SenderConfiguration(Properties config) {
@@ -70,6 +73,7 @@ public class SenderConfiguration {
         checkPolicies =  FSAConfiguration.getBooleanProperty(config, CHECK_POLICIES_PROPERTY_KEY, false);
         forceCheckAllDependencies = FSAConfiguration.getBooleanProperty(config, FORCE_CHECK_ALL_DEPENDENCIES, false);
         forceUpdate = FSAConfiguration.getBooleanProperty(config, FORCE_UPDATE, false);
+        enableImpactAnalysis = FSAConfiguration.getBooleanProperty(config, ENABLE_IMPACT_ANALYSIS, false);
         serviceUrl = config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
         proxyHost = config.getProperty(PROXY_HOST_PROPERTY_KEY);
         connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
@@ -134,5 +138,10 @@ public class SenderConfiguration {
     @JsonProperty(FORCE_UPDATE)
     public boolean isForceUpdate() {
         return forceUpdate;
+    }
+
+    @JsonProperty(ENABLE_IMPACT_ANALYSIS)
+    public boolean isEnableImpactAnalysis() {
+        return enableImpactAnalysis;
     }
 }

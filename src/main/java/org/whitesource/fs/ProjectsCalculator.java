@@ -16,29 +16,22 @@
 package org.whitesource.fs;
 
 import ch.qos.logback.classic.Level;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.model.AgentProjectInfo;
-
-import java.io.*;
-import java.util.*;
-import java.util.zip.GZIPInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class ProjectsCalculator {
 
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(ProjectsCalculator.class);
-    private static final String UTF_8 = "UTF-8";
-    private static final String EMPTY_STRING = "";
 
     /* --- Public methods --- */
 
@@ -68,7 +61,8 @@ public class ProjectsCalculator {
         FileSystemAgent agent = new FileSystemAgent(fsaConfiguration, files);
         //Collection<AgentProjectInfo> projects = agent.createProjects();
 
-        Collection<AgentProjectInfo> projects = getAgentProjectsFromRequests(fsaConfiguration);
+        OfflineReader offlineReader = new OfflineReader();
+        Collection<AgentProjectInfo> projects = offlineReader.getAgentProjectsFromRequests(fsaConfiguration.getOfflineRequestFiles());
         if (fsaConfiguration.getUseCommandLineProjectName()) {
             setProjectNamesFromCommandLine(projects, fsaConfiguration.getRequest().getProjectName());
         }
@@ -94,74 +88,4 @@ public class ProjectsCalculator {
             }
         }
     }
-
-    private Collection<AgentProjectInfo> getAgentProjectsFromRequests(FSAConfiguration fsaConfiguration) {
-        Collection<AgentProjectInfo> projects = new LinkedList<>();
-
-        List<File> requestFiles = new LinkedList<>();
-        List<String> offlineRequestFiles = fsaConfiguration.getOfflineRequestFiles();
-        if (offlineRequestFiles != null) {
-            for (String requestFilePath : offlineRequestFiles) {
-                if (StringUtils.isNotBlank(requestFilePath)) {
-                    requestFiles.add(new File(requestFilePath));
-                }
-            }
-        }
-        if (!requestFiles.isEmpty()) {
-            for (File requestFile : requestFiles) {
-                if (!requestFile.isFile()) {
-                    logger.warn("'{}' is a folder. Enter a valid file path, folder is not acceptable.", requestFile.getName());
-                    continue;
-                }
-                Gson gson = new Gson();
-                UpdateInventoryRequest updateRequest;
-                logger.debug("Converting offline request to JSON");
-                try {
-                    updateRequest = gson.fromJson(new JsonReader(new FileReader(requestFile)), new TypeToken<UpdateInventoryRequest>() {
-                    }.getType());
-                    logger.info("Reading information from request file {}", requestFile);
-                    projects.addAll(updateRequest.getProjects());
-                    // updating the product name and version from the offline file
-                    if (!fsaConfiguration.getUseCommandLineProductName()) {
-                        fsaConfiguration.getRequest().setProductName(updateRequest.product());
-                        fsaConfiguration.getRequest().setProductVersion(updateRequest.productVersion());
-                    }
-                } catch (JsonSyntaxException e) {
-                    // try to decompress file content
-                    try {
-                        logger.debug("Decompressing zipped offline request");
-                        String fileContent = decompress(requestFile);
-                        logger.debug("Converting offline request to JSON");
-                        updateRequest = gson.fromJson(fileContent, new TypeToken<UpdateInventoryRequest>() {}.getType());
-                        logger.info("Reading information from request file {}", requestFile);
-                        projects.addAll(updateRequest.getProjects());
-                    } catch (IOException ioe) {
-                        logger.warn("Error parsing request: " + ioe.getMessage());
-                    } catch (JsonSyntaxException jse) {
-                        logger.warn("Error parsing request: " + jse.getMessage());
-                    }
-                } catch (FileNotFoundException e) {
-                    logger.warn("Error parsing request: " + e.getMessage());
-                }
-            }
-        }
-        return projects;
-    }
-
-    private static String decompress(File file) throws IOException {
-        if (file == null || !file.exists()) {
-            return EMPTY_STRING;
-        }
-
-        byte[] bytes = Base64.getDecoder().decode(IOUtils.toByteArray(new FileInputStream(file)));
-        GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(bytes));
-        BufferedReader bf = new BufferedReader(new InputStreamReader(gzipInputStream, UTF_8));
-        StringBuilder outStr = new StringBuilder(EMPTY_STRING);
-        String line;
-        while ((line = bf.readLine()) != null) {
-            outStr.append(line);
-        }
-        return outStr.toString();
-    }
-
 }

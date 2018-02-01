@@ -24,6 +24,7 @@ import org.whitesource.fs.FSAConfiguration;
 import java.util.*;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
+import static org.whitesource.fs.FileSystemAgent.EMPTY_STRING;
 import static org.whitesource.fs.FileSystemAgent.EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX;
 
 public class AgentConfiguration {
@@ -62,11 +63,11 @@ public class AgentConfiguration {
                               @JsonProperty(SHOW_PROGRESS_BAR) boolean showProgressBar,
                               @JsonProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY) boolean globCaseSensitive,
                               @JsonProperty(EXCLUDED_COPYRIGHT_KEY) Collection<String> excludedCopyrights){
-        this.includes = includes;
-        this.excludes = excludes;
+        this.includes = includes == null? new String[0] : includes;
+        this.excludes = excludes == null? new String[0] : excludes;
         this.archiveExtractionDepth = archiveExtractionDepth;
-        this.archiveIncludes = archiveIncludes;
-        this.archiveExcludes = archiveExcludes;
+        this.archiveIncludes = archiveIncludes == null? new String[0] : archiveIncludes;
+        this.archiveExcludes = archiveExcludes == null? new String[0] : archiveExcludes;
         this.archiveFastUnpack = archiveFastUnpack;
         this.followSymlinks = followSymlinks;
 
@@ -80,10 +81,10 @@ public class AgentConfiguration {
 
     public AgentConfiguration(Properties config) {
         this(FSAConfiguration.getIncludes(config),
-                config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, "").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX),
+                config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX),
                 FSAConfiguration.getArchiveDepth(config),
-                config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, "").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX),
-                config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, "").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX),
+                config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX),
+                config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX),
                 FSAConfiguration.getBooleanProperty(config, ARCHIVE_FAST_UNPACK_KEY, false),
                 FSAConfiguration.getBooleanProperty(config, FOLLOW_SYMBOLIC_LINKS, true),
 

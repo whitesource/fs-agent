@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 package org.whitesource.fs.configuration;
-
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.whitesource.fs.FSAConfiguration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
@@ -31,22 +26,19 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
 public class ConfigurationValidation {
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ConfigurationValidation.class);
     private static final int MAX_EXTRACTION_DEPTH = 7;
 
-    public List<String> getConfigurationErrors(Properties configProps, String configFilePath, String project) {
+    public List<String> getConfigurationErrors(boolean projectPerFolder, String configProjectToken, String configProjectName, String configApiToken, String configFilePath, int archiveDepth ,String[] includes) {
         List<String> errors = new ArrayList<>();
 
-        if (StringUtils.isBlank(configProps.getProperty(ORG_TOKEN_PROPERTY_KEY))) {
+        if (StringUtils.isBlank(configApiToken)) {
             String error = "Could not retrieve " + ORG_TOKEN_PROPERTY_KEY + " property from " + configFilePath;
             errors.add(error);
         }
 
-        String projectToken = configProps.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
-        String projectName = !StringUtils.isBlank(project) ? project : configProps.getProperty(PROJECT_NAME_PROPERTY_KEY);
-        boolean noProjectToken = StringUtils.isBlank(projectToken);
-        boolean noProjectName = StringUtils.isBlank(projectName);
-        boolean projectPerFolder = FSAConfiguration.getBooleanProperty(configProps, PROJECT_PER_SUBFOLDER, false);
+        boolean noProjectToken = StringUtils.isBlank(configProjectToken);
+        boolean noProjectName = StringUtils.isBlank(configProjectName);
+
         if (noProjectToken && noProjectName && !projectPerFolder) {
             String error = "Could not retrieve properties " + PROJECT_NAME_PROPERTY_KEY + " and " + PROJECT_TOKEN_PROPERTY_KEY + " from " + configFilePath;
             errors.add(error);
@@ -55,10 +47,7 @@ public class ConfigurationValidation {
             errors.add(error);
         }
 
-        int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(configProps);
-        String[] includes = FSAConfiguration.getIncludes(configProps);
-
-        if (archiveExtractionDepth < 0 || archiveExtractionDepth > MAX_EXTRACTION_DEPTH) {
+        if (archiveDepth < 0 || archiveDepth > MAX_EXTRACTION_DEPTH) {
             errors.add("Error: archiveExtractionDepth value should be greater than 0 and less than " + MAX_EXTRACTION_DEPTH);
         }
         if (includes.length < 1 || StringUtils.isBlank(includes[0])) {

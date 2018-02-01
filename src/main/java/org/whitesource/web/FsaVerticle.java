@@ -48,9 +48,6 @@ public class FsaVerticle extends AbstractVerticle {
     public static final String WELCOME_MESSAGE = "<h1>File system agent is up and running </h1>";
     public static final String CONFIGURATION = "configuration";
     private FSAConfiguration localFsaConfiguration;
-    private Collection<String> invalidProperties = Arrays.asList(
-            SCM_REPOSITORIES_FILE,LOG_LEVEL_KEY,FOLLOW_SYMBOLIC_LINKS,SHOW_PROGRESS_BAR,PROJECT_CONFIGURATION_PATH,SCAN_PACKAGE_MANAGER,WHITESOURCE_FOLDER_PATH,
-            ENDPOINT_ENABLED,ENDPOINT_PORT,ENDPOINT_CERTIFICATE,ENDPOINT_PASS,ENDPOINT_SSL_ENABLED,OFFLINE_PROPERTY_KEY,OFFLINE_ZIP_PROPERTY_KEY,OFFLINE_PRETTY_JSON_KEY);
 
     @Override
     public void start(Future<Void> fut) {
@@ -74,7 +71,6 @@ public class FsaVerticle extends AbstractVerticle {
         }
 
         // Create Http server and pass the 'accept' method to the request handler
-        //vertx.createHttpServer().requestHandler(router::accept).requestHandler(router::accept).
         vertx.createHttpServer(new HttpServerOptions().setSsl(localFsaConfiguration.getEndpoint().isSsl()).setKeyStoreOptions(new JksOptions()
                 .setPath(localFsaConfiguration.getEndpoint().getCertificate())
                 .setPassword(localFsaConfiguration.getEndpoint().getPass())
@@ -82,11 +78,11 @@ public class FsaVerticle extends AbstractVerticle {
                 listen(config().getInteger(ENDPOINT_PORT, EndPointConfiguration.DEFAULT_PORT),
                         result -> {
                             if (result.succeeded()) {
-                                System.out.println("Http server completed..");
+                                logger.info("Http server completed..");
                                 fut.complete();
                             } else {
                                 fut.fail(result.cause());
-                                System.out.println("Http server failed..");
+                                logger.warn("Http server failed..");
                             }
                         }
                 );
@@ -119,8 +115,8 @@ public class FsaVerticle extends AbstractVerticle {
         try {
             result = new ObjectMapper().writeValueAsString(resultDto);
         } catch (JsonProcessingException e) {
-            logger.error("error writing json:", e);
-            context.response().end("scanning has failed");
+            logger.error("Error writing json:", e);
+            context.response().end("Scanning has failed");
         }
         context.response().end(result);
     }
@@ -145,7 +141,7 @@ public class FsaVerticle extends AbstractVerticle {
     private FSAConfiguration mergeConfigurations(FSAConfiguration baseFsaConfiguration, HashMap<String, Object> parameterMap) {
         Properties properties = ConfigurationSerializer.getAsProperties(parameterMap);
 
-        invalidProperties.forEach(property->{
+        FSAConfiguration.ignoredWebProperties.forEach(property->{
             if (properties.containsKey(property)) {
                 logger.info("Property "+ property +" will be ignored");
                 properties.remove(property);
