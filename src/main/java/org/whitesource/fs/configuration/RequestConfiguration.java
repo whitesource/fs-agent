@@ -108,7 +108,6 @@ public class RequestConfiguration {
         return getProductToken();
     }
 
-    //WSE-207
     public void setProductName(String value){
         productName = value;
     }

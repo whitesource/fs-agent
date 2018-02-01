@@ -69,14 +69,16 @@ public class ProjectsCalculator {
         //Collection<AgentProjectInfo> projects = agent.createProjects();
 
         Collection<AgentProjectInfo> projects = getAgentProjectsFromRequests(fsaConfiguration);
-        setProjectNamesFromCommandLine(projects, fsaConfiguration.getRequest().getProjectName());
-
+        if (fsaConfiguration.getUseCommandLineProjectName()) {
+            setProjectNamesFromCommandLine(projects, fsaConfiguration.getRequest().getProjectName());
+        }
         // create projects as usual
         ProjectsDetails createdProjects = agent.createProjects();
-        // WSE-207
+
         List<String> offlineRequestFiles = fsaConfiguration.getOfflineRequestFiles();
         if (offlineRequestFiles ==  null || offlineRequestFiles.size() == 0) {
             projects.addAll(createdProjects.getProjects());
+
         }
 
         return new ProjectsDetails(projects, createdProjects.getStatusCode(), createdProjects.getDetails());
@@ -119,9 +121,11 @@ public class ProjectsCalculator {
                     }.getType());
                     logger.info("Reading information from request file {}", requestFile);
                     projects.addAll(updateRequest.getProjects());
-                    // WSE-207
-                    fsaConfiguration.getRequest().setProductName(updateRequest.product());
-                    fsaConfiguration.getRequest().setProductVersion(updateRequest.productVersion());
+                    // updating the product name and version from the offline file
+                    if (!fsaConfiguration.getUseCommandLineProductName()) {
+                        fsaConfiguration.getRequest().setProductName(updateRequest.product());
+                        fsaConfiguration.getRequest().setProductVersion(updateRequest.productVersion());
+                    }
                 } catch (JsonSyntaxException e) {
                     // try to decompress file content
                     try {

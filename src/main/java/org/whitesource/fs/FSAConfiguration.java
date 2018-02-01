@@ -65,6 +65,8 @@ public class FSAConfiguration {
     private final boolean scanPackageManager;
 
     private String logLevel;
+    private boolean useCommandLineProductName;
+    private boolean useCommandLineProjectName;
 
     /* --- Constructors --- */
 
@@ -111,12 +113,16 @@ public class FSAConfiguration {
             if(commandLineArgs.whiteSourceFolder!=null) {
                 config.setProperty(WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
             }
+            commandLineArgsOverride(commandLineArgs);
         } else {
             projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             configFilePath = NONE;
             offlineRequestFiles = new ArrayList<>();
             fileListPath = null;
             dependencyDirs = new ArrayList<>();
+            useCommandLineProjectName = false;
+            useCommandLineProductName = false;
+            commandLineArgsOverride(null);
         }
 
         scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);
@@ -204,6 +210,14 @@ public class FSAConfiguration {
 
     public List<String> getDependencyDirs() {
         return dependencyDirs;
+    }
+
+    public boolean getUseCommandLineProductName(){
+        return useCommandLineProductName;
+    }
+
+    public boolean getUseCommandLineProjectName(){
+        return useCommandLineProjectName;
     }
 
     @JsonProperty(SCAN_PACKAGE_MANAGER)
@@ -309,5 +323,10 @@ public class FSAConfiguration {
         if (StringUtils.isNotBlank(propertyValue)) {
             configProps.put(propertyKey, propertyValue);
         }
+    }
+
+    private void commandLineArgsOverride(CommandLineArgs commandLineArgs){
+        useCommandLineProductName = commandLineArgs != null && StringUtils.isNotBlank(commandLineArgs.product);
+        useCommandLineProjectName = commandLineArgs != null && StringUtils.isNotBlank(commandLineArgs.project);
     }
 }
