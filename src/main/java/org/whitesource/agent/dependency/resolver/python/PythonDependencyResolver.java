@@ -143,7 +143,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             // FSA will read the python offline request
             OfflineReader offlineReader = new OfflineReader();
             String offlineFile = Paths.get(tempDir, WHITESOURCE_OFFLINE_FOLDER, UPDATE_REQUEST_JSON).toString();
-            Collection<AgentProjectInfo> projects = offlineReader.getAgentProjectsFromRequests(Arrays.asList(offlineFile));
+            Collection<AgentProjectInfo> projects = offlineReader.getAgentProjectsFromRequests(Arrays.asList(offlineFile),null);
 
             // add projects to map
             if (projects != null && projects.size() > 0) {

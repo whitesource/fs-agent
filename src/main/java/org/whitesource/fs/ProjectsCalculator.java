@@ -62,7 +62,7 @@ public class ProjectsCalculator {
         //Collection<AgentProjectInfo> projects = agent.createProjects();
 
         OfflineReader offlineReader = new OfflineReader();
-        Collection<AgentProjectInfo> projects = offlineReader.getAgentProjectsFromRequests(fsaConfiguration.getOfflineRequestFiles());
+        Collection<AgentProjectInfo> projects = offlineReader.getAgentProjectsFromRequests(fsaConfiguration.getOfflineRequestFiles(),fsaConfiguration);
         if (fsaConfiguration.getUseCommandLineProjectName()) {
             setProjectNamesFromCommandLine(projects, fsaConfiguration.getRequest().getProjectName());
         }

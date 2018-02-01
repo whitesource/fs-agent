@@ -66,6 +66,7 @@ public class FSAConfiguration {
     private final List<String> offlineRequestFiles;
     private final String fileListPath;
     private final List<String> dependencyDirs;
+    private final String configFilePath;
     private final AgentConfiguration agent;
     private final RequestConfiguration request;
     private final boolean scanPackageManager;
@@ -90,7 +91,7 @@ public class FSAConfiguration {
 
     public FSAConfiguration(Properties config, String[] args) {
         configurationValidation = new ConfigurationValidation();
-        String projectName, configFilePath;
+        String projectName;
         errors = new ArrayList<>();
         if ((args != null)) {
             // read command line args
