@@ -115,7 +115,7 @@ public class FSAConfiguration {
             projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             fileListPath = commandLineArgs.fileListPath;
             dependencyDirs = commandLineArgs.dependencyDirs;
-            if (commandLineArgs.whiteSourceFolder != null) {
+            if (StringUtils.isNotBlank(commandLineArgs.whiteSourceFolder)) {
                 config.setProperty(WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
             }
         } else {
