@@ -53,7 +53,7 @@ public class SenderConfiguration {
             @JsonProperty(FORCE_CHECK_ALL_DEPENDENCIES) boolean forceCheckAllDependencies,
             @JsonProperty(FORCE_UPDATE) boolean forceUpdate,
             @JsonProperty(UPDATE_TYPE) String updateTypeValue,
-            @JsonProperty(UPDATE_TYPE) boolean enableImpactAnalysis){
+            @JsonProperty(ENABLE_IMPACT_ANALYSIS) boolean enableImpactAnalysis){
         this.checkPolicies = checkPolicies;
         this.serviceUrl = serviceUrl;
         this.proxyHost = proxyHost;

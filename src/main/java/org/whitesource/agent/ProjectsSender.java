@@ -117,7 +117,7 @@ public class ProjectsSender {
                     statusCode = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
                 }
                 if (statusCode == StatusCode.SUCCESS) {
-                    resultInfo = update(service,projects);
+                    resultInfo = update(service, projects);
                     logger.info(resultInfo);
                     //strip line separators
                     resultInfo = resultInfo.replace(System.lineSeparator(), "");
@@ -234,7 +234,8 @@ public class ProjectsSender {
 
     private String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
-        UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(),UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProjectVersion(), projects);
+        UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(),
+                UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProjectVersion(), projects);
         return logResult(updateResult);
     }
 

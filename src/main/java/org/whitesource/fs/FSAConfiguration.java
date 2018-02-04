@@ -40,7 +40,7 @@ public class FSAConfiguration {
 
     public static Collection<String> ignoredWebProperties = Arrays.asList(
             SCM_REPOSITORIES_FILE, LOG_LEVEL_KEY, FOLLOW_SYMBOLIC_LINKS, SHOW_PROGRESS_BAR, PROJECT_CONFIGURATION_PATH, SCAN_PACKAGE_MANAGER, WHITESOURCE_FOLDER_PATH,
-            ENDPOINT_ENABLED, ENDPOINT_PORT, ENDPOINT_CERTIFICATE, ENDPOINT_PASS, ENDPOINT_SSL_ENABLED, OFFLINE_PROPERTY_KEY, OFFLINE_ZIP_PROPERTY_KEY, OFFLINE_PRETTY_JSON_KEY);
+            ENDPOINT_ENABLED, ENDPOINT_PORT, ENDPOINT_CERTIFICATE, ENDPOINT_PASS, ENDPOINT_SSL_ENABLED, OFFLINE_PROPERTY_KEY, OFFLINE_ZIP_PROPERTY_KEY, OFFLINE_PRETTY_JSON_KEY, WHITESOURCE_CONFIGURATION);
 
     private static final String FALSE = "false";
     private static final String INFO = "info";
@@ -72,6 +72,8 @@ public class FSAConfiguration {
     private final boolean scanPackageManager;
 
     private String logLevel;
+    private boolean useCommandLineProductName;
+    private boolean useCommandLineProjectName;
 
     /* --- Constructors --- */
 
@@ -99,7 +101,7 @@ public class FSAConfiguration {
             new JCommander(commandLineArgs, args);
 
             if (config == null) {
-                Pair<Properties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath, commandLineArgs.project);
+                Pair<Properties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath);
                 errors.addAll(propertiesWithErrors.getValue());
                 config = propertiesWithErrors.getKey();
                 if (StringUtils.isNotEmpty(commandLineArgs.project)) {
@@ -118,14 +120,14 @@ public class FSAConfiguration {
             if (commandLineArgs.whiteSourceFolder != null) {
                 config.setProperty(WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
             }
+            commandLineArgsOverride(commandLineArgs);
         } else {
             projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             configFilePath = NONE;
             offlineRequestFiles = new ArrayList<>();
             fileListPath = null;
             dependencyDirs = new ArrayList<>();
-
-
+            commandLineArgsOverride(null);
         }
 
         scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);
@@ -160,7 +162,7 @@ public class FSAConfiguration {
         endpoint = new EndPointConfiguration(config);
     }
 
-    public static Pair<Properties, List<String>> readWithError(String configFilePath, String projectName) {
+    public static Pair<Properties, List<String>> readWithError(String configFilePath) {
         Properties configProps = new Properties();
         List<String> errors = new ArrayList<>();
         try {
@@ -174,7 +176,7 @@ public class FSAConfiguration {
                 }
             }
         } catch (IOException e) {
-            errors.add("Error occurred when reading from " + configFilePath + e);
+            errors.add("Error occurred when reading from " + configFilePath + " - " + e);
         }
         return new Pair<>(configProps, errors);
     }
@@ -223,6 +225,14 @@ public class FSAConfiguration {
 
     public List<String> getDependencyDirs() {
         return dependencyDirs;
+    }
+
+    public boolean getUseCommandLineProductName(){
+        return useCommandLineProductName;
+    }
+
+    public boolean getUseCommandLineProjectName(){
+        return useCommandLineProjectName;
     }
 
     @JsonProperty(SCAN_PACKAGE_MANAGER)
@@ -331,6 +341,11 @@ public class FSAConfiguration {
         if (StringUtils.isNotBlank(propertyValue)) {
             configProps.put(propertyKey, propertyValue);
         }
+    }
+
+    private void commandLineArgsOverride(CommandLineArgs commandLineArgs){
+        useCommandLineProductName = commandLineArgs != null && StringUtils.isNotBlank(commandLineArgs.product);
+        useCommandLineProjectName = commandLineArgs != null && StringUtils.isNotBlank(commandLineArgs.project);
     }
 
     public void validate() {
