@@ -29,24 +29,26 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:git@github.com:whitesource/agents.git</connection>
-        <developerConnection>scm:git:git@github.com:whitesource/agents.git</developerConnection>
-        <url>git@github.com:whitesource/agents.git</url>
+        <connection>scm:git:git@github.com:whitesource/fs-agent.git</connection>
+        <developerConnection>scm:git:git@github.com:whitesource/fs-agent.git</developerConnection>
+        <url>git@github.com:whitesource/fs-agent.git</url>
         <tag>HEAD</tag>
     </scm>
     <issueManagement>
-        <url>https://github.com/whitesource/agents/issues</url>
+        <url>https://github.com/whitesource/fs-agent/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
-    <organization>
-        <name>White Source</name>
-        <url>http://www.whitesourcesoftware.com/</url>
-    </organization>
+
     <developers>
         <developer>
             <id>anna.rozin</id>
             <name>Anna Rozin</name>
             <email>anna.rozin@whitesourcesoftware.com</email>
+        </developer>
+        <developer>
+            <id>tom.shapira</id>
+            <name>Tom Shapira</name>
+            <email>tom.shapira@whitesourcesoftware.com</email>
         </developer>
     </developers>
 
