@@ -41,7 +41,15 @@ public class OfflineReader {
     private static final String UTF_8 = "UTF-8";
     private static final String EMPTY_STRING = "";
 
-    public Collection<AgentProjectInfo> getAgentProjectsFromRequests(List<String> offlineRequestFiles, FSAConfiguration fsaConfiguration) {
+    public Collection<AgentProjectInfo> getAgentProjectsFromRequests(FSAConfiguration fsaConfiguration) {
+        return getAgentProjectsFromRequests(fsaConfiguration.getOfflineRequestFiles(),fsaConfiguration);
+    }
+
+    public Collection<AgentProjectInfo> getAgentProjectsFromRequests(List<String> offlineRequestFiles) {
+        return getAgentProjectsFromRequests(offlineRequestFiles,null);
+    }
+
+    private Collection<AgentProjectInfo> getAgentProjectsFromRequests(List<String> offlineRequestFiles, FSAConfiguration fsaConfiguration) {
         Collection<AgentProjectInfo> projects = new LinkedList<>();
 
         List<File> requestFiles = new LinkedList<>();
