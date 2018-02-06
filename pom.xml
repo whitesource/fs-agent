@@ -6,7 +6,7 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>18.1.2-SNAPSHOT</version>
+    <version>18.1.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -27,6 +27,30 @@
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:whitesource/fs-agent.git</connection>
+        <developerConnection>scm:git:git@github.com:whitesource/fs-agent.git</developerConnection>
+        <url>git@github.com:whitesource/fs-agent.git</url>
+        <tag>HEAD</tag>
+    </scm>
+    <issueManagement>
+        <url>https://github.com/whitesource/fs-agent/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
+
+    <developers>
+        <developer>
+            <id>anna.rozin</id>
+            <name>Anna Rozin</name>
+            <email>anna.rozin@whitesourcesoftware.com</email>
+        </developer>
+        <developer>
+            <id>tom.shapira</id>
+            <name>Tom Shapira</name>
+            <email>tom.shapira@whitesourcesoftware.com</email>
+        </developer>
+    </developers>
 
     <dependencies>
         <dependency>
