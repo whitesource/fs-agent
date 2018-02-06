@@ -11,19 +11,19 @@ import java.util.Properties;
 public class ConfigurationValidationTest {
 
     @Test
-    public void shouldWorkWithProjectPerFolder() throws IOException {
+    public void shouldWorkWithProjectPerFolder() {
 
         File tmpPath = TestHelper.getTempFileWithReplace("#projectPerFolder=true", "projectPerFolder=true");
 
         // act
-        Properties configProperties = FSAConfiguration.readWithError(tmpPath.toString(), "").getKey();
+        Properties configProperties = FSAConfiguration.readWithError(tmpPath.toString()).getKey();
 
         // assert
         Assert.assertNotNull(configProperties);
     }
 
     @Test
-    public void shouldNotOverrideParametersFromCommandArgs() throws IOException {
+    public void shouldNotOverrideParametersFromCommandArgs() {
         // arrange
         File tmpPath = TestHelper.getTempFileWithReplace("#projectPerFolder=true", "projectPerFolder=true");
 
