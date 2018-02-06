@@ -192,7 +192,7 @@ public class ProjectsSender {
         }
         int connectionTimeoutMinutes = senderConfig.getConnectionTimeOut();
         final WhitesourceService service = new WhitesourceService(pluginInfo.getAgentType(),pluginInfo.getAgentVersion(),pluginInfo.getPluginVersion(),
-                senderConfig.getServiceUrl(), setProxy, connectionTimeoutMinutes);
+                senderConfig.getServiceUrl(), setProxy, connectionTimeoutMinutes, senderConfig.isIgnoreCertificateCheck());
         if (StringUtils.isNotBlank(senderConfig.getProxyHost())) {
             service.getClient().setProxy(senderConfig.getProxyHost(), senderConfig.getProxyPort(), senderConfig.getProxyUser(), senderConfig.getProxyPassword());
         }

@@ -41,6 +41,7 @@ public class SenderConfiguration {
     private final boolean forceUpdate;
     private final String updateTypeValue;
     private final boolean enableImpactAnalysis;
+    private final boolean ignoreCertificateCheck;
 
     public SenderConfiguration(
             @JsonProperty(CHECK_POLICIES_PROPERTY_KEY) boolean checkPolicies,
@@ -53,7 +54,8 @@ public class SenderConfiguration {
             @JsonProperty(FORCE_CHECK_ALL_DEPENDENCIES) boolean forceCheckAllDependencies,
             @JsonProperty(FORCE_UPDATE) boolean forceUpdate,
             @JsonProperty(UPDATE_TYPE) String updateTypeValue,
-            @JsonProperty(ENABLE_IMPACT_ANALYSIS) boolean enableImpactAnalysis){
+            @JsonProperty(ENABLE_IMPACT_ANALYSIS) boolean enableImpactAnalysis,
+            @JsonProperty(IGNORE_CERTIFICATE_CHECK) boolean ignoreCertificateCheck){
         this.checkPolicies = checkPolicies;
         this.serviceUrl = serviceUrl;
         this.proxyHost = proxyHost;
@@ -65,6 +67,7 @@ public class SenderConfiguration {
         this.forceUpdate = forceUpdate;
         this.updateTypeValue = updateTypeValue;
         this.enableImpactAnalysis = enableImpactAnalysis;
+        this.ignoreCertificateCheck = ignoreCertificateCheck;
     }
 
     public SenderConfiguration(Properties config) {
@@ -88,6 +91,7 @@ public class SenderConfiguration {
 
         proxyUser = config.getProperty(PROXY_USER_PROPERTY_KEY);
         proxyPassword = config.getProperty(PROXY_PASS_PROPERTY_KEY);
+        ignoreCertificateCheck = FSAConfiguration.getBooleanProperty(config, IGNORE_CERTIFICATE_CHECK, false);
     }
 
     @JsonProperty(SERVICE_URL_KEYWORD)
@@ -143,5 +147,10 @@ public class SenderConfiguration {
     @JsonProperty(ENABLE_IMPACT_ANALYSIS)
     public boolean isEnableImpactAnalysis() {
         return enableImpactAnalysis;
+    }
+
+    @JsonProperty(IGNORE_CERTIFICATE_CHECK)
+    public boolean isIgnoreCertificateCheck() {
+        return ignoreCertificateCheck;
     }
 }
