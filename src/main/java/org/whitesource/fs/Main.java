@@ -23,12 +23,15 @@ import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.ProjectsSender;
+import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
+import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.web.FsaVerticle;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Author: Itai Marko
@@ -93,12 +96,43 @@ public class Main {
         }
 
         ProjectsDetails result = projectsCalculator.getAllProjects(fsaConfiguration);
+
+        OfflineReader offlineReader = new OfflineReader();
+        Collection<UpdateInventoryRequest> updateInventoryRequests = offlineReader.getAgentProjectsFromRequests(fsaConfiguration.getOfflineRequestFiles());
+        Collection<AgentProjectInfo> projects = updateInventoryRequests.stream().flatMap(updateInventoryRequest -> updateInventoryRequest.getProjects().stream()).collect(Collectors.toList());
+
+        // WSE-207
+        if (fsaConfiguration.getOfflineRequestFiles() ==  null || fsaConfiguration.getOfflineRequestFiles().size() == 0) {
+        }else{
+            // in case of offline requests remove other
+            result.getProjects().clear();
+        }
+        result.getProjects().addAll(projects);
+
+        if (fsaConfiguration.getUseCommandLineProjectName()) {
+            // change project name from command line in case the user sent name via commandLine
+            String projectName = fsaConfiguration.getRequest().getProjectName();
+            if (projects.size() == 1 && projectName != null) {
+                for (AgentProjectInfo project : projects) {
+                    project.getCoordinates().setArtifactId(projectName);
+                }
+            }
+        }
+
+        RequestConfiguration req = fsaConfiguration.getRequest();
+        // updating the product name and version from the offline file
+        if (fsaConfiguration != null && !fsaConfiguration.getUseCommandLineProductName() && updateInventoryRequests.size() > 0) {
+            UpdateInventoryRequest offLineReq = updateInventoryRequests.stream().findFirst().get();
+            req = new RequestConfiguration(req.getApiToken(), req.getRequesterEmail(), req.isProjectPerSubFolder(), req.getProjectName(),
+                    req.getProjectToken(), req.getProjectVersion(), offLineReq.product(), null, offLineReq.productVersion(), req.getAppPath());
+        }
+
         if (!result.getStatusCode().equals(StatusCode.SUCCESS)) {
             return new ProjectsDetails(result.getProjects(), result.getStatusCode(), "");
         }
 
         if (shouldSend) {
-            ProjectsSender projectsSender = new ProjectsSender(fsaConfiguration.getSender(), fsaConfiguration.getOffline() ,fsaConfiguration.getRequest(), new FileSystemAgentInfo());
+            ProjectsSender projectsSender = new ProjectsSender(fsaConfiguration.getSender(), fsaConfiguration.getOffline(), req, new FileSystemAgentInfo());
             Pair<String, StatusCode> processExitCode = sendProjects(projectsSender, result.getProjects());
             logger.debug("Process finished with exit code {} ({})", processExitCode.getKey(), processExitCode.getValue());
             return new ProjectsDetails(new ArrayList<>(), processExitCode.getValue(), processExitCode.getKey());

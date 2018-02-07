@@ -20,11 +20,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.api.model.AgentProjectInfo;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class ProjectsCalculator {
@@ -59,33 +57,7 @@ public class ProjectsCalculator {
 
         // run the agent
         FileSystemAgent agent = new FileSystemAgent(fsaConfiguration, files);
-        //Collection<AgentProjectInfo> projects = agent.createProjects();
-
-        OfflineReader offlineReader = new OfflineReader();
-        Collection<AgentProjectInfo> projects = offlineReader.getAgentProjectsFromRequests(fsaConfiguration);
-        if (fsaConfiguration.getUseCommandLineProjectName()) {
-            setProjectNamesFromCommandLine(projects, fsaConfiguration.getRequest().getProjectName());
-        }
         // create projects as usual
-        ProjectsDetails createdProjects = agent.createProjects();
-
-        List<String> offlineRequestFiles = fsaConfiguration.getOfflineRequestFiles();
-        if (offlineRequestFiles ==  null || offlineRequestFiles.size() == 0) {
-            projects.addAll(createdProjects.getProjects());
-
-        }
-
-        return new ProjectsDetails(projects, createdProjects.getStatusCode(), createdProjects.getDetails());
-    }
-
-    /* --- Private methods --- */
-
-    private void setProjectNamesFromCommandLine(Collection<AgentProjectInfo> projects, String projectName) {
-    // change project name from command line in case the user sent name via commandLine
-        if(projects.size() == 1 && projectName != null) {
-            for (AgentProjectInfo project : projects) {
-                project.getCoordinates().setArtifactId(projectName);
-            }
-        }
+        return agent.createProjects();
     }
 }

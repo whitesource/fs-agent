@@ -64,7 +64,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private static final String SHASUM = "shasum";
 
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractDependencyResolver.class);
+    private static final Logger logger = LoggerFactory.getLogger(NpmDependencyResolver.class);
     private static final String EXCLUDE_TOP_FOLDER = "node_modules";
     private static final String EMPTY_STRING = "";
     private static final int NUM_THREADS = 8;
@@ -79,7 +79,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Constructor --- */
 
-    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector,boolean runPreStep) {
+    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector, boolean runPreStep) {
         super();
         bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector);
         bomParser = new NpmBomParser();
@@ -89,7 +89,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     public NpmDependencyResolver(boolean runPreStep) {
-        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep);
+        this(false, true, NPM_DEFAULT_LS_TIMEOUT, runPreStep);
     }
 
     /* --- Overridden methods --- */
@@ -111,7 +111,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
 
-        if(runPreStep) {
+        if (runPreStep) {
             getDependencyCollector().executePreparationStep(topLevelFolder);
             String[] excludesArray = new String[getExcludes().size()];
             excludesArray = getExcludes().toArray(excludesArray);
@@ -143,7 +143,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         logger.debug("Trying to collect dependencies via 'npm ls'");
         // try to collect dependencies via 'npm ls'
         Collection<AgentProjectInfo> projects = getDependencyCollector().collectDependencies(topLevelFolder);
-        Collection<DependencyInfo> dependencies = projects.stream().flatMap(project->project.getDependencies().stream()).collect(Collectors.toList());
+        Collection<DependencyInfo> dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
 
         boolean lsSuccess = dependencies.size() > 0;
         if (lsSuccess) {
@@ -160,7 +160,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         if (!dependencies.isEmpty()) {
             if (ignoreJavaScriptFiles) {
                 //return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
-                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN),null));
+                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN), null));
             } else {
                 excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN), EXCLUDE_TOP_FOLDER));
             }
