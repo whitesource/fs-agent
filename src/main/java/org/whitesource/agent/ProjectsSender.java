@@ -268,7 +268,11 @@ public class ProjectsSender {
             logger.info("UpdateType offline set to {} ", updateTypeFinal);
             updateRequest.setUpdateType(updateTypeFinal);
 
-            File outputDir = new File(offlineConfig.getWhiteSourceFolderPath());
+            File outputDir = new File(offlineConfig.getWhiteSourceFolderPath()).getAbsoluteFile();
+            if (!outputDir.exists() && !outputDir.mkdir()) {
+                throw new IOException("Unable to make output directory: " + outputDir);
+            }
+
             File file = offlineUpdateRequest.generate(outputDir, offlineConfig.isZip(), offlineConfig.isPrettyJson());
 
             resultInfo = "Offline request generated successfully at " + file.getPath();
