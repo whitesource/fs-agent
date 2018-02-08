@@ -90,7 +90,7 @@ public class FileSystemAgent {
     /* --- Overridden methods --- */
 
     public ProjectsDetails createProjects() {
-        ProjectsDetails projects = null;
+        ProjectsDetails projects;
         if (projectPerSubFolder) {
             projects = new ProjectsDetails(new ArrayList<>(), StatusCode.SUCCESS, "");
             for (String directory : dependencyDirs) {

@@ -11,7 +11,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <agent.api.version>2.5.8</agent.api.version>
+        <agent.api.version>2.5.9</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
     </properties>
 
@@ -74,7 +74,7 @@
         <dependency>
             <groupId>org.whitesource</groupId>
             <artifactId>maven-dependency-tree-parser</artifactId>
-            <version>1.0.4</version>
+            <version>1.0.5</version>
         </dependency>
 
         <!-- WhiteSource -->
