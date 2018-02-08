@@ -35,6 +35,7 @@ public class ResolverConfiguration {
              @JsonProperty(NPM_INCLUDE_DEV_DEPENDENCIES) boolean npmIncludeDevDependencies,
              @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES) boolean npmIgnoreJavaScriptFiles,
              @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS) long npmTimeoutDependenciesCollector,
+             @JsonProperty(NPM_IGNORE_NPM_LS_ERRORS) boolean npmIgnoreNpmLsErrors,
 
              @JsonProperty(BOWER_RESOLVE_DEPENDENCIES) boolean bowerResolveDependencies,
              @JsonProperty(BOWER_RUN_PRE_STEP) boolean bowerRunPreStep,
@@ -53,6 +54,7 @@ public class ResolverConfiguration {
         this.npmIncludeDevDependencies = npmIncludeDevDependencies;
         this.npmIgnoreJavaScriptFiles = npmIgnoreJavaScriptFiles;
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
+        this.npmIgnoreNpmLsErrors = npmIgnoreNpmLsErrors;
 
         this.bowerResolveDependencies = bowerResolveDependencies;
         this.bowerRunPreStep = bowerRunPreStep;
@@ -74,6 +76,7 @@ public class ResolverConfiguration {
         npmIncludeDevDependencies = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
         npmIgnoreJavaScriptFiles = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
         npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
+        npmIgnoreNpmLsErrors = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_NPM_LS_ERRORS, false);
         bowerResolveDependencies = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
         bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
         nugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
@@ -91,6 +94,7 @@ public class ResolverConfiguration {
     private boolean npmIncludeDevDependencies;
     private boolean npmIgnoreJavaScriptFiles;
     private long npmTimeoutDependenciesCollector;
+    private boolean npmIgnoreNpmLsErrors;
     private boolean bowerResolveDependencies;
     private boolean bowerRunPreStep;
     private boolean nugetResolveDependencies;
@@ -126,6 +130,11 @@ public class ResolverConfiguration {
     @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS)
     public long getNpmTimeoutDependenciesCollector() {
         return npmTimeoutDependenciesCollector;
+    }
+
+    @JsonProperty(NPM_IGNORE_NPM_LS_ERRORS)
+    public boolean getNpmIgnoreNpmLsErrors() {
+        return npmIgnoreNpmLsErrors;
     }
 
     @JsonProperty(BOWER_RESOLVE_DEPENDENCIES)

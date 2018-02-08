@@ -63,14 +63,16 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     /* --- Members --- */
 
     protected final boolean includeDevDependencies;
+    protected final boolean ignoreNpmLsErrors;
     private boolean showNpmLsError;
     private final long npmTimeoutDependenciesCollector;
 
     /* --- Constructors --- */
 
-    public NpmLsJsonDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector) {
+    public NpmLsJsonDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector, boolean ignoreNpmLsErrors) {
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
         this.includeDevDependencies = includeDevDependencies;
+        this.ignoreNpmLsErrors = ignoreNpmLsErrors;
     }
 
     /* --- Public methods --- */
@@ -86,8 +88,11 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
             for (String line : lines) {
                 json.append(line);
             }
-            if (json != null && json.length() > 0 && !npmLs.isErrorInProcess()) {
+            if (json != null && json.length() > 0 && (!npmLs.isErrorInProcess() || this.ignoreNpmLsErrors)) {
                 logger.debug("'npm ls' output is not empty");
+                if(npmLs.isErrorInProcess() && this.ignoreNpmLsErrors) {
+                    logger.info("Ignore errors of 'npm ls'");
+                }
                 dependencies.addAll(getDependencies(new JSONObject(json.toString())));
             }
         } catch (IOException e) {
