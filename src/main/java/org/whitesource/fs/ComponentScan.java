@@ -5,11 +5,13 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
-import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Properties;
 
 
 /**
@@ -64,8 +66,9 @@ public class ComponentScan {
             logger.info("Resolving dependencies");
             Collection<AgentProjectInfo> projects = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent()).createProjects(
                     scannerBaseDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getAgent().getArchiveExtractionDepth(),
-                    fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(), followSymlinks, excludedCopyrights,
-                    fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(), fsaConfiguration.getAgent().isCalculateMd5());
+                    fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(),
+                    followSymlinks, excludedCopyrights, fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(),
+                    fsaConfiguration.getAgent().isCalculateMd5(), fsaConfiguration.getResolver().getNpmAccessToken());
             logger.info("Finished dependency resolution");
             for (AgentProjectInfo project : projects) {
 //                project.setCoordinates(new Coordinates());

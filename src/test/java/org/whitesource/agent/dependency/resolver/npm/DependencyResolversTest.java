@@ -63,7 +63,7 @@ public class DependencyResolversTest {
 
         ResolverConfiguration resolverConfiguration = new ResolverConfiguration(props);
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(resolverConfiguration);
-        return dependencyResolutionService.resolveDependencies(pathsToScan, new String[0]);
+        return dependencyResolutionService.resolveDependencies(pathsToScan, new String[0], null);
     }
 
     private void testBowerResolve(boolean checkChildren) {
@@ -78,7 +78,7 @@ public class DependencyResolversTest {
         ResolverConfiguration resolverConfiguration = new ResolverConfiguration(props);
 
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(resolverConfiguration);
-        List<ResolutionResult> results = dependencyResolutionService.resolveDependencies(Arrays.asList(folderParent), new String[0]);
+        List<ResolutionResult> results = dependencyResolutionService.resolveDependencies(Arrays.asList(folderParent), new String[0],null);
 
         TestHelper.testDependencyResult(checkChildren, results);
     }

@@ -65,7 +65,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     /* --- Overridden methods --- */
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles) {
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles, String npmAccessToken) {
         Collection<NugetPackages> allConfigNugetPackages = parseNugetPackageFiles(configFiles);
         Set<DependencyInfo> dependencies = new HashSet<>();
 
