@@ -97,7 +97,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     public NpmDependencyResolver(boolean runPreStep) {
-        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, null, null);
+        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, null, false);
     }
 
     /* --- Overridden methods --- */
