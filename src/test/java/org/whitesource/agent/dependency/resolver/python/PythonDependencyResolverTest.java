@@ -23,7 +23,7 @@ public class PythonDependencyResolverTest {
         File setupPyFile = TestHelper.getFileFromResources("resolver/python/sample/test.py");
 
         PythonDependencyResolver pythonDependencyResolver = new PythonDependencyResolver();
-        ResolutionResult projectsDetails = pythonDependencyResolver.resolveDependencies(setupPyFile.getParentFile().getParent(), setupPyFile.getParent(), Stream.of(setupPyFile.toString()).collect(Collectors.toSet()));
+        ResolutionResult projectsDetails = pythonDependencyResolver.resolveDependencies(setupPyFile.getParentFile().getParent(), setupPyFile.getParent(), Stream.of(setupPyFile.toString()).collect(Collectors.toSet()), null);
 
         Assert.assertNotNull(projectsDetails);
 

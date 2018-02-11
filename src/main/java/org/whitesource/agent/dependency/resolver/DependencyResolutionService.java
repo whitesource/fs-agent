@@ -51,29 +51,30 @@ public class DependencyResolutionService {
     /* --- Constructors --- */
 
     public DependencyResolutionService(ResolverConfiguration config) {
-        final boolean npmRunPreStep = config.isNpmRunPreStep();
-        final boolean npmResolveDependencies = config.isNpmResolveDependencies();
-        final boolean npmIncludeDevDependencies = config.isNpmIncludeDevDependencies();
-        final boolean npmIgnoreJavaScriptFiles = config.isNpmIgnoreJavaScriptFiles();
-        final long npmTimeoutDependenciesCollector = config.getNpmTimeoutDependenciesCollector();
+        final boolean npmRunPreStep                 = config.isNpmRunPreStep();
+        final boolean npmResolveDependencies        = config.isNpmResolveDependencies();
+        final boolean npmIncludeDevDependencies     = config.isNpmIncludeDevDependencies();
+        final boolean npmIgnoreJavaScriptFiles      = config.isNpmIgnoreJavaScriptFiles();
+        final long npmTimeoutDependenciesCollector  = config.getNpmTimeoutDependenciesCollector();
+        final String npmAccessToken                 = config.getNpmAccessToken();
 
-        final boolean bowerResolveDependencies = config.isBowerResolveDependencies();
-        final boolean bowerRunPreStep = config.isBowerRunPreStep();
+        final boolean bowerResolveDependencies      = config.isBowerResolveDependencies();
+        final boolean bowerRunPreStep               = config.isBowerRunPreStep();
 
-        final boolean nugetResolveDependencies = config.isNugetResolveDependencies();
+        final boolean nugetResolveDependencies      = config.isNugetResolveDependencies();
 
-        final boolean mavenResolveDependencies = config.isMavenResolveDependencies();
-        final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
-        final boolean mavenAggregateModules = config.isMavenAggregateModules();
+        final boolean mavenResolveDependencies      = config.isMavenResolveDependencies();
+        final String[] mavenIgnoredScopes           = config.getMavenIgnoredScopes();
+        final boolean mavenAggregateModules         = config.isMavenAggregateModules();
 
-        boolean pythonResolveDependecies = config.isPythonResolveDependencies();
+        boolean pythonResolveDependencies           = config.isPythonResolveDependencies();
 
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmAccessToken));
         }
         if (bowerResolveDependencies) {
             dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep));
@@ -87,7 +88,7 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, dependenciesOnly));
             separateProjects = !mavenAggregateModules;
         }
-        if (pythonResolveDependecies) {
+        if (pythonResolveDependencies) {
             dependencyResolvers.add(new PythonDependencyResolver());
         }
     }
@@ -114,7 +115,7 @@ public class DependencyResolutionService {
         return false;
     }
 
-    public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes) {
+    public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes, String npmAccessToken) {
         Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap = new HashMap<>();
         dependencyResolvers.forEach(dependencyResolver -> {
             // add resolver excludes
@@ -137,7 +138,7 @@ public class DependencyResolutionService {
 
         topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
-                ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
+                ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles, npmAccessToken);
                 resolutionResults.add(result);
             });
         });

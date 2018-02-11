@@ -35,6 +35,7 @@ public class ResolverConfiguration {
              @JsonProperty(NPM_INCLUDE_DEV_DEPENDENCIES) boolean npmIncludeDevDependencies,
              @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES) boolean npmIgnoreJavaScriptFiles,
              @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS) long npmTimeoutDependenciesCollector,
+             @JsonProperty(NPM_ACCESS_TOKEN) String npmAccessToken,
 
              @JsonProperty(BOWER_RESOLVE_DEPENDENCIES) boolean bowerResolveDependencies,
              @JsonProperty(BOWER_RUN_PRE_STEP) boolean bowerRunPreStep,
@@ -53,6 +54,7 @@ public class ResolverConfiguration {
         this.npmIncludeDevDependencies = npmIncludeDevDependencies;
         this.npmIgnoreJavaScriptFiles = npmIgnoreJavaScriptFiles;
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
+        this.npmAccessToken = npmAccessToken;
 
         this.bowerResolveDependencies = bowerResolveDependencies;
         this.bowerRunPreStep = bowerRunPreStep;
@@ -68,20 +70,21 @@ public class ResolverConfiguration {
     }
 
     public ResolverConfiguration(Properties config) {
-        npmRunPreStep = FSAConfiguration.getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
-        pythonResolveDependencies = FSAConfiguration.getBooleanProperty(config, PYTHON_RESOLVE_DEPENDENCIES, true);
-        npmResolveDependencies = FSAConfiguration.getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
-        npmIncludeDevDependencies = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
-        npmIgnoreJavaScriptFiles = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
+        npmRunPreStep                   = FSAConfiguration.getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
+        pythonResolveDependencies       = FSAConfiguration.getBooleanProperty(config, PYTHON_RESOLVE_DEPENDENCIES, true);
+        npmResolveDependencies          = FSAConfiguration.getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
+        npmIncludeDevDependencies       = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
+        npmIgnoreJavaScriptFiles        = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
         npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
-        bowerResolveDependencies = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
-        bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
-        nugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
-        mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
-        mavenIgnoredScopes = FSAConfiguration.getListProperty(config, MAVEN_IGNORED_SCOPES, null);
-        mavenAggregateModules = FSAConfiguration.getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
-        dependenciesOnly = FSAConfiguration.getBooleanProperty(config, DEPENDENCIES_ONLY, false);
-        whitesourceConfiguration = config.getProperty(PROJECT_CONFIGURATION_PATH);
+        npmAccessToken                  = config.getProperty(NPM_ACCESS_TOKEN);
+        bowerResolveDependencies        = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
+        bowerRunPreStep                 = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
+        nugetResolveDependencies        = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
+        mavenResolveDependencies        = FSAConfiguration.getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
+        mavenIgnoredScopes              = FSAConfiguration.getListProperty(config, MAVEN_IGNORED_SCOPES, null);
+        mavenAggregateModules           = FSAConfiguration.getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
+        dependenciesOnly                = FSAConfiguration.getBooleanProperty(config, DEPENDENCIES_ONLY, false);
+        whitesourceConfiguration        = config.getProperty(PROJECT_CONFIGURATION_PATH);
     }
 
     /* --- Members --- */
@@ -90,6 +93,7 @@ public class ResolverConfiguration {
     private boolean npmResolveDependencies;
     private boolean npmIncludeDevDependencies;
     private boolean npmIgnoreJavaScriptFiles;
+    private String npmAccessToken;
     private long npmTimeoutDependenciesCollector;
     private boolean bowerResolveDependencies;
     private boolean bowerRunPreStep;
@@ -127,6 +131,9 @@ public class ResolverConfiguration {
     public long getNpmTimeoutDependenciesCollector() {
         return npmTimeoutDependenciesCollector;
     }
+
+    @JsonProperty(NPM_ACCESS_TOKEN)
+    public String getNpmAccessToken() { return npmAccessToken; }
 
     @JsonProperty(BOWER_RESOLVE_DEPENDENCIES)
     public boolean isBowerResolveDependencies() {
