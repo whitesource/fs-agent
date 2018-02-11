@@ -103,11 +103,11 @@ public class Main {
 
         // WSE-207
         if (fsaConfiguration.getOfflineRequestFiles() ==  null || fsaConfiguration.getOfflineRequestFiles().size() == 0) {
+            projects.addAll(result.getProjects());
         }else{
             // in case of offline requests remove other
-            result.getProjects().clear();
         }
-        result.getProjects().addAll(projects);
+        result.setProjects(projects);
 
         if (fsaConfiguration.getUseCommandLineProjectName()) {
             // change project name from command line in case the user sent name via commandLine

@@ -36,6 +36,7 @@ public class ResolverConfiguration {
              @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES) boolean npmIgnoreJavaScriptFiles,
              @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS) long npmTimeoutDependenciesCollector,
              @JsonProperty(NPM_ACCESS_TOKEN) String npmAccessToken,
+             @JsonProperty(NPM_IGNORE_NPM_LS_ERRORS) boolean npmIgnoreNpmLsErrors,
 
              @JsonProperty(BOWER_RESOLVE_DEPENDENCIES) boolean bowerResolveDependencies,
              @JsonProperty(BOWER_RUN_PRE_STEP) boolean bowerRunPreStep,
@@ -55,6 +56,7 @@ public class ResolverConfiguration {
         this.npmIgnoreJavaScriptFiles = npmIgnoreJavaScriptFiles;
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
         this.npmAccessToken = npmAccessToken;
+        this.npmIgnoreNpmLsErrors = npmIgnoreNpmLsErrors;
 
         this.bowerResolveDependencies = bowerResolveDependencies;
         this.bowerRunPreStep = bowerRunPreStep;
@@ -76,6 +78,7 @@ public class ResolverConfiguration {
         npmIncludeDevDependencies       = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
         npmIgnoreJavaScriptFiles        = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
         npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
+        npmIgnoreNpmLsErrors            = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_NPM_LS_ERRORS, false);
         npmAccessToken                  = config.getProperty(NPM_ACCESS_TOKEN);
         bowerResolveDependencies        = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
         bowerRunPreStep                 = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
@@ -95,6 +98,7 @@ public class ResolverConfiguration {
     private boolean npmIgnoreJavaScriptFiles;
     private String npmAccessToken;
     private long npmTimeoutDependenciesCollector;
+    private boolean npmIgnoreNpmLsErrors;
     private boolean bowerResolveDependencies;
     private boolean bowerRunPreStep;
     private boolean nugetResolveDependencies;
@@ -134,6 +138,11 @@ public class ResolverConfiguration {
 
     @JsonProperty(NPM_ACCESS_TOKEN)
     public String getNpmAccessToken() { return npmAccessToken; }
+
+    @JsonProperty(NPM_IGNORE_NPM_LS_ERRORS)
+    public boolean getNpmIgnoreNpmLsErrors() {
+        return npmIgnoreNpmLsErrors;
+    }
 
     @JsonProperty(BOWER_RESOLVE_DEPENDENCIES)
     public boolean isBowerResolveDependencies() {

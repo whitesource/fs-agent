@@ -42,15 +42,11 @@ public class ProjectsDetails {
         return details;
     }
 
-    public void setStatusCode(StatusCode statusCode) {
-        this.statusCode = statusCode;
+    public void setProjects(Collection<AgentProjectInfo> projects) {
+        this.projects = projects;
     }
 
     public Collection<AgentProjectInfo> getProjects() {
         return projects;
-    }
-
-    public void setProjects(Collection<AgentProjectInfo> projects) {
-        this.projects = projects;
     }
 }

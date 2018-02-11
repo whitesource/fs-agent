@@ -86,9 +86,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Constructor --- */
 
-    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector, boolean runPreStep, String accessToken) {
+    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector, boolean runPreStep, String accessToken, boolean npmIgnoreNpmLsErrors) {
         super();
-        bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector);
+        bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, npmIgnoreNpmLsErrors);
         bomParser = new NpmBomParser();
         this.ignoreJavaScriptFiles = ignoreJavaScriptFiles;
         this.runPreStep = runPreStep;
@@ -97,7 +97,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     public NpmDependencyResolver(boolean runPreStep) {
-        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, null);
+        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, null, null);
     }
 
     /* --- Overridden methods --- */

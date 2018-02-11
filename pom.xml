@@ -74,7 +74,7 @@
         <dependency>
             <groupId>org.whitesource</groupId>
             <artifactId>maven-dependency-tree-parser</artifactId>
-            <version>1.0.4</version>
+            <version>1.0.5</version>
         </dependency>
 
         <!-- WhiteSource -->
