@@ -24,7 +24,7 @@ public class ComponentScan {
     private static final Logger logger = LoggerFactory.getLogger(ComponentScan.class);
     public static final String DIRECTORY_NOT_SET = "Directory parameter 'd' is not set" + StatusCode.ERROR;
     public static final String EMPTY_PROJECT_TOKEN = "";
-    public static final String SPACE = " ";
+    public static final String FOLDER_DELIMITER = ",";
 
     /* --- Members --- */
     private  Properties config;
@@ -41,7 +41,7 @@ public class ComponentScan {
     public String scan() {
         logger.info("Starting Analysis - component scan has started");
         String directory = config.getProperty("d");
-        String[] directories = directory.split(SPACE);
+        String[] directories = directory.split(FOLDER_DELIMITER);
         ArrayList<String> scannerBaseDirs = new ArrayList<>(Arrays.asList(directories));
         if (!scannerBaseDirs.isEmpty()) {
             logger.info("Getting properties");
