@@ -121,6 +121,11 @@ public class BomFile {
             return StringUtils.EMPTY;
         }
         logger.debug("resolved url in file = " + this.resolved);
+        if (this.resolved.contains("git+") || this.resolved.contains("github:")) {
+            // temp solution for WSE-204
+            logger.debug("package is from github - unable to resolve the URL");
+            return StringUtils.EMPTY;
+        }
         if (this.resolved.contains(SCOPED_PACKAGE) || this.resolved.indexOf(NPM_REGISTRY) == -1) {
             // resolve rare cases where the package's name is a sub-string of the registry's url
             int npmRegistryIndex = this.resolved.indexOf(NPM_REGISTRY1);
