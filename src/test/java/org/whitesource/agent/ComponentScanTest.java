@@ -22,7 +22,7 @@ public class ComponentScanTest {
         Properties props = TestHelper.getPropertiesFromFile();
         props.put("includes", "**/*.cs");
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
-        String resolverFolder = Paths.get(config.getParent(), "resolver\\nuget").toString();
+        String resolverFolder = Paths.get(config.getParent(), "resolver/nuget").toString();
         props.put("d", resolverFolder);
         ComponentScan componentScan = new ComponentScan(props);
 
