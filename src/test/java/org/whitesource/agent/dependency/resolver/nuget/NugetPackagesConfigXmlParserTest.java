@@ -20,32 +20,23 @@ import java.util.List;
  */
 public class NugetPackagesConfigXmlParserTest {
 
-    /* --- Static members --- */
-
-    private static final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
-
-
     /* --- Tests --- */
 
     @Test
     public void parseNugetDependenciesFromXml() throws JAXBException {
-        File xmlFile = TestHelper.getFileFromResources("resolver/nuget/file.xml");
+        File xmlFile = TestHelper.getFileFromResources("resolver/nuget/project-name.config");
         JAXBContext jaxbContext = JAXBContext.newInstance(NugetPackages.class);
 
         Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
         jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
         NugetPackages testNugetPackages = createDummyObject();
         jaxbMarshaller.marshal(testNugetPackages, xmlFile);
-//        jaxbMarshaller.marshal(testNugetPackages, System.out); // // console output pretty printed
-
 
         NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(xmlFile, NugetConfigFileType.CONFIG_FILE_TYPE);
 
         NugetPackages packages = parser.parsePackagesConfigFile();
         Assert.assertNotNull("Object was deserialized", packages);
         Assert.assertEquals(5, packages.getNugets().size());
-
-        //xmlFile.delete();
     }
 
 

@@ -105,12 +105,11 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     private Collection<NugetPackages> parseNugetPackageFiles(Set<String> configFilesPath) {
         // get configuration file path
-        String whitesourceConfigurationPath = new File(whitesourceConfiguration).getAbsolutePath();
-
         Collection<NugetPackages> nugetPackages = new ArrayList<>();
         for (String configFilePath : configFilesPath) {
             // don't scan the whitesource configuration file
-            if (!whitesourceConfigurationPath.equals(configFilePath)) {
+            // sometimes FSA is called from outside and there is no config file
+            if (whitesourceConfiguration == null || !new File(whitesourceConfiguration).getAbsolutePath().equals(configFilePath)) {
                 File configFile = new File(configFilePath);
                 // check filename again (just in case)
                 if (!configFile.getName().equals(CommandLineArgs.CONFIG_FILE_NAME)) {
