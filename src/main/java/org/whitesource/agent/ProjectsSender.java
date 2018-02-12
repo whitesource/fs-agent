@@ -111,31 +111,35 @@ public class ProjectsSender {
 //            if (senderConfig.isEnableImpactAnalysis()) {
 //                runViaAnalysis(projects, service);
 //            }
-            try {
-                if (senderConfig.isCheckPolicies()) {
-                    boolean policyCompliance = checkPolicies(service, projects);
-                    statusCode = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
+            int retries = senderConfig.getConnectionRetries();
+            while (retries-- > -1) {
+                try {
+                    statusCode = checkPolicies(service, projects);
+                    if (statusCode == StatusCode.SUCCESS) {
+                        resultInfo = update(service, projects);
+                    }
+                    retries = -1;
+                } catch (WssServiceException e) {
+                    if (e.getCause() != null &&
+                            e.getCause().getClass().getCanonicalName().substring(0, e.getCause().getClass().getCanonicalName().lastIndexOf(DOT)).equals(JAVA_NETWORKING)) {
+                        statusCode = StatusCode.CONNECTION_FAILURE;
+                    } else {
+                        statusCode = StatusCode.SERVER_FAILURE;
+                    }
+                    resultInfo = "Failed to send request to WhiteSource server: " + e.getMessage();
+                    logger.error(resultInfo, e);
+                    logger.error("Trying " + (retries + 1) + " more time" + (retries != 0 ? "s" : ""));
+                    if (retries > -1) {
+                        try {
+                            Thread.sleep(senderConfig.getConnectionRetriesIntervals());
+                        } catch (InterruptedException e1) {
+                            logger.error("Failed to sleep while retrying to connect to server " + e1.getMessage(), e1);
+                        }
+                    }
                 }
-                if (statusCode == StatusCode.SUCCESS) {
-                    resultInfo = update(service, projects);
-                    logger.info(resultInfo);
-                    //strip line separators
-                    resultInfo = resultInfo.replace(System.lineSeparator(), "");
-                }
-            } catch (WssServiceException e) {
-                if (e.getCause() != null &&
-                        e.getCause().getClass().getCanonicalName().substring(0, e.getCause().getClass().getCanonicalName().lastIndexOf(DOT)).equals(JAVA_NETWORKING)) {
-                    statusCode = StatusCode.CONNECTION_FAILURE;
-                } else {
-                    statusCode = StatusCode.SERVER_FAILURE;
-                }
-
-                resultInfo = "Failed to send request to WhiteSource server: " + e.getMessage();
-                logger.error(resultInfo, e);
-            } finally {
-                if (service != null) {
-                    service.shutdown();
-                }
+            }
+            if (service != null) {
+                service.shutdown();
             }
             if (statusCode == StatusCode.SUCCESS) {
                 return new Pair<>(resultInfo, this.prepStepStatusCode);
@@ -199,44 +203,49 @@ public class ProjectsSender {
         return service;
     }
 
-    private boolean checkPolicies(WhitesourceService service,
+    private StatusCode checkPolicies(WhitesourceService service,
                                   Collection<AgentProjectInfo> projects) throws WssServiceException {
         boolean policyCompliance = true;
-        logger.info("Checking policies");
-        CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies());
-        if (checkPoliciesResult.hasRejections()) {
-            if (senderConfig.isForceUpdate()) {
-                logger.info("Some dependencies violate open source policies, however all were force " +
-                        "updated to organization inventory.");
+        if (senderConfig.isCheckPolicies()) {
+            logger.info("Checking policies");
+            CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies());
+            if (checkPoliciesResult.hasRejections()) {
+                if (senderConfig.isForceUpdate()) {
+                    logger.info("Some dependencies violate open source policies, however all were force " +
+                            "updated to organization inventory.");
+                } else {
+                    logger.info("Some dependencies did not conform with open source policies, review report for details");
+                    logger.info("=== UPDATE ABORTED ===");
+                    policyCompliance = false;
+                }
             } else {
-                logger.info("Some dependencies did not conform with open source policies, review report for details");
-                logger.info("=== UPDATE ABORTED ===");
-                policyCompliance = false;
+                logger.info("All dependencies conform with open source policies.");
             }
-        } else {
-            logger.info("All dependencies conform with open source policies.");
+
+            try {
+                // generate report
+                PolicyCheckReport report = new PolicyCheckReport(checkPoliciesResult);
+
+                File outputDir = new File(offlineConfig.getWhiteSourceFolderPath());
+                report.generate(outputDir, false);
+                report.generateJson(outputDir);
+                logger.info("Policies report generated successfully");
+            } catch (IOException e) {
+                logger.error("Error generating check policies report: " + e.getMessage(), e);
+            }
         }
-
-        try {
-            // generate report
-            PolicyCheckReport report = new PolicyCheckReport(checkPoliciesResult);
-
-            File outputDir = new File(offlineConfig.getWhiteSourceFolderPath());
-            report.generate(outputDir, false);
-            report.generateJson(outputDir);
-            logger.info("Policies report generated successfully");
-        } catch (IOException e) {
-            logger.error("Error generating check policies report: " + e.getMessage(), e);
-        }
-
-        return policyCompliance;
+        return policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
     }
 
     private String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
         UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(),
                 UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProjectVersion(), projects);
-        return logResult(updateResult);
+        String resultInfo = logResult(updateResult);
+        logger.info(resultInfo);
+        //strip line separators
+        resultInfo = resultInfo.replace(System.lineSeparator(), "");
+        return resultInfo;
     }
 
     private String offlineUpdate(WhitesourceService service, Collection<AgentProjectInfo> projects) {
