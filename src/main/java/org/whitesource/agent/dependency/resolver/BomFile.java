@@ -123,7 +123,7 @@ public class BomFile {
         logger.debug("resolved url in file = " + this.resolved);
         if (this.resolved.contains("git+") || this.resolved.contains("github:")) {
             // temp solution for WSE-204
-            logger.debug("package is from github - unable to resolve the URL");
+            logger.info("This configuration - " + this.name + " (remote repository packages) is not supported by WhiteSource. Please use direct URL package references.");
             return StringUtils.EMPTY;
         }
         if (this.resolved.contains(SCOPED_PACKAGE) || this.resolved.indexOf(NPM_REGISTRY) == -1) {
