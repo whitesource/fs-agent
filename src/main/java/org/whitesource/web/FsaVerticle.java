@@ -25,6 +25,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.utils.CommandLineProcess;
@@ -57,6 +58,7 @@ public class FsaVerticle extends AbstractVerticle {
     public static final String WELCOME_MESSAGE = "<h1>File system agent is up and running </h1>";
     public static final String CONFIGURATION = "configuration";
     public static final String KEYSTORE_JKS = "keystore.jks";
+    public static final String SPACE = " ";
     private FSAConfiguration localFsaConfiguration;
 
     @Override
@@ -108,23 +110,30 @@ public class FsaVerticle extends AbstractVerticle {
     }
 
     private boolean generateCertificateAndPass(String keystoreName, String password) {
-        String[] params = new String[]{"keytool","-genkey" ,"-alias","replserver","-keyalg","RSA","-keystore",keystoreName,"-dname",
-                "\"CN=author, OU=Whitesource, O=WS, L=Location, S=State, C=US\"","-storepass",password,"-keypass", password};
+        String[] params = new String[]{"keytool", "-genkey", "-alias", "replserver", "-keyalg", "RSA", "-keystore", keystoreName, "-dname",
+                "\"CN=author, OU=Whitesource, O=WS, L=Location, S=State, C=US\"", "-storepass", password, "-keypass", password};
+
+        if (SystemUtils.IS_OS_LINUX) {
+            params = new String[]{"keytool", "-genkey", "-alias", "replserver", "-keyalg", "RSA", "-keystore", keystoreName, "-dname",
+                    "CN=author, OU=Whitesource, O=WS, L=Location, S=State, C=US", "-storepass", password, "-keypass", password};
+        }
 
         CommandLineProcess commandLineProcess = new CommandLineProcess(System.getProperty("user.dir"), params);
         try {
-            if (Files.exists(Paths.get(keystoreName))){
+            if (Files.exists(Paths.get(keystoreName))) {
                 Files.delete(Paths.get(keystoreName));
             }
+            logger.debug("Running: " + String.join(SPACE, params));
             commandLineProcess.executeProcess();
-            if (commandLineProcess.isErrorInProcess()){
+            if (commandLineProcess.isErrorInProcess()) {
                 logger.error("Error creating self signed certificate");
                 return false;
-            }else{
+            } else {
                 logger.info("Self signed certificate created");
                 return true;
             }
         } catch (IOException e) {
+            logger.debug("Error creating certificate" + e);
             logger.error("Error creating self signed certificate");
             return false;
         }
