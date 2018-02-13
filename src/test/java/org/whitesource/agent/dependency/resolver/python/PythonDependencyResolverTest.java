@@ -1,6 +1,7 @@
 package org.whitesource.agent.dependency.resolver.python;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -18,6 +19,8 @@ import java.util.stream.Stream;
 
 public class PythonDependencyResolverTest {
 
+    // requires admin rights to install dependencies in linux
+    @Ignore
     @Test
     public void shouldFindDependecies() {
         File setupPyFile = TestHelper.getFileFromResources("resolver/python/sample/test.py");
@@ -33,6 +36,8 @@ public class PythonDependencyResolverTest {
         Assert.assertTrue(dependecies.stream().filter(x -> x.getDependencyType() != null && x.getDependencyType().equals(DependencyType.PYTHON)).count() == 2);
     }
 
+    // requires admin rights to install dependencies in linux
+    @Ignore
     @Test
     public void shouldWorkEndToEnd() {
         Main main = new Main();
