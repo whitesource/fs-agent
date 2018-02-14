@@ -110,11 +110,12 @@ public class FsaVerticle extends AbstractVerticle {
     }
 
     private boolean generateCertificateAndPass(String keystoreName, String password) {
-        String[] params = new String[]{"keytool", "-genkey", "-alias", "replserver", "-keyalg", "RSA", "-keystore", keystoreName, "-dname",
+        String keyToolPath = Paths.get(System.getProperty("java.home"), "bin", "keytool").toString();
+        String[] params = new String[]{keyToolPath, "-genkey", "-alias", "replserver", "-keyalg", "RSA", "-keystore", keystoreName, "-dname",
                 "\"CN=author, OU=Whitesource, O=WS, L=Location, S=State, C=US\"", "-storepass", password, "-keypass", password};
 
         if (SystemUtils.IS_OS_LINUX) {
-            params = new String[]{"keytool", "-genkey", "-alias", "replserver", "-keyalg", "RSA", "-keystore", keystoreName, "-dname",
+            params = new String[]{keyToolPath, "-genkey", "-alias", "replserver", "-keyalg", "RSA", "-keystore", keystoreName, "-dname",
                     "CN=author, OU=Whitesource, O=WS, L=Location, S=State, C=US", "-storepass", password, "-keypass", password};
         }
 
