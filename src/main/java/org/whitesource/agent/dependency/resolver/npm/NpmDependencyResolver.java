@@ -260,7 +260,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
                 responseFromRegistry = restTemplate.getForObject(registryPackageUrl, String.class);
             }
         } catch (Exception e) {
-            logger.error("Could not reach the registry using the URL: {}. Got an error: {}", registryPackageUrl, e);
+            logger.error("Could not reach the registry using the URL: {}. Got an error: {}", registryPackageUrl, e.getMessage());
             return EMPTY_STRING;
         }
         JSONObject jsonRegistry = new JSONObject(responseFromRegistry);

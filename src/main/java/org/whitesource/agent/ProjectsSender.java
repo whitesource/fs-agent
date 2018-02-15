@@ -15,6 +15,7 @@
  */
 package org.whitesource.agent;
 
+import DEMO.DemoServerProjInfo;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,20 +24,32 @@ import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 import org.whitesource.agent.utils.Pair;
+import org.whitesource.agent.via.api.VulnerabilityAnalysisResult;
+import org.whitesource.agent.via.api.VulnerableElement;
 import org.whitesource.contracts.PluginInfo;
+import org.whitesource.fs.ImpactAnalysisExtensionUtils;
 import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.OfflineConfiguration;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.fs.configuration.SenderConfiguration;
+import whitesource.analysis.server.FSAgentServer;
+import whitesource.analysis.server.Server;
+import whitesource.analysis.utils.Utils;
+import whitesource.analysis.vulnerabilities.VulnerabilitiesAnalysis;
+import whitesource.via.api.vulnerability.update.ApiTranslator;
+import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResult;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 //import whitesource.analysis.server.FSAgentServer;
 //import whitesource.analysis.server.Server;
@@ -108,9 +121,9 @@ public class ProjectsSender {
             StatusCode statusCode = StatusCode.SUCCESS;
 
             //todo comment in via code
-//            if (senderConfig.isEnableImpactAnalysis()) {
-//                runViaAnalysis(projects, service);
-//            }
+            if (senderConfig.isEnableImpactAnalysis()) {
+                runViaAnalysis(projects, service);
+            }
             int retries = senderConfig.getConnectionRetries();
             while (retries-- > -1) {
                 try {
@@ -150,34 +163,45 @@ public class ProjectsSender {
 
     private void runViaAnalysis(Collection<AgentProjectInfo> projects, WhitesourceService service) {
         //todo comment in via code
-//        VulnerabilitiesAnalysis vulnerabilitiesAnalysis = null;
-//        GlobalVulnerabilityAnalysisResult result = null;
-//        for (AgentProjectInfo project : projects) {
-//            Server server = new FSAgentServer(project, service, requestConfig.getApiToken());
-//            try {
-//                String appPath = requestConfig.getAppPath();
-//                // check language for scan according to user file
-//                logger.info("Starting VIA impact analysis");
-//                if (appPath.matches(ImpactAnalysisExtensionUtils.JAVA_EXTENSIONS_PATTERN)) {
-//                    vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(JAVA);
-//                } else if (appPath.matches(ImpactAnalysisExtensionUtils.JAVA_SCRIPT_EXTENSIONS_PATTERN)) {
-//                    int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ?  appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
-//                    appPath = appPath.substring(0, lastIndex);
-//                    vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(JAVA_SCRIPT);
-//                }
-//                if (vulnerabilitiesAnalysis != null) {
-//                    result = vulnerabilitiesAnalysis.startAnalysis(server, appPath, project.getDependencies());
-//                    logger.info("Got impact analysis from server");
-//                    Set<VulnerabilityAnalysisResult> run = ApiTranslator.globalVulnerabilityToVulnerabilityAnalysis(result);
-//                    Map<String, DependencyInfo> stringDependencyInfoMap = Utils.sha1ToDependencyInfo(project.getDependencies());
-//                    for (VulnerabilityAnalysisResult vulnerabilityAnalysisResult : run) {
-//                        stringDependencyInfoMap.get(vulnerabilityAnalysisResult.getMatchValue()).setVulnerabilityAnalysisResult(vulnerabilityAnalysisResult);
-//                    }
-//                }
-//            } catch (Exception e) {
-//                logger.error("Failed to run impact analysis {}", e.getMessage());
-//            }
-//        }
+        VulnerabilitiesAnalysis vulnerabilitiesAnalysis = null;
+        GlobalVulnerabilityAnalysisResult result = null;
+        for (AgentProjectInfo project : projects) {
+            Server server = new FSAgentServer(project, service, requestConfig.getApiToken());
+            //TODO remove later
+//            Server server = new DemoServerProjInfo();
+//            server.setdb("c:/Users/AharonAbadi/work/vulnerabilityCleaner/via-visual-studio-integration/examples/via-server/via.db");
+            try {
+                String appPath = requestConfig.getAppPath();
+                // check language for scan according to user file
+                logger.info("Starting VIA impact analysis");
+                if (appPath.matches(ImpactAnalysisExtensionUtils.JAVA_EXTENSIONS_PATTERN)) {
+                    vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(JAVA);
+                } else if (appPath.matches(ImpactAnalysisExtensionUtils.JAVA_SCRIPT_EXTENSIONS_PATTERN)) {
+                    int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ?  appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
+                    appPath = appPath.substring(0, lastIndex);
+                    vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(JAVA_SCRIPT);
+                }
+                if (vulnerabilitiesAnalysis != null) {
+                    result = vulnerabilitiesAnalysis.startAnalysis(server, appPath, project.getDependencies());
+                    logger.info("Got impact analysis from server");
+                    Set<VulnerabilityAnalysisResult> run = ApiTranslator.globalVulnerabilityToVulnerabilityAnalysis(result);
+                    Map<String, DependencyInfo> stringDependencyInfoMap = Utils.sha1ToDependencyInfo(project.getDependencies());
+                    for (VulnerabilityAnalysisResult vulnerabilityAnalysisResult : run) {
+                        stringDependencyInfoMap.get(vulnerabilityAnalysisResult.getMatchValue()).setVulnerabilityAnalysisResult(vulnerabilityAnalysisResult);
+                        //TODO remove only for test
+                        if(vulnerabilityAnalysisResult.getVulnerableElements().containsKey("CVE-2016-4971")){
+                            Collection<VulnerableElement> vulnerableElements = vulnerabilityAnalysisResult.getVulnerableElements().get("CVE-2016-4971");
+                            vulnerabilityAnalysisResult.getVulnerableElements().put("CVE-2016-4970",vulnerableElements);
+                            vulnerabilityAnalysisResult.getVulnerableElements().remove("CVE-2016-4971");
+                        }
+                        DependencyInfo dependencyInfo = stringDependencyInfoMap.get(vulnerabilityAnalysisResult.getMatchValue());
+                        dependencyInfo.setVulnerabilityAnalysisResult(vulnerabilityAnalysisResult);
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Failed to run impact analysis {}", e.getMessage());
+            }
+        }
     }
 
 
