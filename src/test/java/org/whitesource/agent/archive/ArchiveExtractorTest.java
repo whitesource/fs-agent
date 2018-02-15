@@ -1,11 +1,11 @@
 package org.whitesource.agent.archive;
 
-import javafx.util.Pair;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.agent.utils.FilesScanner;
+import org.whitesource.agent.utils.Pair;
 
 import java.io.File;
 import java.io.IOException;

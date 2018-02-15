@@ -41,6 +41,9 @@ public class SenderConfiguration {
     private final boolean forceUpdate;
     private final String updateTypeValue;
     private final boolean enableImpactAnalysis;
+    private final boolean ignoreCertificateCheck;
+    private final int connectionRetries;
+    private final int connectionRetriesIntervals;
 
     public SenderConfiguration(
             @JsonProperty(CHECK_POLICIES_PROPERTY_KEY) boolean checkPolicies,
@@ -53,7 +56,10 @@ public class SenderConfiguration {
             @JsonProperty(FORCE_CHECK_ALL_DEPENDENCIES) boolean forceCheckAllDependencies,
             @JsonProperty(FORCE_UPDATE) boolean forceUpdate,
             @JsonProperty(UPDATE_TYPE) String updateTypeValue,
-            @JsonProperty(ENABLE_IMPACT_ANALYSIS) boolean enableImpactAnalysis){
+            @JsonProperty(ENABLE_IMPACT_ANALYSIS) boolean enableImpactAnalysis,
+            @JsonProperty(IGNORE_CERTIFICATE_CHECK) boolean ignoreCertificateCheck,
+            @JsonProperty(CONNECTION_RETRIES) int connectionRetries,
+            @JsonProperty(CONNECTION_RETRIES_INTERVALS) int connectionRetriesIntervals){
         this.checkPolicies = checkPolicies;
         this.serviceUrl = serviceUrl;
         this.proxyHost = proxyHost;
@@ -65,6 +71,9 @@ public class SenderConfiguration {
         this.forceUpdate = forceUpdate;
         this.updateTypeValue = updateTypeValue;
         this.enableImpactAnalysis = enableImpactAnalysis;
+        this.ignoreCertificateCheck = ignoreCertificateCheck;
+        this.connectionRetries = connectionRetries;
+        this.connectionRetriesIntervals = connectionRetriesIntervals;
     }
 
     public SenderConfiguration(Properties config) {
@@ -78,7 +87,8 @@ public class SenderConfiguration {
         proxyHost = config.getProperty(PROXY_HOST_PROPERTY_KEY);
         connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
                 String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
-
+        connectionRetries = FSAConfiguration.getIntProperty(config,CONNECTION_RETRIES,1);
+        connectionRetriesIntervals = FSAConfiguration.getIntProperty(config,CONNECTION_RETRIES_INTERVALS,3000);
         String senderPort = config.getProperty(PROXY_PORT_PROPERTY_KEY);
         if(StringUtils.isNotEmpty(senderPort)){
             proxyPort = Integer.parseInt(senderPort);
@@ -88,6 +98,7 @@ public class SenderConfiguration {
 
         proxyUser = config.getProperty(PROXY_USER_PROPERTY_KEY);
         proxyPassword = config.getProperty(PROXY_PASS_PROPERTY_KEY);
+        ignoreCertificateCheck = FSAConfiguration.getBooleanProperty(config, IGNORE_CERTIFICATE_CHECK, false);
     }
 
     @JsonProperty(SERVICE_URL_KEYWORD)
@@ -113,6 +124,16 @@ public class SenderConfiguration {
     @JsonProperty(CONNECTION_TIMEOUT_KEYWORD)
     public int getConnectionTimeOut() {
         return connectionTimeOut;
+    }
+
+    @JsonProperty(CONNECTION_RETRIES)
+    public int getConnectionRetries(){
+        return connectionRetries;
+    }
+
+    @JsonProperty(CONNECTION_RETRIES_INTERVALS)
+    public int getConnectionRetriesIntervals(){
+        return connectionRetriesIntervals;
     }
 
     @JsonProperty(PROXY_PORT_PROPERTY_KEY)
@@ -143,5 +164,10 @@ public class SenderConfiguration {
     @JsonProperty(ENABLE_IMPACT_ANALYSIS)
     public boolean isEnableImpactAnalysis() {
         return enableImpactAnalysis;
+    }
+
+    @JsonProperty(IGNORE_CERTIFICATE_CHECK)
+    public boolean isIgnoreCertificateCheck() {
+        return ignoreCertificateCheck;
     }
 }

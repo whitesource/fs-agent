@@ -90,7 +90,7 @@ public class FileSystemAgent {
     /* --- Overridden methods --- */
 
     public ProjectsDetails createProjects() {
-        ProjectsDetails projects = null;
+        ProjectsDetails projects;
         if (projectPerSubFolder) {
             projects = new ProjectsDetails(new ArrayList<>(), StatusCode.SUCCESS, "");
             for (String directory : dependencyDirs) {
@@ -184,7 +184,7 @@ public class FileSystemAgent {
             projects = new PackageManagerExtractor().createProjects();
         } else {
             projects = new FileSystemScanner(config.getResolver(), config.getAgent())
-                    .createProjects(scannerBaseDirs, hasScmConnectors[0]);
+                    .createProjects(scannerBaseDirs, hasScmConnectors[0], this.config.getResolver().getNpmAccessToken());
         }
         // delete all temp scm files
         scmPaths.forEach(directory -> {

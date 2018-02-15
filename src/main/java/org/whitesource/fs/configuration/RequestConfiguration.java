@@ -32,8 +32,8 @@ public class RequestConfiguration {
     private final String apiToken;
     private final String requesterEmail;
     private final String productToken;
-    private final String productName;
-    private final String productVersion;
+    private String productName;
+    private String productVersion;
     private final String projectName;
     private final String appPath;
 

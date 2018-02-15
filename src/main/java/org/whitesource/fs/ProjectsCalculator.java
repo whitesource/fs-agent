@@ -20,11 +20,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.api.model.AgentProjectInfo;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class ProjectsCalculator {
@@ -35,17 +33,17 @@ public class ProjectsCalculator {
 
     /* --- Public methods --- */
 
-    public ProjectsDetails getAllProjects(FSAConfiguration FSAConfiguration) {
+    public ProjectsDetails getAllProjects(FSAConfiguration fsaConfiguration) {
         // read log level from configuration file
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-        String logLevel = FSAConfiguration.getLogLevel();
+        String logLevel = fsaConfiguration.getLogLevel();
         root.setLevel(Level.toLevel(logLevel, Level.INFO));
 
         // read directories and files from list-file
         List<String> files = new ArrayList<>();
-        if (StringUtils.isNotBlank(FSAConfiguration.getFileListPath())) {
+        if (StringUtils.isNotBlank(fsaConfiguration.getFileListPath())) {
             try {
-                File listFile = new File(FSAConfiguration.getFileListPath());
+                File listFile = new File(fsaConfiguration.getFileListPath());
                 if (listFile.exists()) {
                     files.addAll(FileUtils.readLines(listFile));
                 }
@@ -55,31 +53,11 @@ public class ProjectsCalculator {
         }
 
         // read csv directory list
-        files.addAll(FSAConfiguration.getDependencyDirs());
+        files.addAll(fsaConfiguration.getDependencyDirs());
 
         // run the agent
-        FileSystemAgent agent = new FileSystemAgent(FSAConfiguration, files);
-        //Collection<AgentProjectInfo> projects = agent.createProjects();
-
-        OfflineReader offlineReader = new OfflineReader();
-        Collection<AgentProjectInfo> projects = offlineReader.getAgentProjectsFromRequests(FSAConfiguration.getOfflineRequestFiles());
-        setProjectNamesFromCommandLine(projects, FSAConfiguration.getRequest().getProjectName());
+        FileSystemAgent agent = new FileSystemAgent(fsaConfiguration, files);
         // create projects as usual
-
-        ProjectsDetails createdProjects = agent.createProjects();
-        projects.addAll(createdProjects.getProjects());
-
-        return new ProjectsDetails(projects, createdProjects.getStatusCode(), createdProjects.getDetails());
-    }
-
-    /* --- Private methods --- */
-
-    private void setProjectNamesFromCommandLine(Collection<AgentProjectInfo> projects, String projectName) {
-    // change project name from command line in case the user sent name via commandLine
-        if(projects.size() == 1 && projectName != null) {
-            for (AgentProjectInfo project : projects) {
-                project.getCoordinates().setArtifactId(projectName);
-            }
-        }
+        return agent.createProjects();
     }
 }

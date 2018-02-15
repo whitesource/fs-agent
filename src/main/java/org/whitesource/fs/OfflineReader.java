@@ -41,8 +41,8 @@ public class OfflineReader {
     private static final String UTF_8 = "UTF-8";
     private static final String EMPTY_STRING = "";
 
-    public Collection<AgentProjectInfo> getAgentProjectsFromRequests(List<String> offlineRequestFiles) {
-        Collection<AgentProjectInfo> projects = new LinkedList<>();
+    public Collection<UpdateInventoryRequest> getAgentProjectsFromRequests(List<String> offlineRequestFiles){//, FSAConfiguration fsaConfiguration) {
+        Collection<UpdateInventoryRequest> projects = new LinkedList<>();
 
         List<File> requestFiles = new LinkedList<>();
         if (offlineRequestFiles != null) {
@@ -66,7 +66,7 @@ public class OfflineReader {
                     updateRequest = gson.fromJson(jsonReader, new TypeToken<UpdateInventoryRequest>() {
                     }.getType());
                     logger.info("Reading information from request file {}", requestFile);
-                    projects.addAll(updateRequest.getProjects());
+                    projects.add(updateRequest);
                 } catch (JsonSyntaxException e) {
                     // try to decompress file content
                     try {
@@ -75,7 +75,7 @@ public class OfflineReader {
                         logger.debug("Converting offline request to JSON");
                         updateRequest = gson.fromJson(fileContent, new TypeToken<UpdateInventoryRequest>() {}.getType());
                         logger.info("Reading information from request file {}", requestFile);
-                        projects.addAll(updateRequest.getProjects());
+                        projects.add(updateRequest);
                     } catch (IOException ioe) {
                         logger.warn("Error parsing request: " + ioe.getMessage());
                     } catch (JsonSyntaxException jse) {

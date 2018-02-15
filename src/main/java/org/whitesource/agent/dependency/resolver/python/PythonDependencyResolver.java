@@ -18,6 +18,7 @@ package org.whitesource.agent.dependency.resolver.python;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
@@ -100,7 +101,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     /* --- Overridden methods --- */
 
     @Override
-    public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles) {
+    public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles, String npmAccessToken) {
         String tempDir = getTempDir();
         Map<AgentProjectInfo, Path> resolvedProjects = new HashMap<>();
         String[] args = new String[0];
@@ -143,8 +144,8 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             // FSA will read the python offline request
             OfflineReader offlineReader = new OfflineReader();
             String offlineFile = Paths.get(tempDir, WHITESOURCE_OFFLINE_FOLDER, UPDATE_REQUEST_JSON).toString();
-            Collection<AgentProjectInfo> projects = offlineReader.getAgentProjectsFromRequests(Arrays.asList(offlineFile));
-
+            Collection<UpdateInventoryRequest> updateInventoryRequests = offlineReader.getAgentProjectsFromRequests(Arrays.asList(offlineFile));
+            Collection<AgentProjectInfo> projects = updateInventoryRequests.stream().flatMap(update->update.getProjects().stream()).collect(Collectors.toList());
             // add projects to map
             if (projects != null && projects.size() > 0) {
                 AgentProjectInfo project = projects.stream().findFirst().get();

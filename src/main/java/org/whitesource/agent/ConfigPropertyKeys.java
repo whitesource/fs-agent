@@ -27,6 +27,8 @@ public final class ConfigPropertyKeys {
     public static final String FORCE_UPDATE = "forceUpdate";
     public static final String FORCE_CHECK_ALL_DEPENDENCIES = "forceCheckAllDependencies"; // optional
     public static final String ENABLE_IMPACT_ANALYSIS = "enableImpactAnalysis"; // optional
+    public static final String CONNECTION_RETRIES = "connectionRetries";
+    public static final String CONNECTION_RETRIES_INTERVALS = "connectionRetriesInterval";
     public static final String ORG_TOKEN_PROPERTY_KEY = "apiKey";
     public static final String PARTIAL_SHA1_MATCH_KEY = "partialSha1Match";
     public static final String PRODUCT_TOKEN_PROPERTY_KEY = "productToken"; // optional
@@ -50,6 +52,7 @@ public final class ConfigPropertyKeys {
     public static final String PROXY_PORT_PROPERTY_KEY = "proxy.port";
     public static final String PROXY_USER_PROPERTY_KEY = "proxy.user";
     public static final String PROXY_PASS_PROPERTY_KEY = "proxy.pass";
+    public static final String IGNORE_CERTIFICATE_CHECK = "ignoreCertificateCheck";
     public static final String OFFLINE_PROPERTY_KEY = "offline";
     public static final String OFFLINE_ZIP_PROPERTY_KEY = "offline.zip";
     public static final String OFFLINE_PRETTY_JSON_KEY = "offline.prettyJson";
@@ -73,6 +76,8 @@ public final class ConfigPropertyKeys {
     public static final String NPM_INCLUDE_DEV_DEPENDENCIES = "npm.includeDevDependencies";
     public static final String NPM_IGNORE_JAVA_SCRIPT_FILES = "npm.ignoreJavaScriptFiles";
     public static final String NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS = "npm.timeoutDependenciesCollectorInSeconds";
+    public static final String NPM_ACCESS_TOKEN = "npm.accessToken";
+    public static final String NPM_IGNORE_NPM_LS_ERRORS = "npm.ignoreNpmLsErrors";
 
     public static final String BOWER_RESOLVE_DEPENDENCIES = "bower.resolveDependencies";
     public static final String BOWER_RUN_PRE_STEP = "bower.runPreStep";
