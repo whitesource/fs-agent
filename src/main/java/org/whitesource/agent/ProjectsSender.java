@@ -107,7 +107,7 @@ public class ProjectsSender {
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
 
-            //todo comment in via code
+            // TODO comment in via code
 //            if (senderConfig.isEnableImpactAnalysis()) {
 //                runViaAnalysis(projects, service);
 //            }
@@ -136,8 +136,15 @@ public class ProjectsSender {
                             logger.error("Failed to sleep while retrying to connect to server " + e1.getMessage(), e1);
                         }
                     }
+
+                    String requestToken = e.getRequestToken();
+                    if (StringUtils.isNotBlank(requestToken)) {
+                        resultInfo += NEW_LINE + "Support token: " + requestToken;
+                        logger.info("Support token: {}", requestToken);
+                    }
                 }
             }
+
             if (service != null) {
                 service.shutdown();
             }
@@ -203,8 +210,7 @@ public class ProjectsSender {
         return service;
     }
 
-    private StatusCode checkPolicies(WhitesourceService service,
-                                  Collection<AgentProjectInfo> projects) throws WssServiceException {
+    private StatusCode checkPolicies(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         boolean policyCompliance = true;
         if (senderConfig.isCheckPolicies()) {
             logger.info("Checking policies");
@@ -220,6 +226,11 @@ public class ProjectsSender {
                 }
             } else {
                 logger.info("All dependencies conform with open source policies.");
+            }
+
+            String requestToken = checkPoliciesResult.getRequestToken();
+            if (StringUtils.isNotBlank(requestToken)) {
+                logger.info("Check Policies Support Token: {}", requestToken);
             }
 
             try {
@@ -242,8 +253,8 @@ public class ProjectsSender {
         UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(),
                 UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProjectVersion(), projects);
         String resultInfo = logResult(updateResult);
-        logger.info(resultInfo);
-        //strip line separators
+
+        // remove line separators
         resultInfo = resultInfo.replace(System.lineSeparator(), "");
         return resultInfo;
     }
@@ -300,13 +311,18 @@ public class ProjectsSender {
     private String logResult(UpdateInventoryResult updateResult) {
         StringBuilder resultLogMsg = new StringBuilder("Inventory update results for ").append(updateResult.getOrganization()).append(NEW_LINE);
 
+        logger.info("Inventory update results for {}", updateResult.getOrganization());
+
         // newly created projects
         Collection<String> createdProjects = updateResult.getCreatedProjects();
         if (createdProjects.isEmpty()) {
+            logger.info("No new projects found.");
             resultLogMsg.append("No new projects found.").append(NEW_LINE);
         } else {
+            logger.info("Newly created projects:");
             resultLogMsg.append("Newly created projects:").append(NEW_LINE);
             for (String projectName : createdProjects) {
+                logger.info("# {}", projectName);
                 resultLogMsg.append(projectName).append(NEW_LINE);
             }
         }
@@ -314,10 +330,13 @@ public class ProjectsSender {
         // updated projects
         Collection<String> updatedProjects = updateResult.getUpdatedProjects();
         if (updatedProjects.isEmpty()) {
+            logger.info("No projects were updated.");
             resultLogMsg.append("No projects were updated.").append(NEW_LINE);
         } else {
+            logger.info("Updated projects:");
             resultLogMsg.append("Updated projects:").append(NEW_LINE);
             for (String projectName : updatedProjects) {
+                logger.info("# {}", projectName);
                 resultLogMsg.append(projectName).append(NEW_LINE);
             }
         }
@@ -325,7 +344,8 @@ public class ProjectsSender {
         // support token
         String requestToken = updateResult.getRequestToken();
         if (StringUtils.isNotBlank(requestToken)) {
-            resultLogMsg.append(NEW_LINE).append("Support Token: ").append(requestToken).append(NEW_LINE);
+            logger.info("Support Token: {}", requestToken);
+            resultLogMsg.append(NEW_LINE).append("Support Token: ").append(requestToken);
         }
         return resultLogMsg.toString();
     }
