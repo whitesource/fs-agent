@@ -43,7 +43,7 @@ public class CommandLineProcess {
         return executeProcess(true);
     }
 
-    private List<String> executeProcess(boolean includeOutput) throws IOException{
+    private List<String> executeProcess(boolean includeOutput) throws IOException {
         List<String> lines = new LinkedList<>();
         ProcessBuilder pb = new ProcessBuilder(args);
         pb.directory(new File(rootDirectory));
@@ -53,7 +53,7 @@ public class CommandLineProcess {
         if (!includeOutput) {
             pb.redirectOutput(new File(redirectErrorOutput));
         }
-        logger.debug("start execute command {}", args);
+        logger.debug("start execute command '{}' in '{}'", String.join(" ", args), rootDirectory);
         this.processStart = pb.start();
         if (includeOutput) {
             InputStreamReader inputStreamReader = null;
@@ -99,7 +99,7 @@ public class CommandLineProcess {
             this.processStart.waitFor(this.timeoutProcessMinutes, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
             this.errorInProcess = true;
-            logger.error("'{}' was interrupted {}",args, e);
+            logger.error("'{}' was interrupted {}", args, e);
         }
         if (this.processStart.exitValue() != 0) {
             this.errorInProcess = true;

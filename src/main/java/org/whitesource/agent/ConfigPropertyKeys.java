@@ -83,6 +83,9 @@ public final class ConfigPropertyKeys {
     public static final String BOWER_RUN_PRE_STEP = "bower.runPreStep";
 
     public static final String PYTHON_RESOLVE_DEPENDENCIES = "python.resolveDependencies";
+    public static final String PYTHON_PIP_PATH = "python.pipPath";
+    public static final String PYTHON_PYTHON_PATH = "python.pythonPathPath";
+
     public static final String NUGET_RESOLVE_DEPENDENCIES = "nuget.resolveDependencies";
     public static final String MAVEN_IGNORED_SCOPES = "maven.ignoredScopes";
     public static final String MAVEN_RESOLVE_DEPENDENCIES = "maven.resolveDependencies";
