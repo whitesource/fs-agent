@@ -202,7 +202,7 @@ public class ResolverConfiguration {
         return pipPath;
     }
 
-    @JsonProperty(PYTHON_PYTHON_PATH)
+    @JsonProperty(PYTHON_PATH)
     public String getPythonPath() {
         return pythonPath;
     }

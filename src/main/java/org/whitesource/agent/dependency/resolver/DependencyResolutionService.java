@@ -51,24 +51,24 @@ public class DependencyResolutionService {
     /* --- Constructors --- */
 
     public DependencyResolutionService(ResolverConfiguration config) {
-        final boolean npmRunPreStep                 = config.isNpmRunPreStep();
-        final boolean npmResolveDependencies        = config.isNpmResolveDependencies();
-        final boolean npmIncludeDevDependencies     = config.isNpmIncludeDevDependencies();
-        final boolean npmIgnoreJavaScriptFiles      = config.isNpmIgnoreJavaScriptFiles();
-        final long npmTimeoutDependenciesCollector  = config.getNpmTimeoutDependenciesCollector();
-        final boolean npmIgnoreNpmLsErrors          = config.getNpmIgnoreNpmLsErrors();
-        final String npmAccessToken                 = config.getNpmAccessToken();
+        final boolean npmRunPreStep = config.isNpmRunPreStep();
+        final boolean npmResolveDependencies = config.isNpmResolveDependencies();
+        final boolean npmIncludeDevDependencies = config.isNpmIncludeDevDependencies();
+        final boolean npmIgnoreJavaScriptFiles = config.isNpmIgnoreJavaScriptFiles();
+        final long npmTimeoutDependenciesCollector = config.getNpmTimeoutDependenciesCollector();
+        final boolean npmIgnoreNpmLsErrors = config.getNpmIgnoreNpmLsErrors();
+        final String npmAccessToken = config.getNpmAccessToken();
 
-        final boolean bowerResolveDependencies      = config.isBowerResolveDependencies();
-        final boolean bowerRunPreStep               = config.isBowerRunPreStep();
+        final boolean bowerResolveDependencies = config.isBowerResolveDependencies();
+        final boolean bowerRunPreStep = config.isBowerRunPreStep();
 
-        final boolean nugetResolveDependencies      = config.isNugetResolveDependencies();
+        final boolean nugetResolveDependencies = config.isNugetResolveDependencies();
 
-        final boolean mavenResolveDependencies      = config.isMavenResolveDependencies();
-        final String[] mavenIgnoredScopes           = config.getMavenIgnoredScopes();
-        final boolean mavenAggregateModules         = config.isMavenAggregateModules();
+        final boolean mavenResolveDependencies = config.isMavenResolveDependencies();
+        final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
+        final boolean mavenAggregateModules = config.isMavenAggregateModules();
 
-        boolean pythonResolveDependencies           = config.isPythonResolveDependencies();
+        boolean pythonResolveDependencies = config.isPythonResolveDependencies();
 
         dependenciesOnly = config.isDependenciesOnly();
 
@@ -90,7 +90,7 @@ public class DependencyResolutionService {
             separateProjects = !mavenAggregateModules;
         }
         if (pythonResolveDependencies) {
-            dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(),config.getPipPath()));
+            dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath()));
         }
     }
 
