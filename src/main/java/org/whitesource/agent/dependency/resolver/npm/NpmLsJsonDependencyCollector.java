@@ -129,9 +129,9 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
 
     /* --- Private methods --- */
 
-    private int getDependencies(JSONObject jsonObject, List<String> linesOfNpmLs, int currentLineNumber, Collection<DependencyInfo> dependencies) {
-        if (jsonObject.has(DEPENDENCIES)) {
-            JSONObject dependenciesJsonObject = jsonObject.getJSONObject(DEPENDENCIES);
+    private int getDependencies(JSONObject npmLsJson, List<String> linesOfNpmLs, int currentLineNumber, Collection<DependencyInfo> dependencies) {
+        if (npmLsJson.has(DEPENDENCIES)) {
+            JSONObject dependenciesJsonObject = npmLsJson.getJSONObject(DEPENDENCIES);
             if (dependenciesJsonObject != null) {
                 for (int i = 0; i < dependenciesJsonObject.keySet().size(); i++) {
                     String currentLine = linesOfNpmLs.get(currentLineNumber);
