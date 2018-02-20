@@ -6,6 +6,7 @@ import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
+import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.nio.file.Paths;
@@ -61,7 +62,7 @@ public class DependencyResolversTest {
         props.setProperty(ConfigPropertyKeys.NPM_INCLUDE_DEV_DEPENDENCIES, "false");
         props.setProperty(ConfigPropertyKeys.NPM_RUN_PRE_STEP, "true");
 
-        ResolverConfiguration resolverConfiguration = new ResolverConfiguration(props);
+        ResolverConfiguration resolverConfiguration = new FSAConfiguration(props).getResolver();
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(resolverConfiguration);
         return dependencyResolutionService.resolveDependencies(pathsToScan, new String[0], null);
     }
@@ -75,7 +76,7 @@ public class DependencyResolversTest {
         props.setProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, "false");
         props.setProperty(ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, "false");
 
-        ResolverConfiguration resolverConfiguration = new ResolverConfiguration(props);
+        ResolverConfiguration resolverConfiguration = new FSAConfiguration(props).getResolver();
 
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(resolverConfiguration);
         List<ResolutionResult> results = dependencyResolutionService.resolveDependencies(Arrays.asList(folderParent), new String[0],null);
