@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class ResolverConfiguration {
-    private final boolean pythonIsWssPluginInstalled;
 
     /* --- Constructors --- */
 
@@ -48,6 +47,7 @@ public class ResolverConfiguration {
             @JsonProperty(PYTHON_PIP_PATH) String pipPath,
             @JsonProperty(PYTHON_PATH) String pythonPath,
             @JsonProperty(PYTHON_IS_WSS_PLUGIN_INSTALLED) boolean pythonIsWssPluginInstalled,
+            @JsonProperty(PYTHON_UNINSTALL_WSS_PLUGIN) boolean pythonUninstallWssPlugin,
 
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration
@@ -73,6 +73,7 @@ public class ResolverConfiguration {
         this.pipPath = pipPath;
         this.pythonPath = pythonPath;
         this.pythonIsWssPluginInstalled = pythonIsWssPluginInstalled;
+        this.pythonUninstallWssPlugin = pythonUninstallWssPlugin;
 
         this.dependenciesOnly = dependenciesOnly;
         this.whitesourceConfiguration = whitesourceConfiguration;
@@ -98,6 +99,8 @@ public class ResolverConfiguration {
     private boolean pythonResolveDependencies;
     private String pipPath;
     private String pythonPath;
+    private final boolean pythonIsWssPluginInstalled;
+    private final boolean pythonUninstallWssPlugin;
 
     /* --- Public getters --- */
 
@@ -194,5 +197,10 @@ public class ResolverConfiguration {
     @JsonProperty(PYTHON_IS_WSS_PLUGIN_INSTALLED)
     public boolean isPythonIsWssPluginInstalled() {
         return pythonIsWssPluginInstalled;
+    }
+
+    @JsonProperty(PYTHON_UNINSTALL_WSS_PLUGIN)
+    public boolean getPythonUninstallWssPlugin() {
+        return pythonUninstallWssPlugin;
     }
 }

@@ -203,10 +203,13 @@ public class FSAConfiguration {
         String pipPath = config.getProperty(PYTHON_PIP_PATH, PIP);
         String pythonPath = config.getProperty(PYTHON_PATH, PYTHON);
         boolean pythonIsWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, PYTHON_IS_WSS_PLUGIN_INSTALLED, false);
+        boolean pythonUninstallWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, PYTHON_UNINSTALL_WSS_PLUGIN, true);
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies,
-                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, dependenciesOnly, whitesourceConfiguration);
+                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
+                pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
+                dependenciesOnly, whitesourceConfiguration);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken, String projectName, String projectToken) {

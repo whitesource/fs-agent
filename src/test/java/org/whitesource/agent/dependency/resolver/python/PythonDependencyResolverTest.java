@@ -25,7 +25,7 @@ public class PythonDependencyResolverTest {
     public void shouldFindDependecies() {
         File setupPyFile = TestHelper.getFileFromResources("resolver/python/sample/test.py");
 
-        PythonDependencyResolver pythonDependencyResolver = new PythonDependencyResolver("python.exe", "pip3.exe", true);
+        PythonDependencyResolver pythonDependencyResolver = new PythonDependencyResolver("python.exe", "pip3.exe", true, false);
         ResolutionResult projectsDetails = pythonDependencyResolver.resolveDependencies(setupPyFile.getParentFile().getParent(), setupPyFile.getParent(), Stream.of(setupPyFile.toString()).collect(Collectors.toSet()), null);
 
         Assert.assertNotNull(projectsDetails);
