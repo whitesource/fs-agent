@@ -227,6 +227,13 @@
             <version>2.3.0</version>
         </dependency>
 
+        <!-- xml parser for nuget -->
+        <dependency>
+            <groupId>org.simpleframework</groupId>
+            <artifactId>simple-xml</artifactId>
+            <version>2.7.1</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>junit</groupId>
