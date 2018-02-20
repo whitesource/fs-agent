@@ -25,35 +25,39 @@ import java.util.Properties;
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class ResolverConfiguration {
+    public static final String PIP = "pip";
+    public static final String PYTHON = "python";
 
     /* --- Constructors --- */
 
     @JsonCreator
     public ResolverConfiguration(
-             @JsonProperty(NPM_RUN_PRE_STEP) boolean npmRunPreStep,
-             @JsonProperty(NPM_RESOLVE_DEPENDENCIES) boolean npmResolveDependencies,
-             @JsonProperty(NPM_INCLUDE_DEV_DEPENDENCIES) boolean npmIncludeDevDependencies,
-             @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES) boolean npmIgnoreJavaScriptFiles,
-             @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS) long npmTimeoutDependenciesCollector,
-             @JsonProperty(NPM_IGNORE_NPM_LS_ERRORS) boolean npmIgnoreNpmLsErrors,
+            @JsonProperty(NPM_RUN_PRE_STEP) boolean npmRunPreStep,
+            @JsonProperty(NPM_RESOLVE_DEPENDENCIES) boolean npmResolveDependencies,
+            @JsonProperty(NPM_INCLUDE_DEV_DEPENDENCIES) boolean npmIncludeDevDependencies,
+            @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES) boolean npmIgnoreJavaScriptFiles,
+            @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS) long npmTimeoutDependenciesCollector,
+            @JsonProperty(NPM_ACCESS_TOKEN) String npmAccessToken,
+            @JsonProperty(NPM_IGNORE_NPM_LS_ERRORS) boolean npmIgnoreNpmLsErrors,
 
-             @JsonProperty(BOWER_RESOLVE_DEPENDENCIES) boolean bowerResolveDependencies,
-             @JsonProperty(BOWER_RUN_PRE_STEP) boolean bowerRunPreStep,
+            @JsonProperty(BOWER_RESOLVE_DEPENDENCIES) boolean bowerResolveDependencies,
+            @JsonProperty(BOWER_RUN_PRE_STEP) boolean bowerRunPreStep,
 
-             @JsonProperty(NUGET_RESOLVE_DEPENDENCIES) boolean nugetResolveDependencies,
+            @JsonProperty(NUGET_RESOLVE_DEPENDENCIES) boolean nugetResolveDependencies,
 
-             @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES) boolean mavenResolveDependencies,
-             @JsonProperty(MAVEN_IGNORED_SCOPES) String[] mavenIgnoredScopes,
-             @JsonProperty(MAVEN_AGGREGATE_MODULES) boolean mavenAggregateModules,
+            @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES) boolean mavenResolveDependencies,
+            @JsonProperty(MAVEN_IGNORED_SCOPES) String[] mavenIgnoredScopes,
+            @JsonProperty(MAVEN_AGGREGATE_MODULES) boolean mavenAggregateModules,
 
-             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
-             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration
+            @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
+            @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration
     ) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmResolveDependencies = npmResolveDependencies;
         this.npmIncludeDevDependencies = npmIncludeDevDependencies;
         this.npmIgnoreJavaScriptFiles = npmIgnoreJavaScriptFiles;
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
+        this.npmAccessToken = npmAccessToken;
         this.npmIgnoreNpmLsErrors = npmIgnoreNpmLsErrors;
 
         this.bowerResolveDependencies = bowerResolveDependencies;
@@ -77,6 +81,7 @@ public class ResolverConfiguration {
         npmIgnoreJavaScriptFiles = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
         npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
         npmIgnoreNpmLsErrors = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_NPM_LS_ERRORS, false);
+        npmAccessToken = config.getProperty(NPM_ACCESS_TOKEN);
         bowerResolveDependencies = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
         bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
         nugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
@@ -85,6 +90,8 @@ public class ResolverConfiguration {
         mavenAggregateModules = FSAConfiguration.getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
         dependenciesOnly = FSAConfiguration.getBooleanProperty(config, DEPENDENCIES_ONLY, false);
         whitesourceConfiguration = config.getProperty(PROJECT_CONFIGURATION_PATH);
+        pipPath = config.getProperty(PROJECT_CONFIGURATION_PATH, PIP);
+        pythonPath = config.getProperty(PROJECT_CONFIGURATION_PATH, PYTHON);
     }
 
     /* --- Members --- */
@@ -93,6 +100,7 @@ public class ResolverConfiguration {
     private boolean npmResolveDependencies;
     private boolean npmIncludeDevDependencies;
     private boolean npmIgnoreJavaScriptFiles;
+    private String npmAccessToken;
     private long npmTimeoutDependenciesCollector;
     private boolean npmIgnoreNpmLsErrors;
     private boolean bowerResolveDependencies;
@@ -104,6 +112,8 @@ public class ResolverConfiguration {
     private boolean dependenciesOnly;
     private String whitesourceConfiguration;
     private boolean pythonResolveDependencies;
+    private String pipPath;
+    private String pythonPath;
 
     /* --- Public getters --- */
 
@@ -130,6 +140,11 @@ public class ResolverConfiguration {
     @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS)
     public long getNpmTimeoutDependenciesCollector() {
         return npmTimeoutDependenciesCollector;
+    }
+
+    @JsonProperty(NPM_ACCESS_TOKEN)
+    public String getNpmAccessToken() {
+        return npmAccessToken;
     }
 
     @JsonProperty(NPM_IGNORE_NPM_LS_ERRORS)
@@ -180,5 +195,15 @@ public class ResolverConfiguration {
     @JsonProperty(PYTHON_RESOLVE_DEPENDENCIES)
     public boolean isPythonResolveDependencies() {
         return pythonResolveDependencies;
+    }
+
+    @JsonProperty(PYTHON_PIP_PATH)
+    public String getPipPath() {
+        return pipPath;
+    }
+
+    @JsonProperty(PYTHON_PATH)
+    public String getPythonPath() {
+        return pythonPath;
     }
 }

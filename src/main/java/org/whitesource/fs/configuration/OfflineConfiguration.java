@@ -38,7 +38,7 @@ public class OfflineConfiguration {
             @JsonProperty(OFFLINE_PROPERTY_KEY) boolean enabled,
             @JsonProperty(OFFLINE_ZIP_PROPERTY_KEY) boolean zip,
             @JsonProperty(OFFLINE_PRETTY_JSON_KEY) boolean prettyJson,
-            @JsonProperty(WHITESOURCE_CONFIGURATION) String whiteSourceFolderPath) {
+            @JsonProperty(WHITESOURCE_FOLDER_PATH) String whiteSourceFolderPath) {
         this.enabled = enabled;
         this.zip = zip;
         this.prettyJson = prettyJson;
@@ -73,7 +73,7 @@ public class OfflineConfiguration {
         return zip;
     }
 
-    @JsonProperty(WHITESOURCE_CONFIGURATION)
+    @JsonProperty(WHITESOURCE_FOLDER_PATH)
     public String getWhiteSourceFolderPath() {
         return whiteSourceFolderPath;
     }

@@ -57,6 +57,7 @@ public class DependencyResolutionService {
         final boolean npmIgnoreJavaScriptFiles = config.isNpmIgnoreJavaScriptFiles();
         final long npmTimeoutDependenciesCollector = config.getNpmTimeoutDependenciesCollector();
         final boolean npmIgnoreNpmLsErrors = config.getNpmIgnoreNpmLsErrors();
+        final String npmAccessToken = config.getNpmAccessToken();
 
         final boolean bowerResolveDependencies = config.isBowerResolveDependencies();
         final boolean bowerRunPreStep = config.isBowerRunPreStep();
@@ -67,14 +68,14 @@ public class DependencyResolutionService {
         final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
         final boolean mavenAggregateModules = config.isMavenAggregateModules();
 
-        boolean pythonResolveDependecies = config.isPythonResolveDependencies();
+        boolean pythonResolveDependencies = config.isPythonResolveDependencies();
 
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmIgnoreNpmLsErrors));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmAccessToken, npmIgnoreNpmLsErrors));
         }
         if (bowerResolveDependencies) {
             dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep));
@@ -88,8 +89,8 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, dependenciesOnly));
             separateProjects = !mavenAggregateModules;
         }
-        if (pythonResolveDependecies) {
-            dependencyResolvers.add(new PythonDependencyResolver());
+        if (pythonResolveDependencies) {
+            dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath()));
         }
     }
 
@@ -115,7 +116,7 @@ public class DependencyResolutionService {
         return false;
     }
 
-    public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes) {
+    public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes, String npmAccessToken) {
         Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap = new HashMap<>();
         dependencyResolvers.forEach(dependencyResolver -> {
             // add resolver excludes
@@ -138,7 +139,7 @@ public class DependencyResolutionService {
 
         topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
-                ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
+                ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles, npmAccessToken);
                 resolutionResults.add(result);
             });
         });

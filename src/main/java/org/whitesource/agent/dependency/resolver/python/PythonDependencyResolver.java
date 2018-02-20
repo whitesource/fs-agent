@@ -47,12 +47,10 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     private static final String WS_SETUP_PY = "ws_setup.py";
     private static final String WS_CONFIG = "ws_config.py";
-    private static final String PYTHON = "python";
     private static final String INSTALL = "install";
     private static final String WHITESOURCE_UPDATE_COMMAND = "whitesource_update";
     private static final String CONFIG_FLAG = "-p";
     private static final String WS_PYTHON_PACKAGE_NAME = "ws-python-package-name";
-    private static final String PIP = "pip";
     private static final String UNINSTALL = "uninstall";
     private static final String WSS_PLUGIN = "wss_plugin";
     private static final String YES = "-y";
@@ -97,11 +95,19 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             ")"};
 
     private final Collection<String> excludes = Arrays.asList("**/*" + PY_EXT);
+    private final String pythonPath;
+    private final String pipPath;
+
+    public PythonDependencyResolver(String pythonPath, String pipPath) {
+        super();
+        this.pythonPath = pythonPath;
+        this.pipPath = pipPath;
+    }
 
     /* --- Overridden methods --- */
 
     @Override
-    public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles) {
+    public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles, String npmAccessToken) {
         String tempDir = getTempDir();
         Map<AgentProjectInfo, Path> resolvedProjects = new HashMap<>();
         String[] args = new String[0];
@@ -126,37 +132,36 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             saveConfigFile(pathSetupPy, setupPy);
 
             // FSA will run "pip install wss_plugin"
-            args = new String[]{PIP, INSTALL, WSS_PLUGIN};
-            commandLineProcess = new CommandLineProcess(tempDir, args);
-            output = commandLineProcess.executeProcess();
-
+            output = processCommand(tempDir, new String[]{pipPath, INSTALL, WSS_PLUGIN});
             // FSA will run "python setup.py install"
-            args = new String[]{PYTHON, WS_SETUP_PY, INSTALL};
-            commandLineProcess = new CommandLineProcess(tempDir, args);
-            output = commandLineProcess.executeProcess();
-
+            output = processCommand(tempDir, new String[]{pythonPath, WS_SETUP_PY, INSTALL});
             // FSA will run "python setup.py whitesource_update -p "custom_config.py"
-            args = new String[]{PYTHON, WS_SETUP_PY, WHITESOURCE_UPDATE_COMMAND, CONFIG_FLAG, WS_CONFIG, OFFLINE_FLAG, TRUE};
-            commandLineProcess = new CommandLineProcess(tempDir, args);
-            output = commandLineProcess.executeProcess();
+            output = processCommand(tempDir, new String[]{pythonPath, WS_SETUP_PY, WHITESOURCE_UPDATE_COMMAND, CONFIG_FLAG, WS_CONFIG, OFFLINE_FLAG, TRUE});
 
             // Python-plugin will export an offline file
             // FSA will read the python offline request
             OfflineReader offlineReader = new OfflineReader();
             String offlineFile = Paths.get(tempDir, WHITESOURCE_OFFLINE_FOLDER, UPDATE_REQUEST_JSON).toString();
-            Collection<UpdateInventoryRequest> updateInventoryRequests = offlineReader.getAgentProjectsFromRequests(Arrays.asList(offlineFile));
-            Collection<AgentProjectInfo> projects = updateInventoryRequests.stream().flatMap(update->update.getProjects().stream()).collect(Collectors.toList());
-            // add projects to map
-            if (projects != null && projects.size() > 0) {
-                AgentProjectInfo project = projects.stream().findFirst().get();
-                project.getDependencies().forEach(dependencyInfo ->
-                        dependencyInfo.setDependencyType(DependencyType.PYTHON));
-                resolvedProjects.put(project, Paths.get(tempDir));
+            if (Files.exists(Paths.get(offlineFile))) {
+                Collection<UpdateInventoryRequest> updateInventoryRequests = offlineReader.getAgentProjectsFromRequests(Arrays.asList(offlineFile));
+                Collection<AgentProjectInfo> projects = updateInventoryRequests.stream().flatMap(update -> update.getProjects().stream()).collect(Collectors.toList());
+                // add projects to map
+                if (projects != null && projects.size() > 0) {
+                    AgentProjectInfo project = projects.stream().findFirst().get();
+                    project.getDependencies().forEach(dependencyInfo ->
+                            dependencyInfo.setDependencyType(DependencyType.PYTHON));
+                    resolvedProjects.put(project, Paths.get(tempDir));
+                }
+            } else {
+                logger.warn("Offline file '" + offlineFile + "' could not be found");
             }
 
             // FSA will run pip uninstall "project-name"
-            commandLineProcess = new CommandLineProcess(tempDir, new String[]{PIP, UNINSTALL, YES, WS_PYTHON_PACKAGE_NAME});
-            output = commandLineProcess.executeProcess();
+            output = processCommand(tempDir, new String[]{pipPath, UNINSTALL, YES, WS_PYTHON_PACKAGE_NAME});
+
+            // FSA will run "pip uninstall wss_plugin"
+            output = processCommand(tempDir, new String[]{pipPath, UNINSTALL, YES, WSS_PLUGIN});
+
             if (!isTempDirectory) {
                 FileUtils.deleteDirectory(new File(tempDir));
             }
@@ -167,6 +172,20 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         }
 
         return new ResolutionResult(resolvedProjects, getExcludes(), DependencyType.PYTHON, topLevelFolder);
+    }
+
+    private List<String> processCommand(String tempDir, String[] args) throws IOException {
+        try {
+            CommandLineProcess commandLineProcess = new CommandLineProcess(tempDir, args);
+            List<String> lines = commandLineProcess.executeProcess();
+            if (commandLineProcess.isErrorInProcess()) {
+                logger.debug("Fail to run '" + String.join(" ", args) + "' in '" + tempDir + "'.\n  Try running custom process manually");
+            }
+            return lines;
+        } catch (IOException ioe) {
+            logger.error("Consider adding '" + args[0] + "' to the PATH or set '" + args[0] + "' full path in the configuration file");
+            throw ioe;
+        }
     }
 
     private boolean saveConfigFile(Path config, String[] fileLines) {

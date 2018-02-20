@@ -107,35 +107,46 @@ public class ProjectsSender {
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
 
-            //todo comment in via code
+            // TODO comment in via code
 //            if (senderConfig.isEnableImpactAnalysis()) {
 //                runViaAnalysis(projects, service);
 //            }
-            try {
-                if (senderConfig.isCheckPolicies()) {
-                    boolean policyCompliance = checkPolicies(service, projects);
-                    statusCode = policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
-                }
-                if (statusCode == StatusCode.SUCCESS) {
-                    resultInfo = update(service, projects);
-                    logger.info(resultInfo);
-                    //strip line separators
-                    resultInfo = resultInfo.replace(System.lineSeparator(), "");
-                }
-            } catch (WssServiceException e) {
-                if (e.getCause() != null &&
-                        e.getCause().getClass().getCanonicalName().substring(0, e.getCause().getClass().getCanonicalName().lastIndexOf(DOT)).equals(JAVA_NETWORKING)) {
-                    statusCode = StatusCode.CONNECTION_FAILURE;
-                } else {
-                    statusCode = StatusCode.SERVER_FAILURE;
-                }
+            int retries = senderConfig.getConnectionRetries();
+            while (retries-- > -1) {
+                try {
+                    statusCode = checkPolicies(service, projects);
+                    if (statusCode == StatusCode.SUCCESS) {
+                        resultInfo = update(service, projects);
+                    }
+                    retries = -1;
+                } catch (WssServiceException e) {
+                    if (e.getCause() != null &&
+                            e.getCause().getClass().getCanonicalName().substring(0, e.getCause().getClass().getCanonicalName().lastIndexOf(DOT)).equals(JAVA_NETWORKING)) {
+                        statusCode = StatusCode.CONNECTION_FAILURE;
+                    } else {
+                        statusCode = StatusCode.SERVER_FAILURE;
+                    }
+                    resultInfo = "Failed to send request to WhiteSource server: " + e.getMessage();
+                    logger.error(resultInfo, e);
+                    logger.error("Trying " + (retries + 1) + " more time" + (retries != 0 ? "s" : ""));
+                    if (retries > -1) {
+                        try {
+                            Thread.sleep(senderConfig.getConnectionRetriesIntervals());
+                        } catch (InterruptedException e1) {
+                            logger.error("Failed to sleep while retrying to connect to server " + e1.getMessage(), e1);
+                        }
+                    }
 
-                resultInfo = "Failed to send request to WhiteSource server: " + e.getMessage();
-                logger.error(resultInfo, e);
-            } finally {
-                if (service != null) {
-                    service.shutdown();
+                    String requestToken = e.getRequestToken();
+                    if (StringUtils.isNotBlank(requestToken)) {
+                        resultInfo += NEW_LINE + "Support token: " + requestToken;
+                        logger.info("Support token: {}", requestToken);
+                    }
                 }
+            }
+
+            if (service != null) {
+                service.shutdown();
             }
             if (statusCode == StatusCode.SUCCESS) {
                 return new Pair<>(resultInfo, this.prepStepStatusCode);
@@ -199,44 +210,53 @@ public class ProjectsSender {
         return service;
     }
 
-    private boolean checkPolicies(WhitesourceService service,
-                                  Collection<AgentProjectInfo> projects) throws WssServiceException {
+    private StatusCode checkPolicies(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         boolean policyCompliance = true;
-        logger.info("Checking policies");
-        CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies());
-        if (checkPoliciesResult.hasRejections()) {
-            if (senderConfig.isForceUpdate()) {
-                logger.info("Some dependencies violate open source policies, however all were force " +
-                        "updated to organization inventory.");
+        if (senderConfig.isCheckPolicies()) {
+            logger.info("Checking policies");
+            CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies());
+            if (checkPoliciesResult.hasRejections()) {
+                if (senderConfig.isForceUpdate()) {
+                    logger.info("Some dependencies violate open source policies, however all were force " +
+                            "updated to organization inventory.");
+                } else {
+                    logger.info("Some dependencies did not conform with open source policies, review report for details");
+                    logger.info("=== UPDATE ABORTED ===");
+                    policyCompliance = false;
+                }
             } else {
-                logger.info("Some dependencies did not conform with open source policies, review report for details");
-                logger.info("=== UPDATE ABORTED ===");
-                policyCompliance = false;
+                logger.info("All dependencies conform with open source policies.");
             }
-        } else {
-            logger.info("All dependencies conform with open source policies.");
+
+            String requestToken = checkPoliciesResult.getRequestToken();
+            if (StringUtils.isNotBlank(requestToken)) {
+                logger.info("Check Policies Support Token: {}", requestToken);
+            }
+
+            try {
+                // generate report
+                PolicyCheckReport report = new PolicyCheckReport(checkPoliciesResult);
+
+                File outputDir = new File(offlineConfig.getWhiteSourceFolderPath());
+                report.generate(outputDir, false);
+                report.generateJson(outputDir);
+                logger.info("Policies report generated successfully");
+            } catch (IOException e) {
+                logger.error("Error generating check policies report: " + e.getMessage(), e);
+            }
         }
-
-        try {
-            // generate report
-            PolicyCheckReport report = new PolicyCheckReport(checkPoliciesResult);
-
-            File outputDir = new File(offlineConfig.getWhiteSourceFolderPath());
-            report.generate(outputDir, false);
-            report.generateJson(outputDir);
-            logger.info("Policies report generated successfully");
-        } catch (IOException e) {
-            logger.error("Error generating check policies report: " + e.getMessage(), e);
-        }
-
-        return policyCompliance;
+        return policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
     }
 
     private String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
         UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(),
                 UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProjectVersion(), projects);
-        return logResult(updateResult);
+        String resultInfo = logResult(updateResult);
+
+        // remove line separators
+        resultInfo = resultInfo.replace(System.lineSeparator(), "");
+        return resultInfo;
     }
 
     private String offlineUpdate(WhitesourceService service, Collection<AgentProjectInfo> projects) {
@@ -268,7 +288,11 @@ public class ProjectsSender {
             logger.info("UpdateType offline set to {} ", updateTypeFinal);
             updateRequest.setUpdateType(updateTypeFinal);
 
-            File outputDir = new File(offlineConfig.getWhiteSourceFolderPath());
+            File outputDir = new File(offlineConfig.getWhiteSourceFolderPath()).getAbsoluteFile();
+            if (!outputDir.exists() && !outputDir.mkdir()) {
+                throw new IOException("Unable to make output directory: " + outputDir);
+            }
+
             File file = offlineUpdateRequest.generate(outputDir, offlineConfig.isZip(), offlineConfig.isPrettyJson());
 
             resultInfo = "Offline request generated successfully at " + file.getPath();
@@ -287,13 +311,18 @@ public class ProjectsSender {
     private String logResult(UpdateInventoryResult updateResult) {
         StringBuilder resultLogMsg = new StringBuilder("Inventory update results for ").append(updateResult.getOrganization()).append(NEW_LINE);
 
+        logger.info("Inventory update results for {}", updateResult.getOrganization());
+
         // newly created projects
         Collection<String> createdProjects = updateResult.getCreatedProjects();
         if (createdProjects.isEmpty()) {
+            logger.info("No new projects found.");
             resultLogMsg.append("No new projects found.").append(NEW_LINE);
         } else {
+            logger.info("Newly created projects:");
             resultLogMsg.append("Newly created projects:").append(NEW_LINE);
             for (String projectName : createdProjects) {
+                logger.info("# {}", projectName);
                 resultLogMsg.append(projectName).append(NEW_LINE);
             }
         }
@@ -301,10 +330,13 @@ public class ProjectsSender {
         // updated projects
         Collection<String> updatedProjects = updateResult.getUpdatedProjects();
         if (updatedProjects.isEmpty()) {
+            logger.info("No projects were updated.");
             resultLogMsg.append("No projects were updated.").append(NEW_LINE);
         } else {
+            logger.info("Updated projects:");
             resultLogMsg.append("Updated projects:").append(NEW_LINE);
             for (String projectName : updatedProjects) {
+                logger.info("# {}", projectName);
                 resultLogMsg.append(projectName).append(NEW_LINE);
             }
         }
@@ -312,7 +344,8 @@ public class ProjectsSender {
         // support token
         String requestToken = updateResult.getRequestToken();
         if (StringUtils.isNotBlank(requestToken)) {
-            resultLogMsg.append(NEW_LINE).append("Support Token: ").append(requestToken).append(NEW_LINE);
+            logger.info("Support Token: {}", requestToken);
+            resultLogMsg.append(NEW_LINE).append("Support Token: ").append(requestToken);
         }
         return resultLogMsg.toString();
     }

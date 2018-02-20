@@ -41,6 +41,9 @@ public class BomFile {
 
     public static String DUMMY_PARAMETER_SCOPE_PACKAGE = "{dummyParameterOfScopePackage}";
     private static final Logger logger = LoggerFactory.getLogger(BomFile.class);
+    private static String NPM_REGISTRY = "registry.npmjs.org";
+    private static final String NPM_REGISTRY1 = "npm/registry/";
+    private static final String SCOPED_PACKAGE = "@";
 
     /* --- Constructors --- */
 
@@ -96,7 +99,7 @@ public class BomFile {
     }
 
     public static String getUniqueDependencyName(String name, String version) {
-        return name + "@" + version.replace("v", "");
+        return name + SCOPED_PACKAGE + version.replace("v", "");
     }
 
     public String getUniqueDependencyName() {
@@ -112,14 +115,21 @@ public class BomFile {
     }
 
     public String getRegistryPackageUrl() {
-        String registryPackageUrl;
+        String registryPackageUrl = null;
         if (StringUtils.isEmpty(this.resolved)) {
             logger.debug("resolved url in file is empty");
             return StringUtils.EMPTY;
         }
         logger.debug("resolved url in file = " + this.resolved);
-        if (this.resolved.contains("@")) {
-            registryPackageUrl = this.resolved.substring(0, this.resolved.indexOf(this.name) + this.name.length());
+        if (this.resolved.contains("git+") || this.resolved.contains("github:")) {
+            // temp solution for WSE-204
+            logger.info("This configuration - " + this.name + " (remote repository packages) is not supported by WhiteSource. Please use direct URL package references.");
+            return StringUtils.EMPTY;
+        }
+        if (this.resolved.contains(SCOPED_PACKAGE) || this.resolved.indexOf(NPM_REGISTRY) == -1) {
+            // resolve rare cases where the package's name is a sub-string of the registry's url
+            int npmRegistryIndex = this.resolved.indexOf(NPM_REGISTRY1);
+            registryPackageUrl =  this.resolved.substring(0, this.resolved.indexOf(this.name,npmRegistryIndex) + this.name.length());
             int lastSlashIndex = registryPackageUrl.lastIndexOf('/');
             registryPackageUrl = registryPackageUrl.substring(0, lastSlashIndex) + DUMMY_PARAMETER_SCOPE_PACKAGE + registryPackageUrl.substring(lastSlashIndex + 1);
             this.scopedPackage = true;

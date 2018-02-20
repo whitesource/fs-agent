@@ -91,20 +91,20 @@ public class FileSystemScanner {
                                                String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
                                                Collection<String> excludedCopyrights, boolean partialSha1Match) {
         Collection<AgentProjectInfo> projects = createProjects(scannerBaseDirs, scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
-                archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match, false, false);
+                archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match, false, false, null);
         return projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
     }
 
-    public Collection<AgentProjectInfo> createProjects(List<String> scannerBaseDirs, boolean hasScmConnector) {
+    public Collection<AgentProjectInfo> createProjects(List<String> scannerBaseDirs, boolean hasScmConnector, String npmAccessToken) {
         return createProjects(scannerBaseDirs,hasScmConnector,agent.getIncludes(),agent.getExcludes(), agent.getGlobCaseSensitive(),agent.getArchiveExtractionDepth(),
         agent.getArchiveIncludes(), agent.getArchiveExcludes(),agent.isArchiveFastUnpack(),agent.isFollowSymlinks(),
-                agent.getExcludedCopyrights(), agent.isPartialSha1Match(), agent.isCalculateHints(), agent.isCalculateMd5());
+                agent.getExcludedCopyrights(), agent.isPartialSha1Match(), agent.isCalculateHints(), agent.isCalculateMd5(), npmAccessToken);
     }
 
     public Collection<AgentProjectInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
                                                        String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                        String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
-                                                       Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
+                                                       Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5, String npmAccessToken) {
 
         MemoryUsageHelper.SystemStats systemStats = MemoryUsageHelper.getMemoryUsage();
         logger.debug(systemStats.toString());
@@ -154,7 +154,7 @@ public class FileSystemScanner {
             isDependenciesOnly = dependencyResolutionService.isDependenciesOnly();
 
             // get all resolution results
-            Collection<ResolutionResult> resolutionResults = dependencyResolutionService.resolveDependencies(pathsToScan, excludes);
+            Collection<ResolutionResult> resolutionResults = dependencyResolutionService.resolveDependencies(pathsToScan, excludes, npmAccessToken);
 
             // add all resolved dependencies
             final int[] totalDependencies = {0};

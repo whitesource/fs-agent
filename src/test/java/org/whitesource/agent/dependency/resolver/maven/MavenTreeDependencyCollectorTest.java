@@ -62,7 +62,7 @@ public class MavenTreeDependencyCollectorTest {
         ResolverConfiguration resolverConfiguration = new ResolverConfiguration(props);
 
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(resolverConfiguration);
-        List<ResolutionResult> results = dependencyResolutionService.resolveDependencies(Arrays.asList(folderParent), new String[0]);
+        List<ResolutionResult> results = dependencyResolutionService.resolveDependencies(Arrays.asList(folderParent), new String[0], null);
 
         TestHelper.testDependencyResult(true, results);
     }

@@ -24,9 +24,7 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
 public class EndPointConfiguration {
 
     public static final int DEFAULT_PORT = 443;
-    public static final boolean DEFAULT_SSL = false;
-    public static final String DEFAULT_CERTIFICATE = "test.jks";
-    public static final String DEFAULT_PASS = "123456";
+    public static final boolean DEFAULT_SSL = true;
     private static final boolean DEFAULT_ENABLED = false;
 
     private final int port;
@@ -76,8 +74,8 @@ public class EndPointConfiguration {
 
     public EndPointConfiguration(Properties config) {
         this(FSAConfiguration.getIntProperty(config, ENDPOINT_PORT, DEFAULT_PORT),
-                config.getProperty(ENDPOINT_CERTIFICATE) == null ? DEFAULT_CERTIFICATE : config.getProperty(ENDPOINT_CERTIFICATE),
-                config.getProperty(ENDPOINT_PASS) == null ? DEFAULT_PASS : config.getProperty(ENDPOINT_PASS),
+                config.getProperty(ENDPOINT_CERTIFICATE),
+                config.getProperty(ENDPOINT_PASS),
                 FSAConfiguration.getBooleanProperty(config, ENDPOINT_ENABLED, DEFAULT_ENABLED),
                 FSAConfiguration.getBooleanProperty(config, ENDPOINT_SSL_ENABLED, DEFAULT_SSL));
     }
