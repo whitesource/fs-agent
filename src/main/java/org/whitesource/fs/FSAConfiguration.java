@@ -203,7 +203,7 @@ public class FSAConfiguration {
         String pipPath = config.getProperty(PYTHON_PIP_PATH, PIP);
         String pythonPath = config.getProperty(PYTHON_PATH, PYTHON);
         boolean pythonIsWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, PYTHON_IS_WSS_PLUGIN_INSTALLED, false);
-        boolean pythonUninstallWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, PYTHON_UNINSTALL_WSS_PLUGIN, true);
+        boolean pythonUninstallWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, PYTHON_UNINSTALL_WSS_PLUGIN, false);
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies,
