@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver.bower;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 
 /**
@@ -76,7 +76,7 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
     }
 
     @Override
-    protected void enrichDependency(DependencyInfo dependency, BomFile packageJson) {
+    protected void enrichDependency(DependencyInfo dependency, BomFile packageJson, String npmAccessToken) {
         dependency.setGroupId(packageJson.getName());
         dependency.setArtifactId(packageJson.getName());
         dependency.setVersion(packageJson.getVersion());

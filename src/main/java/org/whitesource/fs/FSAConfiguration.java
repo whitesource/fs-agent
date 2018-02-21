@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.api.dispatch.UpdateType;
+import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.*;
 
@@ -29,6 +31,9 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
+import static org.whitesource.agent.client.ClientConstants.SERVICE_URL_KEYWORD;
+import static org.whitesource.fs.FileSystemAgent.EMPTY_STRING;
+import static org.whitesource.fs.FileSystemAgent.EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX;
 
 /**
  * Author: eugen.horovitz
@@ -49,6 +54,14 @@ public class FSAConfiguration {
     private static final String NONE = "(none)";
     private static final String SPACE = " ";
     private static final String BLANK = "";
+
+    public static final String WHITE_SOURCE_DEFAULT_FOLDER_PATH = ".";
+    public static final String PIP = "pip";
+    public static final String PYTHON = "python";
+
+    public static final int DEFAULT_PORT = 443;
+    public static final boolean DEFAULT_SSL = true;
+    private static final boolean DEFAULT_ENABLED = false;
 
     /* --- Private fields --- */
 
@@ -145,6 +158,61 @@ public class FSAConfiguration {
 
         logLevel = config.getProperty(LOG_LEVEL_KEY, INFO);
 
+        request = getRequest(config, apiToken, projectName, projectToken);
+        scm = getScm(config);
+        agent = getAgent(config);
+        offline = getOffline(config);
+        sender = getSender(config);
+        resolver = getResolver(config);
+        endpoint = getEndpoint(config);
+    }
+
+    private EndPointConfiguration getEndpoint(Properties config) {
+        return new EndPointConfiguration(FSAConfiguration.getIntProperty(config, ENDPOINT_PORT, DEFAULT_PORT),
+                config.getProperty(ENDPOINT_CERTIFICATE),
+                config.getProperty(ENDPOINT_PASS),
+                FSAConfiguration.getBooleanProperty(config, ENDPOINT_ENABLED, DEFAULT_ENABLED),
+                FSAConfiguration.getBooleanProperty(config, ENDPOINT_SSL_ENABLED, DEFAULT_SSL));
+    }
+
+    private ResolverConfiguration getResolver(Properties config) {
+
+        // todo split this in multiple configuration before release fsa as a service
+        boolean npmRunPreStep = FSAConfiguration.getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
+        boolean npmResolveDependencies = FSAConfiguration.getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
+        boolean npmIncludeDevDependencies = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
+        boolean npmIgnoreJavaScriptFiles = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
+        long npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
+        boolean npmIgnoreNpmLsErrors = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_NPM_LS_ERRORS, false);
+        String npmAccessToken = config.getProperty(NPM_ACCESS_TOKEN);
+
+        boolean bowerResolveDependencies = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
+        boolean bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
+
+        boolean nugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
+
+        boolean mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
+        String[] mavenIgnoredScopes = FSAConfiguration.getListProperty(config, MAVEN_IGNORED_SCOPES, null);
+        boolean mavenAggregateModules = FSAConfiguration.getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
+
+        boolean dependenciesOnly = FSAConfiguration.getBooleanProperty(config, DEPENDENCIES_ONLY, false);
+
+        String whitesourceConfiguration = config.getProperty(PROJECT_CONFIGURATION_PATH);
+
+        boolean pythonResolveDependencies = FSAConfiguration.getBooleanProperty(config, PYTHON_RESOLVE_DEPENDENCIES, true);
+        String pipPath = config.getProperty(PYTHON_PIP_PATH, PIP);
+        String pythonPath = config.getProperty(PYTHON_PATH, PYTHON);
+        boolean pythonIsWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, PYTHON_IS_WSS_PLUGIN_INSTALLED, false);
+        boolean pythonUninstallWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, PYTHON_UNINSTALL_WSS_PLUGIN, false);
+
+        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
+                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies,
+                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
+                pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
+                dependenciesOnly, whitesourceConfiguration);
+    }
+
+    private RequestConfiguration getRequest(Properties config, String apiToken, String projectName, String projectToken) {
         String productToken = config.getProperty(ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY);
         String productName = config.getProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY);
         String productVersion = config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
@@ -152,14 +220,110 @@ public class FSAConfiguration {
         String appPath = config.getProperty(APP_PATH, BLANK);
         boolean projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(REQUESTER_EMAIL);
+        return new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken, projectVersion, productName, productToken, productVersion, appPath);
+    }
 
-        request = new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken, projectVersion, productName, productToken, productVersion, appPath);
-        scm = new ScmConfiguration(config);
-        agent = new AgentConfiguration(config);
-        offline = new OfflineConfiguration(config);
-        sender = new SenderConfiguration(config);
-        resolver = new ResolverConfiguration(config);
-        endpoint = new EndPointConfiguration(config);
+    private SenderConfiguration getSender(Properties config) {
+        String updateTypeValue = config.getProperty(UPDATE_TYPE, UpdateType.OVERRIDE.toString());
+        boolean checkPolicies = FSAConfiguration.getBooleanProperty(config, CHECK_POLICIES_PROPERTY_KEY, false);
+        boolean forceCheckAllDependencies = FSAConfiguration.getBooleanProperty(config, FORCE_CHECK_ALL_DEPENDENCIES, false);
+        boolean forceUpdate = FSAConfiguration.getBooleanProperty(config, FORCE_UPDATE, false);
+        boolean enableImpactAnalysis = FSAConfiguration.getBooleanProperty(config, ENABLE_IMPACT_ANALYSIS, false);
+        String serviceUrl = config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
+        String proxyHost = config.getProperty(PROXY_HOST_PROPERTY_KEY);
+        int connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
+                String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
+        int connectionRetries = FSAConfiguration.getIntProperty(config, CONNECTION_RETRIES, 1);
+        int connectionRetriesIntervals = FSAConfiguration.getIntProperty(config, CONNECTION_RETRIES_INTERVALS, 3000);
+        String senderPort = config.getProperty(PROXY_PORT_PROPERTY_KEY);
+
+        int proxyPort;
+        if (StringUtils.isNotEmpty(senderPort)) {
+            proxyPort = Integer.parseInt(senderPort);
+        } else {
+            proxyPort = -1;
+        }
+
+        String proxyUser = config.getProperty(PROXY_USER_PROPERTY_KEY);
+        String proxyPassword = config.getProperty(PROXY_PASS_PROPERTY_KEY);
+        boolean ignoreCertificateCheck = FSAConfiguration.getBooleanProperty(config, IGNORE_CERTIFICATE_CHECK, false);
+
+        return new SenderConfiguration(checkPolicies, serviceUrl, connectionTimeOut,
+                proxyHost, proxyPort, proxyUser, proxyPassword,
+                forceCheckAllDependencies, forceUpdate, updateTypeValue, enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals);
+    }
+
+    private OfflineConfiguration getOffline(Properties config) {
+        boolean enabled = FSAConfiguration.getBooleanProperty(config, OFFLINE_PROPERTY_KEY, false);
+        boolean zip = FSAConfiguration.getBooleanProperty(config, OFFLINE_ZIP_PROPERTY_KEY, false);
+        boolean prettyJson = FSAConfiguration.getBooleanProperty(config, OFFLINE_PRETTY_JSON_KEY, false);
+        String wsFolder = StringUtils.isBlank(config.getProperty(WHITESOURCE_FOLDER_PATH)) ? WHITE_SOURCE_DEFAULT_FOLDER_PATH : config.getProperty(WHITESOURCE_FOLDER_PATH);
+        return new OfflineConfiguration(enabled, zip, prettyJson, wsFolder);
+    }
+
+    private AgentConfiguration getAgent(Properties config) {
+        String[] includes = FSAConfiguration.getIncludes(config);
+        String[] excludes = config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(config);
+        String[] archiveIncludes = config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String[] archiveExcludes = config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        boolean archiveFastUnpack = FSAConfiguration.getBooleanProperty(config, ARCHIVE_FAST_UNPACK_KEY, false);
+        boolean archiveFollowSymbolicLinks = FSAConfiguration.getBooleanProperty(config, FOLLOW_SYMBOLIC_LINKS, true);
+
+        boolean partialSha1Match = FSAConfiguration.getBooleanProperty(config, PARTIAL_SHA1_MATCH_KEY, false);
+        boolean calculateHints = FSAConfiguration.getBooleanProperty(config, CALCULATE_HINTS, false);
+        boolean calculateMd5 = FSAConfiguration.getBooleanProperty(config, CALCULATE_MD5, false);
+        boolean showProgress = FSAConfiguration.getBooleanProperty(config, SHOW_PROGRESS_BAR, true);
+        Pair<Boolean, String> globalCaseSensitive = getGlobalCaseSensitive(config.getProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY));
+        //key , val
+
+        Collection<String> excludesCopyrights = getExcludeCopyrights(config.getProperty(EXCLUDED_COPYRIGHT_KEY, ""));
+
+        return new AgentConfiguration(includes, excludes,
+                archiveExtractionDepth, archiveIncludes, archiveExcludes, archiveFastUnpack, archiveFollowSymbolicLinks,
+                partialSha1Match, calculateHints, calculateMd5, showProgress, globalCaseSensitive.getKey(), globalCaseSensitive.getValue(), excludesCopyrights);
+    }
+
+    private Collection<String> getExcludeCopyrights(String excludedCopyrightsValue) {
+        Collection<String> excludes = new ArrayList<>(Arrays.asList(excludedCopyrightsValue.split(EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX)));
+        excludes.remove("");
+        return excludes;
+    }
+
+    private Pair<Boolean, String> getGlobalCaseSensitive(String globCaseSensitiveValue) {
+        boolean globCaseSensitive = false;
+        String error = null;
+        if (StringUtils.isNotBlank(globCaseSensitiveValue)) {
+            if (globCaseSensitiveValue.equalsIgnoreCase("true") || globCaseSensitiveValue.equalsIgnoreCase("y")) {
+                globCaseSensitive = true;
+                error = null;
+            } else if (globCaseSensitiveValue.equalsIgnoreCase("false") || globCaseSensitiveValue.equalsIgnoreCase("n")) {
+                globCaseSensitive = false;
+                error = null;
+            } else {
+                error = "Bad " + CASE_SENSITIVE_GLOB_PROPERTY_KEY + ". Received " + globCaseSensitiveValue + ", required true/false or y/n";
+            }
+        } else {
+            error = null;
+        }
+        return new Pair<>(globCaseSensitive, error);
+    }
+
+    private ScmConfiguration getScm(Properties config) {
+        String type = config.getProperty(SCM_TYPE_PROPERTY_KEY);
+        String url = config.getProperty(SCM_URL_PROPERTY_KEY);
+        String user = config.getProperty(SCM_USER_PROPERTY_KEY);
+        String pass = config.getProperty(SCM_PASS_PROPERTY_KEY);
+        String branch = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
+        String tag = config.getProperty(SCM_TAG_PROPERTY_KEY);
+        String ppk = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
+
+        //defaults
+        String repositoriesPath = config.getProperty(SCM_REPOSITORIES_FILE);
+        boolean npmInstall = FSAConfiguration.getBooleanProperty(config, SCM_NPM_INSTALL, true);
+        int npmInstallTimeoutMinutes = FSAConfiguration.getIntProperty(config, SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
+
+        return new ScmConfiguration(type, user, pass, ppk, url, branch, tag, repositoriesPath, npmInstall, npmInstallTimeoutMinutes);
     }
 
     public static Pair<Properties, List<String>> readWithError(String configFilePath) {
@@ -227,11 +391,11 @@ public class FSAConfiguration {
         return dependencyDirs;
     }
 
-    public boolean getUseCommandLineProductName(){
+    public boolean getUseCommandLineProductName() {
         return useCommandLineProductName;
     }
 
-    public boolean getUseCommandLineProjectName(){
+    public boolean getUseCommandLineProjectName() {
         return useCommandLineProjectName;
     }
 
@@ -343,14 +507,14 @@ public class FSAConfiguration {
         }
     }
 
-    private void commandLineArgsOverride(CommandLineArgs commandLineArgs){
+    private void commandLineArgsOverride(CommandLineArgs commandLineArgs) {
         useCommandLineProductName = commandLineArgs != null && StringUtils.isNotBlank(commandLineArgs.product);
         useCommandLineProjectName = commandLineArgs != null && StringUtils.isNotBlank(commandLineArgs.project);
     }
 
     public void validate() {
         getErrors().clear();
-        errors.addAll(configurationValidation.getConfigurationErrors(getRequest().isProjectPerSubFolder(),getRequest().getProjectToken(),
+        errors.addAll(configurationValidation.getConfigurationErrors(getRequest().isProjectPerSubFolder(), getRequest().getProjectToken(),
                 getRequest().getProjectName(), getRequest().getApiToken(), configFilePath, getAgent().getArchiveExtractionDepth(), getAgent().getIncludes()));
     }
 }

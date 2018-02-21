@@ -8,10 +8,7 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.AgentProjectInfo;
@@ -28,7 +25,7 @@ import java.util.Properties;
 @RunWith(VertxUnitRunner.class)
 public class FsaVerticleTest {
 
-    public static final String GIT_SAMPLE = "https://github.com/adutra/maven-dependency-tree-parser.git";
+    private static final String GIT_SAMPLE = "https://github.com/adutra/maven-dependency-tree-parser.git";
     private Vertx vertx;
 
     @Before
@@ -48,30 +45,29 @@ public class FsaVerticleTest {
         vertx.close(context.asyncAssertSuccess());
     }
 
-
+    // requires admin rights to install dependencies in linux
+    @Ignore
     @Test
     public void testHome(TestContext context) {
         final Async async = context.async();
 
-        vertx.createHttpClient().getNow(EndPointConfiguration.DEFAULT_PORT, "localhost", FsaVerticle.HOME,
-                response -> {
-                    response.handler(body -> {
-                        context.assertTrue(body.toString().equals(FsaVerticle.WELCOME_MESSAGE));
-                        async.complete();
-                    });
-                });
+        vertx.createHttpClient().getNow(FSAConfiguration.DEFAULT_PORT, "localhost", FsaVerticle.HOME,
+                response -> response.handler(body -> {
+                    context.assertTrue(body.toString().equals(FsaVerticle.WELCOME_MESSAGE));
+                    async.complete();
+                }));
     }
 
+    // requires admin rights to install dependencies in linux
+    @Ignore
     @Test
     public void testAnalyzeApi(TestContext context) {
         final Async async = context.async();
-        vertx.createHttpClient().post("localhost:" + EndPointConfiguration.DEFAULT_PORT + "\\analyze",
-                response -> {
-                    response.handler(body -> {
-                        context.assertTrue(body.toString().contains("Hello"));
-                        async.complete();
-                    });
-                });
+        vertx.createHttpClient().post("localhost:" + FSAConfiguration.DEFAULT_PORT + "\\analyze",
+                response -> response.handler(body -> {
+                    context.assertTrue(body.toString().contains("Hello"));
+                    async.complete();
+                }));
 
 
         Properties properties = new Properties();
@@ -88,6 +84,7 @@ public class FsaVerticleTest {
         FSAConfiguration fsaConfiguration = new FSAConfiguration(properties);
 
         String json = ConfigurationSerializer.getAsString(fsaConfiguration,false);
+        assert json != null;
         Assert.assertTrue(json.contains(GIT_SAMPLE));
         final String length = Integer.toString(json.length());
 
@@ -96,7 +93,7 @@ public class FsaVerticleTest {
         options.setKeepAlive(true);
         options.setMaxPoolSize(500);
 
-        vertx.createHttpClient(options).post(EndPointConfiguration.DEFAULT_PORT, "localhost", FsaVerticle.API_ANALYZE)
+        vertx.createHttpClient(options).post(FSAConfiguration.DEFAULT_PORT, "localhost", FsaVerticle.API_ANALYZE)
                 .putHeader("content-type", "application/json")
                 .putHeader("content-length", length)
                 .handler(response -> {
@@ -107,7 +104,7 @@ public class FsaVerticleTest {
                         //context.assertNotNull(projects.getKey().size()>0);
                         context.assertTrue(body.length() > 20000);
                         Collection<AgentProjectInfo> projects = getProjects(body).getResult().getProjects();
-                        context.assertTrue(projects.size() >= 0);
+                        context.assertTrue(projects.size() > 0);
                         async.complete();
                     });
                 })
@@ -129,8 +126,10 @@ public class FsaVerticleTest {
     public static String getPropertyAsString(Properties prop) {
         StringBuilder sb = new StringBuilder();
 
-        prop.stringPropertyNames().stream().forEach(p -> {
-            sb.append(p + "=" + prop.getProperty(p));
+        prop.stringPropertyNames().forEach(p -> {
+            sb.append(p);
+            sb.append("=");
+            sb.append(prop.getProperty(p));
             sb.append(System.lineSeparator());
         });
 

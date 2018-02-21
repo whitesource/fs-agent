@@ -115,12 +115,4 @@ public class RequestConfiguration {
         }
         return getProductToken();
     }
-
-    public void setProductName(String value){
-        productName = value;
-    }
-
-    public void setProductVersion(String value){
-        productVersion = value;
-    }
 }

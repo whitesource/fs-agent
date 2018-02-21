@@ -5,11 +5,13 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
-import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Properties;
 
 
 /**
@@ -22,7 +24,7 @@ public class ComponentScan {
     private static final Logger logger = LoggerFactory.getLogger(ComponentScan.class);
     public static final String DIRECTORY_NOT_SET = "Directory parameter 'd' is not set" + StatusCode.ERROR;
     public static final String EMPTY_PROJECT_TOKEN = "";
-    public static final String SPACE = " ";
+    public static final String FOLDER_DELIMITER = ",";
 
     /* --- Members --- */
     private  Properties config;
@@ -39,7 +41,7 @@ public class ComponentScan {
     public String scan() {
         logger.info("Starting Analysis - component scan has started");
         String directory = config.getProperty("d");
-        String[] directories = directory.split(SPACE);
+        String[] directories = directory.split(FOLDER_DELIMITER);
         ArrayList<String> scannerBaseDirs = new ArrayList<>(Arrays.asList(directories));
         if (!scannerBaseDirs.isEmpty()) {
             logger.info("Getting properties");
@@ -47,7 +49,7 @@ public class ComponentScan {
 //            List<String> scannerBaseDirs = Collections.singletonList(directory);
             FSAConfiguration fsaConfiguration = new FSAConfiguration(config);
             // set default values in case of missing parameters
-            ResolverConfiguration resolverConfiguration = new ResolverConfiguration(config);
+            ResolverConfiguration resolverConfiguration = fsaConfiguration.getResolver();
             String[] includes = config.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY) != null ?
                     config.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX) : ExtensionUtils.INCLUDES;
             String[] excludes = config.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY) != null ?
@@ -64,8 +66,9 @@ public class ComponentScan {
             logger.info("Resolving dependencies");
             Collection<AgentProjectInfo> projects = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent()).createProjects(
                     scannerBaseDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getAgent().getArchiveExtractionDepth(),
-                    fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(), followSymlinks, excludedCopyrights,
-                    fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(), fsaConfiguration.getAgent().isCalculateMd5());
+                    fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(),
+                    followSymlinks, excludedCopyrights, fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(),
+                    fsaConfiguration.getAgent().isCalculateMd5(), fsaConfiguration.getResolver().getNpmAccessToken());
             logger.info("Finished dependency resolution");
             for (AgentProjectInfo project : projects) {
 //                project.setCoordinates(new Coordinates());

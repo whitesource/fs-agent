@@ -19,6 +19,9 @@ import org.eclipse.jgit.util.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -64,10 +67,13 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private static final String SHASUM = "shasum";
 
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractDependencyResolver.class);
+    private static final Logger logger = LoggerFactory.getLogger(NpmDependencyResolver.class);
     private static final String EXCLUDE_TOP_FOLDER = "node_modules";
     private static final String EMPTY_STRING = "";
     private static final int NUM_THREADS = 8;
+    public static final String AUTHORIZATION = "Authorization";
+    public static final String BEARER = "Bearer";
+    public static final String SPACE = " ";
 
     /* --- Members --- */
 
@@ -75,21 +81,23 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private final NpmBomParser bomParser;
     private final boolean ignoreJavaScriptFiles;
     private final boolean runPreStep;
+    private final String accessToken;
     private final FilesScanner filesScanner;
 
     /* --- Constructor --- */
 
-    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector,boolean runPreStep) {
+    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector, boolean runPreStep, String accessToken, boolean npmIgnoreNpmLsErrors) {
         super();
-        bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector);
+        bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, npmIgnoreNpmLsErrors);
         bomParser = new NpmBomParser();
         this.ignoreJavaScriptFiles = ignoreJavaScriptFiles;
         this.runPreStep = runPreStep;
+        this.accessToken = accessToken;
         this.filesScanner = new FilesScanner();
     }
 
     public NpmDependencyResolver(boolean runPreStep) {
-        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep);
+        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, null, false);
     }
 
     /* --- Overridden methods --- */
@@ -109,9 +117,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles, String npmAccessToken) {
 
-        if(runPreStep) {
+        if (runPreStep) {
             getDependencyCollector().executePreparationStep(topLevelFolder);
             String[] excludesArray = new String[getExcludes().size()];
             excludesArray = getExcludes().toArray(excludesArray);
@@ -143,12 +151,12 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         logger.debug("Trying to collect dependencies via 'npm ls'");
         // try to collect dependencies via 'npm ls'
         Collection<AgentProjectInfo> projects = getDependencyCollector().collectDependencies(topLevelFolder);
-        Collection<DependencyInfo> dependencies = projects.stream().flatMap(project->project.getDependencies().stream()).collect(Collectors.toList());
+        Collection<DependencyInfo> dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
 
         boolean lsSuccess = dependencies.size() > 0;
         if (lsSuccess) {
             logger.debug("'npm ls succeeded");
-            handleLsSuccess(parsedBomFiles, dependencies);
+            handleLsSuccess(parsedBomFiles, dependencies, npmAccessToken);
         } else {
             logger.debug("'npm ls failed");
             dependencies.addAll(collectPackageJsonDependencies(parsedBomFiles));
@@ -160,7 +168,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         if (!dependencies.isEmpty()) {
             if (ignoreJavaScriptFiles) {
                 //return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
-                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN),null));
+                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN), null));
             } else {
                 excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN), EXCLUDE_TOP_FOLDER));
             }
@@ -211,11 +219,11 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         return childDependency.getArtifactId().equals(NpmBomParser.getNpmArtifactId(name, version));
     }
 
-    protected void enrichDependency(DependencyInfo dependency, BomFile packageJson) {
+    protected void enrichDependency(DependencyInfo dependency, BomFile packageJson, String npmAccessToken) {
         String sha1 = packageJson.getSha1();
         String registryPackageUrl = packageJson.getRegistryPackageUrl();
         if (StringUtils.isEmptyOrNull(sha1) && !StringUtils.isEmptyOrNull(registryPackageUrl)) {
-            sha1 = getSha1FromRegistryPackageUrl(registryPackageUrl, packageJson.isScopedPackage(), packageJson.getVersion());
+            sha1 = getSha1FromRegistryPackageUrl(registryPackageUrl, packageJson.isScopedPackage(), packageJson.getVersion(), npmAccessToken);
         }
         dependency.setSha1(sha1);
         dependency.setGroupId(packageJson.getName());
@@ -228,34 +236,41 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Private methods --- */
 
-    private String getSha1FromRegistryPackageUrl(String registryPackageUrl, boolean isScopeDep, String versionOfPackage) {
+    private String getSha1FromRegistryPackageUrl(String registryPackageUrl, boolean isScopeDep, String versionOfPackage, String npmAccessToken) {
         RestTemplate restTemplate = new RestTemplate();
         URI uriScopeDep = null;
         if (isScopeDep) {
             try {
                 uriScopeDep = new URI(registryPackageUrl.replace(BomFile.DUMMY_PARAMETER_SCOPE_PACKAGE, "%2F"));
             } catch (Exception e) {
-                logger.debug("Failed creating uri of {}", registryPackageUrl);
+                logger.warn("Failed creating uri of {}", registryPackageUrl);
                 return EMPTY_STRING;
             }
         }
+
         String responseFromRegistry = null;
         try {
             if (isScopeDep) {
-                responseFromRegistry = restTemplate.getForObject(uriScopeDep, String.class);
+                HttpHeaders httpHeaders = new HttpHeaders();
+                httpHeaders.set(AUTHORIZATION, BEARER + SPACE + npmAccessToken);
+                HttpEntity entity = new HttpEntity(httpHeaders);
+                responseFromRegistry = restTemplate.exchange(uriScopeDep, HttpMethod.GET,entity,String.class).getBody();
+                //responseFromRegistry = restTemplate.getForObject(uriScopeDep, String.class);
             } else {
                 responseFromRegistry = restTemplate.getForObject(registryPackageUrl, String.class);
             }
         } catch (Exception e) {
-            logger.error("Could not reach the registry using the URL: {}. Got an error: {}", registryPackageUrl, e);
+            logger.error("Could not reach the registry using the URL: {}. Got an error: {}", registryPackageUrl, e.getMessage());
             return EMPTY_STRING;
         }
         JSONObject jsonRegistry = new JSONObject(responseFromRegistry);
+        String shasum;
         if (isScopeDep) {
-            return jsonRegistry.getJSONObject(VERSIONS).getJSONObject(versionOfPackage).getJSONObject(DIST).getString(SHASUM);
+            shasum = jsonRegistry.getJSONObject(VERSIONS).getJSONObject(versionOfPackage).getJSONObject(DIST).getString(SHASUM);
         } else {
-            return jsonRegistry.getJSONObject(DIST).getString(SHASUM);
+            shasum = jsonRegistry.getJSONObject(DIST).getString(SHASUM);
         }
+        return shasum;
     }
 
     /**
@@ -325,7 +340,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         });
     }
 
-    private void handleLsSuccess(Collection<BomFile> packageJsonFiles, Collection<DependencyInfo> dependencies) {
+    private void handleLsSuccess(Collection<BomFile> packageJsonFiles, Collection<DependencyInfo> dependencies, String npmAccessToken) {
         Map<String, BomFile> resultFiles = packageJsonFiles.stream()
                 .filter(packageJson -> packageJson != null && packageJson.isValid())
                 .filter(distinctByKey(BomFile::getFileName))
@@ -333,21 +348,21 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
         logger.debug("Handling all dependencies");
         Collection<EnrichDependency> threadsCollection = new LinkedList<>();
-        dependencies.forEach(dependency -> handleLSDependencyRecursivelyImpl(dependency, resultFiles, threadsCollection));
+        dependencies.forEach(dependency -> handleLSDependencyRecursivelyImpl(dependency, resultFiles, threadsCollection, npmAccessToken));
         ExecutorService executorService = Executors.newWorkStealingPool(NUM_THREADS);
         runThreadCollection(executorService, threadsCollection);
     }
 
-    private void handleLSDependencyRecursivelyImpl(DependencyInfo dependency, Map<String, BomFile> resultFiles, Collection<EnrichDependency> threadsCollection) {
+    private void handleLSDependencyRecursivelyImpl(DependencyInfo dependency, Map<String, BomFile> resultFiles, Collection<EnrichDependency> threadsCollection, String npmAccessToken) {
         String uniqueName = BomFile.getUniqueDependencyName(dependency.getGroupId(), dependency.getVersion());
         BomFile packageJson = resultFiles.get(uniqueName);
         if (packageJson != null) {
-            threadsCollection.add(new EnrichDependency(packageJson, dependency));
+            threadsCollection.add(new EnrichDependency(packageJson, dependency, npmAccessToken));
         } else {
             logger.debug("Dependency {} could not be retrieved. 'package.json' could not be found", dependency.getArtifactId());
         }
         logger.debug("handle the children dependencies in the file: {}", dependency.getFilename());
-        dependency.getChildren().forEach(childDependency -> handleLSDependencyRecursivelyImpl(childDependency, resultFiles, threadsCollection));
+        dependency.getChildren().forEach(childDependency -> handleLSDependencyRecursivelyImpl(childDependency, resultFiles, threadsCollection, npmAccessToken));
     }
 
     private <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
@@ -364,13 +379,15 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         private BomFile packageJson;
         private DependencyInfo dependency;
         private ConcurrentHashMap<DependencyInfo, BomFile> dependencyPackageJsonMap;
+        private String npmAccessToken;
 
         /* --- Constructors --- */
 
-        public EnrichDependency(BomFile packageJson, DependencyInfo dependency) {
+        public EnrichDependency(BomFile packageJson, DependencyInfo dependency, String npmAccessToken) {
             this.packageJson = packageJson;
             this.dependency = dependency;
             this.dependencyPackageJsonMap = null;
+            this.npmAccessToken = npmAccessToken;
         }
 
         public EnrichDependency(BomFile packageJson, DependencyInfo dependency, ConcurrentHashMap<DependencyInfo, BomFile> dependencyPackageJsonMap) {
@@ -383,7 +400,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
         @Override
         public Void call() {
-            enrichDependency(this.dependency, this.packageJson);
+            enrichDependency(this.dependency, this.packageJson, this.npmAccessToken);
             if (dependencyPackageJsonMap != null) {
                 dependencyPackageJsonMap.putIfAbsent(this.dependency, this.packageJson);
             }
