@@ -17,10 +17,6 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.whitesource.fs.FSAConfiguration;
-
-import java.util.Properties;
-
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 /**
@@ -54,21 +50,6 @@ public class ScmConfiguration {
         this.repositoriesPath = repositoriesPath;
         this.npmInstall = npmInstall;
         this.npmInstallTimeoutMinutes = npmInstallTimeoutMinutes;
-    }
-
-    public ScmConfiguration(Properties config) {
-        this.type = config.getProperty(SCM_TYPE_PROPERTY_KEY);
-        this.url = config.getProperty(SCM_URL_PROPERTY_KEY);
-        this.user = config.getProperty(SCM_USER_PROPERTY_KEY);
-        this.pass = config.getProperty(SCM_PASS_PROPERTY_KEY);
-        this.branch = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
-        this.tag = config.getProperty(SCM_TAG_PROPERTY_KEY);
-        this.ppk = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
-
-        //defaults
-        this.repositoriesPath = config.getProperty(SCM_REPOSITORIES_FILE);
-        npmInstall = FSAConfiguration.getBooleanProperty(config, SCM_NPM_INSTALL, true);
-        npmInstallTimeoutMinutes = FSAConfiguration.getIntProperty(config, SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
     }
 
     /* --- Members --- */

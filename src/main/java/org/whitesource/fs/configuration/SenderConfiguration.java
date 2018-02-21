@@ -16,15 +16,7 @@
 package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.commons.lang.StringUtils;
-import org.whitesource.agent.api.dispatch.UpdateType;
-import org.whitesource.agent.client.ClientConstants;
-import org.whitesource.fs.FSAConfiguration;
-
-import java.util.Properties;
-
 import static org.whitesource.agent.ConfigPropertyKeys.*;
-import static org.whitesource.agent.ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY;
 import static org.whitesource.agent.client.ClientConstants.CONNECTION_TIMEOUT_KEYWORD;
 import static org.whitesource.agent.client.ClientConstants.SERVICE_URL_KEYWORD;
 
@@ -48,11 +40,13 @@ public class SenderConfiguration {
     public SenderConfiguration(
             @JsonProperty(CHECK_POLICIES_PROPERTY_KEY) boolean checkPolicies,
             @JsonProperty(SERVICE_URL_KEYWORD) String serviceUrl,
-            @JsonProperty(PROXY_HOST_PROPERTY_KEY) String proxyHost,
             @JsonProperty(CONNECTION_TIMEOUT_KEYWORD) int connectionTimeOut,
+
+            @JsonProperty(PROXY_HOST_PROPERTY_KEY) String proxyHost,
             @JsonProperty(PROXY_PORT_PROPERTY_KEY) int proxyPort,
             @JsonProperty(PROXY_USER_PROPERTY_KEY) String proxyUser,
             @JsonProperty(PROXY_PASS_PROPERTY_KEY) String proxyPassword,
+
             @JsonProperty(FORCE_CHECK_ALL_DEPENDENCIES) boolean forceCheckAllDependencies,
             @JsonProperty(FORCE_UPDATE) boolean forceUpdate,
             @JsonProperty(UPDATE_TYPE) String updateTypeValue,
@@ -74,31 +68,6 @@ public class SenderConfiguration {
         this.ignoreCertificateCheck = ignoreCertificateCheck;
         this.connectionRetries = connectionRetries;
         this.connectionRetriesIntervals = connectionRetriesIntervals;
-    }
-
-    public SenderConfiguration(Properties config) {
-
-        updateTypeValue = config.getProperty(UPDATE_TYPE, UpdateType.OVERRIDE.toString());
-        checkPolicies =  FSAConfiguration.getBooleanProperty(config, CHECK_POLICIES_PROPERTY_KEY, false);
-        forceCheckAllDependencies = FSAConfiguration.getBooleanProperty(config, FORCE_CHECK_ALL_DEPENDENCIES, false);
-        forceUpdate = FSAConfiguration.getBooleanProperty(config, FORCE_UPDATE, false);
-        enableImpactAnalysis = FSAConfiguration.getBooleanProperty(config, ENABLE_IMPACT_ANALYSIS, false);
-        serviceUrl = config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
-        proxyHost = config.getProperty(PROXY_HOST_PROPERTY_KEY);
-        connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
-                String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
-        connectionRetries = FSAConfiguration.getIntProperty(config,CONNECTION_RETRIES,1);
-        connectionRetriesIntervals = FSAConfiguration.getIntProperty(config,CONNECTION_RETRIES_INTERVALS,3000);
-        String senderPort = config.getProperty(PROXY_PORT_PROPERTY_KEY);
-        if(StringUtils.isNotEmpty(senderPort)){
-            proxyPort = Integer.parseInt(senderPort);
-        }else{
-            proxyPort = -1;
-        }
-
-        proxyUser = config.getProperty(PROXY_USER_PROPERTY_KEY);
-        proxyPassword = config.getProperty(PROXY_PASS_PROPERTY_KEY);
-        ignoreCertificateCheck = FSAConfiguration.getBooleanProperty(config, IGNORE_CERTIFICATE_CHECK, false);
     }
 
     @JsonProperty(SERVICE_URL_KEYWORD)

@@ -97,11 +97,15 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     private final Collection<String> excludes = Arrays.asList("**/*" + PY_EXT);
     private final String pythonPath;
     private final String pipPath;
+    private final boolean isPythonIsWssPluginInstalled;
+    private final boolean uninstallPythonPlugin;
 
-    public PythonDependencyResolver(String pythonPath, String pipPath) {
+    public PythonDependencyResolver(String pythonPath, String pipPath , boolean isPythonIsWssPluginInstalled , boolean uninstallPythonPlugin) {
         super();
         this.pythonPath = pythonPath;
         this.pipPath = pipPath;
+        this.isPythonIsWssPluginInstalled = isPythonIsWssPluginInstalled;
+        this.uninstallPythonPlugin = uninstallPythonPlugin;
     }
 
     /* --- Overridden methods --- */
@@ -112,7 +116,6 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         Map<AgentProjectInfo, Path> resolvedProjects = new HashMap<>();
         String[] args = new String[0];
         List<String> output = new ArrayList<>();
-        CommandLineProcess commandLineProcess;
         try {
             FileUtils.forceMkdir(new File(tempDir));
 
@@ -132,7 +135,9 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             saveConfigFile(pathSetupPy, setupPy);
 
             // FSA will run "pip install wss_plugin"
-            output = processCommand(tempDir, new String[]{pipPath, INSTALL, WSS_PLUGIN});
+            if (!isPythonIsWssPluginInstalled) {
+                output = processCommand(tempDir, new String[]{pipPath, INSTALL, WSS_PLUGIN});
+            }
             // FSA will run "python setup.py install"
             output = processCommand(tempDir, new String[]{pythonPath, WS_SETUP_PY, INSTALL});
             // FSA will run "python setup.py whitesource_update -p "custom_config.py"
@@ -159,8 +164,10 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             // FSA will run pip uninstall "project-name"
             output = processCommand(tempDir, new String[]{pipPath, UNINSTALL, YES, WS_PYTHON_PACKAGE_NAME});
 
-            // FSA will run "pip uninstall wss_plugin"
-            output = processCommand(tempDir, new String[]{pipPath, UNINSTALL, YES, WSS_PLUGIN});
+            // FSA will run "pip uninstall wss_plugin" if we already installed and the user asked for uninstall
+            if (uninstallPythonPlugin && !isPythonIsWssPluginInstalled) {
+                output = processCommand(tempDir, new String[]{pipPath, UNINSTALL, YES, WSS_PLUGIN});
+            }
 
             if (!isTempDirectory) {
                 FileUtils.deleteDirectory(new File(tempDir));
