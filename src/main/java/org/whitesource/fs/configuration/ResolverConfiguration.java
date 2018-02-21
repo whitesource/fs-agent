@@ -18,15 +18,9 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.whitesource.fs.FSAConfiguration;
-
-import java.util.Properties;
-
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class ResolverConfiguration {
-    public static final String PIP = "pip";
-    public static final String PYTHON = "python";
 
     /* --- Constructors --- */
 
@@ -49,6 +43,12 @@ public class ResolverConfiguration {
             @JsonProperty(MAVEN_IGNORED_SCOPES) String[] mavenIgnoredScopes,
             @JsonProperty(MAVEN_AGGREGATE_MODULES) boolean mavenAggregateModules,
 
+            @JsonProperty(PYTHON_RESOLVE_DEPENDENCIES) boolean pythonResolveDependencies,
+            @JsonProperty(PYTHON_PIP_PATH) String pipPath,
+            @JsonProperty(PYTHON_PATH) String pythonPath,
+            @JsonProperty(PYTHON_IS_WSS_PLUGIN_INSTALLED) boolean pythonIsWssPluginInstalled,
+            @JsonProperty(PYTHON_UNINSTALL_WSS_PLUGIN) boolean pythonUninstallWssPlugin,
+
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration
     ) {
@@ -69,29 +69,14 @@ public class ResolverConfiguration {
         this.mavenIgnoredScopes = mavenIgnoredScopes;
         this.mavenAggregateModules = mavenAggregateModules;
 
+        this.pythonResolveDependencies = pythonResolveDependencies;
+        this.pipPath = pipPath;
+        this.pythonPath = pythonPath;
+        this.pythonIsWssPluginInstalled = pythonIsWssPluginInstalled;
+        this.pythonUninstallWssPlugin = pythonUninstallWssPlugin;
+
         this.dependenciesOnly = dependenciesOnly;
         this.whitesourceConfiguration = whitesourceConfiguration;
-    }
-
-    public ResolverConfiguration(Properties config) {
-        npmRunPreStep = FSAConfiguration.getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
-        pythonResolveDependencies = FSAConfiguration.getBooleanProperty(config, PYTHON_RESOLVE_DEPENDENCIES, true);
-        npmResolveDependencies = FSAConfiguration.getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
-        npmIncludeDevDependencies = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
-        npmIgnoreJavaScriptFiles = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
-        npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
-        npmIgnoreNpmLsErrors = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_NPM_LS_ERRORS, false);
-        npmAccessToken = config.getProperty(NPM_ACCESS_TOKEN);
-        bowerResolveDependencies = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
-        bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
-        nugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
-        mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
-        mavenIgnoredScopes = FSAConfiguration.getListProperty(config, MAVEN_IGNORED_SCOPES, null);
-        mavenAggregateModules = FSAConfiguration.getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
-        dependenciesOnly = FSAConfiguration.getBooleanProperty(config, DEPENDENCIES_ONLY, false);
-        whitesourceConfiguration = config.getProperty(PROJECT_CONFIGURATION_PATH);
-        pipPath = config.getProperty(PROJECT_CONFIGURATION_PATH, PIP);
-        pythonPath = config.getProperty(PROJECT_CONFIGURATION_PATH, PYTHON);
     }
 
     /* --- Members --- */
@@ -114,6 +99,8 @@ public class ResolverConfiguration {
     private boolean pythonResolveDependencies;
     private String pipPath;
     private String pythonPath;
+    private final boolean pythonIsWssPluginInstalled;
+    private final boolean pythonUninstallWssPlugin;
 
     /* --- Public getters --- */
 
@@ -205,5 +192,15 @@ public class ResolverConfiguration {
     @JsonProperty(PYTHON_PATH)
     public String getPythonPath() {
         return pythonPath;
+    }
+
+    @JsonProperty(PYTHON_IS_WSS_PLUGIN_INSTALLED)
+    public boolean isPythonIsWssPluginInstalled() {
+        return pythonIsWssPluginInstalled;
+    }
+
+    @JsonProperty(PYTHON_UNINSTALL_WSS_PLUGIN)
+    public boolean getPythonUninstallWssPlugin() {
+        return pythonUninstallWssPlugin;
     }
 }

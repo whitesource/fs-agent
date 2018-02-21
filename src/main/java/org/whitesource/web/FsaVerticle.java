@@ -34,7 +34,6 @@ import org.whitesource.fs.Main;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
-import org.whitesource.fs.configuration.EndPointConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -96,7 +95,7 @@ public class FsaVerticle extends AbstractVerticle {
                 .setPath(certificate)
                 .setPassword(pass)
         )).requestHandler(router::accept).
-                listen(config().getInteger(ENDPOINT_PORT, EndPointConfiguration.DEFAULT_PORT),
+                listen(config().getInteger(ENDPOINT_PORT, localFsaConfiguration.getEndpoint().getPort()),
                         result -> {
                             if (result.succeeded()) {
                                 logger.info("Http server completed..");
