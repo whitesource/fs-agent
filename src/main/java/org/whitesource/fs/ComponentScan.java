@@ -49,7 +49,7 @@ public class ComponentScan {
 //            List<String> scannerBaseDirs = Collections.singletonList(directory);
             FSAConfiguration fsaConfiguration = new FSAConfiguration(config);
             // set default values in case of missing parameters
-            ResolverConfiguration resolverConfiguration = new ResolverConfiguration(config);
+            ResolverConfiguration resolverConfiguration = fsaConfiguration.getResolver();
             String[] includes = config.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY) != null ?
                     config.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX) : ExtensionUtils.INCLUDES;
             String[] excludes = config.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY) != null ?

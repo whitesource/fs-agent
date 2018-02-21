@@ -51,7 +51,7 @@ public class FsaVerticleTest {
     public void testHome(TestContext context) {
         final Async async = context.async();
 
-        vertx.createHttpClient().getNow(EndPointConfiguration.DEFAULT_PORT, "localhost", FsaVerticle.HOME,
+        vertx.createHttpClient().getNow(FSAConfiguration.DEFAULT_PORT, "localhost", FsaVerticle.HOME,
                 response -> response.handler(body -> {
                     context.assertTrue(body.toString().equals(FsaVerticle.WELCOME_MESSAGE));
                     async.complete();
@@ -63,7 +63,7 @@ public class FsaVerticleTest {
     @Test
     public void testAnalyzeApi(TestContext context) {
         final Async async = context.async();
-        vertx.createHttpClient().post("localhost:" + EndPointConfiguration.DEFAULT_PORT + "\\analyze",
+        vertx.createHttpClient().post("localhost:" + FSAConfiguration.DEFAULT_PORT + "\\analyze",
                 response -> response.handler(body -> {
                     context.assertTrue(body.toString().contains("Hello"));
                     async.complete();
@@ -93,7 +93,7 @@ public class FsaVerticleTest {
         options.setKeepAlive(true);
         options.setMaxPoolSize(500);
 
-        vertx.createHttpClient(options).post(EndPointConfiguration.DEFAULT_PORT, "localhost", FsaVerticle.API_ANALYZE)
+        vertx.createHttpClient(options).post(FSAConfiguration.DEFAULT_PORT, "localhost", FsaVerticle.API_ANALYZE)
                 .putHeader("content-type", "application/json")
                 .putHeader("content-length", length)
                 .handler(response -> {

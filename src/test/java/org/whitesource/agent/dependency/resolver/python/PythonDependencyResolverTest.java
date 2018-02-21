@@ -25,7 +25,7 @@ public class PythonDependencyResolverTest {
     public void shouldFindDependecies() {
         File setupPyFile = TestHelper.getFileFromResources("resolver/python/sample/test.py");
 
-        PythonDependencyResolver pythonDependencyResolver = new PythonDependencyResolver();
+        PythonDependencyResolver pythonDependencyResolver = new PythonDependencyResolver("python.exe", "pip3.exe", true, false);
         ResolutionResult projectsDetails = pythonDependencyResolver.resolveDependencies(setupPyFile.getParentFile().getParent(), setupPyFile.getParent(), Stream.of(setupPyFile.toString()).collect(Collectors.toSet()), null);
 
         Assert.assertNotNull(projectsDetails);
@@ -33,7 +33,7 @@ public class PythonDependencyResolverTest {
         Assert.assertTrue(projectsDetails.getResolvedProjects().size() == 1);
 
         Collection<DependencyInfo> dependecies = projectsDetails.getResolvedProjects().keySet().stream().findFirst().get().getDependencies();
-        Assert.assertTrue(dependecies.stream().filter(x -> x.getDependencyType() != null && x.getDependencyType().equals(DependencyType.PYTHON)).count() == 2);
+        Assert.assertEquals(dependecies.stream().filter(x -> x.getDependencyType() != null && x.getDependencyType().equals(DependencyType.PYTHON)).count(), 6);
     }
 
     // requires admin rights to install dependencies in linux

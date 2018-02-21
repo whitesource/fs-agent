@@ -28,11 +28,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Collect dependencies using 'npm ls' or bower command.
@@ -59,11 +58,14 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     private static final String MISSING = "missing";
     public static final String PEER_MISSING = "peerMissing";
     private static final String NAME = "name";
+    private static final String DEDUPED = "deduped";
+    private static final String REQUIRED = "required";
 
     /* --- Members --- */
 
     protected final boolean includeDevDependencies;
     protected final boolean ignoreNpmLsErrors;
+    private final Pattern patternOfNameOfPackageFromLine = Pattern.compile(".* (.*)@");
     private boolean showNpmLsError;
     private final long npmTimeoutDependenciesCollector;
 
@@ -79,21 +81,24 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
 
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
-        Collection<DependencyInfo> dependencies = new LinkedList<>();
+        Collection<DependencyInfo> dependencies = new ArrayList<>();
         try {
-            CommandLineProcess npmLs = new CommandLineProcess(rootDirectory, getLsCommandParams());
-            npmLs.setTimeoutReadLineSeconds(this.npmTimeoutDependenciesCollector);
-            List<String> lines = npmLs.executeProcess();
+            CommandLineProcess npmLsJson = new CommandLineProcess(rootDirectory, getLsCommandParamsJson());
+            npmLsJson.setTimeoutReadLineSeconds(this.npmTimeoutDependenciesCollector);
+            List<String> linesOfNpmLsJson = npmLsJson.executeProcess();
             StringBuilder json = new StringBuilder();
-            for (String line : lines) {
+            for (String line : linesOfNpmLsJson) {
                 json.append(line);
             }
-            if (json != null && json.length() > 0 && (!npmLs.isErrorInProcess() || this.ignoreNpmLsErrors)) {
+            if (json != null && json.length() > 0 && (!npmLsJson.isErrorInProcess() || this.ignoreNpmLsErrors)) {
                 logger.debug("'npm ls' output is not empty");
-                if(npmLs.isErrorInProcess() && this.ignoreNpmLsErrors) {
+                if(npmLsJson.isErrorInProcess() && this.ignoreNpmLsErrors) {
                     logger.info("Ignore errors of 'npm ls'");
                 }
-                dependencies.addAll(getDependencies(new JSONObject(json.toString())));
+                CommandLineProcess npmLs = new CommandLineProcess(rootDirectory, getLsCommandParams());
+                npmLs.setTimeoutReadLineSeconds(this.npmTimeoutDependenciesCollector);
+                List<String> linesOfNpmLs = npmLs.executeProcess();
+                getDependencies(new JSONObject(json.toString()), linesOfNpmLs, 1, dependencies);
             }
         } catch (IOException e) {
             logger.warn("Error getting dependencies after running 'npm ls --json' on {}, error : {}", rootDirectory, e.getMessage());
@@ -124,30 +129,41 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
 
     /* --- Private methods --- */
 
-    private Collection<DependencyInfo> getDependencies(JSONObject jsonObject) {
-        Collection<DependencyInfo> dependencies = new ArrayList<>();
-        if (jsonObject.has(DEPENDENCIES)) {
-            JSONObject dependenciesJsonObject = jsonObject.getJSONObject(DEPENDENCIES);
+    private int getDependencies(JSONObject npmLsJson, List<String> linesOfNpmLs, int currentLineNumber, Collection<DependencyInfo> dependencies) {
+        if (npmLsJson.has(DEPENDENCIES)) {
+            JSONObject dependenciesJsonObject = npmLsJson.getJSONObject(DEPENDENCIES);
             if (dependenciesJsonObject != null) {
-                for (String dependencyAlias : dependenciesJsonObject.keySet()) {
+                for (int i = 0; i < dependenciesJsonObject.keySet().size(); i++) {
+                    String currentLine = linesOfNpmLs.get(currentLineNumber);
+                    if (currentLine.endsWith(DEDUPED)) {
+                        currentLineNumber++;
+                        continue;
+                    }
+                    String dependencyAlias = getTheNextPackageNameFromNpmLs(currentLine);
                     JSONObject dependencyJsonObject = dependenciesJsonObject.getJSONObject(dependencyAlias);
-                    if (dependencyJsonObject.keySet().isEmpty()) {
-                        logger.debug("Dependency {} has no JSON content", dependencyAlias);
+                    DependencyInfo dependency = getDependency(dependencyAlias, dependencyJsonObject);
+                    if (dependency != null) {
+                        dependencies.add(dependency);
+                        logger.debug("Collect child dependencies of {}", dependencyAlias);
+                        // collect child dependencies
+                        Collection<DependencyInfo> childDependencies = new ArrayList<>();
+                        currentLineNumber = getDependencies(dependencyJsonObject, linesOfNpmLs, currentLineNumber + 1, childDependencies);
+                        dependency.getChildren().addAll(childDependencies);
                     } else {
-                        DependencyInfo dependency = getDependency(dependencyAlias, dependencyJsonObject);
-                        if (dependency != null) {
-                            dependencies.add(dependency);
-
-                            logger.debug("Collect child dependencies of {}", dependencyAlias);
-                            // collect child dependencies
-                            Collection<DependencyInfo> childDependencies = getDependencies(dependencyJsonObject);
-                            dependency.getChildren().addAll(childDependencies);
-                        }
+                        // it can be only if was an error in 'npm ls'
+                        currentLineNumber = getDependencies(dependencyJsonObject.getJSONObject(REQUIRED), linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
                     }
                 }
             }
         }
-        return dependencies;
+        return currentLineNumber;
+    }
+
+    private String getTheNextPackageNameFromNpmLs(String line) {
+        Matcher matcher = this.patternOfNameOfPackageFromLine.matcher(line);
+        matcher.find();
+        // take only the name of the package from the match
+        return matcher.group(1);
     }
 
     private String getVersionFromLink(String linkResolved) {
@@ -172,6 +188,14 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     }
 
     protected String[] getLsCommandParams() {
+        if (includeDevDependencies) {
+            return new String[]{NPM_COMMAND, LS_COMMAND};
+        } else {
+            return new String[]{NPM_COMMAND, LS_COMMAND, LS_ONLY_PROD_ARGUMENT};
+        }
+    }
+
+    protected String[] getLsCommandParamsJson() {
         if (includeDevDependencies) {
             return new String[]{NPM_COMMAND, LS_COMMAND, LS_PARAMETER_JSON};
         } else {

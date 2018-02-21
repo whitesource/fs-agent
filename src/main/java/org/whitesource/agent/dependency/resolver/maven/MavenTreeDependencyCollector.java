@@ -128,10 +128,10 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                     return projectInfo;
                 }).collect(Collectors.toList());
             } else {
-                logger.error("Failed to scanAndSend {}", getLsCommandParams());
+                logger.error("Failed to scan and send {}", getLsCommandParams());
             }
         } catch (IOException e) {
-            logger.warn("Error getting dependencies after running {} on {},   {}" , getLsCommandParams() , rootDirectory, e.getMessage());
+            logger.warn("Error getting dependencies after running {} on {}, {}" , getLsCommandParams() , rootDirectory, e.getMessage());
             logger.debug("Error: {}", e.getStackTrace());
         }
 

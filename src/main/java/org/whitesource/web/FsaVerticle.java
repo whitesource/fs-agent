@@ -34,7 +34,6 @@ import org.whitesource.fs.Main;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
-import org.whitesource.fs.configuration.EndPointConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -96,7 +95,7 @@ public class FsaVerticle extends AbstractVerticle {
                 .setPath(certificate)
                 .setPassword(pass)
         )).requestHandler(router::accept).
-                listen(config().getInteger(ENDPOINT_PORT, EndPointConfiguration.DEFAULT_PORT),
+                listen(config().getInteger(ENDPOINT_PORT, localFsaConfiguration.getEndpoint().getPort()),
                         result -> {
                             if (result.succeeded()) {
                                 logger.info("Http server completed..");
@@ -110,11 +109,12 @@ public class FsaVerticle extends AbstractVerticle {
     }
 
     private boolean generateCertificateAndPass(String keystoreName, String password) {
-        String[] params = new String[]{"keytool", "-genkey", "-alias", "replserver", "-keyalg", "RSA", "-keystore", keystoreName, "-dname",
+        String keyToolPath = Paths.get(System.getProperty("java.home"), "bin", "keytool").toString();
+        String[] params = new String[]{keyToolPath, "-genkey", "-alias", "replserver", "-keyalg", "RSA", "-keystore", keystoreName, "-dname",
                 "\"CN=author, OU=Whitesource, O=WS, L=Location, S=State, C=US\"", "-storepass", password, "-keypass", password};
 
         if (SystemUtils.IS_OS_LINUX) {
-            params = new String[]{"keytool", "-genkey", "-alias", "replserver", "-keyalg", "RSA", "-keystore", keystoreName, "-dname",
+            params = new String[]{keyToolPath, "-genkey", "-alias", "replserver", "-keyalg", "RSA", "-keystore", keystoreName, "-dname",
                     "CN=author, OU=Whitesource, O=WS, L=Location, S=State, C=US", "-storepass", password, "-keypass", password};
         }
 

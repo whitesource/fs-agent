@@ -9,6 +9,7 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
+import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.util.Arrays;
@@ -59,7 +60,7 @@ public class MavenTreeDependencyCollectorTest {
         props.setProperty(ConfigPropertyKeys.BOWER_RESOLVE_DEPENDENCIES, "false");
 
         props.setProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY, "**/*.jar");
-        ResolverConfiguration resolverConfiguration = new ResolverConfiguration(props);
+        ResolverConfiguration resolverConfiguration = new FSAConfiguration(props).getResolver();
 
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(resolverConfiguration);
         List<ResolutionResult> results = dependencyResolutionService.resolveDependencies(Arrays.asList(folderParent), new String[0], null);

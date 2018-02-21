@@ -17,15 +17,8 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.commons.lang.StringUtils;
-import org.whitesource.agent.utils.Pair;
-import org.whitesource.fs.FSAConfiguration;
-
-import java.util.*;
-
+import java.util.Collection;
 import static org.whitesource.agent.ConfigPropertyKeys.*;
-import static org.whitesource.fs.FileSystemAgent.EMPTY_STRING;
-import static org.whitesource.fs.FileSystemAgent.EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX;
 
 public class AgentConfiguration {
 
@@ -43,7 +36,7 @@ public class AgentConfiguration {
     private final boolean showProgressBar;
     private final boolean globCaseSensitive;
     private final Collection<String> excludedCopyrights;
-    private String error = null;
+    private final String error;
 
     public String getError() {
         return error;
@@ -62,6 +55,7 @@ public class AgentConfiguration {
                               @JsonProperty(CALCULATE_MD5) boolean calculateMd5,
                               @JsonProperty(SHOW_PROGRESS_BAR) boolean showProgressBar,
                               @JsonProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY) boolean globCaseSensitive,
+                              String error,
                               @JsonProperty(EXCLUDED_COPYRIGHT_KEY) Collection<String> excludedCopyrights){
         this.includes = includes == null? new String[0] : includes;
         this.excludes = excludes == null? new String[0] : excludes;
@@ -76,31 +70,8 @@ public class AgentConfiguration {
         this.calculateMd5 = calculateMd5;
         this.showProgressBar = showProgressBar;
         this.globCaseSensitive = globCaseSensitive;
+        this.error = error;
         this.excludedCopyrights = excludedCopyrights;
-    }
-
-    public AgentConfiguration(Properties config) {
-        this(FSAConfiguration.getIncludes(config),
-                config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX),
-                FSAConfiguration.getArchiveDepth(config),
-                config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX),
-                config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX),
-                FSAConfiguration.getBooleanProperty(config, ARCHIVE_FAST_UNPACK_KEY, false),
-                FSAConfiguration.getBooleanProperty(config, FOLLOW_SYMBOLIC_LINKS, true),
-
-                FSAConfiguration.getBooleanProperty(config, PARTIAL_SHA1_MATCH_KEY, false),
-                FSAConfiguration.getBooleanProperty(config, CALCULATE_HINTS, false),
-                FSAConfiguration.getBooleanProperty(config, CALCULATE_MD5, false),
-                FSAConfiguration.getBooleanProperty(config, SHOW_PROGRESS_BAR, true),
-                getGlobalCaseSensitive(config.getProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY)).getKey(),
-                getExcludeCopyrights(config.getProperty(EXCLUDED_COPYRIGHT_KEY, "")));
-        error = getGlobalCaseSensitive(config.getProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY)).getValue();
-    }
-
-    private static Collection<String> getExcludeCopyrights(String excludedCopyrightsValue) {
-        Collection<String> excludes = new ArrayList<>(Arrays.asList(excludedCopyrightsValue.split(EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX)));
-        excludes.remove("");
-        return excludes;
     }
 
     @JsonProperty(SHOW_PROGRESS_BAR)
@@ -166,25 +137,5 @@ public class AgentConfiguration {
     @JsonProperty(CALCULATE_MD5)
     public boolean isCalculateMd5() {
         return calculateMd5;
-    }
-
-    private static Pair<Boolean,String> getGlobalCaseSensitive(String globCaseSensitiveValue) {
-        boolean globCaseSensitive = false;
-        String error = null;
-        if (StringUtils.isNotBlank(globCaseSensitiveValue)) {
-            if (globCaseSensitiveValue.equalsIgnoreCase("true") || globCaseSensitiveValue.equalsIgnoreCase("y")) {
-                globCaseSensitive = true;
-                error = null;
-            } else if (globCaseSensitiveValue.equalsIgnoreCase("false") || globCaseSensitiveValue.equalsIgnoreCase("n")) {
-                globCaseSensitive = false;
-                error = null;
-            } else {
-                error = "Bad " + CASE_SENSITIVE_GLOB_PROPERTY_KEY + ". Received " + globCaseSensitiveValue + ", required true/false or y/n";
-            }
-        }else{
-            error = null;
-        }
-
-        return new Pair<>(globCaseSensitive,error);
     }
 }

@@ -17,16 +17,9 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.commons.lang.StringUtils;
-import org.whitesource.fs.FSAConfiguration;
-
-import java.util.Properties;
-
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class OfflineConfiguration {
-
-    public static final String WHITE_SOURCE_DEFAULT_FOLDER_PATH = ".";
 
     private final boolean enabled;
     private final boolean zip;
@@ -43,19 +36,6 @@ public class OfflineConfiguration {
         this.zip = zip;
         this.prettyJson = prettyJson;
         this.whiteSourceFolderPath = whiteSourceFolderPath;
-    }
-
-    public OfflineConfiguration(Properties config) {
-        enabled = FSAConfiguration.getBooleanProperty(config, OFFLINE_PROPERTY_KEY, false);
-        zip = FSAConfiguration.getBooleanProperty(config, OFFLINE_ZIP_PROPERTY_KEY, false);
-        prettyJson = FSAConfiguration.getBooleanProperty(config, OFFLINE_PRETTY_JSON_KEY, false);
-
-        String wsFolder = config.getProperty(WHITESOURCE_FOLDER_PATH);
-        if (StringUtils.isBlank(wsFolder)) {
-            whiteSourceFolderPath = WHITE_SOURCE_DEFAULT_FOLDER_PATH;
-        } else {
-            whiteSourceFolderPath = wsFolder;
-        }
     }
 
     @JsonProperty(OFFLINE_PROPERTY_KEY)

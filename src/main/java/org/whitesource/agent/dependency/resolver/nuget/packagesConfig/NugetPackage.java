@@ -15,16 +15,20 @@
  */
 package org.whitesource.agent.dependency.resolver.nuget.packagesConfig;
 
-import javax.xml.bind.annotation.XmlAttribute;
+import org.simpleframework.xml.Attribute;
+import org.simpleframework.xml.Root;
 
 /**
  * @author yossi.weinberg
  */
+@Root(name="package", strict=false)
 public class NugetPackage implements NugetPackageInterface {
 
     /* --- Members --- */
 
+    @Attribute(name="id", required=false)
     private String pkgName;
+    @Attribute(name="version", required=false)
     private String pkgVersion;
 
     /* --- Constructors --- */
@@ -43,7 +47,6 @@ public class NugetPackage implements NugetPackageInterface {
         return pkgName;
     }
 
-    @XmlAttribute(name = "id")
     public void setPkgName(String pkgName) {
         this.pkgName = pkgName;
     }
@@ -52,7 +55,6 @@ public class NugetPackage implements NugetPackageInterface {
         return pkgVersion;
     }
 
-    @XmlAttribute(name = "version")
     public void setPkgVersion(String pkgVersion) {
         this.pkgVersion = pkgVersion;
     }
