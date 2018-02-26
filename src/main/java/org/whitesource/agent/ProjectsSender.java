@@ -15,7 +15,6 @@
  */
 package org.whitesource.agent;
 
-import DEMO.DemoServerProjInfo;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +30,7 @@ import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.agent.via.api.VulnerabilityAnalysisResult;
-import org.whitesource.agent.via.api.VulnerableElement;
 import org.whitesource.contracts.PluginInfo;
-import org.whitesource.fs.ImpactAnalysisExtensionUtils;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.OfflineConfiguration;
