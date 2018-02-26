@@ -69,7 +69,7 @@ public class FileSystemScanner {
         this.isSeparateProjects = dependencyResolutionService.isSeparateProjects();
         this.agent = agentConfiguration;
         this.showProgressBar = agentConfiguration.isShowProgressBar();
-        enableImpactAnalysis = enableImpactAnalysis;
+        this.enableImpactAnalysis = enableImpactAnalysis;
     }
 
     /* --- Public methods --- */

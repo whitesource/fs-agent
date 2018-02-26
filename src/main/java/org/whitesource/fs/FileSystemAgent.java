@@ -100,7 +100,8 @@ public class FileSystemAgent {
                     String projectVersion = config.getRequest().getProjectVersion();
                     AgentProjectInfo projectInfo = projectsDetails.getProjects().stream().findFirst().get();
                     projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
-                    projects.getProjects().add(projectInfo);
+                    // TODO: 1. Check when via will support multi project
+                    projects.getProjectToLanguage().put(projectInfo, projectsDetails.getProjectToLanguage().get(projectInfo));
                 }
                 // return on the first project that fails
                 if (!projectsDetails.getStatusCode().equals(StatusCode.SUCCESS)) {
