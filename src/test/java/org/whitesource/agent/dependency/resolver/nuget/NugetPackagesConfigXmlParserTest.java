@@ -36,7 +36,7 @@ public class NugetPackagesConfigXmlParserTest {
 
         NugetPackages packages = parser.parsePackagesConfigFile();
         Assert.assertNotNull("Object was deserialized", packages);
-        Assert.assertEquals(5, packages.getNugets().size());
+        Assert.assertEquals(5, packages.getNugetPackages().size());
     }
 
 
@@ -49,7 +49,7 @@ public class NugetPackagesConfigXmlParserTest {
             NugetPackage nugetPackage = new NugetPackage("nuget" + i, "1.0." + i);
             nugetPackages.add(nugetPackage);
         }
-        packages.setNugets(nugetPackages);
+        packages.setNugetPackages(nugetPackages);
         return packages;
     }
 }
