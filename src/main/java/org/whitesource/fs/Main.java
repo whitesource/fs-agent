@@ -43,6 +43,7 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     public static final long MAX_TIMEOUT = 1000*60*60;
     public static final String FALSE = "false";
+    public static final String EMPPTY_STRING = "";
 
     /* --- Main --- */
 
@@ -99,21 +100,21 @@ public class Main {
 
         OfflineReader offlineReader = new OfflineReader();
         Collection<UpdateInventoryRequest> updateInventoryRequests = offlineReader.getAgentProjectsFromRequests(fsaConfiguration.getOfflineRequestFiles());
-        Collection<AgentProjectInfo> projects = updateInventoryRequests.stream().flatMap(updateInventoryRequest -> updateInventoryRequest.getProjects().stream()).collect(Collectors.toList());
+        Collection<AgentProjectInfo> offlineProjects = updateInventoryRequests.stream().flatMap(updateInventoryRequest ->
+                updateInventoryRequest.getProjects().stream()).collect(Collectors.toList());
 
-        // WSE-207
-        if (fsaConfiguration.getOfflineRequestFiles() ==  null || fsaConfiguration.getOfflineRequestFiles().size() == 0) {
-            projects.addAll(result.getProjects());
+        if (fsaConfiguration.getOfflineRequestFiles() !=  null) {
+            result.addOfflineProjects(offlineProjects);
         }else{
             // in case of offline requests remove other
         }
-        result.setProjects(projects);
 
         if (fsaConfiguration.getUseCommandLineProjectName()) {
             // change project name from command line in case the user sent name via commandLine
             String projectName = fsaConfiguration.getRequest().getProjectName();
-            if (projects.size() == 1 && projectName != null) {
-                for (AgentProjectInfo project : projects) {
+            Set<AgentProjectInfo> agentProjectInfos = result.getProjectToLanguage().keySet();
+            if (agentProjectInfos.size() == 1 && projectName != null) {
+                for (AgentProjectInfo project : agentProjectInfos) {
                     project.getCoordinates().setArtifactId(projectName);
                 }
             }
@@ -128,20 +129,21 @@ public class Main {
         }
 
         if (!result.getStatusCode().equals(StatusCode.SUCCESS)) {
-            return new ProjectsDetails(result.getProjects(), result.getStatusCode(), "");
+            return new ProjectsDetails(result.getProjects(), result.getStatusCode(), EMPPTY_STRING);
         }
 
         if (shouldSend) {
             ProjectsSender projectsSender = new ProjectsSender(fsaConfiguration.getSender(), fsaConfiguration.getOffline(), req, new FileSystemAgentInfo());
-            Pair<String, StatusCode> processExitCode = sendProjects(projectsSender, result.getProjects());
+            Pair<String, StatusCode> processExitCode = sendProjects(projectsSender, result);
             logger.debug("Process finished with exit code {} ({})", processExitCode.getKey(), processExitCode.getValue());
             return new ProjectsDetails(new ArrayList<>(), processExitCode.getValue(), processExitCode.getKey());
         } else {
-            return new ProjectsDetails(result.getProjects(), result.getStatusCode(), "");
+            return new ProjectsDetails(result.getProjects(), result.getStatusCode(), EMPPTY_STRING);
         }
     }
 
-    private Pair<String, StatusCode> sendProjects(ProjectsSender projectsSender, Collection<AgentProjectInfo> projects) {
+    private Pair<String, StatusCode> sendProjects(ProjectsSender projectsSender, ProjectsDetails projectsDetails) {
+        Collection<AgentProjectInfo> projects = projectsDetails.getProjects();
         Iterator<AgentProjectInfo> iterator = projects.iterator();
         while (iterator.hasNext()) {
             AgentProjectInfo project = iterator.next();
@@ -164,7 +166,7 @@ public class Main {
             logger.info("Exiting, nothing to update");
             return new Pair<>("Exiting, nothing to update", StatusCode.SUCCESS);
         } else {
-            return projectsSender.sendRequest(projects);
+            return projectsSender.sendRequest(projectsDetails);//todo
         }
     }
 }

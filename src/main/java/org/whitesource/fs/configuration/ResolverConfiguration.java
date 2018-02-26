@@ -50,7 +50,7 @@ public class ResolverConfiguration {
             @JsonProperty(PYTHON_UNINSTALL_WSS_PLUGIN) boolean pythonUninstallWssPlugin,
 
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
-            @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration
+            @JsonProperty(WHITESOURCE_CONFIGURATION) String whiteSourceConfiguration
     ) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmResolveDependencies = npmResolveDependencies;
@@ -76,7 +76,7 @@ public class ResolverConfiguration {
         this.pythonUninstallWssPlugin = pythonUninstallWssPlugin;
 
         this.dependenciesOnly = dependenciesOnly;
-        this.whitesourceConfiguration = whitesourceConfiguration;
+        this.whitesourceConfiguration = whiteSourceConfiguration;
     }
 
     /* --- Members --- */

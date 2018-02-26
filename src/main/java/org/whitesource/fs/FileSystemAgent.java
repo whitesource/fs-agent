@@ -149,7 +149,8 @@ public class FileSystemAgent {
                     .collect(Collectors.toList());
         } else {
             scmConnectors = Arrays.asList(ScmConnector.create(
-                    config.getScm().getType(), config.getScm().getUrl(), config.getScm().getPpk(), config.getScm().getUser(), config.getScm().getPass(), config.getScm().getBranch(), config.getScm().getTag()));
+                    config.getScm().getType(), config.getScm().getUrl(), config.getScm().getPpk(), config.getScm().getUser(),
+                    config.getScm().getPass(), config.getScm().getBranch(), config.getScm().getTag()));
         }
 
         if (scmConnectors != null && scmConnectors.stream().anyMatch(scm -> scm != null)) {
@@ -159,7 +160,8 @@ public class FileSystemAgent {
                     logger.info("Connecting to SCM");
 
                     String scmPath = scmConnector.cloneRepository().getPath();
-                    Pair<String, StatusCode> result = npmInstallScmRepository(config.getScm().isNpmInstall(), config.getScm().getNpmInstallTimeoutMinutes(), scmConnector, separatorFiles, scmPath);
+                    Pair<String, StatusCode> result = npmInstallScmRepository(config.getScm().isNpmInstall(), config.getScm().getNpmInstallTimeoutMinutes(),
+                            scmConnector, separatorFiles, scmPath);
                     scmPath = result.getKey();
                     success[0] = result.getValue();
                     scmPaths.add(scmPath);
@@ -177,14 +179,17 @@ public class FileSystemAgent {
             return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, config.getAgent().getError()); // TODO this is within a try frame. Throw an exception instead
         }
 
-
         Collection<AgentProjectInfo> projects = null;
-
+        Map<AgentProjectInfo, String> projectToLanguage = null;
+        ProjectsDetails projectsDetails;
+        // Use FSA a as a package manger extractor for Debian/RPM/Arch Linux/Alpine
         if (config.isScanProjectManager()) {
             projects = new PackageManagerExtractor().createProjects();
+            projectsDetails =new ProjectsDetails(projects, success[0], EMPTY_STRING);
         } else {
-            projects = new FileSystemScanner(config.getResolver(), config.getAgent())
+            projectToLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis())
                     .createProjects(scannerBaseDirs, hasScmConnectors[0], this.config.getResolver().getNpmAccessToken());
+            projectsDetails = new ProjectsDetails(projectToLanguage, success[0], EMPTY_STRING);
         }
         // delete all temp scm files
         scmPaths.forEach(directory -> {
@@ -196,7 +201,7 @@ public class FileSystemAgent {
                 }
             }
         });
-        return new ProjectsDetails(projects, success[0], EMPTY_STRING);
+        return projectsDetails;
     }
 
     private Pair<String, StatusCode> npmInstallScmRepository(boolean scmNpmInstall, int npmInstallTimeoutMinutes, ScmConnector scmConnector,
