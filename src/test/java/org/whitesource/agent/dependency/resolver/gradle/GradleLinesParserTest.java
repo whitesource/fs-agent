@@ -1,0 +1,82 @@
+package org.whitesource.agent.dependency.resolver.gradle;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.utils.CommandLineProcess;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class GradleLinesParserTest {
+
+    private GradleLinesParser gradleLinesParser;
+    @Before
+    public void setup(){
+        gradleLinesParser = new GradleLinesParser();
+    }
+    @Test
+    public void parseLines() throws IOException {
+        String[] params = new String[] {"cmd", "/c", "gradle", "dependencies"};
+        CommandLineProcess commandLineProcess = new CommandLineProcess("C:\\Users\\ErezHuberman\\Documents\\gradle-build-scan-quickstart-master", params);
+        List<String> lines = commandLineProcess.executeProcess();
+        gradleLinesParser.parseLines(lines);
+    }
+
+    @Test
+    public void parseLinesFromString(){
+        List<String> lines = new ArrayList<>();
+        lines.add("+--- com.google.guava:guava:23.0");
+        lines.add("|    +--- com.google.code.findbugs:jsr305:1.3.9");
+        lines.add("|    +--- com.google.errorprone:error_prone_annotations:2.0.18");
+        lines.add("|    +--- com.google.j2objc:j2objc-annotations:1.1");
+        lines.add("|    \\--- org.codehaus.mojo:animal-sniffer-annotations:1.14");
+        lines.add("+--- org.webjars.npm:isurl:1.0.0");
+        lines.add("|    +--- org.webjars.npm:has-to-string-tag-x:[1.2.0,2) -> 1.4.1");
+        lines.add("|    |    \\--- org.webjars.npm:has-symbol-support-x:[1.4.1,2) -> 1.4.1");
+        lines.add("|    \\--- org.webjars.npm:is-object:[1.0.1,2) -> 1.0.1");
+        lines.add("\\--- junit:junit:4.12");
+        lines.add("     \\--- org.hamcrest:hamcrest-core:1.3");
+
+        gradleLinesParser.parseLines(lines);
+    }
+
+    @Test
+    public void parseLinesFromString2() {
+        List<String> lines = new ArrayList<>();
+        lines.add("+--- org.slf4j:jcl-over-slf4j:1.7.12");
+        lines.add("|    \\--- org.slf4j:slf4j-api:1.7.12");
+        lines.add("+--- ch.qos.logback:logback-classic:1.1.3");
+        lines.add("|    +--- ch.qos.logback:logback-core:1.1.3");
+        lines.add("|    \\--- org.slf4j:slf4j-api:1.7.7 -> 1.7.12");
+        lines.add("|         \\--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("+--- org.springframework:spring-webmvc:4.1.6.RELEASE");
+        lines.add("|    +--- org.springframework:spring-beans:4.1.6.RELEASE");
+        lines.add("|    |    \\--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("|    +--- org.springframework:spring-context:4.1.6.RELEASE");
+        lines.add("|    |    +--- org.springframework:spring-aop:4.1.6.RELEASE");
+        lines.add("|    |    |    +--- aopalliance:aopalliance:1.0");
+        lines.add("|    |    |    +--- org.springframework:spring-beans:4.1.6.RELEASE");
+        lines.add("|    |    |    \\--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("|    |    +--- org.springframework:spring-beans:4.1.6.RELEASE");
+        lines.add("|    |    +--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("|    |    \\--- org.springframework:spring-expression:4.1.6.RELEASE");
+        lines.add("|    |         \\--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("|    +--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("|    +--- org.springframework:spring-expression:4.1.6.RELEASE");
+        lines.add("|    \\--- org.springframework:spring-web:4.1.6.RELEASE");
+        lines.add("|         +--- org.springframework:spring-aop:4.1.6.RELEASE");
+        lines.add("|         +--- org.springframework:spring-beans:4.1.6.RELEASE");
+        lines.add("|         +--- org.springframework:spring-context:4.1.6.RELEASE");
+        lines.add("|         \\--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("+--- org.hsqldb:hsqldb:2.3.2");
+        lines.add("\\--- javax.servlet:servlet-api:2.5");
+        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines);
+
+        Assert.assertTrue(dependencyInfos.get(0).getVersion().equals("1.7.12"));
+        Assert.assertTrue(dependencyInfos.get(4).getVersion().equals("2.5"));
+    }
+
+}

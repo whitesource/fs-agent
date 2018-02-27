@@ -25,6 +25,9 @@ import java.util.Collection;
  */
 public abstract class DependencyCollector {
 
+    private static final String OS_NAME = "os.name";
+    private static final String WINDOWS = "win";
+
     protected abstract Collection<AgentProjectInfo> collectDependencies(String folder);
 
     protected Collection<AgentProjectInfo> getSingleProjectList(Collection<DependencyInfo> dependencies) {
@@ -33,5 +36,9 @@ public abstract class DependencyCollector {
         dependencies.stream().forEach(dependency -> projectInfo.getDependencies().add(dependency) );
         projects.add(projectInfo);
         return projects;
+    }
+
+    public static boolean isWindows() {
+        return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
     }
 }
