@@ -194,7 +194,7 @@ public class ProjectsSender {
 
                 if (vulnerabilitiesAnalysis != null) {
                     result = vulnerabilitiesAnalysis.startAnalysis(server, appPath, project.getDependencies());
-                    logger.info("Got impact analysis from server");
+                    logger.info("Got impact analysis result from server");
                     Set<VulnerabilityAnalysisResult> run = ApiTranslator.globalVulnerabilityToVulnerabilityAnalysis(result);
                     Map<String, DependencyInfo> stringDependencyInfoMap = Utils.sha1ToDependencyInfo(project.getDependencies());
                     for (VulnerabilityAnalysisResult vulnerabilityAnalysisResult : run) {
