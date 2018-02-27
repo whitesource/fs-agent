@@ -83,6 +83,7 @@ public class FSAConfiguration {
     private final AgentConfiguration agent;
     private final RequestConfiguration request;
     private final boolean scanPackageManager;
+    private final boolean scanDockerImages;
 
     private String logLevel;
     private boolean useCommandLineProductName;
@@ -144,6 +145,7 @@ public class FSAConfiguration {
         }
 
         scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);
+        scanDockerImages = getBooleanProperty(config,SCAN_DOCKER_IMAGES,false);
 
         // validate config
         String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
@@ -264,12 +266,14 @@ public class FSAConfiguration {
     private AgentConfiguration getAgent(Properties config) {
         String[] includes = FSAConfiguration.getIncludes(config);
         String[] excludes = config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String[] dockerIncludes = FSAConfiguration.getDockerIncludes(config);
+        String[] dockerExcludes = config.getProperty(DOCKER_EXCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(config);
         String[] archiveIncludes = config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         String[] archiveExcludes = config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         boolean archiveFastUnpack = FSAConfiguration.getBooleanProperty(config, ARCHIVE_FAST_UNPACK_KEY, false);
         boolean archiveFollowSymbolicLinks = FSAConfiguration.getBooleanProperty(config, FOLLOW_SYMBOLIC_LINKS, true);
-
+        boolean dockerScan = FSAConfiguration.getBooleanProperty(config, SCAN_DOCKER_IMAGES, false);
         boolean partialSha1Match = FSAConfiguration.getBooleanProperty(config, PARTIAL_SHA1_MATCH_KEY, false);
         boolean calculateHints = FSAConfiguration.getBooleanProperty(config, CALCULATE_HINTS, false);
         boolean calculateMd5 = FSAConfiguration.getBooleanProperty(config, CALCULATE_MD5, false);
@@ -279,9 +283,9 @@ public class FSAConfiguration {
 
         Collection<String> excludesCopyrights = getExcludeCopyrights(config.getProperty(EXCLUDED_COPYRIGHT_KEY, ""));
 
-        return new AgentConfiguration(includes, excludes,
+        return new AgentConfiguration(includes, excludes, dockerIncludes, dockerExcludes,
                 archiveExtractionDepth, archiveIncludes, archiveExcludes, archiveFastUnpack, archiveFollowSymbolicLinks,
-                partialSha1Match, calculateHints, calculateMd5, showProgress, globalCaseSensitive.getKey(), globalCaseSensitive.getValue(), excludesCopyrights);
+                partialSha1Match, calculateHints, calculateMd5, showProgress, globalCaseSensitive.getKey(), dockerScan, globalCaseSensitive.getValue(), excludesCopyrights);
     }
 
     private Collection<String> getExcludeCopyrights(String excludedCopyrightsValue) {
@@ -404,6 +408,11 @@ public class FSAConfiguration {
         return scanPackageManager;
     }
 
+    @JsonProperty(SCAN_DOCKER_IMAGES)
+    public boolean isScanDockerImages() {
+        return scanDockerImages;
+    }
+
     @JsonProperty(LOG_LEVEL_KEY)
     public String getLogLevel() {
         return logLevel;
@@ -459,6 +468,14 @@ public class FSAConfiguration {
         String includesString = configProps.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "");
         if (StringUtils.isNotBlank(includesString)) {
             return configProps.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        }
+        return new String[0];
+    }
+
+    public static String[] getDockerIncludes(Properties configProps) {
+        String includesString = configProps.getProperty(DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, "");
+        if (StringUtils.isNotBlank(includesString)) {
+            return configProps.getProperty(DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, "").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         }
         return new String[0];
     }

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
+import org.whitesource.agent.dependency.resolver.docker.DockerResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.dependency.resolver.packageManger.PackageManagerExtractor;
 import org.whitesource.agent.utils.CommandLineProcess;
@@ -182,6 +183,9 @@ public class FileSystemAgent {
 
         if (config.isScanProjectManager()) {
             projects = new PackageManagerExtractor().createProjects();
+        } else if (config.isScanDockerImages()) {
+            projects = new DockerResolver(config).createProjects();
+
         } else {
             projects = new FileSystemScanner(config.getResolver(), config.getAgent())
                     .createProjects(scannerBaseDirs, hasScmConnectors[0], this.config.getResolver().getNpmAccessToken());
