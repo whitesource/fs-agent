@@ -1,15 +1,19 @@
 package org.whitesource.agent.dependency.resolver.nuget.packagesConfig;
 
-import javax.xml.bind.annotation.XmlAttribute;
+import org.simpleframework.xml.Attribute;
+import org.simpleframework.xml.Root;
 
 /**
  * @author raz.nitzan
  */
+@Root(name="PackageReference", strict=false)
 public class PackageReference implements NugetPackageInterface {
 
     /* --- Members --- */
 
+    @Attribute(name="Include", required=false)
     private String pkgName;
+    @Attribute(name="Version", required=false)
     private String pkgVersion;
 
     /* --- Constructors --- */
@@ -28,7 +32,6 @@ public class PackageReference implements NugetPackageInterface {
         return pkgName;
     }
 
-    @XmlAttribute(name = "Include")
     public void setPkgName(String pkgName) {
         this.pkgName = pkgName;
     }
@@ -37,7 +40,6 @@ public class PackageReference implements NugetPackageInterface {
         return pkgVersion;
     }
 
-    @XmlAttribute(name = "Version")
     public void setPkgVersion(String pkgVersion) {
         this.pkgVersion = pkgVersion;
     }

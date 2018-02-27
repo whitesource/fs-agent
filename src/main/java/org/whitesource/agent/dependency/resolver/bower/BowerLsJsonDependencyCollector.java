@@ -22,6 +22,9 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 /**
  * Collect dependencies using 'bower ls' command.
  *
@@ -39,6 +42,7 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
     private static final String TAG = "tag";
     private static final String NAME = "name";
     private static final String MISSING = "missing";
+    private static final String DEPENDENCIES = "dependencies";
 
     /* --- Constructors --- */
 
@@ -54,7 +58,7 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
     }
 
     @Override
-    protected String[] getLsCommandParams() {
+    protected String[] getLsCommandParamsJson() {
         return new String[]{BOWER_COMMAND, NpmLsJsonDependencyCollector.LS_COMMAND, NpmLsJsonDependencyCollector.LS_PARAMETER_JSON};
     }
 
@@ -104,6 +108,32 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
         dependency.setVersion(version);
         dependency.setDependencyType(DependencyType.BOWER);
         return dependency;
+    }
+
+    @Override
+    protected void getDependencies(JSONObject jsonObject, String rootDirectory, Collection<DependencyInfo> dependencies) {
+        if (jsonObject.has(DEPENDENCIES)) {
+            JSONObject dependenciesJsonObject = jsonObject.getJSONObject(DEPENDENCIES);
+            if (dependenciesJsonObject != null) {
+                for (String dependencyAlias : dependenciesJsonObject.keySet()) {
+                    JSONObject dependencyJsonObject = dependenciesJsonObject.getJSONObject(dependencyAlias);
+                    if (dependencyJsonObject.keySet().isEmpty()) {
+                        logger.debug("Dependency {} has no JSON content", dependencyAlias);
+                    } else {
+                        DependencyInfo dependency = getDependency(dependencyAlias, dependencyJsonObject);
+                        if (dependency != null) {
+                            dependencies.add(dependency);
+
+                            logger.debug("Collect child dependencies of {}", dependencyAlias);
+                            // collect child dependencies
+                            Collection<DependencyInfo> childDependencies = new ArrayList<>();
+                            getDependencies(dependencyJsonObject, rootDirectory, childDependencies);
+                            dependency.getChildren().addAll(childDependencies);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void unmetDependencyLog(String dependencyAlias) {

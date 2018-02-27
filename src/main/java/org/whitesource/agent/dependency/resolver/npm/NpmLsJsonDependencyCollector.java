@@ -95,10 +95,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
                 if(npmLsJson.isErrorInProcess() && this.ignoreNpmLsErrors) {
                     logger.info("Ignore errors of 'npm ls'");
                 }
-                CommandLineProcess npmLs = new CommandLineProcess(rootDirectory, getLsCommandParams());
-                npmLs.setTimeoutReadLineSeconds(this.npmTimeoutDependenciesCollector);
-                List<String> linesOfNpmLs = npmLs.executeProcess();
-                getDependencies(new JSONObject(json.toString()), linesOfNpmLs, 1, dependencies);
+                getDependencies(new JSONObject(json.toString()), rootDirectory, dependencies);
             }
         } catch (IOException e) {
             logger.warn("Error getting dependencies after running 'npm ls --json' on {}, error : {}", rootDirectory, e.getMessage());
@@ -182,6 +179,18 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     }
 
     /* --- Protected methods --- */
+
+    protected void getDependencies(JSONObject jsonObject, String rootDirectory, Collection<DependencyInfo> dependencies) {
+        CommandLineProcess npmLs = new CommandLineProcess(rootDirectory, getLsCommandParams());
+        npmLs.setTimeoutReadLineSeconds(this.npmTimeoutDependenciesCollector);
+        try {
+            List<String> linesOfNpmLs = npmLs.executeProcess();
+            getDependencies(jsonObject, linesOfNpmLs, 1, dependencies);
+        } catch (IOException e) {
+            logger.warn("Error getting dependencies after running 'npm ls --json' on {}, error : {}", rootDirectory, e.getMessage());
+            logger.debug("Error: {}", e.getStackTrace());
+        }
+    }
 
     protected String[] getInstallParams() {
         return new String[]{NPM_COMMAND, INSTALL_COMMAND};

@@ -126,7 +126,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     private Set<DependencyInfo> collectDependenciesFromNugetConfig(NugetPackages configNugetPackage) {
         Set<DependencyInfo> dependencies = new HashSet<>();
-        List<NugetPackage> nugetPackages = configNugetPackage.getNugets();
+        List<NugetPackage> nugetPackages = configNugetPackage.getNugetPackages();
         if (nugetPackages != null) {
             for (NugetPackage nugetPackage : nugetPackages) {
                 if (StringUtils.isNotBlank(nugetPackage.getPkgName()) && StringUtils.isNotBlank(nugetPackage.getPkgVersion())) {

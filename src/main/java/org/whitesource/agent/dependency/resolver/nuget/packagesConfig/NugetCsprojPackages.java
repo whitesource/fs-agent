@@ -1,27 +1,28 @@
 package org.whitesource.agent.dependency.resolver.nuget.packagesConfig;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import org.simpleframework.xml.ElementList;
+import org.simpleframework.xml.Root;
+
 import java.util.LinkedList;
 import java.util.List;
 
 /**
  * @author raz.nitzan
  */
-@XmlRootElement(name = "Project")
+@Root(name="Project", strict=false)
 public class NugetCsprojPackages {
     /* --- Members --- */
 
-    private List<NugetCsprojItemGroup> nugets = new LinkedList<>();
+    @ElementList(inline=true, required=false)
+    private List<NugetCsprojItemGroup> nugetItemGroups = new LinkedList<>();
 
     /* --- Getters / Setters --- */
 
-    @XmlElement(name = "ItemGroup")
-    public List<NugetCsprojItemGroup> getNugets() {
-        return nugets;
+    public List<NugetCsprojItemGroup> getNugetItemGroups() {
+        return nugetItemGroups;
     }
 
-    public void setNugets(List<NugetCsprojItemGroup> nugets) {
-        this.nugets = (List<NugetCsprojItemGroup>) nugets;
+    public void setNugetItemGroups(List<NugetCsprojItemGroup> nugetItemGroups) {
+        this.nugetItemGroups = (List<NugetCsprojItemGroup>) nugetItemGroups;
     }
 }

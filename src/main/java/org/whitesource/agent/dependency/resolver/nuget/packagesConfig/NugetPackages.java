@@ -15,29 +15,29 @@
  */
 package org.whitesource.agent.dependency.resolver.nuget.packagesConfig;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import org.simpleframework.xml.ElementList;
+import org.simpleframework.xml.Root;
+
 import java.util.LinkedList;
 import java.util.List;
 
 /**
  * @author yossi.weinberg
  */
-@XmlRootElement(name = "packages")
+@Root(name="packages", strict=false)
 public class NugetPackages {
 
     /* --- Members --- */
-
-    private List<NugetPackage> nugets = new LinkedList<>();
+    @ElementList(inline=true, required=false)
+    private List<NugetPackage> nugetPackages = new LinkedList<>();
 
     /* --- Getters / Setters --- */
 
-    @XmlElement(name = "package")
-    public List<NugetPackage> getNugets() {
-        return nugets;
+    public List<NugetPackage> getNugetPackages() {
+        return nugetPackages;
     }
 
-    public void setNugets(List<? extends NugetPackageInterface> nugets) {
-        this.nugets = (List<NugetPackage>) nugets;
+    public void setNugetPackages(List<? extends NugetPackageInterface> nugetPackages) {
+        this.nugetPackages = (List<NugetPackage>) nugetPackages;
     }
 }
