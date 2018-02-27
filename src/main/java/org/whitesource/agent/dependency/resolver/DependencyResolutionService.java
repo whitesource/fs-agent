@@ -18,6 +18,7 @@ package org.whitesource.agent.dependency.resolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
+import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
@@ -70,6 +71,8 @@ public class DependencyResolutionService {
 
         boolean pythonResolveDependencies = config.isPythonResolveDependencies();
 
+        boolean gradleResolveDependencies = config.isGradleResolveDependencies();
+
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
@@ -91,6 +94,10 @@ public class DependencyResolutionService {
         }
         if (pythonResolveDependencies) {
             dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(), config.isPythonIsWssPluginInstalled(), config.getPythonUninstallWssPlugin()));
+        }
+
+        if (gradleResolveDependencies) {
+            dependencyResolvers.add(new GradleDependencyResolver());
         }
     }
 

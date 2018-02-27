@@ -1,6 +1,5 @@
 package org.whitesource.agent.dependency.resolver.gradle;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -13,10 +12,7 @@ import org.whitesource.agent.utils.CommandLineProcess;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class GradleDependencyResolver extends AbstractDependencyResolver {
 
@@ -27,8 +23,9 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     private static final String C_Char_WINDOWS = "/c";
     private static final String GRADLE_PARAMS_TREE = "dependencies";
     private static final String GRADLE_COMMAND = "gradle";
+    private static final List<String> GRADLE_SCRIPT_EXTENSION = Arrays.asList(".gradle",".groovy", ".java");
 
-    private String dotGradlePath;
+
     private GradleLinesParser gradleLinesParser;
 
     public GradleDependencyResolver(){
@@ -38,18 +35,19 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles, String npmAccessToken) {
-        List<DependencyInfo> dependencyInfos = collectDependencies(projectFolder);
-        return null;
+        List<DependencyInfo> dependencies = collectDependencies(projectFolder);
+
+        return new ResolutionResult(dependencies, new LinkedList<>(), getDependencyType(), topLevelFolder);
     }
 
     @Override
     protected Collection<String> getExcludes() {
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
     protected Collection<String> getSourceFileExtensions() {
-        return null;
+        return GRADLE_SCRIPT_EXTENSION;
     }
 
     @Override
@@ -68,9 +66,6 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     }
 
     private List<DependencyInfo> collectDependencies(String rootDirectory) {
-        if (StringUtils.isBlank(dotGradlePath)){
-            this.dotGradlePath = getDotGradlePath();
-        }
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
         try {
             CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, getLsCommandParams());

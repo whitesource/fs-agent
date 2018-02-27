@@ -79,4 +79,63 @@ public class GradleLinesParserTest {
         Assert.assertTrue(dependencyInfos.get(4).getVersion().equals("2.5"));
     }
 
+    @Test
+    public void parseLinesFromString3(){
+        List<String> lines = new ArrayList<>();
+        lines.add("archives - Configuration for archive artifacts.");
+        lines.add("No dependencies");
+        lines.add("compile - Compile classpath for source set 'main'.");
+        lines.add("+--- org.slf4j:jcl-over-slf4j:1.7.12");
+        lines.add("|    \\--- org.slf4j:slf4j-api:1.7.12");
+        lines.add("+--- ch.qos.logback:logback-classic:1.1.3");
+        lines.add("|    +--- ch.qos.logback:logback-core:1.1.3");
+        lines.add("|    \\--- org.slf4j:slf4j-api:1.7.7 -> 1.7.12");
+        lines.add("+--- org.springframework:spring-webmvc:4.1.6.RELEASE");
+        lines.add("|    +--- org.springframework:spring-beans:4.1.6.RELEASE");
+        lines.add("|    |    \\--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("|    +--- org.springframework:spring-context:4.1.6.RELEASE");
+        lines.add("|    |    +--- org.springframework:spring-aop:4.1.6.RELEASE");
+        lines.add("|    |    |    +--- aopalliance:aopalliance:1.0");
+        lines.add("|    |    |    +--- org.springframework:spring-beans:4.1.6.RELEASE (*)");
+        lines.add("|    |    |    \\--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("|    |    +--- org.springframework:spring-beans:4.1.6.RELEASE");
+        lines.add("|    |    +--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("|    |    \\--- org.springframework:spring-expression:4.1.6.RELEASE");
+        lines.add("|    |         \\--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("|    +--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("|    +--- org.springframework:spring-expression:4.1.6.RELEASE");
+        lines.add("|    \\--- org.springframework:spring-web:4.1.6.RELEASE");
+        lines.add("|         +--- org.springframework:spring-aop:4.1.6.RELEASE");
+        lines.add("|         +--- org.springframework:spring-beans:4.1.6.RELEASE");
+        lines.add("|         +--- org.springframework:spring-context:4.1.6.RELEASE");
+        lines.add("|         \\--- org.springframework:spring-core:4.1.6.RELEASE");
+        lines.add("+--- org.hsqldb:hsqldb:2.3.2");
+        lines.add("\\--- javax.servlet:servlet-api:2.5");
+        lines.add("default - Configuration for default artifacts.");
+        lines.add("+--- org.slf4j:jcl-over-slf4j:1.7.12 ");
+        lines.add("|    \\--- org.slf4j:slf4j-api:1.7.12");
+        lines.add("+--- ch.qos.logback:logback-classic:1.1.3");
+        lines.add("|    +--- ch.qos.logback:logback-core:1.1.3");
+        lines.add("|    \\--- org.slf4j:slf4j-api:1.7.7 -> 1.7.12");
+        lines.add("providedCompile - Additional compile classpath for libraries that should not be part of the WAR arc");
+        lines.add("\\--- javax.servlet:servlet-api:2.5");
+        lines.add("providedRuntime - Additional runtime classpath for libraries that should not be part of the WAR arc");
+        lines.add("\\--- javax.servlet:servlet-api:2.5");
+        lines.add("runtime - Runtime classpath for source set 'main'.");
+        lines.add("+--- org.slf4j:jcl-over-slf4j:1.7.12");
+        lines.add("|    \\--- org.slf4j:slf4j-api:1.7.12");
+        lines.add("+--- ch.qos.logback:logback-classic:1.1.3");
+        lines.add("|    +--- ch.qos.logback:logback-core:1.1.3");
+        lines.add("|    \\--- org.slf4j:slf4j-api:1.7.7 -> 1.7.12");
+        lines.add("testCompile - Compile classpath for source set 'test'.");
+        lines.add("+--- org.slf4j:jcl-over-slf4j:1.7.12");
+        lines.add("|    \\--- org.slf4j:slf4j-api:1.7.12");
+        lines.add("+--- ch.qos.logback:logback-classic:1.1.3");
+        lines.add("|    +--- ch.qos.logback:logback-core:1.1.3");
+        lines.add("|    \\--- org.slf4j:slf4j-api:1.7.7 -> 1.7.12");
+
+        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines);
+        Assert.assertTrue(dependencyInfos.get(2).getChildren().iterator().next().getVersion().equals("4.1.6.RELEASE"));
+    }
+
 }
