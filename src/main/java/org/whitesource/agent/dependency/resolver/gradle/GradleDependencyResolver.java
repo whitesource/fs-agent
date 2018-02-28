@@ -21,7 +21,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     private static final String C_Char_WINDOWS = "/c";
     private static final String GRADLE_PARAMS_TREE = "dependencies";
     private static final String GRADLE_COMMAND = "gradle";
-    private static final List<String> GRADLE_SCRIPT_EXTENSION = Arrays.asList(".gradle",".groovy", ".java");
+    private static final List<String> GRADLE_SCRIPT_EXTENSION = Arrays.asList(".gradle",".groovy", ".java", ".jar", ".war", ".ear", ".car", ".class");
 
 
     private GradleLinesParser gradleLinesParser;
