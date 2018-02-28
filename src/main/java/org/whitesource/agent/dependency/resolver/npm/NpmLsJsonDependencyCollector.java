@@ -49,8 +49,6 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     public static final String LS_PARAMETER_JSON = "--json";
 
     private static final String NPM_COMMAND = isWindows() ? "npm.cmd" : "npm";
-    private static final String OS_NAME = "os.name";
-    private static final String WINDOWS = "win";
     private static final String DEPENDENCIES = "dependencies";
     private static final String VERSION = "version";
     private static final String RESOLVED = "resolved";
@@ -241,12 +239,6 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
         dependency.setFilename(filename);
         dependency.setDependencyType(DependencyType.NPM);
         return dependency;
-    }
-
-    /* --- Static methods --- */
-
-    public static boolean isWindows() {
-        return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
     }
 
     /* --- Nested classes --- */

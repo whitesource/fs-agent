@@ -48,8 +48,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
     private static final String MVN_PARAMS_TREE = "dependency:tree";
     private static final String MVN_COMMAND = "mvn";
-    private static final String OS_NAME = "os.name";
-    private static final String WINDOWS = "win";
     private static final String SCOPE_TEST = "test";
     private static final String SCOPE_PROVIDED = "provided";
     private static final String DOT = ".";
@@ -227,11 +225,5 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             showMavenTreeError = true;
             return null;
         }
-    }
-
-    /* --- Static methods --- */
-
-    private static boolean isWindows() {
-        return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
     }
 }

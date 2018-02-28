@@ -50,7 +50,9 @@ public class ResolverConfiguration {
             @JsonProperty(PYTHON_UNINSTALL_WSS_PLUGIN) boolean pythonUninstallWssPlugin,
 
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
-            @JsonProperty(WHITESOURCE_CONFIGURATION) String whiteSourceConfiguration
+            @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
+
+            @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean gradleResolveDependencies
     ) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmResolveDependencies = npmResolveDependencies;
@@ -76,29 +78,35 @@ public class ResolverConfiguration {
         this.pythonUninstallWssPlugin = pythonUninstallWssPlugin;
 
         this.dependenciesOnly = dependenciesOnly;
-        this.whitesourceConfiguration = whiteSourceConfiguration;
+        this.whitesourceConfiguration = whitesourceConfiguration;
+
+        this.gradleResolveDependencies = gradleResolveDependencies;
     }
 
     /* --- Members --- */
 
-    private boolean npmRunPreStep;
-    private boolean npmResolveDependencies;
-    private boolean npmIncludeDevDependencies;
-    private boolean npmIgnoreJavaScriptFiles;
-    private String npmAccessToken;
-    private long npmTimeoutDependenciesCollector;
-    private boolean npmIgnoreNpmLsErrors;
-    private boolean bowerResolveDependencies;
-    private boolean bowerRunPreStep;
-    private boolean nugetResolveDependencies;
-    private boolean mavenResolveDependencies;
-    private String[] mavenIgnoredScopes;
-    private boolean mavenAggregateModules;
-    private boolean dependenciesOnly;
-    private String whitesourceConfiguration;
-    private boolean pythonResolveDependencies;
-    private String pipPath;
-    private String pythonPath;
+    private boolean     npmRunPreStep;
+    private boolean     npmResolveDependencies;
+    private boolean     npmIncludeDevDependencies;
+    private boolean     npmIgnoreJavaScriptFiles;
+    private String      npmAccessToken;
+    private long        npmTimeoutDependenciesCollector;
+    private boolean     npmIgnoreNpmLsErrors;
+    private boolean     bowerResolveDependencies;
+    private boolean     bowerRunPreStep;
+    private boolean     nugetResolveDependencies;
+    private boolean     mavenResolveDependencies;
+    private String[]    mavenIgnoredScopes;
+    private boolean     mavenAggregateModules;
+    private boolean     dependenciesOnly;
+    private String      whitesourceConfiguration;
+    private boolean     pythonResolveDependencies;
+    private String      pipPath;
+    private String      pythonPath;
+
+
+
+    private boolean     gradleResolveDependencies;
     private final boolean pythonIsWssPluginInstalled;
     private final boolean pythonUninstallWssPlugin;
 
@@ -203,4 +211,7 @@ public class ResolverConfiguration {
     public boolean getPythonUninstallWssPlugin() {
         return pythonUninstallWssPlugin;
     }
+
+    @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES)
+    public boolean isGradleResolveDependencies() { return gradleResolveDependencies; }
 }
