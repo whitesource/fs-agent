@@ -19,14 +19,16 @@ import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.core.Persister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.*;
+
+import java.io.File;
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
  * @author yossi.weinberg
  */
-public class NugetPackagesConfigXmlParser {
+public class NugetPackagesConfigXmlParser implements Serializable{
 
     /* --- Static members --- */
 
@@ -38,25 +40,23 @@ public class NugetPackagesConfigXmlParser {
 
     private NugetConfigFileType nugetConfigFileType;
 
-    private Serializer serializer;
-
     /* --- Constructors --- */
 
     public NugetPackagesConfigXmlParser(File xml, NugetConfigFileType nugetConfigFileType) {
         this.xml = xml;
         this.nugetConfigFileType = nugetConfigFileType;
-        this.serializer = new Persister();
     }
 
     /* --- Public methods --- */
 
     public NugetPackages parsePackagesConfigFile() {
+        Persister persister = new Persister();
         NugetPackages packages = null;
         try {
             if (this.nugetConfigFileType == NugetConfigFileType.CONFIG_FILE_TYPE) {
-                packages = this.serializer.read(NugetPackages.class, xml);
+                packages = persister.read(NugetPackages.class, xml);
             } else {
-                NugetCsprojPackages csprojPackages = this.serializer.read(NugetCsprojPackages.class, xml);
+                NugetCsprojPackages csprojPackages = persister.read(NugetCsprojPackages.class, xml);
                 packages = getNugetPackagesFromCsproj(csprojPackages);
             }
         } catch (Exception e) {
@@ -67,7 +67,7 @@ public class NugetPackagesConfigXmlParser {
 
     private NugetPackages getNugetPackagesFromCsproj(NugetCsprojPackages csprojPackages) {
         List<NugetPackage> nugetPackages = new LinkedList<>();
-        for (NugetCsprojItemGroup csprojPackage : csprojPackages.getNugets()) {
+        for (NugetCsprojItemGroup csprojPackage : csprojPackages.getNugetItemGroups()) {
             for(PackageReference packageReference : csprojPackage.getPackageReference()) {
                 if (packageReference != null && packageReference.getPkgName() != null && packageReference.getPkgVersion() != null) {
                     nugetPackages.add(new NugetPackage(packageReference.getPkgName(), packageReference.getPkgVersion()));
@@ -75,7 +75,7 @@ public class NugetPackagesConfigXmlParser {
             }
         }
         NugetPackages nugetPackagesResult = new NugetPackages();
-        nugetPackagesResult.setNugets(nugetPackages);
+        nugetPackagesResult.setNugetPackages(nugetPackages);
         return nugetPackagesResult;
     }
 }

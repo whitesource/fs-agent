@@ -2,6 +2,7 @@ package org.whitesource.agent.dependency.resolver.nuget.packagesConfig;
 
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -13,15 +14,15 @@ public class NugetCsprojPackages {
     /* --- Members --- */
 
     @ElementList(inline=true, required=false)
-    private List<NugetCsprojItemGroup> nugets = new LinkedList<>();
+    private List<NugetCsprojItemGroup> nugetItemGroups = new LinkedList<>();
 
     /* --- Getters / Setters --- */
 
-    public List<NugetCsprojItemGroup> getNugets() {
-        return nugets;
+    public List<NugetCsprojItemGroup> getNugetItemGroups() {
+        return nugetItemGroups;
     }
 
-    public void setNugets(List<NugetCsprojItemGroup> nugets) {
-        this.nugets = (List<NugetCsprojItemGroup>) nugets;
+    public void setNugetItemGroups(List<NugetCsprojItemGroup> nugetItemGroups) {
+        this.nugetItemGroups = (List<NugetCsprojItemGroup>) nugetItemGroups;
     }
 }

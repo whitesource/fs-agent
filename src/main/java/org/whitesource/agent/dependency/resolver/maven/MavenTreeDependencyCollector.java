@@ -122,7 +122,8 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
                     AgentProjectInfo projectInfo = new AgentProjectInfo();
                     projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
-                    dependencies.stream().forEach(dependency -> projectInfo.getDependencies().add(dependency));
+                    dependencies.stream().filter(dependency -> StringUtils.isNotEmpty(dependency.getSha1())).forEach(dependency ->
+                            projectInfo.getDependencies().add(dependency));
                     return projectInfo;
                 }).collect(Collectors.toList());
             } else {
@@ -144,9 +145,9 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
     private String getSha1(String filePath) {
         try {
-            return  ChecksumUtils.calculateSHA1(new File(filePath));
+            return ChecksumUtils.calculateSHA1(new File(filePath));
         } catch (IOException e) {
-            logger.info("Failed getting " +filePath, getLsCommandParams());
+            logger.info("Failed getting " + filePath + ". File will not be send to WhiteSource server.");
             return EMPTY_STRING;
         }
     }
