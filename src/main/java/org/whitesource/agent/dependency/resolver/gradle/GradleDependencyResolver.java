@@ -9,9 +9,7 @@ import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.CommandLineProcess;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class GradleDependencyResolver extends AbstractDependencyResolver {
@@ -68,6 +66,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     private List<DependencyInfo> collectDependencies(String rootDirectory) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
         try {
+            // run gradle dependencies to get dependency tree
             CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, getLsCommandParams());
             List<String> lines = commandLineProcess.executeProcess();
             if (!commandLineProcess.isErrorInProcess()) {
@@ -77,20 +76,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
             logger.warn("Error getting dependencies after running {} on {}, {}" , getLsCommandParams() , rootDirectory, e.getMessage());
             logger.debug("Error: {}", e.getStackTrace());
         }
-
-
         return dependencyInfos;
-    }
-
-    private String getDotGradlePath() {
-        String currentUsersHomeDir = System.getProperty(USER_HOME);
-        File dotGradle = Paths.get(currentUsersHomeDir, ".gradle", "caches","modules-2","files-2.1").toFile();
-
-        if (dotGradle.exists()) {
-            return dotGradle.getAbsolutePath();
-        }
-        logger.error("could not get .gradle path");
-        return  null;
     }
 
     private String[] getLsCommandParams() {
