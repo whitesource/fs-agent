@@ -138,11 +138,11 @@
         </dependency>
 
         <!-- VIA test -->
-        <dependency>
-            <groupId>org.whitesource.analysis</groupId>
-            <artifactId>whitesource-analysis-via</artifactId>
-            <version>0.0.1</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.whitesource.analysis</groupId>-->
+            <!--<artifactId>whitesource-analysis-via</artifactId>-->
+            <!--<version>0.0.1</version>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>guru.nidi</groupId>
