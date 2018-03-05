@@ -18,17 +18,25 @@ package org.whitesource.fs;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ProjectsDetails {
 
-    private Collection<AgentProjectInfo> projects;
+//    private Collection<AgentProjectInfo> projects;
+    private Map<AgentProjectInfo, String> projectToLanguage;
     private String details;
     private StatusCode statusCode;
 
-    public ProjectsDetails(Collection<AgentProjectInfo> projects, StatusCode statusCode , String details) {
+
+    public ProjectsDetails(Map<AgentProjectInfo, String> projectToLanguage, StatusCode statusCode , String details) {
         this.statusCode = statusCode;
-        this.projects = projects;
+        this.projectToLanguage = projectToLanguage;
         this.details = details;
+    }
+
+    public ProjectsDetails(Collection<AgentProjectInfo> projects, StatusCode statusCode , String details) {
+        this(projects.stream().collect(Collectors.toMap(project->project,null)), statusCode, details);
     }
 
     public ProjectsDetails() {
@@ -42,11 +50,24 @@ public class ProjectsDetails {
         return details;
     }
 
-    public void setProjects(Collection<AgentProjectInfo> projects) {
-        this.projects = projects;
+    public Map<AgentProjectInfo, String> getProjectToLanguage() {
+        return projectToLanguage;
+    }
+
+    public void setProjectToLanguage(Map<AgentProjectInfo, String> projectToLanguage) {
+        this.projectToLanguage = projectToLanguage;
+    }
+
+    public void addOfflineProjects(Collection<AgentProjectInfo> projects) {
+        if (projects.size() > 0){
+            for (AgentProjectInfo agentProjectInfo : projects) {
+                getProjectToLanguage().put(agentProjectInfo, null);
+            }
+        }
+//            setProjectToLanguage(projects.stream().collect(Collectors.toMap(project-> project, null)));
     }
 
     public Collection<AgentProjectInfo> getProjects() {
-        return projects;
+        return getProjectToLanguage().keySet();
     }
 }
