@@ -41,7 +41,10 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
 /* --- Statics Members --- */
 
-    private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector.class);
+    protected static final String DOT = ".";
+    protected static final String DASH = "-";
+
+    private static final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector.class);
 
     private static final String MVN_PARAMS_M2PATH_PATH = "help:evaluate";
     private static final String MVN_PARAMS_M2PATH_LOCAL = "-Dexpression=settings.localRepository";
@@ -50,8 +53,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String MVN_COMMAND = "mvn";
     private static final String SCOPE_TEST = "test";
     private static final String SCOPE_PROVIDED = "provided";
-    private static final String DOT = ".";
-    private static final String DASH = "-";
     private static final String USER_HOME = "user.home";
     private static final String M2 = ".m2";
     private static final String REPOSITORY = "repository";
@@ -61,11 +62,10 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String EMPTY_STRING = "";
     private static final String POM = "pom";
 
-
     /* --- Members --- */
 
+    protected String M2Path;
     private final Set<String> mavenIgnoredScopes;
-    private String M2Path;
     private boolean showMavenTreeError;
     private MavenLinesParser mavenLinesParser;
 
@@ -143,7 +143,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         return projects;
     }
 
-    private String getSha1(String filePath) {
+    protected String getSha1(String filePath) {
         try {
             return ChecksumUtils.calculateSHA1(new File(filePath));
         } catch (IOException e) {
@@ -191,7 +191,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         }
     }
 
-    private String getMavenM2Path(String rootDirectory) {
+    protected String getMavenM2Path(String rootDirectory) {
         String currentUsersHomeDir = System.getProperty(USER_HOME);
         File m2Path = Paths.get(currentUsersHomeDir, M2, REPOSITORY).toFile();
 

@@ -52,7 +52,8 @@ public class ResolverConfiguration {
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
 
-            @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean gradleResolveDependencies
+            @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean gradleResolveDependencies,
+            @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean gradleRunAssembleCommand
     ) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmResolveDependencies = npmResolveDependencies;
@@ -81,6 +82,7 @@ public class ResolverConfiguration {
         this.whitesourceConfiguration = whitesourceConfiguration;
 
         this.gradleResolveDependencies = gradleResolveDependencies;
+        this.gradleRunAssembleCommand = gradleRunAssembleCommand;
     }
 
     /* --- Members --- */
@@ -104,9 +106,9 @@ public class ResolverConfiguration {
     private String      pipPath;
     private String      pythonPath;
 
-
-
     private boolean     gradleResolveDependencies;
+    private boolean     gradleRunAssembleCommand;
+
     private final boolean pythonIsWssPluginInstalled;
     private final boolean pythonUninstallWssPlugin;
 
@@ -214,4 +216,7 @@ public class ResolverConfiguration {
 
     @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES)
     public boolean isGradleResolveDependencies() { return gradleResolveDependencies; }
+
+    @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND)
+    public boolean isGradleRunAssembleCommand() { return gradleRunAssembleCommand; }
 }
