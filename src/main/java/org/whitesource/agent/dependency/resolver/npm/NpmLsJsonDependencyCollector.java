@@ -42,7 +42,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
 
     /* --- Statics Members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(NpmLsJsonDependencyCollector.class);
+    private final Logger logger = LoggerFactory.getLogger(NpmLsJsonDependencyCollector.class);
 
     public static final String LS_COMMAND = "ls";
     public static final String INSTALL_COMMAND = "install";

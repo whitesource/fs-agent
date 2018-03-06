@@ -67,7 +67,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private static final String SHASUM = "shasum";
 
 
-    private static final Logger logger = LoggerFactory.getLogger(NpmDependencyResolver.class);
+    private final Logger logger = LoggerFactory.getLogger(NpmDependencyResolver.class);
     private static final String EXCLUDE_TOP_FOLDER = "node_modules";
     private static final String EMPTY_STRING = "";
     private static final int NUM_THREADS = 8;

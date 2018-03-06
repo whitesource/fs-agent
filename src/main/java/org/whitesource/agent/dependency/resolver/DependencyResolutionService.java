@@ -46,7 +46,7 @@ public class DependencyResolutionService {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
+    private final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
 
     private boolean separateProjects = false;
 

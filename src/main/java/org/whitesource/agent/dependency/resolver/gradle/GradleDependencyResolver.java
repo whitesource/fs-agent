@@ -15,7 +15,7 @@ import java.util.*;
 public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private static final String BUILD_GRADLE = "**/*build.gradle";
-    private static final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver.class);
+    private Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver.class);
     private static final String USER_HOME = "user.home";
     private static final String CMD = "cmd";
     private static final String C_Char_WINDOWS = "/c";

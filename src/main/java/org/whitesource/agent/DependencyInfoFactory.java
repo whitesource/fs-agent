@@ -38,7 +38,7 @@ public class DependencyInfoFactory {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(DependencyInfoFactory.class);
+    private final Logger logger = LoggerFactory.getLogger(DependencyInfoFactory.class);
 
     private static final String COPYRIGHT_PATTERN = ".*copyright.*|.*\\(c\\).*";
 

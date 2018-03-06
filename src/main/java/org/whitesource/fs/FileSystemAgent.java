@@ -48,7 +48,7 @@ public class FileSystemAgent {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
+    private Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
     public static final String EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX = ",";
     private static final String NPM_COMMAND = NpmLsJsonDependencyCollector.isWindows() ? "npm.cmd" : "npm";
     private static final String NPM_INSTALL_COMMAND = "install";
@@ -74,7 +74,7 @@ public class FileSystemAgent {
 
                 File file = new File(directory);
                 if (file.isDirectory()) {
-                    List<Path> directories = FilesUtils.getSubDirectories(directory);
+                    List<Path> directories = new FilesUtils().getSubDirectories(directory);
                     directories.forEach(subDir -> this.dependencyDirs.add(subDir.toString()));
                 } else if (file.isFile()) {
                     this.dependencyDirs.add(directory);
@@ -143,7 +143,7 @@ public class FileSystemAgent {
 
         List<ScmConnector> scmConnectors = null;
         if (StringUtils.isNotBlank(config.getScm().getRepositoriesPath())) {
-            Collection<ScmConfiguration> scmConfigurations = ScmRepositoriesParser.parseRepositoriesFile(
+            Collection<ScmConfiguration> scmConfigurations = new ScmRepositoriesParser().parseRepositoriesFile(
                     config.getScm().getRepositoriesPath(), config.getScm().getType(), config.getScm().getPpk(), config.getScm().getUser(), config.getScm().getPass());
             scmConnectors = scmConfigurations.stream()
                     .map(scm -> ScmConnector.create(scm.getType(), scm.getUrl(), scm.getPpk(), scm.getUser(), scm.getPass(), scm.getBranch(), scm.getTag()))

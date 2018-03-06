@@ -67,7 +67,7 @@ public class ProjectsSender {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ProjectsSender.class);
+    private final Logger logger = LoggerFactory.getLogger(ProjectsSender.class);
 
     private static final String NEW_LINE = System.lineSeparator();
     private static final String DOT = ".";
@@ -119,7 +119,7 @@ public class ProjectsSender {
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
 
-            //todo remove projects.size() == 1 when via will scan more than one project
+//            //todo remove projects.size() == 1 when via will scan more than one project
             if (senderConfig.isEnableImpactAnalysis() && projects.size() == 1) {
                 runViaAnalysis(projectsDetails, service);
             }  else if (!senderConfig.isEnableImpactAnalysis()) {

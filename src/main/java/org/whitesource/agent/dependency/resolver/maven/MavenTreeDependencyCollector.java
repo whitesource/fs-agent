@@ -41,7 +41,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
 /* --- Statics Members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector.class);
+    private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector.class);
 
     private static final String MVN_PARAMS_M2PATH_PATH = "help:evaluate";
     private static final String MVN_PARAMS_M2PATH_LOCAL = "-Dexpression=settings.localRepository";

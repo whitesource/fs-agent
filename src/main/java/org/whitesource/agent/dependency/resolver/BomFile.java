@@ -40,7 +40,7 @@ public class BomFile {
     private boolean scopedPackage;
 
     public static String DUMMY_PARAMETER_SCOPE_PACKAGE = "{dummyParameterOfScopePackage}";
-    private static final Logger logger = LoggerFactory.getLogger(BomFile.class);
+    private final Logger logger = LoggerFactory.getLogger(BomFile.class);
     private static String NPM_REGISTRY = "registry.npmjs.org";
     private static final String NPM_REGISTRY1 = "npm/registry/";
     private static final String SCOPED_PACKAGE = "@";
