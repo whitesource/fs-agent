@@ -83,7 +83,7 @@ public class Main {
                     .setBlockedThreadCheckInterval(MAX_TIMEOUT));
 
             JsonObject config = new JsonObject();
-            config.put(FsaVerticle.CONFIGURATION, ConfigurationSerializer.getAsString(fsaConfiguration, false));
+            config.put(FsaVerticle.CONFIGURATION, new ConfigurationSerializer().getAsString(fsaConfiguration, false));
             DeploymentOptions options = new DeploymentOptions()
                     .setConfig(config)
                     .setWorker(true);

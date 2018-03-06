@@ -141,13 +141,7 @@
         <dependency>
             <groupId>org.whitesource.analysis</groupId>
             <artifactId>whitesource-analysis-via</artifactId>
-            <version>0.0.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.whitesource</groupId>
-                    <artifactId>whitesource-fs-agent</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>0.0.2</version>
         </dependency>
 
         <dependency>

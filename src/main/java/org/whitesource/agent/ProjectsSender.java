@@ -67,7 +67,7 @@ public class ProjectsSender {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ProjectsSender.class);
+    private final Logger logger = LoggerFactory.getLogger(ProjectsSender.class);
 
     private static final String NEW_LINE = System.lineSeparator();
     private static final String DOT = ".";
@@ -119,7 +119,7 @@ public class ProjectsSender {
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
 
-            //todo remove projects.size() == 1 when via will scan more than one project
+//            //todo remove projects.size() == 1 when via will scan more than one project
             if (senderConfig.isEnableImpactAnalysis() && projects.size() == 1) {
                 runViaAnalysis(projectsDetails, service);
             }  else if (!senderConfig.isEnableImpactAnalysis()) {
@@ -193,21 +193,8 @@ public class ProjectsSender {
                 }
 
                 if (vulnerabilitiesAnalysis != null) {
-                    result = vulnerabilitiesAnalysis.startAnalysis(server, appPath, project.getDependencies());
+                    vulnerabilitiesAnalysis.runAnalysis(server, appPath, project.getDependencies());
                     logger.info("Got impact analysis result from server");
-                    Set<VulnerabilityAnalysisResult> run = ApiTranslator.globalVulnerabilityToVulnerabilityAnalysis(result);
-                    Map<String, DependencyInfo> stringDependencyInfoMap = Utils.sha1ToDependencyInfo(project.getDependencies());
-                    for (VulnerabilityAnalysisResult vulnerabilityAnalysisResult : run) {
-                        stringDependencyInfoMap.get(vulnerabilityAnalysisResult.getMatchValue()).setVulnerabilityAnalysisResult(vulnerabilityAnalysisResult);
-//                        //TODO remove only for test
-//                        if(vulnerabilityAnalysisResult.getVulnerableElements().containsKey("CVE-2016-4971")){
-//                            Collection<VulnerableElement> vulnerableElements = vulnerabilityAnalysisResult.getVulnerableElements().get("CVE-2016-4971");
-//                            vulnerabilityAnalysisResult.getVulnerableElements().put("CVE-2016-4970",vulnerableElements);
-//                            vulnerabilityAnalysisResult.getVulnerableElements().remove("CVE-2016-4971");
-//                        }
-                        DependencyInfo dependencyInfo = stringDependencyInfoMap.get(vulnerabilityAnalysisResult.getMatchValue());
-                        dependencyInfo.setVulnerabilityAnalysisResult(vulnerabilityAnalysisResult);
-                    }
                 }
             } catch (Exception e) {
                 logger.error("Failed to run impact analysis {}", e.getMessage());

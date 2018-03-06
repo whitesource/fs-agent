@@ -38,7 +38,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(NugetDependencyResolver.class);
+    private final Logger logger = LoggerFactory.getLogger(NugetDependencyResolver.class);
     public static final String CONFIG = ".config";
     public static final String CSPROJ = ".csproj";
     public static final String PATTERN = "**/*";

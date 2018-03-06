@@ -18,7 +18,7 @@ public abstract class ScmConnector {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ScmConnector.class);
+    private final Logger logger = LoggerFactory.getLogger(ScmConnector.class);
 
     public static final String SCM_CONNECTOR_TMP_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir"), "WhiteSource-ScmConnector").toString();
 

@@ -23,7 +23,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(GradleLinesParser.class);
+    private final Logger logger = LoggerFactory.getLogger(GradleLinesParser.class);
     private static final String PLUS = "+---";
     private static final String SLASH = "\\---";
     private static final String SPACE = " ";

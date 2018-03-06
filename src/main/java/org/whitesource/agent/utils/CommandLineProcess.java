@@ -29,7 +29,7 @@ public class CommandLineProcess {
     /* --- Statics Members --- */
     private static final long DEFAULT_TIMEOUT_READLINE_SECONDS = 60;
     private static final long DEFAULT_TIMEOUT_PROCESS_MINUTES = 15;
-    private static final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.utils.CommandLineProcess.class);
+    private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.utils.CommandLineProcess.class);
 
     public CommandLineProcess(String rootDirectory, String[] args) {
         this.rootDirectory = rootDirectory;

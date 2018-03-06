@@ -20,7 +20,7 @@ import java.util.List;
 
 public class PackageManagerTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(PackageManagerExtractor.class);
+    private final Logger logger = LoggerFactory.getLogger(PackageManagerExtractor.class);
 
     private static final String WHITE_SPACE = " ";
     private static final String COLON = ":";

@@ -43,7 +43,7 @@ public class NpmBomParser extends BomParser {
     private static String NPM_PACKAGE_FORMAT = "{0}-{1}.tgz";
     private static String RESOLVED = "_resolved";
 
-    private static final Logger logger = LoggerFactory.getLogger(NpmBomParser.class);
+    private final Logger logger = LoggerFactory.getLogger(NpmBomParser.class);
 
     /* --- Protected methods --- */
 
