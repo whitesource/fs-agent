@@ -146,7 +146,11 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
                         dependency.getChildren().addAll(childDependencies);
                     } else {
                         // it can be only if was an error in 'npm ls'
-                        currentLineNumber = getDependencies(dependencyJsonObject.getJSONObject(REQUIRED), linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
+                        if (dependenciesJsonObject.has(REQUIRED)) {
+                            currentLineNumber = getDependencies(dependencyJsonObject.getJSONObject(REQUIRED), linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
+                        } else {
+                            currentLineNumber++;
+                        }
                     }
                 }
             }
