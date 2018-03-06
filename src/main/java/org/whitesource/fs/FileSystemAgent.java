@@ -184,8 +184,7 @@ public class FileSystemAgent {
         if (config.isScanProjectManager()) {
             projects = new PackageManagerExtractor().createProjects();
         } else if (config.isScanDockerImages()) {
-            projects = new DockerResolver(config).createProjects();
-
+            projects = new DockerResolver(config).resolveDockerImages();
         } else {
             projects = new FileSystemScanner(config.getResolver(), config.getAgent())
                     .createProjects(scannerBaseDirs, hasScmConnectors[0], this.config.getResolver().getNpmAccessToken());
