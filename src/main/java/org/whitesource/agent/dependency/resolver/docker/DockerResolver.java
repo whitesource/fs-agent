@@ -154,9 +154,9 @@ public class DockerResolver {
 
             File containerTarFile = new File(TEMP_FOLDER, dockerImage.getRepository() + TAR_SUFFIX);
             File containerTarExtractDir = new File(TEMP_FOLDER, dockerImage.getRepository());
-            containerTarExtractDir.mkdir();
+            containerTarExtractDir.mkdirs();
             File containerTarArchiveExtractDir = new File(ARCHIVE_EXTRACTOR_TEMP_FOLDER);
-            containerTarArchiveExtractDir.mkdir();
+            containerTarArchiveExtractDir.mkdirs();
             try {
                 //Save image as tar file
                 process = Runtime.getRuntime().exec(DOCKER_SAVE_IMAGE_COMMAND + SPACE + dockerImage.getId() +
@@ -168,6 +168,17 @@ public class DockerResolver {
                 archiveDirs.add(containerTarArchiveExtractDir.getPath());
                 ArchiveExtractor archiveExtractor = new ArchiveExtractor(config.getAgent().getArchiveIncludes(), config.getAgent().getArchiveExcludes(), config.getAgent().getIncludes());
                 archiveExtractor.extractArchives(containerTarFile.getPath(), config.getAgent().getArchiveExtractionDepth(), archiveDirs);
+
+                AbstractParser parser = new DebianParser();
+                File file = parser.findFile(containerTarArchiveExtractDir, "available");
+                if (file != null) {
+                    Collection<DependencyInfo> debianPackages = parser.parse(file);
+                    if (!debianPackages.isEmpty()) {
+                        projectInfo.getDependencies().addAll(debianPackages);
+                        logger.info("Found {} Debian Packages", debianPackages.size());
+                    }
+                }
+
 
                 // scan files
                 String extractPath = containerTarArchiveExtractDir.getPath();
