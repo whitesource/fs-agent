@@ -21,7 +21,7 @@ public class GradleDependencyResolverTest {
 
     @Test
     public void resolveDependencies() {
-        ResolutionResult resolutionResult = gradleDependencyResolver.resolveDependencies("C:\\Users\\ErezHuberman\\Documents\\gradle-build-scan-quickstart-master", "C:\\Users\\ErezHuberman\\Documents\\gradle-build-scan-quickstart-master", null, null);
+        ResolutionResult resolutionResult = gradleDependencyResolver.resolveDependencies("C:\\Users\\ErezHuberman\\Documents\\gradle-build-scan-quickstart-master", "C:\\Users\\ErezHuberman\\Documents\\gradle-build-scan-quickstart-master", null);
 
         Assert.assertTrue(resolutionResult.getDependencyType() == DependencyType.GRADLE);
         AgentProjectInfo projectInfo = resolutionResult.getResolvedProjects().keySet().iterator().next();
@@ -35,7 +35,7 @@ public class GradleDependencyResolverTest {
 
     @Test
     public void resolveDependencies2() {
-        ResolutionResult resolutionResult = gradleDependencyResolver.resolveDependencies("C:\\Users\\ErezHuberman\\Documents\\GitHub\\gradle-plugin", "C:\\Users\\ErezHuberman\\Documents\\GitHub\\gradle-plugin", null, null);
+        ResolutionResult resolutionResult = gradleDependencyResolver.resolveDependencies("C:\\Users\\ErezHuberman\\Documents\\GitHub\\gradle-plugin", "C:\\Users\\ErezHuberman\\Documents\\GitHub\\gradle-plugin", null);
         AgentProjectInfo projectInfo = resolutionResult.getResolvedProjects().keySet().iterator().next();
         Iterator iterator = projectInfo.getDependencies().iterator();
         DependencyInfo wssAgentApiClient = (DependencyInfo) iterator.next();

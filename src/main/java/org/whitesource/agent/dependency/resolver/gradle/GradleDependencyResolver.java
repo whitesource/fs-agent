@@ -32,7 +32,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles, String npmAccessToken) {
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         List<DependencyInfo> dependencies = collectDependencies(projectFolder);
 
         return new ResolutionResult(dependencies, new LinkedList<>(), getDependencyType(), topLevelFolder);

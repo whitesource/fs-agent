@@ -152,7 +152,7 @@ public class FileSystemScanner {
         allProjects.put(mainProject, null);
 
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
-        Map<File, Collection<String>> fileMapBeforeResolve = fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
+        Map<File, Collection<String>> fileMapBeforeResolve = FilesUtils.fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
         Set<String> allFiles = fileMapBeforeResolve.entrySet().stream().flatMap(folder -> folder.getValue().stream()).collect(Collectors.toSet());
 
         Map<Collection<AgentProjectInfo>, String> projectsResult = new HashMap<>();
@@ -227,7 +227,7 @@ public class FileSystemScanner {
 
         String[] excludesExtended = excludeFileSystemAgent(excludes);
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
-        Map<File, Collection<String>> fileMap = fillFilesMap(pathsToScan, includes, excludesExtended, followSymlinks, globCaseSensitive);
+        Map<File, Collection<String>> fileMap = FilesUtils.fillFilesMap(pathsToScan, includes, excludesExtended, followSymlinks, globCaseSensitive);
         long filesCount = fileMap.entrySet().stream().flatMap(folder -> folder.getValue().stream()).count();
         totalFiles += filesCount;
         logger.info(MessageFormat.format("Total Files Found: {0}", totalFiles));
@@ -340,39 +340,6 @@ public class FileSystemScanner {
             }
         }
         return pathsToScan;
-    }
-
-    private Map<File, Collection<String>> fillFilesMap(Collection<String> pathsToScan, String[] includes, String[] excludesExtended,
-                                                       boolean followSymlinks, boolean globCaseSensitive) {
-        Map<File, Collection<String>> fileMap = new HashMap<>();
-        for (String scannerBaseDir : pathsToScan) {
-            File file = new File(scannerBaseDir);
-            logger.debug("Scanning {}", file.getAbsolutePath());
-            if (file.exists()) {
-                FilesScanner filesScanner = new FilesScanner();
-                if (file.isDirectory()) {
-                    File basedir = new File(scannerBaseDir);
-                    String[] fileNames = filesScanner.getFileNames(scannerBaseDir, includes, excludesExtended, followSymlinks, globCaseSensitive);
-                    // convert array to list (don't use Arrays.asList, might be added to later)
-                    List<String> fileNameList = Arrays.stream(fileNames).collect(Collectors.toList());
-                    fileMap.put(basedir, fileNameList);
-                } else {
-                    // handle single file
-                    boolean included = filesScanner.isIncluded(file, includes, excludesExtended, followSymlinks, globCaseSensitive);
-                    if (included) {
-                        Collection<String> files = fileMap.get(file.getParentFile());
-                        if (files == null) {
-                            files = new ArrayList<>();
-                        }
-                        files.add(file.getName());
-                        fileMap.put(file.getParentFile(), files);
-                    }
-                }
-            } else {
-                logger.info(MessageFormat.format("File {0} doesn\'t exist", scannerBaseDir));
-            }
-        }
-        return fileMap;
     }
 
     private void increaseCount(DependencyInfo dependency, int[] totalDependencies) {

@@ -191,6 +191,7 @@ public class FSAConfiguration {
         boolean bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
 
         boolean nugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
+        boolean nugetRestoreDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESTORE_DEPENDENCIES, true);
 
         boolean mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = FSAConfiguration.getListProperty(config, MAVEN_IGNORED_SCOPES, null);
@@ -209,7 +210,7 @@ public class FSAConfiguration {
         boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, GRADLE_RESOLVE_DEPENDENCIES, true);
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
-                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies,
+                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies);
