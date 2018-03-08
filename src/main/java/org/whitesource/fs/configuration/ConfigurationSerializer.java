@@ -34,7 +34,7 @@ import java.util.Properties;
 public class ConfigurationSerializer <T> {
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ConfigurationSerializer.class);
+    private final Logger logger = LoggerFactory.getLogger(ConfigurationSerializer.class);
     public static final String DELIMITER_SPACE = " ";
 
     /* --- Members --- */
@@ -78,7 +78,7 @@ public class ConfigurationSerializer <T> {
         }
     }
 
-    public static <T> String getAsString(T object, boolean includeNulls) {
+    public <T> String getAsString(T object, boolean includeNulls) {
         try {
             if (includeNulls) {
                 return jsonMapperWithoutNulls.writeValueAsString(object);

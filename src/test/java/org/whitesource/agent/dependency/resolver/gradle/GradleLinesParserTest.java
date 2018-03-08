@@ -15,14 +15,14 @@ public class GradleLinesParserTest {
     private GradleLinesParser gradleLinesParser;
     @Before
     public void setup(){
-        gradleLinesParser = new GradleLinesParser();
+        gradleLinesParser = new GradleLinesParser(false);
     }
     @Test
     public void parseLines() throws IOException {
         String[] params = new String[] {"cmd", "/c", "gradle", "dependencies"};
         CommandLineProcess commandLineProcess = new CommandLineProcess("C:\\Users\\ErezHuberman\\Documents\\gradle-build-scan-quickstart-master", params);
         List<String> lines = commandLineProcess.executeProcess();
-        gradleLinesParser.parseLines(lines);
+        gradleLinesParser.parseLines(lines, "");
     }
 
     @Test
@@ -40,7 +40,7 @@ public class GradleLinesParserTest {
         lines.add("\\--- junit:junit:4.12");
         lines.add("     \\--- org.hamcrest:hamcrest-core:1.3");
 
-        gradleLinesParser.parseLines(lines);
+        gradleLinesParser.parseLines(lines, "");
     }
 
     @Test
@@ -73,7 +73,7 @@ public class GradleLinesParserTest {
         lines.add("|         \\--- org.springframework:spring-core:4.1.6.RELEASE");
         lines.add("+--- org.hsqldb:hsqldb:2.3.2");
         lines.add("\\--- javax.servlet:servlet-api:2.5");
-        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines);
+        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, "");
 
         Assert.assertTrue(dependencyInfos.get(0).getVersion().equals("1.7.12"));
         Assert.assertTrue(dependencyInfos.get(4).getVersion().equals("2.5"));
@@ -134,7 +134,7 @@ public class GradleLinesParserTest {
         lines.add("|    +--- ch.qos.logback:logback-core:1.1.3");
         lines.add("|    \\--- org.slf4j:slf4j-api:1.7.7 -> 1.7.12");
 
-        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines);
+        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, "");
         Assert.assertTrue(dependencyInfos.get(2).getChildren().iterator().next().getVersion().equals("4.1.6.RELEASE"));
     }
 

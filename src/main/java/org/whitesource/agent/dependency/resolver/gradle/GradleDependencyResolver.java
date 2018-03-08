@@ -1,46 +1,45 @@
 package org.whitesource.agent.dependency.resolver.gradle;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
-import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
-import org.whitesource.agent.utils.CommandLineProcess;
 
-import java.io.IOException;
 import java.util.*;
 
 public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private static final String BUILD_GRADLE = "**/*build.gradle";
-    private static final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver.class);
-    private static final String USER_HOME = "user.home";
-    private static final String CMD = "cmd";
-    private static final String C_Char_WINDOWS = "/c";
-    private static final String GRADLE_PARAMS_TREE = "dependencies";
-    private static final String GRADLE_COMMAND = "gradle";
     private static final List<String> GRADLE_SCRIPT_EXTENSION = Arrays.asList(".gradle",".groovy", ".java", ".jar", ".war", ".ear", ".car", ".class");
-
+    private static final String FILE_SEPARATOR = "file.separator";
+    private static final String JAR_EXTENSION = ".jar";
 
     private GradleLinesParser gradleLinesParser;
+    private GradleCli gradleCli;
 
-    public GradleDependencyResolver(){
+    private ArrayList<String> topLevelFoldersNames;
+
+    public GradleDependencyResolver(boolean runAssembleCommand){
         super();
-        gradleLinesParser = new GradleLinesParser();
+        gradleLinesParser = new GradleLinesParser(runAssembleCommand);
+        gradleCli = new GradleCli();
+        topLevelFoldersNames = new ArrayList<>();
     }
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
-        List<DependencyInfo> dependencies = collectDependencies(projectFolder);
-
-        return new ResolutionResult(dependencies, new LinkedList<>(), getDependencyType(), topLevelFolder);
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles, String npmAccessToken) {
+        List<DependencyInfo> dependencies = collectDependencies(topLevelFolder);
+        topLevelFoldersNames.add(topLevelFolder.substring(topLevelFolder.lastIndexOf(System.getProperty(FILE_SEPARATOR)) + 1));
+        return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
     }
 
     @Override
     protected Collection<String> getExcludes() {
-        return new ArrayList<>();
+        Set<String> excludes = new HashSet<>();
+        for (String topLeverFolderName : topLevelFoldersNames) {
+            excludes.add("**/" + topLeverFolderName + JAR_EXTENSION);
+        }
+        return excludes;
     }
 
     @Override
@@ -65,25 +64,10 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private List<DependencyInfo> collectDependencies(String rootDirectory) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
-        try {
-            // run gradle dependencies to get dependency tree
-            CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, getLsCommandParams());
-            List<String> lines = commandLineProcess.executeProcess();
-            if (!commandLineProcess.isErrorInProcess()) {
-                dependencyInfos.addAll(gradleLinesParser.parseLines(lines));
-            }
-        } catch (IOException e) {
-            logger.warn("Error getting dependencies after running {} on {}, {}" , getLsCommandParams() , rootDirectory, e.getMessage());
-            logger.debug("Error: {}", e.getStackTrace());
+        List<String> lines = gradleCli.runCmd(rootDirectory, gradleCli.getGradleCommandParams(MvnCommand.DEPENDENCIES));
+        if (lines != null) {
+            dependencyInfos.addAll(gradleLinesParser.parseLines(lines, rootDirectory));
         }
         return dependencyInfos;
-    }
-
-    private String[] getLsCommandParams() {
-        if (DependencyCollector.isWindows()) {
-            return new String[] {CMD, C_Char_WINDOWS, GRADLE_COMMAND, GRADLE_PARAMS_TREE};
-        } else {
-            return new String[] {GRADLE_COMMAND, GRADLE_PARAMS_TREE};
-        }
     }
 }

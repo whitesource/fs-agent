@@ -208,12 +208,13 @@ public class FSAConfiguration {
         boolean pythonUninstallWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, PYTHON_UNINSTALL_WSS_PLUGIN, false);
 
         boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, GRADLE_RESOLVE_DEPENDENCIES, true);
+        boolean gradleRunAssembleCommand = FSAConfiguration.getBooleanProperty(config, GRADLE_RUN_ASSEMBLE_COMMAND, true);
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
-                dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies);
+                dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken, String projectName, String projectToken) {

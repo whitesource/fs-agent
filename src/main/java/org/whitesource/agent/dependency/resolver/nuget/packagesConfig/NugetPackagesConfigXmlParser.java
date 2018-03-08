@@ -15,7 +15,6 @@
  */
 package org.whitesource.agent.dependency.resolver.nuget.packagesConfig;
 
-import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.core.Persister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +31,7 @@ public class NugetPackagesConfigXmlParser implements Serializable{
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(NugetPackagesConfigXmlParser.class);
+    private final Logger logger = LoggerFactory.getLogger(NugetPackagesConfigXmlParser.class);
 
     /* --- Members --- */
 

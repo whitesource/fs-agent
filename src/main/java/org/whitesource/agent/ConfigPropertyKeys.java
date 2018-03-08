@@ -107,6 +107,7 @@ public final class ConfigPropertyKeys {
     public static final String ENDPOINT_SSL_ENABLED = "endpoint.ssl";
 
     public static final String GRADLE_RESOLVE_DEPENDENCIES = "gradle.resolveDependencies";
+    public static final String GRADLE_RUN_ASSEMBLE_COMMAND = "gradle.runAssembleCommand";
 
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 }

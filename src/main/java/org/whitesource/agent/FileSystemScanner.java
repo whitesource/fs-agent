@@ -49,7 +49,7 @@ public class FileSystemScanner {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
+    private final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
     public static final String JAVA_SCRIPT = "javaScript";
     public static final String JAVA = "java";
     private static String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
@@ -254,7 +254,7 @@ public class FileSystemScanner {
             // create new projects if necessary
             if (!isDependenciesOnly && filesDependencies.size() > 0) {
                 scannerBaseDirs.stream().forEach(directory -> {
-                    List<Path> subDirectories = FilesUtils.getSubDirectories(directory);
+                    List<Path> subDirectories = new FilesUtils().getSubDirectories(directory);
                     subDirectories.forEach(subFolder -> {
                         if (filesDependencies.size() > 0) {
                             List<DependencyInfo> projectDependencies = filesDependencies.stream().

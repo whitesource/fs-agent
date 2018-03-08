@@ -61,7 +61,7 @@ public class ArchiveExtractor {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ArchiveExtractor.class);
+    private final Logger logger = LoggerFactory.getLogger(ArchiveExtractor.class);
     public static final int LONG_BOUND = 100000;
     public static final String DEPTH = "_depth_";
     public static final String DEPTH_REGEX = DEPTH + "[0-9]";

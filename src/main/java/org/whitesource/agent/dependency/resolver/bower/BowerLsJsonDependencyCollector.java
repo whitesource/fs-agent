@@ -33,7 +33,7 @@ import java.util.Collection;
 public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector {
 
     /* --- Statics Members --- */
-    private static final Logger logger = LoggerFactory.getLogger(BowerLsJsonDependencyCollector.class);
+    private final Logger logger = LoggerFactory.getLogger(BowerLsJsonDependencyCollector.class);
     private static final String BOWER_COMMAND = NpmLsJsonDependencyCollector.isWindows() ? "bower.cmd" : "bower";
     private static final String VERSION = "version";
     private static final String PKG_META = "pkgMeta";

@@ -29,7 +29,7 @@ public class ProjectsCalculator {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ProjectsCalculator.class);
+    private final Logger logger = LoggerFactory.getLogger(ProjectsCalculator.class);
 
     /* --- Public methods --- */
 

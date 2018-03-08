@@ -16,7 +16,7 @@ public class GradleDependencyResolverTest {
 
     @Before
     public void setUp() throws Exception {
-        gradleDependencyResolver = new GradleDependencyResolver();
+        gradleDependencyResolver = new GradleDependencyResolver(true);
     }
 
     @Test

@@ -21,7 +21,7 @@ public class ComponentScan {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ComponentScan.class);
+    private final Logger logger = LoggerFactory.getLogger(ComponentScan.class);
     public static final String DIRECTORY_NOT_SET = "Directory parameter 'd' is not set" + StatusCode.ERROR;
     public static final String EMPTY_PROJECT_TOKEN = "";
     public static final String FOLDER_DELIMITER = ",";
@@ -31,12 +31,11 @@ public class ComponentScan {
 
     /* --- Constructors --- */
 
-
-    /* --- Methods --- */
-
     public ComponentScan(Properties config) {
         this.config = config;
     }
+
+    /* --- Methods --- */
 
     public String scan() {
         logger.info("Starting Analysis - component scan has started");
@@ -76,7 +75,7 @@ public class ComponentScan {
                 project.setProjectToken(EMPTY_PROJECT_TOKEN);
             }
 //             Return dependencies
-            String jsonString = ConfigurationSerializer.getAsString(projects, true);
+            String jsonString = new ConfigurationSerializer().getAsString(projects, true);
             return jsonString;
         } else
             return "";// new ConfigurationSerializer<>().getAsString(new Collection<AgentProjectInfo>);

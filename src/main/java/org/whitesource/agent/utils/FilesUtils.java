@@ -33,11 +33,11 @@ public class FilesUtils {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(FilesUtils.class);
+    private final Logger logger = LoggerFactory.getLogger(FilesUtils.class);
 
     /* --- Static methods --- */
 
-    public static List<Path> getSubDirectories(String directory) {
+    public List<Path> getSubDirectories(String directory) {
         String[] files;
         try {
             File file = new File(directory);

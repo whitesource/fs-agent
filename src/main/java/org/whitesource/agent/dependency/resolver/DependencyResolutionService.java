@@ -17,7 +17,6 @@ package org.whitesource.agent.dependency.resolver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.dotNet.DotNetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
@@ -47,7 +46,7 @@ public class DependencyResolutionService {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
+    private final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
 
     private boolean separateProjects = false;
 
@@ -100,7 +99,7 @@ public class DependencyResolutionService {
         }
 
         if (gradleResolveDependencies) {
-            dependencyResolvers.add(new GradleDependencyResolver());
+            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand()));
         }
     }
 
