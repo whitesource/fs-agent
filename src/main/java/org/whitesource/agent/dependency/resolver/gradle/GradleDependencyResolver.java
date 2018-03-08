@@ -27,7 +27,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles, String npmAccessToken) {
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         List<DependencyInfo> dependencies = collectDependencies(topLevelFolder);
         topLevelFoldersNames.add(topLevelFolder.substring(topLevelFolder.lastIndexOf(System.getProperty(FILE_SEPARATOR)) + 1));
         return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
