@@ -29,12 +29,12 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private static final String SPACE = " ";
     private static final String PIPE = "|";
     private static final String USER_HOME = "user.home";
-    public static final String COLON = ":";
-    public static final int INDENTETION_SPACE = 5;
-    public static final String EMPTY_STRING = "";
-    public static final String FILE_SEPARATOR = "file.separator";
-    public static final String JAR_EXTENSION = ".jar";
-    public static final String ASTERIX = "(*)";
+    private static final String COLON = ":";
+    private static final int INDENTETION_SPACE = 5;
+    private static final String EMPTY_STRING = "";
+    private static final String FILE_SEPARATOR = "file.separator";
+    private static final String JAR_EXTENSION = ".jar";
+    private static final String ASTERIX = "(*)";
 
     private String dotGradlePath;
     private String rootDirectory;
