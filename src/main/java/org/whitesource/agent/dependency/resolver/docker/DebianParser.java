@@ -7,7 +7,6 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import java.io.*;
 import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
 
 /**
@@ -32,7 +31,7 @@ public class DebianParser extends AbstractParser {
 
     /**
      * Parse the available file to create DependencyInfo
-     * Field to parse - Package,Version,Architecture,Filename,SystemPath,MD5sum
+     * Field to parse - Package, Version, Architecture, Filename, SystemPath, MD5sum
      */
     @Override
     public Collection<DependencyInfo> parse(File file) {
@@ -43,6 +42,9 @@ public class DebianParser extends AbstractParser {
             fr = new FileReader(file.getAbsoluteFile());
             br = new BufferedReader(fr);
             String line = null;
+            String filename = null;
+            String systemPath = null;
+            String md5 = null;
             Package packageInfo = new Package();
             while ((line = br.readLine()) != null) {
                 if (!line.isEmpty()) {
@@ -59,33 +61,18 @@ public class DebianParser extends AbstractParser {
                             packageInfo.setArchitecture(dependencyParameter);
                             break;
                         case SYSTEMPATH:
-                            packageInfo.setSystemPath(dependencyParameter);
+                            systemPath = dependencyParameter;
                             int lastSlashPos = dependencyParameter.lastIndexOf(SLASH_SEPERATOR);
-                            String filename = dependencyParameter.substring(lastSlashPos + 1, dependencyParameter.length());
-                            packageInfo.setFilename(filename);
+                            filename = dependencyParameter.substring(lastSlashPos + 1, dependencyParameter.length());
                             break;
                         case MD5:
-                            packageInfo.setMd5(dependencyParameter);
+                            md5 = dependencyParameter;
                             break;
                         default:
+                            break;
                     }
                 } else {
-                    DependencyInfo dependencyInfo = null;
-                    if (StringUtils.isNotBlank(packageInfo.getPackageName()) && StringUtils.isNotBlank(packageInfo.getVersion()) && StringUtils.isNotBlank(packageInfo.getArchitecture())) {
-                        dependencyInfo = new DependencyInfo(
-                                null, MessageFormat.format(DEBIAN_PACKAGE_PATTERN, packageInfo.getPackageName(), packageInfo.getVersion(), packageInfo.getArchitecture()), packageInfo.getVersion());
-                    }
-                    if (StringUtils.isNotBlank(packageInfo.getFilename())) {
-                        dependencyInfo.setFilename(packageInfo.getFilename());
-                    }
-                    if (StringUtils.isNotBlank(packageInfo.getSystemPath())) {
-                        dependencyInfo.setSystemPath(packageInfo.getSystemPath());
-                    }
-                    if (StringUtils.isNotBlank(packageInfo.getMd5())) {
-                        HashMap<ChecksumType, String> checksums = new HashMap<>();
-                        checksums.put(ChecksumType.MD5, packageInfo.getMd5());
-                        dependencyInfo.setChecksums(checksums);
-                    }
+                    DependencyInfo dependencyInfo = createDependencyInfo(packageInfo, filename, systemPath, md5);
                     packageInfo = new Package();
                     dependencyInfos.add(dependencyInfo);
                 }
@@ -95,15 +82,45 @@ public class DebianParser extends AbstractParser {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            try {
-                if (br != null)
-                    br.close();
-                if (fr != null)
-                    fr.close();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
+            closeStream(br, fr);
         }
         return dependencyInfos;
     }
+
+    @Override
+    public File findFile(String[] files, String filename) {
+        for (String filepath : files) {
+            if (filepath.contains(filename)) {
+                return new File(filepath);
+            }
+        }
+        return null;
+    }
+
+    /* --- Private methods --- */
+
+    private DependencyInfo createDependencyInfo(Package packageInfo, String filename, String systemPath, String md5) {
+        DependencyInfo dependencyInfo = null;
+        if (StringUtils.isNotBlank(packageInfo.getPackageName()) && StringUtils.isNotBlank(packageInfo.getVersion()) && StringUtils.isNotBlank(packageInfo.getArchitecture())) {
+            dependencyInfo = new DependencyInfo(
+                    null, MessageFormat.format(DEBIAN_PACKAGE_PATTERN, packageInfo.getPackageName(), packageInfo.getVersion(), packageInfo.getArchitecture()), packageInfo.getVersion());
+        }
+        if (StringUtils.isNotBlank(filename)) {
+            dependencyInfo.setFilename(filename);
+        }
+        if (StringUtils.isNotBlank(systemPath)) {
+            dependencyInfo.setSystemPath(systemPath);
+        }
+        if (StringUtils.isNotBlank(md5)) {
+            dependencyInfo.getChecksums().put(ChecksumType.MD5, md5);
+        }
+        if (dependencyInfo != null) {
+            return dependencyInfo;
+        } else {
+            return null;
+
+        }
+    }
+
+
 }

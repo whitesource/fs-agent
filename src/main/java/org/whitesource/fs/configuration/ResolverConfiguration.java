@@ -203,4 +203,5 @@ public class ResolverConfiguration {
     public boolean getPythonUninstallWssPlugin() {
         return pythonUninstallWssPlugin;
     }
+
 }

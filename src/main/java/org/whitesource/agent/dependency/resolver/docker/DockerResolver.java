@@ -11,6 +11,7 @@ import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.archive.ArchiveExtractor;
 import org.whitesource.agent.hash.FileExtensions;
+import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.FSAConfiguration;
 
 import java.io.*;
@@ -34,6 +35,7 @@ public class DockerResolver {
     private static final String TEMP_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + WHITE_SOURCE_DOCKER;
     private static final String ARCHIVE_EXTRACTOR_TEMP_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + "WhiteSource-ArchiveExtractor";
     private static final String DOCKER_SAVE_IMAGE_COMMAND = "docker save";
+
     private static final String O_PARAMETER = "-o";
     private static final String REPOSITORY = "REPOSITORY";
     private static final String SPACES_REGEX = "\\s+";
@@ -44,7 +46,14 @@ public class DockerResolver {
     private static final boolean PARTIAL_SHA1_MATCH = false;
     private static final String WINDOWS_PATH_SEPARATOR = "\\";
     private static final String UNIX_PATH_SEPARATOR = "/";
+    public static final String AVAILABLE_PATTERN = "**/*available";
+    public static final String DESC_PATTERN = "**/*desc";
 
+    public static final String[] scanIncludes = {AVAILABLE_PATTERN, DESC_PATTERN};
+    public static final String[] scanExcludes = {};
+    public static final String SEPERATOR = "\\";
+    public static final String ARCH_LINUX_DESC_FOLDERS = "var\\lib\\pacman\\local";
+    public static final String AVAILABLE = "available";
     /* --- Members --- */
 
     private FSAConfiguration config;
@@ -77,9 +86,7 @@ public class DockerResolver {
                 // read all docker images data, skip the first line
                 if (!line.startsWith(REPOSITORY)) {
                     String[] dockerImageString = line.split(SPACES_REGEX);
-
                     dockerImages.add(new DockerImage(dockerImageString[0], dockerImageString[1], dockerImageString[2]));
-
                 }
             }
             if (!dockerImages.isEmpty()) {
@@ -169,13 +176,30 @@ public class DockerResolver {
                 ArchiveExtractor archiveExtractor = new ArchiveExtractor(config.getAgent().getArchiveIncludes(), config.getAgent().getArchiveExcludes(), config.getAgent().getIncludes());
                 archiveExtractor.extractArchives(containerTarFile.getPath(), config.getAgent().getArchiveExtractionDepth(), archiveDirs);
 
+                FilesScanner filesScanner = new FilesScanner();
+                String[] fileNames = filesScanner.getFileNames(containerTarArchiveExtractDir.getPath(), scanIncludes, scanExcludes, true, false);
+
+                for (int i = 0; i < fileNames.length; i++) {
+                    fileNames[i] = containerTarArchiveExtractDir.getPath() + SEPERATOR + fileNames[i];
+                }
+
                 AbstractParser parser = new DebianParser();
-                File file = parser.findFile(containerTarArchiveExtractDir, "available");
-                if (file != null) {
+                File file = parser.findFile(fileNames, AVAILABLE);
+                if (file != null && file.getName().equals(AVAILABLE)) {
                     Collection<DependencyInfo> debianPackages = parser.parse(file);
                     if (!debianPackages.isEmpty()) {
                         projectInfo.getDependencies().addAll(debianPackages);
                         logger.info("Found {} Debian Packages", debianPackages.size());
+                    }
+                }
+
+                parser = new ArchLinuxParser();
+                file = parser.findFile(fileNames, ARCH_LINUX_DESC_FOLDERS);
+                if (file != null) {
+                    Collection<DependencyInfo> archLinuxPackages = parser.parse(file);
+                    if (!archLinuxPackages.isEmpty()) {
+                        projectInfo.getDependencies().addAll(archLinuxPackages);
+                        logger.info("Found {} Arch linux Packages", archLinuxPackages.size());
                     }
                 }
 

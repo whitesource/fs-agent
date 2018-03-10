@@ -12,9 +12,6 @@ public class Package {
     private String packageName;
     private String version;
     private String architecture;
-    private String filename;
-    private String systemPath;
-    private String md5;
 
     /* --- Constructors --- */
 
@@ -30,16 +27,13 @@ public class Package {
         Package aPackage = (Package) o;
         return Objects.equals(packageName, aPackage.packageName) &&
                 Objects.equals(version, aPackage.version) &&
-                Objects.equals(architecture, aPackage.architecture) &&
-                Objects.equals(filename, aPackage.filename) &&
-                Objects.equals(systemPath, aPackage.systemPath) &&
-                Objects.equals(md5, aPackage.md5);
+                Objects.equals(architecture, aPackage.architecture);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(packageName, version, architecture, filename, systemPath, md5);
+        return Objects.hash(packageName, version, architecture);
     }
 
     /* --- Public methods --- */
@@ -68,27 +62,4 @@ public class Package {
         this.architecture = architecture;
     }
 
-    public String getFilename() {
-        return filename;
-    }
-
-    public void setFilename(String filename) {
-        this.filename = filename;
-    }
-
-    public String getSystemPath() {
-        return systemPath;
-    }
-
-    public void setSystemPath(String systemPath) {
-        this.systemPath = systemPath;
-    }
-
-    public String getMd5() {
-        return md5;
-    }
-
-    public void setMd5(String md5) {
-        this.md5 = md5;
-    }
 }
