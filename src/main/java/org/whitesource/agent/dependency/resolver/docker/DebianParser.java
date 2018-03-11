@@ -16,15 +16,15 @@ public class DebianParser extends AbstractParser {
 
     /* --- Static members --- */
 
-    public static final String PACKAGE = "Package";
-    public static final String VERSION = "Version";
-    public static final String ARCHITECTURE = "Architecture";
-    public static final String SYSTEMPATH = "Filename";
-    public static final String MD5 = "MD5sum";
-    public static final String COLON = ":";
+    private static final String PACKAGE = "Package";
+    private static final String VERSION = "Version";
+    private static final String ARCHITECTURE = "Architecture";
+    private static final String SYSTEMPATH = "Filename";
+    private static final String MD5 = "MD5sum";
+    private static final String COLON = ":";
 
     private static final String DEBIAN_PACKAGE_PATTERN = "{0}_{1}_{2}.deb";
-    public static final String SLASH_SEPERATOR = "/";
+    private static final String SLASH_SEPERATOR = "/";
 
 
     /* --- Overridden methods --- */
@@ -90,7 +90,7 @@ public class DebianParser extends AbstractParser {
     @Override
     public File findFile(String[] files, String filename) {
         for (String filepath : files) {
-            if (filepath.contains(filename)) {
+            if (filepath.endsWith(filename)) {
                 return new File(filepath);
             }
         }

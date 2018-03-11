@@ -46,14 +46,17 @@ public class DockerResolver {
     private static final boolean PARTIAL_SHA1_MATCH = false;
     private static final String WINDOWS_PATH_SEPARATOR = "\\";
     private static final String UNIX_PATH_SEPARATOR = "/";
-    public static final String AVAILABLE_PATTERN = "**/*available";
-    public static final String DESC_PATTERN = "**/*desc";
+    private static final String DEBIAN_PATTERN = "**/*available";
+    private static final String ARCH_LINUX_PATTERN = "**/*desc";
+    private static final String ALPINE_PATTERN = "**/*installed";
 
-    public static final String[] scanIncludes = {AVAILABLE_PATTERN, DESC_PATTERN};
-    public static final String[] scanExcludes = {};
-    public static final String SEPERATOR = "\\";
-    public static final String ARCH_LINUX_DESC_FOLDERS = "var\\lib\\pacman\\local";
-    public static final String AVAILABLE = "available";
+    private static final String[] scanIncludes = {DEBIAN_PATTERN, ARCH_LINUX_PATTERN, ALPINE_PATTERN};
+    private static final String[] scanExcludes = {};
+    private static final String SEPERATOR = "\\";
+    private static final String ARCH_LINUX_DESC_FOLDERS = "var\\lib\\pacman\\local";
+    private static final String DEBIAN_LIST_PACKAGES_FILE = "available";
+    private static final String ALPINE_LIST_PACKAGES_FILE = "installed";
+
     /* --- Members --- */
 
     private FSAConfiguration config;
@@ -184,8 +187,8 @@ public class DockerResolver {
                 }
 
                 AbstractParser parser = new DebianParser();
-                File file = parser.findFile(fileNames, AVAILABLE);
-                if (file != null && file.getName().equals(AVAILABLE)) {
+                File file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE);
+                if (file != null && file.getName().equals(DEBIAN_LIST_PACKAGES_FILE)) {
                     Collection<DependencyInfo> debianPackages = parser.parse(file);
                     if (!debianPackages.isEmpty()) {
                         projectInfo.getDependencies().addAll(debianPackages);
@@ -195,13 +198,11 @@ public class DockerResolver {
 
                 parser = new ArchLinuxParser();
                 file = parser.findFile(fileNames, ARCH_LINUX_DESC_FOLDERS);
-                if (file != null) {
-                    Collection<DependencyInfo> archLinuxPackages = parser.parse(file);
-                    if (!archLinuxPackages.isEmpty()) {
-                        projectInfo.getDependencies().addAll(archLinuxPackages);
-                        logger.info("Found {} Arch linux Packages", archLinuxPackages.size());
-                    }
-                }
+                parseProjectInfo(projectInfo, parser, file);
+
+                parser = new AlpineParser();
+                file = parser.findFile(fileNames, ALPINE_LIST_PACKAGES_FILE);
+                parseProjectInfo(projectInfo, parser, file);
 
 
                 // scan files
@@ -238,6 +239,16 @@ public class DockerResolver {
                 deleteDockerArchiveFiles(containerTarFile, containerTarExtractDir, containerTarArchiveExtractDir);
             }
 
+        }
+    }
+
+    private void parseProjectInfo(AgentProjectInfo projectInfo, AbstractParser parser, File file) {
+        if (file != null) {
+            Collection<DependencyInfo> alpinePackages = parser.parse(file);
+            if (!alpinePackages.isEmpty()) {
+                projectInfo.getDependencies().addAll(alpinePackages);
+                logger.info("Found {} Arch linux Packages", alpinePackages.size());
+            }
         }
     }
 

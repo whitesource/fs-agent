@@ -16,12 +16,16 @@ import java.util.Map;
  */
 public class ArchLinuxParser extends AbstractParser {
 
-    public static final String PACKAGE = "%NAME%";
-    public static final String VERSION = "%VERSION%";
-    public static final String ARCHITECTURE = "%ARCH%";
-    public static final String DESC = "desc";
+    /* --- Static members --- */
+
+    private static final String PACKAGE = "%NAME%";
+    private static final String VERSION = "%VERSION%";
+    private static final String ARCHITECTURE = "%ARCH%";
+    private static final String DESC = "desc";
     private static final String ARCH_LINUX_PACKAGE_PATTERN = "{0}-{1}-{2}.pkg.tar.xz";
-    public static final String DESC_PATH = "var\\lib\\pacman\\local";
+    private static final String DESC_PATH = "var\\lib\\pacman\\local";
+
+    /* --- Overridden methods --- */
 
     @Override
     public Collection<DependencyInfo> parse(File dir) {
@@ -94,6 +98,8 @@ public class ArchLinuxParser extends AbstractParser {
         return null;
     }
 
+    /* --- Private methods --- */
+
     // Get the dec files from specific folder (every dec contains dependency info data)
     private void getDescFiles(File dir, Collection<File> files) {
         if (dir.isDirectory()) {
@@ -107,7 +113,7 @@ public class ArchLinuxParser extends AbstractParser {
         }
     }
 
-    public DependencyInfo createDependencyInfo(Package packageInfo) {
+    private DependencyInfo createDependencyInfo(Package packageInfo) {
         DependencyInfo dependencyInfo = null;
         if (StringUtils.isNotBlank(packageInfo.getPackageName()) && StringUtils.isNotBlank(packageInfo.getVersion())
                 && StringUtils.isNotBlank(packageInfo.getArchitecture())) {
