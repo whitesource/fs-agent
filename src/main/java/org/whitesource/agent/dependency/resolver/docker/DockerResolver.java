@@ -215,7 +215,7 @@ public class DockerResolver {
 
                 // scan files
                 String extractPath = containerTarArchiveExtractDir.getPath();
-                List<DependencyInfo> dependencyInfos = new FileSystemScanner(config.getResolver(), config.getAgent()).createProjects(
+                List<DependencyInfo> dependencyInfos = new FileSystemScanner(config.getResolver(), config.getAgent(),false).createProjects(
                         Arrays.asList(extractPath), false, config.getAgent().getIncludes(), config.getAgent().getExcludes(),
                         config.getAgent().getGlobCaseSensitive(), config.getAgent().getArchiveExtractionDepth(), FileExtensions.ARCHIVE_INCLUDES,
                         FileExtensions.ARCHIVE_EXCLUDES, false, config.getAgent().isFollowSymlinks(),
