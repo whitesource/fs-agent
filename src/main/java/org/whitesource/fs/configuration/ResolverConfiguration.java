@@ -38,6 +38,7 @@ public class ResolverConfiguration {
             @JsonProperty(BOWER_RUN_PRE_STEP) boolean bowerRunPreStep,
 
             @JsonProperty(NUGET_RESOLVE_DEPENDENCIES) boolean nugetResolveDependencies,
+            @JsonProperty(NUGET_RESTORE_DEPENDENCIES) boolean nugetRestoreDependencies,
 
             @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES) boolean mavenResolveDependencies,
             @JsonProperty(MAVEN_IGNORED_SCOPES) String[] mavenIgnoredScopes,
@@ -67,6 +68,7 @@ public class ResolverConfiguration {
         this.bowerRunPreStep = bowerRunPreStep;
 
         this.nugetResolveDependencies = nugetResolveDependencies;
+        this.nugetRestoreDependencies = nugetRestoreDependencies;
 
         this.mavenResolveDependencies = mavenResolveDependencies;
         this.mavenIgnoredScopes = mavenIgnoredScopes;
@@ -97,6 +99,7 @@ public class ResolverConfiguration {
     private boolean     bowerResolveDependencies;
     private boolean     bowerRunPreStep;
     private boolean     nugetResolveDependencies;
+    private boolean     nugetRestoreDependencies;
     private boolean     mavenResolveDependencies;
     private String[]    mavenIgnoredScopes;
     private boolean     mavenAggregateModules;
@@ -162,6 +165,11 @@ public class ResolverConfiguration {
     @JsonProperty(NUGET_RESOLVE_DEPENDENCIES)
     public boolean isNugetResolveDependencies() {
         return nugetResolveDependencies;
+    }
+
+    @JsonProperty(NUGET_RESTORE_DEPENDENCIES)
+    public boolean isNugetRestoreDependencies() {
+        return nugetRestoreDependencies;
     }
 
     @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES)

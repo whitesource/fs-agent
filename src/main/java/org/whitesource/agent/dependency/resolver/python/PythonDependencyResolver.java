@@ -111,7 +111,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     /* --- Overridden methods --- */
 
     @Override
-    public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles, String npmAccessToken) {
+    public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles) {
         String tempDir = getTempDir();
         Map<AgentProjectInfo, Path> resolvedProjects = new HashMap<>();
         String[] args = new String[0];
