@@ -191,7 +191,7 @@ public class FSAConfiguration {
         boolean bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
 
         boolean nugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
-        boolean nugetRestoreDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESTORE_DEPENDENCIES, true);
+        boolean nugetRestoreDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESTORE_DEPENDENCIES, false);
 
         boolean mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = FSAConfiguration.getListProperty(config, MAVEN_IGNORED_SCOPES, null);

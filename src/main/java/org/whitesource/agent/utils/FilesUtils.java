@@ -33,7 +33,7 @@ public class FilesUtils {
 
     /* --- Static members --- */
 
-    private final Logger logger = LoggerFactory.getLogger(FilesUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(FilesUtils.class);
 
     /* --- Static methods --- */
 

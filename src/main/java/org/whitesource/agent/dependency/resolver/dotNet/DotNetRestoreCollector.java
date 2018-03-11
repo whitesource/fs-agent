@@ -35,6 +35,7 @@ public class DotNetRestoreCollector extends DependencyCollector {
     public static final String EMPTY_STRING = "";
     public static final String NUPKG = ".nupkg";
     public static final String BACK_SLASH = "\\";
+    public static final String DOT = ".";
     private static String[] includes = {"**/*" + NUPKG};
     private static String[] excludes = {};
 
@@ -125,12 +126,13 @@ public class DotNetRestoreCollector extends DependencyCollector {
 
     private DependencyInfo getDependency(String nugetFilePath, String shortPath) {
         DependencyInfo dependency = new DependencyInfo();
+        // TODO to fix the issue with the dependency type
         String name = getPackageName(shortPath);
-        dependency.setGroupId(name);
-        dependency.setArtifactId(name);
-//        dependency.setArtifactId(name + "." + getVersion(shortPath) + ".nupkg");
-        dependency.setVersion(getVersion(shortPath));
-        dependency.setDependencyType(DependencyType.NUGET);
+//        dependency.setGroupId(name);
+//        dependency.setArtifactId(name);
+        dependency.setArtifactId(name + DOT + getVersion(shortPath) + NUPKG);
+//        dependency.setVersion(getVersion(shortPath));
+//        dependency.setDependencyType(DependencyType.NUGET);
         String sha1 = getSha1(nugetFilePath);
         dependency.setSha1(sha1);
         return dependency;
