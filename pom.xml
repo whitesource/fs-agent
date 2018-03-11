@@ -107,7 +107,7 @@
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>3.7.0.201502260915-r</version>
+            <version>4.10.0.201712302008-r</version>
         </dependency>
 
         <!-- SVN Connector -->

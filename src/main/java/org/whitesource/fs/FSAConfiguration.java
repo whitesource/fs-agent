@@ -320,7 +320,7 @@ public class FSAConfiguration {
         String pass = config.getProperty(SCM_PASS_PROPERTY_KEY);
         String branch = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
         String tag = config.getProperty(SCM_TAG_PROPERTY_KEY);
-        String ppk = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
+        String ppk = config.getProperty(SCM_PPK_PROPERTY_KEY);
 
         //defaults
         String repositoriesPath = config.getProperty(SCM_REPOSITORIES_FILE);
