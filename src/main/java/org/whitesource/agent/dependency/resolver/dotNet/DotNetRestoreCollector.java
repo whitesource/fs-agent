@@ -34,7 +34,7 @@ public class DotNetRestoreCollector extends DependencyCollector {
     public static final String DOT_NET_RESTORE_WS = "DotNetRestoreWS";
     public static final String EMPTY_STRING = "";
     public static final String NUPKG = ".nupkg";
-    public static final String BACK_SLASH = "\\";
+    public static final String BACK_SLASH = isWindows() ? "\\" : "/";
     public static final String DOT = ".";
     private static String[] includes = {"**/*" + NUPKG};
     private static String[] excludes = {};
