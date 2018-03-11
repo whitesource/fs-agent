@@ -89,6 +89,7 @@ public final class ConfigPropertyKeys {
     public static final String PYTHON_UNINSTALL_WSS_PLUGIN = "python.uninstallWssPlugin";
 
     public static final String NUGET_RESOLVE_DEPENDENCIES = "nuget.resolveDependencies";
+    public static final String NUGET_RESTORE_DEPENDENCIES = "nuget.restoreDependencies";
     public static final String MAVEN_IGNORED_SCOPES = "maven.ignoredScopes";
     public static final String MAVEN_RESOLVE_DEPENDENCIES = "maven.resolveDependencies";
     public static final String MAVEN_AGGREGATE_MODULES = "maven.aggregateModules";
