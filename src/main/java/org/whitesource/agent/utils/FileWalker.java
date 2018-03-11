@@ -35,7 +35,7 @@ public class FileWalker implements Iterator<Path> {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(FileWalker.class);
+    private Logger logger = LoggerFactory.getLogger(FileWalker.class);
 
     /* --- Private members --- */
 

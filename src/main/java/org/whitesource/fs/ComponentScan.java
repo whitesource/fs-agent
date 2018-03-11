@@ -21,7 +21,7 @@ public class ComponentScan {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ComponentScan.class);
+    private final Logger logger = LoggerFactory.getLogger(ComponentScan.class);
     public static final String DIRECTORY_NOT_SET = "Directory parameter 'd' is not set" + StatusCode.ERROR;
     public static final String EMPTY_PROJECT_TOKEN = "";
     public static final String FOLDER_DELIMITER = ",";
@@ -31,12 +31,11 @@ public class ComponentScan {
 
     /* --- Constructors --- */
 
-
-    /* --- Methods --- */
-
     public ComponentScan(Properties config) {
         this.config = config;
     }
+
+    /* --- Methods --- */
 
     public String scan() {
         logger.info("Starting Analysis - component scan has started");
@@ -64,18 +63,19 @@ public class ComponentScan {
             //todo hasScmConnectors[0] in future - no need for cx
             // Resolving dependencies
             logger.info("Resolving dependencies");
-            Collection<AgentProjectInfo> projects = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent()).createProjects(
+            // via should not run for componentScan
+            Collection<AgentProjectInfo> projects = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent(), false).createProjects(
                     scannerBaseDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getAgent().getArchiveExtractionDepth(),
                     fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(),
                     followSymlinks, excludedCopyrights, fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(),
-                    fsaConfiguration.getAgent().isCalculateMd5(), fsaConfiguration.getResolver().getNpmAccessToken());
+                    fsaConfiguration.getAgent().isCalculateMd5(), fsaConfiguration.getResolver().getNpmAccessToken()).keySet();
             logger.info("Finished dependency resolution");
             for (AgentProjectInfo project : projects) {
 //                project.setCoordinates(new Coordinates());
                 project.setProjectToken(EMPTY_PROJECT_TOKEN);
             }
 //             Return dependencies
-            String jsonString = ConfigurationSerializer.getAsString(projects, true);
+            String jsonString = new ConfigurationSerializer().getAsString(projects, true);
             return jsonString;
         } else
             return "";// new ConfigurationSerializer<>().getAsString(new Collection<AgentProjectInfo>);

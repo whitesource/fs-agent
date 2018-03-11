@@ -28,7 +28,7 @@ public class FileSystemAgentInfo implements PluginInfo {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(FileSystemAgentInfo.class);
+    private final Logger logger = LoggerFactory.getLogger(FileSystemAgentInfo.class);
     private static final String AGENT_TYPE = "fs-agent";
     private static final String VERSION = "version";
     private static final String AGENTS_VERSION = "agentsVersion";

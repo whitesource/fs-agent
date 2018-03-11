@@ -42,15 +42,13 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
 
     /* --- Statics Members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(NpmLsJsonDependencyCollector.class);
+    private final Logger logger = LoggerFactory.getLogger(NpmLsJsonDependencyCollector.class);
 
     public static final String LS_COMMAND = "ls";
     public static final String INSTALL_COMMAND = "install";
     public static final String LS_PARAMETER_JSON = "--json";
 
     private static final String NPM_COMMAND = isWindows() ? "npm.cmd" : "npm";
-    private static final String OS_NAME = "os.name";
-    private static final String WINDOWS = "win";
     private static final String DEPENDENCIES = "dependencies";
     private static final String VERSION = "version";
     private static final String RESOLVED = "resolved";
@@ -148,7 +146,11 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
                         dependency.getChildren().addAll(childDependencies);
                     } else {
                         // it can be only if was an error in 'npm ls'
-                        currentLineNumber = getDependencies(dependencyJsonObject.getJSONObject(REQUIRED), linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
+                        if (dependenciesJsonObject.has(REQUIRED)) {
+                            currentLineNumber = getDependencies(dependencyJsonObject.getJSONObject(REQUIRED), linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
+                        } else {
+                            currentLineNumber++;
+                        }
                     }
                 }
             }
@@ -241,12 +243,6 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
         dependency.setFilename(filename);
         dependency.setDependencyType(DependencyType.NPM);
         return dependency;
-    }
-
-    /* --- Static methods --- */
-
-    public static boolean isWindows() {
-        return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
     }
 
     /* --- Nested classes --- */

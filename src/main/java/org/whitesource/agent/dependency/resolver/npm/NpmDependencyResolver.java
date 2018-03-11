@@ -67,7 +67,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private static final String SHASUM = "shasum";
 
 
-    private static final Logger logger = LoggerFactory.getLogger(NpmDependencyResolver.class);
+    private final Logger logger = LoggerFactory.getLogger(NpmDependencyResolver.class);
     private static final String EXCLUDE_TOP_FOLDER = "node_modules";
     private static final String EMPTY_STRING = "";
     private static final int NUM_THREADS = 8;
@@ -83,10 +83,12 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private final boolean runPreStep;
     private final String accessToken;
     private final FilesScanner filesScanner;
+    private final String npmAccessToken;
 
     /* --- Constructor --- */
 
-    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector, boolean runPreStep, String accessToken, boolean npmIgnoreNpmLsErrors) {
+    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector,
+                                 boolean runPreStep, String accessToken, boolean npmIgnoreNpmLsErrors, String npmAccessToken) {
         super();
         bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, npmIgnoreNpmLsErrors);
         bomParser = new NpmBomParser();
@@ -94,10 +96,11 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         this.runPreStep = runPreStep;
         this.accessToken = accessToken;
         this.filesScanner = new FilesScanner();
+        this.npmAccessToken = npmAccessToken;
     }
 
-    public NpmDependencyResolver(boolean runPreStep) {
-        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, null, false);
+    public NpmDependencyResolver(boolean runPreStep, String npmAccessToken) {
+        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, null, false, npmAccessToken);
     }
 
     /* --- Overridden methods --- */
@@ -117,7 +120,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles, String npmAccessToken) {
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
 
         if (runPreStep) {
             getDependencyCollector().executePreparationStep(topLevelFolder);

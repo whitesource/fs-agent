@@ -6,12 +6,12 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>18.2.1-SNAPSHOT</version>
+    <version>18.2.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <agent.api.version>2.6.2</agent.api.version>
+        <agent.api.version>2.6.4</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
     </properties>
 
@@ -107,7 +107,7 @@
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>3.7.0.201502260915-r</version>
+            <version>4.10.0.201712302008-r</version>
         </dependency>
 
         <!-- SVN Connector -->
@@ -138,11 +138,17 @@
         </dependency>
 
         <!-- VIA test -->
-        <!--<dependency>-->
-            <!--<groupId>org.whitesource.analysis</groupId>-->
-            <!--<artifactId>whitesource-analysis-via</artifactId>-->
-            <!--<version>0.0.1-SNAPSHOT</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.whitesource.analysis</groupId>
+            <artifactId>whitesource-analysis-via</artifactId>
+            <version>0.0.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>guru.nidi</groupId>
+            <artifactId>graphviz-java</artifactId>
+            <version>0.2.3</version>
+        </dependency>
 
         <!-- LZMA -->
         <dependency>
@@ -216,6 +222,16 @@
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
             <version>2.9.2</version>
+        </dependency>
+
+
+        <!-- jaxb for nuget dependecy resolver -->
+        <!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <!--<version>2.3.0</version>-->
+            <version>2.3.0-b170201.1204</version>
         </dependency>
 
         <!-- xml parser for nuget -->

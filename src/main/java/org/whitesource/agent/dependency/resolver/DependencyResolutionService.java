@@ -18,6 +18,8 @@ package org.whitesource.agent.dependency.resolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
+import org.whitesource.agent.dependency.resolver.dotNet.DotNetDependencyResolver;
+import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
@@ -44,7 +46,7 @@ public class DependencyResolutionService {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
+    private final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
 
     private boolean separateProjects = false;
 
@@ -63,6 +65,7 @@ public class DependencyResolutionService {
         final boolean bowerRunPreStep = config.isBowerRunPreStep();
 
         final boolean nugetResolveDependencies = config.isNugetResolveDependencies();
+        final boolean nugetRestoreDependencies = config.isNugetRestoreDependencies();
 
         final boolean mavenResolveDependencies = config.isMavenResolveDependencies();
         final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
@@ -70,12 +73,14 @@ public class DependencyResolutionService {
 
         boolean pythonResolveDependencies = config.isPythonResolveDependencies();
 
+        boolean gradleResolveDependencies = config.isGradleResolveDependencies();
+
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmAccessToken, npmIgnoreNpmLsErrors));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmAccessToken, npmIgnoreNpmLsErrors, npmAccessToken));
         }
         if (bowerResolveDependencies) {
             dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep));
@@ -83,7 +88,7 @@ public class DependencyResolutionService {
         if (nugetResolveDependencies) {
             String whitesourceConfiguration = config.getWhitesourceConfiguration();
             dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE));
-            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE));
+            dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies));
         }
         if (mavenResolveDependencies) {
             dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, dependenciesOnly));
@@ -91,6 +96,10 @@ public class DependencyResolutionService {
         }
         if (pythonResolveDependencies) {
             dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(), config.isPythonIsWssPluginInstalled(), config.getPythonUninstallWssPlugin()));
+        }
+
+        if (gradleResolveDependencies) {
+            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand()));
         }
     }
 
@@ -139,7 +148,7 @@ public class DependencyResolutionService {
 
         topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
-                ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles, npmAccessToken);
+                ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
                 resolutionResults.add(result);
             });
         });

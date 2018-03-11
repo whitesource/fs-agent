@@ -50,7 +50,7 @@ import static org.whitesource.agent.ConfigPropertyKeys.ENDPOINT_PORT;
  */
 public class FsaVerticle extends AbstractVerticle {
 
-    private static final Logger logger = LoggerFactory.getLogger(FsaVerticle.class);
+    private final Logger logger = LoggerFactory.getLogger(FsaVerticle.class);
     public static final String API_ANALYZE = "/analyze";
     public static final String API_SEND = "/send";
     public static final String HOME = "/";

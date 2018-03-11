@@ -41,6 +41,9 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
 /* --- Statics Members --- */
 
+    protected static final String DOT = ".";
+    protected static final String DASH = "-";
+
     private static final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector.class);
 
     private static final String MVN_PARAMS_M2PATH_PATH = "help:evaluate";
@@ -48,12 +51,8 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
     private static final String MVN_PARAMS_TREE = "dependency:tree";
     private static final String MVN_COMMAND = "mvn";
-    private static final String OS_NAME = "os.name";
-    private static final String WINDOWS = "win";
     private static final String SCOPE_TEST = "test";
     private static final String SCOPE_PROVIDED = "provided";
-    private static final String DOT = ".";
-    private static final String DASH = "-";
     private static final String USER_HOME = "user.home";
     private static final String M2 = ".m2";
     private static final String REPOSITORY = "repository";
@@ -63,11 +62,10 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String EMPTY_STRING = "";
     private static final String POM = "pom";
 
-
     /* --- Members --- */
 
+    protected String M2Path;
     private final Set<String> mavenIgnoredScopes;
-    private String M2Path;
     private boolean showMavenTreeError;
     private MavenLinesParser mavenLinesParser;
 
@@ -124,7 +122,8 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
                     AgentProjectInfo projectInfo = new AgentProjectInfo();
                     projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
-                    dependencies.stream().forEach(dependency -> projectInfo.getDependencies().add(dependency));
+                    dependencies.stream().filter(dependency -> StringUtils.isNotEmpty(dependency.getSha1())).forEach(dependency ->
+                            projectInfo.getDependencies().add(dependency));
                     return projectInfo;
                 }).collect(Collectors.toList());
             } else {
@@ -144,11 +143,11 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         return projects;
     }
 
-    private String getSha1(String filePath) {
+    protected String getSha1(String filePath) {
         try {
-            return  ChecksumUtils.calculateSHA1(new File(filePath));
+            return ChecksumUtils.calculateSHA1(new File(filePath));
         } catch (IOException e) {
-            logger.info("Failed getting " +filePath, getLsCommandParams());
+            logger.info("Failed getting " + filePath + ". File will not be send to WhiteSource server.");
             return EMPTY_STRING;
         }
     }
@@ -192,7 +191,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         }
     }
 
-    private String getMavenM2Path(String rootDirectory) {
+    protected String getMavenM2Path(String rootDirectory) {
         String currentUsersHomeDir = System.getProperty(USER_HOME);
         File m2Path = Paths.get(currentUsersHomeDir, M2, REPOSITORY).toFile();
 
@@ -226,11 +225,5 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             showMavenTreeError = true;
             return null;
         }
-    }
-
-    /* --- Static methods --- */
-
-    private static boolean isWindows() {
-        return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
     }
 }

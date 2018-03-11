@@ -35,7 +35,7 @@ public class BowerBomParser extends NpmBomParser {
     public static final String RESOLUTION = "_resolution";
     public static final String TAG = "tag";
     public static final String BOWER_PACKAGE_FILENAME_FORMAT = "{0}-{1}";
-    private static final Logger logger = LoggerFactory.getLogger(NpmBomParser.class);
+    private final Logger logger = LoggerFactory.getLogger(NpmBomParser.class);
 
     /* --- Overridden methods --- */
 

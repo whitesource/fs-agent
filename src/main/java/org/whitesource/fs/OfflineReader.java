@@ -37,7 +37,7 @@ public class OfflineReader {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(OfflineReader.class);
+    private final Logger logger = LoggerFactory.getLogger(OfflineReader.class);
     private static final String UTF_8 = "UTF-8";
     private static final String EMPTY_STRING = "";
 

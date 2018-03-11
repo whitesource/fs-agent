@@ -36,7 +36,7 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Static Members --- */
 
-    private static final String POM_XML = "**/*pom.xml";
+    private static final String POM_XML = "**/pom.xml";
     private static final List<String> JAVA_EXTENSIONS = Arrays.asList(".java", ".jar", ".war", ".ear", ".car", ".class");
     private static final String TEST = String.join(File.separator, new String[]{"src", "test"});
     private final boolean mavenAggregateModules;
@@ -57,7 +57,7 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
     private final MavenTreeDependencyCollector dependencyCollector;
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles, String npmAccessToken) {
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         // try to collect dependencies via 'mvn dependency tree and parse'
         Collection<AgentProjectInfo> projects = dependencyCollector.collectDependencies(topLevelFolder);
 

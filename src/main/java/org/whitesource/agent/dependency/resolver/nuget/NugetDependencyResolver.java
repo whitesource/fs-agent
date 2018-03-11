@@ -38,7 +38,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(NugetDependencyResolver.class);
+    private final Logger logger = LoggerFactory.getLogger(NugetDependencyResolver.class);
     public static final String CONFIG = ".config";
     public static final String CSPROJ = ".csproj";
     public static final String PATTERN = "**/*";
@@ -65,7 +65,11 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     /* --- Overridden methods --- */
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles, String npmAccessToken) {
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles) {
+        return getDependenciesFromParsing(topLevelFolder, configFiles);
+    }
+
+    protected ResolutionResult getDependenciesFromParsing(String topLevelFolder, Set<String> configFiles) {
         Collection<NugetPackages> allConfigNugetPackages = parseNugetPackageFiles(configFiles);
         Set<DependencyInfo> dependencies = new HashSet<>();
 

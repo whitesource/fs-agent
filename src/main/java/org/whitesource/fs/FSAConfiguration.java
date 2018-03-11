@@ -45,7 +45,8 @@ public class FSAConfiguration {
 
     public static Collection<String> ignoredWebProperties = Arrays.asList(
             SCM_REPOSITORIES_FILE, LOG_LEVEL_KEY, FOLLOW_SYMBOLIC_LINKS, SHOW_PROGRESS_BAR, PROJECT_CONFIGURATION_PATH, SCAN_PACKAGE_MANAGER, WHITESOURCE_FOLDER_PATH,
-            ENDPOINT_ENABLED, ENDPOINT_PORT, ENDPOINT_CERTIFICATE, ENDPOINT_PASS, ENDPOINT_SSL_ENABLED, OFFLINE_PROPERTY_KEY, OFFLINE_ZIP_PROPERTY_KEY, OFFLINE_PRETTY_JSON_KEY, WHITESOURCE_CONFIGURATION);
+            ENDPOINT_ENABLED, ENDPOINT_PORT, ENDPOINT_CERTIFICATE, ENDPOINT_PASS, ENDPOINT_SSL_ENABLED, OFFLINE_PROPERTY_KEY, OFFLINE_ZIP_PROPERTY_KEY,
+            OFFLINE_PRETTY_JSON_KEY, WHITESOURCE_CONFIGURATION);
 
     private static final String FALSE = "false";
     private static final String INFO = "info";
@@ -192,6 +193,7 @@ public class FSAConfiguration {
         boolean bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
 
         boolean nugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
+        boolean nugetRestoreDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESTORE_DEPENDENCIES, false);
 
         boolean mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = FSAConfiguration.getListProperty(config, MAVEN_IGNORED_SCOPES, null);
@@ -207,11 +209,14 @@ public class FSAConfiguration {
         boolean pythonIsWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, PYTHON_IS_WSS_PLUGIN_INSTALLED, false);
         boolean pythonUninstallWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, PYTHON_UNINSTALL_WSS_PLUGIN, false);
 
+        boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, GRADLE_RESOLVE_DEPENDENCIES, true);
+        boolean gradleRunAssembleCommand = FSAConfiguration.getBooleanProperty(config, GRADLE_RUN_ASSEMBLE_COMMAND, true);
+
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
-                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies,
+                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
-                dependenciesOnly, whitesourceConfiguration);
+                dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken, String projectName, String projectToken) {
@@ -320,7 +325,7 @@ public class FSAConfiguration {
         String pass = config.getProperty(SCM_PASS_PROPERTY_KEY);
         String branch = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
         String tag = config.getProperty(SCM_TAG_PROPERTY_KEY);
-        String ppk = config.getProperty(SCM_BRANCH_PROPERTY_KEY);
+        String ppk = config.getProperty(SCM_PPK_PROPERTY_KEY);
 
         //defaults
         String repositoriesPath = config.getProperty(SCM_REPOSITORIES_FILE);
