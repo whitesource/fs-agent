@@ -34,6 +34,7 @@ public class AlpineParser extends AbstractParser {
             br = new BufferedReader(fr);
             String line = null;
             Package packageInfo = new Package();
+            // Create Alpine package - package-version-architecture.apk
             while ((line = br.readLine()) != null) {
                 if (!line.isEmpty()) {
                     if (packageInfo.getPackageName() == null || packageInfo.getVersion() == null || packageInfo.getArchitecture() == null) {
@@ -83,9 +84,11 @@ public class AlpineParser extends AbstractParser {
 
     private DependencyInfo createDependencyInfo(Package packageInfo) {
         DependencyInfo dependencyInfo = null;
-        if (StringUtils.isNotBlank(packageInfo.getPackageName()) && StringUtils.isNotBlank(packageInfo.getVersion()) && StringUtils.isNotBlank(packageInfo.getArchitecture())) {
+        if (StringUtils.isNotBlank(packageInfo.getPackageName()) && StringUtils.isNotBlank(packageInfo.getVersion()) &&
+                StringUtils.isNotBlank(packageInfo.getArchitecture())) {
             dependencyInfo = new DependencyInfo(
-                    null, MessageFormat.format(ALPINE_PACKAGE_PATTERN, packageInfo.getPackageName(), packageInfo.getVersion(), packageInfo.getArchitecture()), packageInfo.getVersion());
+                    null, MessageFormat.format(ALPINE_PACKAGE_PATTERN, packageInfo.getPackageName(), packageInfo.getVersion(),
+                    packageInfo.getArchitecture()), packageInfo.getVersion());
         }
         if (dependencyInfo != null) {
             return dependencyInfo;

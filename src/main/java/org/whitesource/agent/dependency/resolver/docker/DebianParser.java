@@ -46,6 +46,7 @@ public class DebianParser extends AbstractParser {
             String systemPath = null;
             String md5 = null;
             Package packageInfo = new Package();
+            // Create Debian package - package-version-architecture.deb
             while ((line = br.readLine()) != null) {
                 if (!line.isEmpty()) {
                     String[] lineSplit = line.split(COLON);

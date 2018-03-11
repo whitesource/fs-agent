@@ -1,6 +1,5 @@
 package org.whitesource.agent.dependency.resolver.docker;
 
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.api.model.DependencyInfo;
 
@@ -8,7 +7,6 @@ import java.io.*;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Map;
 
 
 /**
@@ -43,6 +41,7 @@ public class ArchLinuxParser extends AbstractParser {
                         fr = new FileReader(file);
                         br = new BufferedReader(fr);
                         String line = null;
+                        // Create Arch Linux package - package-version-architecture.pkg.tar.xz
                         while ((line = br.readLine()) != null) {
                             switch (line) {
                                 case PACKAGE:
@@ -72,35 +71,37 @@ public class ArchLinuxParser extends AbstractParser {
         return dependencyInfos;
     }
 
+    /**
+     * @param files
+     * @param pathToPackageManagerFolder
+     * @return Folder file with all the information about the installed packages
+     */
     @Override
-    public File findFile(String[] files, String filename) {
-        Map<File, Integer> filesMap = new HashedMap();
-        Map.Entry<File, Integer> maxEntery = null;
+    public File findFile(String[] files, String pathToPackageManagerFolder) {
+        int max = 0;
+        File archLinuxPackageManagerFile = null;
         for (String filepath : files) {
-            if (filepath.contains(filename) && filepath.endsWith(DESC)) {
-                int i = filepath.lastIndexOf(DESC_PATH);
-                String descPath = filepath.substring(0, i + 20);
-                File file = new File(descPath);
-                if (filesMap.get(file.getPath()) == null && file.isDirectory()) {
-                    filesMap.put(file, file.listFiles().length);
+            if (filepath.contains(pathToPackageManagerFolder) && filepath.endsWith(DESC)) {
+                int descStartIndex = filepath.lastIndexOf(DESC_PATH);
+                if (descStartIndex > 0) {
+                    String descPath = filepath.substring(0, descStartIndex + DESC_PATH.length());
+                    File file = new File(descPath);
+                    if (max < file.listFiles().length) {
+                        max = file.listFiles().length;
+                        archLinuxPackageManagerFile = file;
+                    }
                 }
             }
         }
-        if (!filesMap.isEmpty()) {
-            for (Map.Entry<File, Integer> entry : filesMap.entrySet()) {
-                if (maxEntery == null || entry.getValue().compareTo(maxEntery.getValue()) > 0) {
-                    maxEntery = entry;
-                }
-            }
-            return maxEntery.getKey();
+        if (archLinuxPackageManagerFile != null) {
+            return archLinuxPackageManagerFile;
         }
-
         return null;
     }
 
     /* --- Private methods --- */
 
-    // Get the dec files from specific folder (every dec contains dependency info data)
+    // Get the desc files from specific folder (every dec contains dependency info data)
     private void getDescFiles(File dir, Collection<File> files) {
         if (dir.isDirectory()) {
             for (File file : dir.listFiles()) {
