@@ -28,7 +28,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private static final String SRC = "src";
     private static final String MAIN = "main";
     private static final String JAVA = "java";
-    public static final String JAVA_EXTENSION = ".java";
+    private static final String JAVA_EXTENSION = ".java";
     private final Logger logger = LoggerFactory.getLogger(GradleLinesParser.class);
     private static final String PLUS = "+---";
     private static final String SLASH = "\\---";
@@ -56,7 +56,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private boolean removeSrcDir;
     private boolean removeJavaFile;
 
-    public GradleLinesParser(boolean runAssembleCommand){
+    GradleLinesParser(boolean runAssembleCommand){
         super(null);
         this.runAssembleCommand = runAssembleCommand;
         gradleCli = new GradleCli();
@@ -140,7 +140,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 parentDependencies.push(currentDependency);
             }
             prevLineIndentation = lastSpace;
-        };
+        }
 
         return dependenciesList;
     }
@@ -222,7 +222,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         File file = new File(pathToDependency);
         if (file.isFile()) {
             sha1 = getSha1(pathToDependency);
-            if (sha1 == EMPTY_STRING) {
+            if (sha1.equals(EMPTY_STRING)) {
                 logger.error("Couldn't calculate sha1 for " + groupId + "." + artifactId + "." + version + ".  ");
             }
         } else {
@@ -264,26 +264,26 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         String srcDirPath = rootDirectory + this.srcDirPath;
         File srcDir = new File(srcDirPath);
         removeSrcDir = false;
-        if (srcDir.isDirectory() == false){ // src folder doesn't exist - create the whole tree
+        if (!srcDir.isDirectory()){ // src folder doesn't exist - create the whole tree
             FileUtils.forceMkdir(javaDir);
             removeSrcDir = true;
         } else {
             String mainDirPath = rootDirectory + this.mainDirPath;
             File mainDir = new File(mainDirPath);
             removeMainDir = false;
-            if (mainDir.isDirectory() == false){ // main folder doesn't exist - create it with its sub-folder
+            if (!mainDir.isDirectory()){ // main folder doesn't exist - create it with its sub-folder
                 FileUtils.forceMkdir(javaDir);
                 removeMainDir = true;
             } else {
                 removeJavaDir = false;
-                if (javaDir.isDirectory() == false) { // java folder doesn't exist - create it
+                if (!javaDir.isDirectory()) { // java folder doesn't exist - create it
                     FileUtils.forceMkdir(javaDir);
                     removeJavaDir = true;
                 }
             }
         }
         removeJavaFile = false;
-        if (javaFileExists(rootDirectory + this.javaDirPath) == false){ // the java folder doesn't have any java file inside it - creating a temp file
+        if (!javaFileExists(rootDirectory + this.javaDirPath)){ // the java folder doesn't have any java file inside it - creating a temp file
             File javaFile = new File(javaDirPath + fileSeparator + TMP_JAVA_FILE);
             removeJavaFile = javaFile.createNewFile();
         }
@@ -292,12 +292,14 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private boolean javaFileExists(String directoryName){
         File directory = new File(directoryName);
         File[] fList = directory.listFiles();
-        for (File file : fList){
-            if (file.isFile()){
-                if (file.getName().endsWith(JAVA_EXTENSION))
-                    return true;
-            } else if (file.isDirectory()){
-                return javaFileExists(file.getAbsolutePath());
+        if (fList != null){
+            for (File file : fList){
+                if (file.isFile()){
+                    if (file.getName().endsWith(JAVA_EXTENSION))
+                        return true;
+                } else if (file.isDirectory()){
+                    return javaFileExists(file.getAbsolutePath());
+                }
             }
         }
         return false;
