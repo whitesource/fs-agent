@@ -139,13 +139,13 @@ public class DotNetRestoreCollector extends DependencyCollector {
     }
 
     private String getPackageName(String path) {
-        int indexBackslash = path.indexOf('\\');
+        int indexBackslash = path.indexOf(BACK_SLASH);
         return path.substring(0, indexBackslash);
     }
 
     private String getVersion(String path) {
-        int indexBackslash = path.indexOf('\\');
-        int indexSecondBackslash = path.indexOf('\\', indexBackslash + 1);
+        int indexBackslash = path.indexOf(BACK_SLASH);
+        int indexSecondBackslash = path.indexOf(BACK_SLASH, indexBackslash + 1);
         return path.substring(indexBackslash + 1, indexSecondBackslash);
     }
 }
