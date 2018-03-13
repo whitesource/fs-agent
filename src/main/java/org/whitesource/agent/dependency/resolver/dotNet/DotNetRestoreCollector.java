@@ -34,7 +34,7 @@ public class DotNetRestoreCollector extends DependencyCollector {
     public static final String DOT_NET_RESTORE_WS = "DotNetRestoreWS";
     public static final String EMPTY_STRING = "";
     public static final String NUPKG = ".nupkg";
-    public static final String BACK_SLASH = "\\";
+    public static final String BACK_SLASH = isWindows() ? "\\" : "/";
     public static final String DOT = ".";
     private static String[] includes = {"**/*" + NUPKG};
     private static String[] excludes = {};
@@ -139,13 +139,13 @@ public class DotNetRestoreCollector extends DependencyCollector {
     }
 
     private String getPackageName(String path) {
-        int indexBackslash = path.indexOf('\\');
+        int indexBackslash = path.indexOf(BACK_SLASH);
         return path.substring(0, indexBackslash);
     }
 
     private String getVersion(String path) {
-        int indexBackslash = path.indexOf('\\');
-        int indexSecondBackslash = path.indexOf('\\', indexBackslash + 1);
+        int indexBackslash = path.indexOf(BACK_SLASH);
+        int indexSecondBackslash = path.indexOf(BACK_SLASH, indexBackslash + 1);
         return path.substring(indexBackslash + 1, indexSecondBackslash);
     }
 }
