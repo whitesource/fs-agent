@@ -2,6 +2,7 @@ package org.whitesource.agent.dependency.resolver.nuget;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackage;
@@ -14,6 +15,7 @@ import javax.xml.bind.Marshaller;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by yossi.weinberg on 7/21/2017.
@@ -34,9 +36,9 @@ public class NugetPackagesConfigXmlParserTest {
 
         NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(xmlFile, NugetConfigFileType.CONFIG_FILE_TYPE);
 
-        NugetPackages packages = parser.parsePackagesConfigFile();
-        Assert.assertNotNull("Object was deserialized", packages);
-        Assert.assertEquals(5, packages.getNugetPackages().size());
+        Set<DependencyInfo> dependecnies = parser.parsePackagesConfigFile(false);
+        Assert.assertNotNull("Object was deserialized", dependecnies);
+        Assert.assertEquals(5, dependecnies.size());
     }
 
 

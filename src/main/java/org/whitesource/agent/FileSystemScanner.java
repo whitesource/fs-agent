@@ -151,7 +151,7 @@ public class FileSystemScanner {
         allProjects.put(mainProject, null);
 
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
-        Map<File, Collection<String>> fileMapBeforeResolve = FilesUtils.fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
+        Map<File, Collection<String>> fileMapBeforeResolve = new FilesUtils().fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
         Set<String> allFiles = fileMapBeforeResolve.entrySet().stream().flatMap(folder -> folder.getValue().stream()).collect(Collectors.toSet());
 
         Map<Collection<AgentProjectInfo>, String> projectsResult = new HashMap<>();
@@ -226,7 +226,7 @@ public class FileSystemScanner {
 
         String[] excludesExtended = excludeFileSystemAgent(excludes);
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
-        Map<File, Collection<String>> fileMap = FilesUtils.fillFilesMap(pathsToScan, includes, excludesExtended, followSymlinks, globCaseSensitive);
+        Map<File, Collection<String>> fileMap = new FilesUtils().fillFilesMap(pathsToScan, includes, excludesExtended, followSymlinks, globCaseSensitive);
         long filesCount = fileMap.entrySet().stream().flatMap(folder -> folder.getValue().stream()).count();
         totalFiles += filesCount;
         logger.info(MessageFormat.format("Total Files Found: {0}", totalFiles));
