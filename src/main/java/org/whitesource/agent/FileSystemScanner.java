@@ -25,11 +25,10 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.archive.ArchiveExtractor;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
-import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.MemoryUsageHelper;
-import org.whitesource.fs.configuration.AgentConfiguration;
 import org.whitesource.fs.FileSystemAgent;
+import org.whitesource.fs.configuration.AgentConfiguration;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.io.File;

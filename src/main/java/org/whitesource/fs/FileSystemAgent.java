@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
+import org.whitesource.agent.dependency.resolver.docker.DockerResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.dependency.resolver.packageManger.PackageManagerExtractor;
 import org.whitesource.agent.utils.CommandLineProcess;
@@ -186,7 +187,10 @@ public class FileSystemAgent {
         // Use FSA a as a package manger extractor for Debian/RPM/Arch Linux/Alpine
         if (config.isScanProjectManager()) {
             projects = new PackageManagerExtractor().createProjects();
-            projectsDetails =new ProjectsDetails(projects, success[0], EMPTY_STRING);
+            projectsDetails = new ProjectsDetails(projects, success[0], EMPTY_STRING);
+        } else if (config.isScanDockerImages()) {
+            projects = new DockerResolver(config).resolveDockerImages();
+            projectsDetails = new ProjectsDetails(projects, success[0], EMPTY_STRING);
         } else {
             projectToLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis())
                     .createProjects(scannerBaseDirs, hasScmConnectors[0], this.config.getResolver().getNpmAccessToken());
