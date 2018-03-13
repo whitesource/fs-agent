@@ -54,7 +54,7 @@ public class DotNetRestoreCollector extends DependencyCollector {
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
         List<DependencyInfo> dependencies = new LinkedList<>();
-        Map<File, Collection<String>> folderMapToFiles = FilesUtils.fillFilesMap(this.pathsToScan, this.includes, this.excludes, true, false);
+        Map<File, Collection<String>> folderMapToFiles = new FilesUtils().fillFilesMap(this.pathsToScan, this.includes, this.excludes, true, false);
         for (File file : folderMapToFiles.keySet()) {
             for (String shortPath : folderMapToFiles.get(file)) {
                 String nugetFilePath = file.getAbsolutePath() + BACK_SLASH + shortPath;
