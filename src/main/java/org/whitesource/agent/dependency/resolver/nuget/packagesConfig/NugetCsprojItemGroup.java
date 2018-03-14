@@ -15,10 +15,14 @@ public class NugetCsprojItemGroup {
     @ElementList(inline=true, required=false)
     private List<PackageReference> packagesReference = new LinkedList<>();
 
+    @ElementList(inline=true, required=false)
+    private List<ReferenceTag> references = new LinkedList<>();
+
     /* --- Constructors --- */
 
-    public NugetCsprojItemGroup(List<PackageReference> packagesReference) {
+    public NugetCsprojItemGroup(List<PackageReference> packagesReference, List<ReferenceTag> references) {
         this.packagesReference = packagesReference;
+        this.references = references;
     }
 
     public NugetCsprojItemGroup() {
@@ -31,5 +35,13 @@ public class NugetCsprojItemGroup {
 
     public void setPackageReference(List<PackageReference> packagesReference) {
         this.packagesReference = packagesReference;
+    }
+
+    public List<ReferenceTag> getReferences() {
+        return this.references;
+    }
+
+    public void setReferences(List<ReferenceTag> references) {
+        this.references = references;
     }
 }

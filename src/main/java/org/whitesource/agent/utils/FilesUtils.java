@@ -33,9 +33,7 @@ public class FilesUtils {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(FilesUtils.class);
-
-    /* --- Static methods --- */
+    private final Logger logger = LoggerFactory.getLogger(FilesUtils.class);
 
     public List<Path> getSubDirectories(String directory) {
         String[] files;
@@ -53,7 +51,7 @@ public class FilesUtils {
         return Arrays.stream(files).map(subDir -> Paths.get(directory, subDir)).collect(Collectors.toList());
     }
 
-    public static Map<File, Collection<String>> fillFilesMap(Collection<String> pathsToScan, String[] includes, String[] excludesExtended,
+    public Map<File, Collection<String>> fillFilesMap(Collection<String> pathsToScan, String[] includes, String[] excludesExtended,
                                                        boolean followSymlinks, boolean globCaseSensitive) {
         Map<File, Collection<String>> fileMap = new HashMap<>();
         for (String scannerBaseDir : pathsToScan) {
@@ -85,6 +83,8 @@ public class FilesUtils {
         }
         return fileMap;
     }
+
+    /* --- Static methods --- */
 
     public static void deleteDirectory(File directory) {
         if (directory != null) {

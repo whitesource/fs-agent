@@ -119,7 +119,7 @@ public class ProjectsSender {
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
 
-//            //todo remove projects.size() == 1 when via will scan more than one project
+//            // TODO remove projects.size() == 1 when via will scan more than one project
             if (senderConfig.isEnableImpactAnalysis() && projects.size() == 1) {
                 runViaAnalysis(projectsDetails, service);
             }  else if (!senderConfig.isEnableImpactAnalysis()) {
