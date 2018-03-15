@@ -1,6 +1,7 @@
 package org.whitesource.agent.utils;
 
 public class Pair <X, Y>{
+
     /* --- Private members --- */
     private final X key;
     private final Y value;

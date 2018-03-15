@@ -15,14 +15,22 @@
  */
 package org.whitesource.agent.dependency.resolver.nuget.packagesConfig;
 
+import org.apache.commons.lang.StringUtils;
 import org.simpleframework.xml.core.Persister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.DependencyInfoFactory;
+import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.api.model.DependencyType;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yossi.weinberg
@@ -48,20 +56,34 @@ public class NugetPackagesConfigXmlParser implements Serializable{
 
     /* --- Public methods --- */
 
-    public NugetPackages parsePackagesConfigFile() {
+    /**
+     * Parse packages.config or csproj file
+     * @param getDependenciesFromReferenceTag - flag to indicate weather to get dependencies form reference tag or not
+     * @return Set<DependencyInfo> - found dependencies
+     */
+    public Set<DependencyInfo> parsePackagesConfigFile(boolean getDependenciesFromReferenceTag) {
         Persister persister = new Persister();
-        NugetPackages packages = null;
+        Set<DependencyInfo> dependencies = new HashSet<>();
         try {
+            // case of packages.config file
             if (this.nugetConfigFileType == NugetConfigFileType.CONFIG_FILE_TYPE) {
-                packages = persister.read(NugetPackages.class, xml);
+               NugetPackages packages = persister.read(NugetPackages.class, xml);
+               if (!getDependenciesFromReferenceTag) {
+                   dependencies.addAll(collectDependenciesFromNugetConfig(packages));
+               }
+               // case of csproj file
             } else {
                 NugetCsprojPackages csprojPackages = persister.read(NugetCsprojPackages.class, xml);
-                packages = getNugetPackagesFromCsproj(csprojPackages);
+                NugetPackages packages = getNugetPackagesFromCsproj(csprojPackages);
+                if (!getDependenciesFromReferenceTag) {
+                    dependencies.addAll(collectDependenciesFromNugetConfig(packages));
+                }
+                dependencies.addAll(getDependenciesFromReferencesTag(csprojPackages));
             }
         } catch (Exception e) {
             logger.warn("Unable to parse suspected Nuget package configuration file {}", xml, e.getMessage());
         }
-        return packages;
+        return dependencies;
     }
 
     private NugetPackages getNugetPackagesFromCsproj(NugetCsprojPackages csprojPackages) {
@@ -76,5 +98,47 @@ public class NugetPackagesConfigXmlParser implements Serializable{
         NugetPackages nugetPackagesResult = new NugetPackages();
         nugetPackagesResult.setNugetPackages(nugetPackages);
         return nugetPackagesResult;
+    }
+
+    private Set<DependencyInfo> getDependenciesFromReferencesTag(NugetCsprojPackages csprojPackages) {
+        Set<DependencyInfo> dependencies = new HashSet<>();
+        DependencyInfoFactory dependencyInfoFactory = new DependencyInfoFactory();
+        for (NugetCsprojItemGroup csprojPackage : csprojPackages.getNugetItemGroups()) {
+            for (ReferenceTag referenceTag : csprojPackage.getReferences()) {
+                // Ignore the dependency if the hint path is blank
+                if (StringUtils.isNotEmpty(referenceTag.getHintPath())) {
+                    Path basePath = FileSystems.getDefault().getPath(this.xml.getPath());
+                    Path hintParentResolvedPath = basePath.getParent().resolve(referenceTag.getHintPath());
+                    String hintAbsolutePath = hintParentResolvedPath.normalize().toAbsolutePath().toString();
+                    File fileFromHintPath = new File(hintAbsolutePath);
+                    DependencyInfo dependency = dependencyInfoFactory.createDependencyInfo(fileFromHintPath.getParentFile(), fileFromHintPath.getName());
+                    if (dependency != null) {
+                        if (StringUtils.isNotEmpty(referenceTag.getVersion())) {
+                            dependency.setVersion(referenceTag.getVersion());
+                        }
+                        dependencies.add(dependency);
+                    }
+                }
+            }
+        }
+        return dependencies;
+    }
+
+    private Set<DependencyInfo> collectDependenciesFromNugetConfig(NugetPackages configNugetPackage) {
+        Set<DependencyInfo> dependencies = new HashSet<>();
+        List<NugetPackage> nugetPackages = configNugetPackage.getNugetPackages();
+        if (nugetPackages != null) {
+            for (NugetPackage nugetPackage : nugetPackages) {
+                if (StringUtils.isNotBlank(nugetPackage.getPkgName()) && StringUtils.isNotBlank(nugetPackage.getPkgVersion())) {
+                    DependencyInfo dependency = new DependencyInfo();
+                    dependency.setGroupId(nugetPackage.getPkgName());
+                    dependency.setArtifactId(nugetPackage.getPkgName());
+                    dependency.setVersion(nugetPackage.getPkgVersion());
+                    dependency.setDependencyType(DependencyType.NUGET);
+                    dependencies.add(dependency);
+                }
+            }
+        }
+        return dependencies;
     }
 }

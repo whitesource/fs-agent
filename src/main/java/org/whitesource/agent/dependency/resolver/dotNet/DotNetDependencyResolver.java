@@ -6,7 +6,9 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -35,9 +37,10 @@ public class DotNetDependencyResolver extends NugetDependencyResolver {
             this.resolveCollector.executeDotNetRestore(projectFolder, csprojFiles);
             Collection<AgentProjectInfo> projects = this.resolveCollector.collectDependencies(projectFolder);
             Collection<DependencyInfo> dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
+            dependencies.addAll(parseNugetPackageFiles(csprojFiles, true));
             return new ResolutionResult(dependencies, new LinkedList<>(), getDependencyType(), topLevelFolder);
         } else {
-            return getDependenciesFromParsing(topLevelFolder, csprojFiles);
+            return getResolutionResultFromParsing(topLevelFolder, csprojFiles, false);
         }
     }
 }

@@ -111,9 +111,9 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             }
             // In case the dependency is transitive/child dependency
             if (line.startsWith(SPACE) || line.startsWith(PIPE)){
-                if (duplicateDependency)
+                if (duplicateDependency || parentDependencies.isEmpty())
                     continue;
-                if (!parentDependencies.isEmpty()) {
+                //if (!parentDependencies.isEmpty()) {
                     // Check if 2 dependencies are siblings (under the hierarchy level)
                     if (lastSpace == prevLineIndentation){
                         parentDependencies.pop();
@@ -131,7 +131,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                         }
                     }
                     parentDependencies.peek().getChildren().add(currentDependency);
-                }
+                //}
                 parentDependencies.push(currentDependency);
             } else {
                 duplicateDependency = false;
@@ -166,6 +166,8 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 // making sure the download attempt is performed only once, otherwise there might be an infinite loop
                 if (!dependenciesDownloadAttemptPerformed && downloadDependencies()){
                     sha1 = getDependencySha1(dependencyInfo);
+                } else {
+                    logger.error("Couldn't find sha1 for " + dependencyInfo.getGroupId() + "." + dependencyInfo.getArtifactId() + "." + dependencyInfo.getVersion());
                 }
             }
         }
@@ -202,7 +204,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             }
         }
         if (sha1 == null){
-            logger.error("Couldn't find sha1 for " + groupId + "." + artifactId + "." + version + " inside .gradle cache." );
+            logger.debug("Couldn't find sha1 for " + groupId + "." + artifactId + "." + version + " inside .gradle cache." );
         }
         return sha1;
     }
@@ -217,16 +219,16 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             this.M2Path = getMavenM2Path(DOT);
         }
 
-        String pathToDependency = M2Path.concat(fileSeparator + groupId + fileSeparator + artifactId + fileSeparator + version
+        String pathToDependency = M2Path.concat(fileSeparator + String.join(fileSeparator,groupId.split("\\.")) + fileSeparator + artifactId + fileSeparator + version
                 + fileSeparator + artifactId + DASH + version + JAR_EXTENSION);
         File file = new File(pathToDependency);
         if (file.isFile()) {
             sha1 = getSha1(pathToDependency);
             if (sha1.equals(EMPTY_STRING)) {
-                logger.error("Couldn't calculate sha1 for " + groupId + "." + artifactId + "." + version + ".  ");
+                logger.debug("Couldn't calculate sha1 for " + groupId + "." + artifactId + "." + version + ".  ");
             }
         } else {
-            logger.error("Couldn't find sha1 for " + groupId + "." + artifactId + "." + version + " inside .m2 cache." );
+            logger.debug("Couldn't find sha1 for " + groupId + "." + artifactId + "." + version + " inside .m2 cache." );
         }
         return sha1;
     }
@@ -247,7 +249,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                     }
                 }
             } catch (IOException e){
-                logger.error("Failed running 'gradle assemble' command, got exception: " + e.getMessage());
+                logger.debug("Failed running 'gradle assemble' command, got exception: " + e.getMessage());
             }
         } else {
             logger.debug("Can't run 'gradle assemble' to download missing dependencies.  Change 'gradle.runAssembleCommand' in the configuration file to 'true'");

@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.hash.ChecksumUtils;
@@ -54,7 +53,7 @@ public class DotNetRestoreCollector extends DependencyCollector {
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
         List<DependencyInfo> dependencies = new LinkedList<>();
-        Map<File, Collection<String>> folderMapToFiles = FilesUtils.fillFilesMap(this.pathsToScan, this.includes, this.excludes, true, false);
+        Map<File, Collection<String>> folderMapToFiles = new FilesUtils().fillFilesMap(this.pathsToScan, this.includes, this.excludes, true, false);
         for (File file : folderMapToFiles.keySet()) {
             for (String shortPath : folderMapToFiles.get(file)) {
                 String nugetFilePath = file.getAbsolutePath() + BACK_SLASH + shortPath;

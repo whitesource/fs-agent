@@ -18,6 +18,7 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class ResolverConfiguration {

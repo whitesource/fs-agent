@@ -30,7 +30,11 @@ import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.web.FsaVerticle;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
