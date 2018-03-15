@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver.maven;
+
 import fr.dutra.tools.maven.deptree.core.Node;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -26,7 +27,8 @@ import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.CommandLineProcess;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -127,7 +129,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                     return projectInfo;
                 }).collect(Collectors.toList());
             } else {
-                logger.error("Failed to scan and send {}", getLsCommandParams());
+                logger.warn("Failed to scan and send {}", getLsCommandParams());
             }
         } catch (IOException e) {
             logger.warn("Error getting dependencies after running {} on {}, {}" , getLsCommandParams() , rootDirectory, e.getMessage());
@@ -212,16 +214,16 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 if (pathLine.isPresent()) {
                     return pathLine.get();
                 } else {
-                    logger.error("could not get m2 path : {} out: {}", rootDirectory, lines.stream().reduce("", String::concat));
+                    logger.warn("could not get m2 path : {} out: {}", rootDirectory, lines.stream().reduce("", String::concat));
                     showMavenTreeError = true;
                     return null;
                 }
             } else {
-                logger.error("Failed to scanAndSend {}", getLsCommandParams());
+                logger.warn("Failed to scan and send {}", getLsCommandParams());
                 return null;
             }
         } catch (IOException io) {
-            logger.error("could not get m2 path : {}", io.getMessage());
+            logger.warn("could not get m2 path : {}", io.getMessage());
             showMavenTreeError = true;
             return null;
         }

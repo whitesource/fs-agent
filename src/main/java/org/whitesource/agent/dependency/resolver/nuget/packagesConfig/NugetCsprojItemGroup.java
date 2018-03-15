@@ -2,6 +2,7 @@ package org.whitesource.agent.dependency.resolver.nuget.packagesConfig;
 
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import java.util.List;
  */
 @Root(name="ItemGroup", strict=false)
 public class NugetCsprojItemGroup {
+
     /* --- Members --- */
 
     @ElementList(inline=true, required=false)

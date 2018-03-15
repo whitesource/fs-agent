@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.hash.ChecksumUtils;

@@ -13,6 +13,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     private static final List<String> GRADLE_SCRIPT_EXTENSION = Arrays.asList(".gradle",".groovy", ".java", ".jar", ".war", ".ear", ".car", ".class");
     private static final String FILE_SEPARATOR = "file.separator";
     private static final String JAR_EXTENSION = ".jar";
+    public static final String GLOB_PATTERN = "**/";
 
     private GradleLinesParser gradleLinesParser;
     private GradleCli gradleCli;
@@ -37,7 +38,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
         for (String topLeverFolderName : topLevelFoldersNames) {
-            excludes.add("**/" + topLeverFolderName + JAR_EXTENSION);
+            excludes.add(GLOB_PATTERN + topLeverFolderName + JAR_EXTENSION);
         }
         return excludes;
     }
