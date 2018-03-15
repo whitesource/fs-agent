@@ -138,7 +138,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
         if (projects != null && projects.isEmpty()) {
             if (!showMavenTreeError) {
-                logger.info("Failed getting dependencies after running '{}' Please install maven ", getLsCommandParams());
+                logger.info("Failed to getting dependencies after running '{}' Please install maven ", getLsCommandParams());
                 showMavenTreeError = true;
             }
         }
