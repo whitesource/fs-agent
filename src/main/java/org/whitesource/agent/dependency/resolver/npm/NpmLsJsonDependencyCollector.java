@@ -102,7 +102,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
 
         if (dependencies.isEmpty()) {
             if (!showNpmLsError) {
-                logger.info("Failed getting dependencies after running '{}' Please run {} on the folder {}", getLsCommandParams(),getInstallParams(), rootDirectory);
+                logger.info("Failed to getting dependencies after running '{}' Please run {} on the folder {}", getLsCommandParams(),getInstallParams(), rootDirectory);
                 showNpmLsError = true;
             }
         }

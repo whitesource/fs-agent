@@ -121,7 +121,7 @@ public class DockerResolver {
      * Filter the images using includes and excludes lists
      */
     private Collection<DockerImage> filterDockerImagesToScan(Collection<DockerImage> dockerImages, String[] dockerImageIncludes, String[] dockerImageExcludes) {
-        logger.info("Filtering docker image list by includes and excludes lists");
+        logger.info("Filtering docker images list by includes and excludes lists");
         Collection<DockerImage> dockerImagesToScan = new LinkedList<>();
         Collection<String> imageIncludesList = Arrays.asList(dockerImageIncludes);
         Collection<String> imageExcludesList = Arrays.asList(dockerImageExcludes);

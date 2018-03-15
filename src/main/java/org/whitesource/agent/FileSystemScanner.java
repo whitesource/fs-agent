@@ -300,11 +300,7 @@ public class FileSystemScanner {
             for (String archiveDirectory : archiveDirectories) {
            File directory = new File(archiveDirectory);
            if (directory.exists()) {
-               try {
-                   FileUtils.deleteDirectory(directory);
-               } catch (IOException e) {
-                   logger.warn("Error deleting archive directory", e);
-               }
+               FileUtils.deleteQuietly(directory);
            }}
         }
         logger.info("Finished Analyzing Files");

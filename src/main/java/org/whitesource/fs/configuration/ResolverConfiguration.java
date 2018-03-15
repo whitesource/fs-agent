@@ -227,4 +227,28 @@ public class ResolverConfiguration {
 
     @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND)
     public boolean isGradleRunAssembleCommand() { return gradleRunAssembleCommand; }
+
+    public void setNpmResolveDependencies(boolean npmResolveDependencies) {
+        this.npmResolveDependencies = npmResolveDependencies;
+    }
+
+    public void setBowerResolveDependencies(boolean bowerResolveDependencies) {
+        this.bowerResolveDependencies = bowerResolveDependencies;
+    }
+
+    public void setNugetResolveDependencies(boolean nugetResolveDependencies) {
+        this.nugetResolveDependencies = nugetResolveDependencies;
+    }
+
+    public void setMavenResolveDependencies(boolean mavenResolveDependencies) {
+        this.mavenResolveDependencies = mavenResolveDependencies;
+    }
+
+    public void setPythonResolveDependencies(boolean pythonResolveDependencies) {
+        this.pythonResolveDependencies = pythonResolveDependencies;
+    }
+
+    public void setGradleResolveDependencies(boolean gradleResolveDependencies) {
+        this.gradleResolveDependencies = gradleResolveDependencies;
+    }
 }
