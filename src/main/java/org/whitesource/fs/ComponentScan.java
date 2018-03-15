@@ -27,6 +27,7 @@ public class ComponentScan {
     public static final String FOLDER_DELIMITER = ",";
 
     /* --- Members --- */
+
     private  Properties config;
 
     /* --- Constructors --- */
