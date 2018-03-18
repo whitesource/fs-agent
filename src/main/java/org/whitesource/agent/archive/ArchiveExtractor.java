@@ -53,8 +53,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
-  The class supports recursive deCompression of compressed files Java, Python & Ruby types.
-  @author anna.rozin
+ * @author anna.rozin
  */
 public class ArchiveExtractor {
 
