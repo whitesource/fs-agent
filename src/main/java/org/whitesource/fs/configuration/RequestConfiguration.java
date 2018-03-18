@@ -20,8 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
-import static org.whitesource.agent.ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY;
-import static org.whitesource.agent.ConfigPropertyKeys.REQUESTER_EMAIL;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RequestConfiguration {

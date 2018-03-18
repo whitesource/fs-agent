@@ -21,7 +21,10 @@ import org.whitesource.agent.api.model.DependencyType;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by eugen on 6/21/2017.

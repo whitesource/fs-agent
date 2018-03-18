@@ -28,6 +28,7 @@ import java.util.List;
 public class NugetPackages {
 
     /* --- Members --- */
+
     @ElementList(inline=true, required=false)
     private List<NugetPackage> nugetPackages = new LinkedList<>();
 

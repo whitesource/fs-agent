@@ -111,9 +111,9 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             }
             // In case the dependency is transitive/child dependency
             if (line.startsWith(SPACE) || line.startsWith(PIPE)){
-                if (duplicateDependency)
+                if (duplicateDependency || parentDependencies.isEmpty())
                     continue;
-                if (!parentDependencies.isEmpty()) {
+                //if (!parentDependencies.isEmpty()) {
                     // Check if 2 dependencies are siblings (under the hierarchy level)
                     if (lastSpace == prevLineIndentation){
                         parentDependencies.pop();
@@ -131,7 +131,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                         }
                     }
                     parentDependencies.peek().getChildren().add(currentDependency);
-                }
+                //}
                 parentDependencies.push(currentDependency);
             } else {
                 duplicateDependency = false;

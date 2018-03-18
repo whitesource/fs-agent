@@ -1,7 +1,6 @@
 package org.whitesource.agent;
 
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.scm.ScmConnector;
 
 import java.io.File;
 import java.text.MessageFormat;

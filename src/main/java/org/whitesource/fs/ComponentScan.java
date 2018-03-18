@@ -27,6 +27,7 @@ public class ComponentScan {
     public static final String DOT = ".";
 
     /* --- Members --- */
+
     private  Properties config;
 
     /* --- Constructors --- */
