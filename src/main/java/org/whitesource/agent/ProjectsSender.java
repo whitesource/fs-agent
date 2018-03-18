@@ -45,9 +45,7 @@ import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResul
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 //import whitesource.analysis.server.FSAgentServer;
 //import whitesource.analysis.server.Server;
@@ -64,6 +62,7 @@ import java.util.Set;
  * @author anna.rozin
  */
 public class ProjectsSender {
+    public static final String PROJECT_URL_PREFIX = "Wss/WSS.html#!project;id=";
 
     /* --- Static members --- */
 
@@ -342,6 +341,7 @@ public class ProjectsSender {
             }
         }
 
+
         // updated projects
         Collection<String> updatedProjects = updateResult.getUpdatedProjects();
         if (updatedProjects.isEmpty()) {
@@ -353,6 +353,17 @@ public class ProjectsSender {
             for (String projectName : updatedProjects) {
                 logger.info("# {}", projectName);
                 resultLogMsg.append(projectName).append(NEW_LINE);
+            }
+        }
+
+        // reading projects' URLs
+        HashMap<String, Integer> projectsUrls = updateResult.getProjectNamesToIds();
+        if (projectsUrls != null && !projectsUrls.isEmpty()) {
+            for (String projectName : projectsUrls.keySet()) {
+                String appUrl = senderConfig.getServiceUrl().replace("agent","");
+                String projectsUrl = appUrl + PROJECT_URL_PREFIX + projectsUrls.get(projectName);
+                logger.info("Project name: {}, URL: {}",projectName, projectsUrl);
+                resultLogMsg.append(NEW_LINE).append("Project name: ").append(projectName).append(", project URL:").append(projectsUrl);
             }
         }
 
