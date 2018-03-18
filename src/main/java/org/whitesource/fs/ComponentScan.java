@@ -5,19 +5,18 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Properties;
+import java.util.*;
 
 
 /**
  * Created by anna.rozin
  */
 public class ComponentScan {
+    public static final String DIRECTORY = "d";
 
     /* --- Static members --- */
 
@@ -25,6 +24,7 @@ public class ComponentScan {
     public static final String DIRECTORY_NOT_SET = "Directory parameter 'd' is not set" + StatusCode.ERROR;
     public static final String EMPTY_PROJECT_TOKEN = "";
     public static final String FOLDER_DELIMITER = ",";
+    public static final String DOT = ".";
 
     /* --- Members --- */
     private  Properties config;
@@ -39,13 +39,12 @@ public class ComponentScan {
 
     public String scan() {
         logger.info("Starting Analysis - component scan has started");
-        String directory = config.getProperty("d");
+        String directory = config.getProperty(DIRECTORY);
         String[] directories = directory.split(FOLDER_DELIMITER);
         ArrayList<String> scannerBaseDirs = new ArrayList<>(Arrays.asList(directories));
         if (!scannerBaseDirs.isEmpty()) {
             logger.info("Getting properties");
             // configure properties
-//            List<String> scannerBaseDirs = Collections.singletonList(directory);
             FSAConfiguration fsaConfiguration = new FSAConfiguration(config);
             // set default values in case of missing parameters
             ResolverConfiguration resolverConfiguration = fsaConfiguration.getResolver();
@@ -53,7 +52,7 @@ public class ComponentScan {
                     config.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX) : ExtensionUtils.INCLUDES;
             String[] excludes = config.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY) != null ?
                     config.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX) : ExtensionUtils.EXCLUDES;
-
+            String[] acceptExtensionsList = (String[]) config.get(ConfigPropertyKeys.ACCEPT_EXTENSIONS_LIST);
             boolean globCaseSensitive = config.getProperty(ConfigPropertyKeys.CASE_SENSITIVE_GLOB_PROPERTY_KEY) != null ?
                     Boolean.valueOf(config.getProperty(ConfigPropertyKeys.CASE_SENSITIVE_GLOB_PROPERTY_KEY)) : false;
             boolean followSymlinks = config.getProperty(ConfigPropertyKeys.CASE_SENSITIVE_GLOB_PROPERTY_KEY) != null ?
@@ -71,14 +70,31 @@ public class ComponentScan {
                     fsaConfiguration.getAgent().isCalculateMd5(), fsaConfiguration.getResolver().getNpmAccessToken()).keySet();
             logger.info("Finished dependency resolution");
             for (AgentProjectInfo project : projects) {
-//                project.setCoordinates(new Coordinates());
                 project.setProjectToken(EMPTY_PROJECT_TOKEN);
+                if (acceptExtensionsList != null && acceptExtensionsList.length > 0) {
+                    project.setDependencies(getDependenciesFromExtensionsListOnly(project.getDependencies(), acceptExtensionsList));
+                }
             }
 //             Return dependencies
             String jsonString = new ConfigurationSerializer().getAsString(projects, true);
             return jsonString;
-        } else
+        } else {
             return "";// new ConfigurationSerializer<>().getAsString(new Collection<AgentProjectInfo>);
         }
     }
+
+    private List<DependencyInfo> getDependenciesFromExtensionsListOnly(Collection<DependencyInfo> dependencies, String[] acceptExtensionsList) {
+        LinkedList<DependencyInfo> filteredDependencies = new LinkedList<>();
+        for (DependencyInfo dependency : dependencies) {
+            for (String extension : acceptExtensionsList) {
+                if (dependency.getArtifactId().endsWith(DOT + extension)) {
+                    filteredDependencies.add(dependency);
+                    dependency.setChildren(getDependenciesFromExtensionsListOnly(dependency.getChildren(), acceptExtensionsList));
+                    break;
+                }
+            }
+        }
+        return filteredDependencies;
+    }
+}
 
