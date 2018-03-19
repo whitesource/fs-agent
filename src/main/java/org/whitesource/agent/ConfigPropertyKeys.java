@@ -35,6 +35,7 @@ public final class ConfigPropertyKeys {
     public static final String PRODUCT_NAME_PROPERTY_KEY = "productName"; // optional
     public static final String PRODUCT_VERSION_PROPERTY_KEY = "productVersion"; // optional
     public static final String APP_PATH = "appPath"; // optional
+    public static final String VIA_DEBUG="viaDebug"; // optional
     public static final String PROJECT_TOKEN_PROPERTY_KEY = "projectToken";
     public static final String PROJECT_NAME_PROPERTY_KEY = "projectName";
     public static final String PROJECT_VERSION_PROPERTY_KEY = "projectVersion"; // optional
