@@ -34,7 +34,7 @@ public class FilesScanner {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(FilesScanner.class);
+    private Logger logger = LoggerFactory.getLogger(FilesScanner.class);
 
     /* --- Public methods --- */
 

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
+import org.whitesource.agent.dependency.resolver.docker.DockerResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.dependency.resolver.packageManger.PackageManagerExtractor;
 import org.whitesource.agent.utils.CommandLineProcess;
@@ -48,7 +49,7 @@ public class FileSystemAgent {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
+    private Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
     public static final String EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX = ",";
     private static final String NPM_COMMAND = NpmLsJsonDependencyCollector.isWindows() ? "npm.cmd" : "npm";
     private static final String NPM_INSTALL_COMMAND = "install";
@@ -74,7 +75,7 @@ public class FileSystemAgent {
 
                 File file = new File(directory);
                 if (file.isDirectory()) {
-                    List<Path> directories = FilesUtils.getSubDirectories(directory);
+                    List<Path> directories = new FilesUtils().getSubDirectories(directory);
                     directories.forEach(subDir -> this.dependencyDirs.add(subDir.toString()));
                 } else if (file.isFile()) {
                     this.dependencyDirs.add(directory);
@@ -143,7 +144,7 @@ public class FileSystemAgent {
 
         List<ScmConnector> scmConnectors = null;
         if (StringUtils.isNotBlank(config.getScm().getRepositoriesPath())) {
-            Collection<ScmConfiguration> scmConfigurations = ScmRepositoriesParser.parseRepositoriesFile(
+            Collection<ScmConfiguration> scmConfigurations = new ScmRepositoriesParser().parseRepositoriesFile(
                     config.getScm().getRepositoriesPath(), config.getScm().getType(), config.getScm().getPpk(), config.getScm().getUser(), config.getScm().getPass());
             scmConnectors = scmConfigurations.stream()
                     .map(scm -> ScmConnector.create(scm.getType(), scm.getUrl(), scm.getPpk(), scm.getUser(), scm.getPass(), scm.getBranch(), scm.getTag()))
@@ -186,7 +187,10 @@ public class FileSystemAgent {
         // Use FSA a as a package manger extractor for Debian/RPM/Arch Linux/Alpine
         if (config.isScanProjectManager()) {
             projects = new PackageManagerExtractor().createProjects();
-            projectsDetails =new ProjectsDetails(projects, success[0], EMPTY_STRING);
+            projectsDetails = new ProjectsDetails(projects, success[0], EMPTY_STRING);
+        } else if (config.isScanDockerImages()) {
+            projects = new DockerResolver(config).resolveDockerImages();
+            projectsDetails = new ProjectsDetails(projects, success[0], EMPTY_STRING);
         } else {
             projectToLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis())
                     .createProjects(scannerBaseDirs, hasScmConnectors[0], this.config.getResolver().getNpmAccessToken());

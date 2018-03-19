@@ -17,6 +17,7 @@ package org.whitesource.agent.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
@@ -35,7 +36,7 @@ public class FileWalker implements Iterator<Path> {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(FileWalker.class);
+    private Logger logger = LoggerFactory.getLogger(FileWalker.class);
 
     /* --- Private members --- */
 

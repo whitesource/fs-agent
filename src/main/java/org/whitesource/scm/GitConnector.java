@@ -25,7 +25,7 @@ public class GitConnector extends ScmConnector {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(GitConnector.class);
+    private Logger logger = LoggerFactory.getLogger(GitConnector.class);
 
     /* --- Constructors --- */
 

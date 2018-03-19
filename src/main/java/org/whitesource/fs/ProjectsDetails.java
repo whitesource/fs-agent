@@ -18,8 +18,8 @@ package org.whitesource.fs;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ProjectsDetails {
 
@@ -36,7 +36,14 @@ public class ProjectsDetails {
     }
 
     public ProjectsDetails(Collection<AgentProjectInfo> projects, StatusCode statusCode , String details) {
-        this(projects.stream().collect(Collectors.toMap(project->project,null)), statusCode, details);
+        Map<AgentProjectInfo, String> projectToLanguage = new HashMap<>();
+        for (AgentProjectInfo project : projects) {
+            projectToLanguage.put(project, null);
+        }
+        this.statusCode = statusCode;
+        this.projectToLanguage = projectToLanguage;
+        this.details = details;
+//        this(projects.stream().collect(Collectors.toMap(project->project,null)), statusCode, details);
     }
 
     public ProjectsDetails() {

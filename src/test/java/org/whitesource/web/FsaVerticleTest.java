@@ -83,7 +83,7 @@ public class FsaVerticleTest {
 
         FSAConfiguration fsaConfiguration = new FSAConfiguration(properties);
 
-        String json = ConfigurationSerializer.getAsString(fsaConfiguration,false);
+        String json = new ConfigurationSerializer().getAsString(fsaConfiguration,false);
         assert json != null;
         Assert.assertTrue(json.contains(GIT_SAMPLE));
         final String length = Integer.toString(json.length());

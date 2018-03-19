@@ -30,7 +30,11 @@ import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.web.FsaVerticle;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -83,7 +87,7 @@ public class Main {
                     .setBlockedThreadCheckInterval(MAX_TIMEOUT));
 
             JsonObject config = new JsonObject();
-            config.put(FsaVerticle.CONFIGURATION, ConfigurationSerializer.getAsString(fsaConfiguration, false));
+            config.put(FsaVerticle.CONFIGURATION, new ConfigurationSerializer().getAsString(fsaConfiguration, false));
             DeploymentOptions options = new DeploymentOptions()
                     .setConfig(config)
                     .setWorker(true);

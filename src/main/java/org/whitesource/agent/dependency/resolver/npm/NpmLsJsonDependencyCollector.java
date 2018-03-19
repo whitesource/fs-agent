@@ -28,8 +28,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,22 +44,19 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
 
     /* --- Statics Members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(NpmLsJsonDependencyCollector.class);
+    private final Logger logger = LoggerFactory.getLogger(NpmLsJsonDependencyCollector.class);
 
     public static final String LS_COMMAND = "ls";
     public static final String INSTALL_COMMAND = "install";
     public static final String LS_PARAMETER_JSON = "--json";
 
     private static final String NPM_COMMAND = isWindows() ? "npm.cmd" : "npm";
-    private static final String OS_NAME = "os.name";
-    private static final String WINDOWS = "win";
     private static final String DEPENDENCIES = "dependencies";
     private static final String VERSION = "version";
     private static final String RESOLVED = "resolved";
     private static final String LS_ONLY_PROD_ARGUMENT = "--only=prod";
     private static final String MISSING = "missing";
     public static final String PEER_MISSING = "peerMissing";
-    private static final String NAME = "name";
     private static final String DEDUPED = "deduped";
     private static final String REQUIRED = "required";
 
@@ -104,7 +103,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
 
         if (dependencies.isEmpty()) {
             if (!showNpmLsError) {
-                logger.info("Failed getting dependencies after running '{}' Please run {} on the folder {}", getLsCommandParams(),getInstallParams(), rootDirectory);
+                logger.info("Failed to getting dependencies after running '{}' Please run {} on the folder {}", getLsCommandParams(),getInstallParams(), rootDirectory);
                 showNpmLsError = true;
             }
         }
@@ -148,7 +147,11 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
                         dependency.getChildren().addAll(childDependencies);
                     } else {
                         // it can be only if was an error in 'npm ls'
-                        currentLineNumber = getDependencies(dependencyJsonObject.getJSONObject(REQUIRED), linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
+                        if (dependenciesJsonObject.has(REQUIRED)) {
+                            currentLineNumber = getDependencies(dependencyJsonObject.getJSONObject(REQUIRED), linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
+                        } else {
+                            currentLineNumber++;
+                        }
                     }
                 }
             }
@@ -241,12 +244,6 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
         dependency.setFilename(filename);
         dependency.setDependencyType(DependencyType.NPM);
         return dependency;
-    }
-
-    /* --- Static methods --- */
-
-    public static boolean isWindows() {
-        return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
     }
 
     /* --- Nested classes --- */

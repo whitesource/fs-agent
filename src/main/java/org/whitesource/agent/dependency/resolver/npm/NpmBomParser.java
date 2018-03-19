@@ -18,8 +18,9 @@ package org.whitesource.agent.dependency.resolver.npm;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.dependency.resolver.BomParser;
 import org.whitesource.agent.dependency.resolver.BomFile;
+import org.whitesource.agent.dependency.resolver.BomParser;
+
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -43,7 +44,7 @@ public class NpmBomParser extends BomParser {
     private static String NPM_PACKAGE_FORMAT = "{0}-{1}.tgz";
     private static String RESOLVED = "_resolved";
 
-    private static final Logger logger = LoggerFactory.getLogger(NpmBomParser.class);
+    private final Logger logger = LoggerFactory.getLogger(NpmBomParser.class);
 
     /* --- Protected methods --- */
 

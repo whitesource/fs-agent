@@ -17,13 +17,17 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Collection;
+
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class AgentConfiguration {
 
     private final String[] includes;
     private final String[] excludes;
+    private final String[] dockerIncludes;
+    private final String[] dockerExcludes;
     private final int archiveExtractionDepth;
     private final String[] archiveIncludes;
     private final String[] archiveExcludes;
@@ -32,7 +36,7 @@ public class AgentConfiguration {
     private final boolean partialSha1Match;
     private final boolean calculateHints;
     private final boolean calculateMd5;
-
+    private final boolean dockerScan;
     private final boolean showProgressBar;
     private final boolean globCaseSensitive;
     private final Collection<String> excludedCopyrights;
@@ -45,6 +49,8 @@ public class AgentConfiguration {
     @JsonCreator
     public AgentConfiguration(@JsonProperty(INCLUDES_PATTERN_PROPERTY_KEY) String[] includes,
                               @JsonProperty(EXCLUDES_PATTERN_PROPERTY_KEY) String[] excludes,
+                              @JsonProperty(DOCKER_INCLUDES_PATTERN_PROPERTY_KEY) String[] dockerIncludes,
+                              @JsonProperty(DOCKER_EXCLUDES_PATTERN_PROPERTY_KEY) String[] dockerExcludes,
                               @JsonProperty(ARCHIVE_EXTRACTION_DEPTH_KEY) int archiveExtractionDepth,
                               @JsonProperty(ARCHIVE_INCLUDES_PATTERN_KEY) String[] archiveIncludes,
                               @JsonProperty(ARCHIVE_EXCLUDES_PATTERN_KEY) String[] archiveExcludes,
@@ -55,16 +61,19 @@ public class AgentConfiguration {
                               @JsonProperty(CALCULATE_MD5) boolean calculateMd5,
                               @JsonProperty(SHOW_PROGRESS_BAR) boolean showProgressBar,
                               @JsonProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY) boolean globCaseSensitive,
+                              @JsonProperty(SCAN_DOCKER_IMAGES) boolean dockerScan,
                               String error,
-                              @JsonProperty(EXCLUDED_COPYRIGHT_KEY) Collection<String> excludedCopyrights){
-        this.includes = includes == null? new String[0] : includes;
-        this.excludes = excludes == null? new String[0] : excludes;
+                              @JsonProperty(EXCLUDED_COPYRIGHT_KEY) Collection<String> excludedCopyrights) {
+        this.includes = includes == null ? new String[0] : includes;
+        this.excludes = excludes == null ? new String[0] : excludes;
+        this.dockerIncludes = dockerIncludes == null ? new String[0] : dockerIncludes;
+        this.dockerExcludes = dockerExcludes == null ? new String[0] : dockerExcludes;
         this.archiveExtractionDepth = archiveExtractionDepth;
-        this.archiveIncludes = archiveIncludes == null? new String[0] : archiveIncludes;
-        this.archiveExcludes = archiveExcludes == null? new String[0] : archiveExcludes;
+        this.archiveIncludes = archiveIncludes == null ? new String[0] : archiveIncludes;
+        this.archiveExcludes = archiveExcludes == null ? new String[0] : archiveExcludes;
         this.archiveFastUnpack = archiveFastUnpack;
         this.followSymlinks = followSymlinks;
-
+        this.dockerScan = dockerScan;
         this.partialSha1Match = partialSha1Match;
         this.calculateHints = calculateHints;
         this.calculateMd5 = calculateMd5;
@@ -137,5 +146,17 @@ public class AgentConfiguration {
     @JsonProperty(CALCULATE_MD5)
     public boolean isCalculateMd5() {
         return calculateMd5;
+    }
+
+    public String[] getDockerIncludes() {
+        return dockerIncludes;
+    }
+
+    public String[] getDockerExcludes() {
+        return dockerExcludes;
+    }
+
+    public boolean isDockerScan() {
+        return dockerScan;
     }
 }

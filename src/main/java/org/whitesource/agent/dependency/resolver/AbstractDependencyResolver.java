@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver;
+
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.api.model.DependencyType;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +38,7 @@ public abstract class AbstractDependencyResolver {
 
     /* --- Abstract methods --- */
 
-    protected abstract ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles, String npmAccessToken);
+    protected abstract ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles);
 
     protected abstract Collection<String> getExcludes();
 

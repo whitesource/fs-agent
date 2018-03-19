@@ -20,6 +20,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class ScmRepositoriesParser {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ScmRepositoriesParser.class);
+    private final Logger logger = LoggerFactory.getLogger(ScmRepositoriesParser.class);
     public static final String URL = "url";
     public static final String BRANCH = "branch";
     public static final String TAG = "tag";
@@ -43,7 +44,7 @@ public class ScmRepositoriesParser {
 
     /* --- Static methods --- */
 
-    public static Collection<ScmConfiguration> parseRepositoriesFile(String fileName, String scmType, String scmPpk, String scmUser, String scmPassword) {
+    public Collection<ScmConfiguration> parseRepositoriesFile(String fileName, String scmType, String scmPpk, String scmUser, String scmPassword) {
         try (InputStream is = new FileInputStream(fileName)) {
             String jsonText = IOUtils.toString(is);
 

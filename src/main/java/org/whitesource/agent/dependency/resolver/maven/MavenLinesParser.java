@@ -24,7 +24,7 @@ public class MavenLinesParser {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(MavenLinesParser.class);
+    private Logger logger = LoggerFactory.getLogger(MavenLinesParser.class);
     private static final String MAVEN_DEPENDENCY_PLUGIN_TREE = "maven-dependency-plugin:"; // 2.8:tree";
     private static final String INFO = "[INFO] ";
     private static final String UTF_8 = "UTF-8";
@@ -45,15 +45,16 @@ public class MavenLinesParser {
                 Node tree = parser.parse(lineReader);
                 nodes.add(tree);
             } catch (UnsupportedEncodingException e) {
-                logger.error("unsupportedEncoding error parsing output : {}", e.getMessage());
+                logger.warn("unsupportedEncoding error parsing output : {}", e.getMessage());
+                logger.debug("unsupportedEncoding error parsing output : {}", e.getStackTrace());
             } catch (ParseException e) {
-                logger.error("error parsing output : {} ", e.getMessage());
+                logger.warn("error parsing output : {} ", e.getMessage());
+                logger.debug("error parsing output : {} ", e.getStackTrace());
             } catch (Exception e) {
                 // this can happen often - some parts of the output are not parsable
                 logger.debug("error parsing output : {} {}", e.getMessage(), mvnLines);
             }
         });
-
         return nodes;
     }
 

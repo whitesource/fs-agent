@@ -26,7 +26,8 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.fs.OfflineReader;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,7 +41,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver.class);
+    private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver.class);
     private static final String PATTERN = "**/*";
     private static final String PYTHON_BOM = "requirements.txt";
     private static final String WHITESOURCE_TEMP_FOLDER = "Whitesource_python_resolver";
@@ -111,7 +112,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     /* --- Overridden methods --- */
 
     @Override
-    public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles, String npmAccessToken) {
+    public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles) {
         String tempDir = getTempDir();
         Map<AgentProjectInfo, Path> resolvedProjects = new HashMap<>();
         String[] args = new String[0];
@@ -190,7 +191,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             }
             return lines;
         } catch (IOException ioe) {
-            logger.error("Consider adding '" + args[0] + "' to the PATH or set '" + args[0] + "' full path in the configuration file");
+            logger.warn("Consider adding '" + args[0] + "' to the PATH or set '" + args[0] + "' full path in the configuration file");
             throw ioe;
         }
     }

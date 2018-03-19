@@ -35,7 +35,7 @@ public class MavenPomParser implements IBomParser {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(MavenPomParser.class);
+    private final Logger logger = LoggerFactory.getLogger(MavenPomParser.class);
 
     /* --- Constructor --- */
 

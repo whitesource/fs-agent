@@ -29,7 +29,6 @@ import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 import org.whitesource.agent.utils.Pair;
-import org.whitesource.agent.via.api.VulnerabilityAnalysisResult;
 import org.whitesource.contracts.PluginInfo;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
@@ -46,15 +45,6 @@ import org.whitesource.fs.configuration.SenderConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-
-//import whitesource.analysis.server.FSAgentServer;
-//import whitesource.analysis.server.Server;
-//import whitesource.analysis.utils.Utils;
-//import whitesource.analysis.vulnerabilities.VulnerabilitiesAnalysis;
-//import whitesource.via.api.vulnerability.update.ApiTranslator;
-//import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResult;
 
 /**
  * Class for sending projects for all WhiteSource command line agents.
@@ -67,7 +57,7 @@ public class ProjectsSender {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ProjectsSender.class);
+    private final Logger logger = LoggerFactory.getLogger(ProjectsSender.class);
 
     private static final String NEW_LINE = System.lineSeparator();
     private static final String DOT = ".";
@@ -119,7 +109,7 @@ public class ProjectsSender {
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
 
-            //todo remove projects.size() == 1 when via will scan more than one project
+//            // TODO remove projects.size() == 1 when via will scan more than one project
             if (senderConfig.isEnableImpactAnalysis() && projects.size() == 1) {
 //                runViaAnalysis(projectsDetails, service);
             }  else if (!senderConfig.isEnableImpactAnalysis()) {

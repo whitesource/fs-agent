@@ -15,7 +15,6 @@
  */
 package org.whitesource.agent.dependency.resolver.nuget;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -23,8 +22,6 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
-import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackage;
-import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackages;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetPackagesConfigXmlParser;
 import org.whitesource.fs.CommandLineArgs;
 
@@ -38,7 +35,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(NugetDependencyResolver.class);
+    private final Logger logger = LoggerFactory.getLogger(NugetDependencyResolver.class);
     public static final String CONFIG = ".config";
     public static final String CSPROJ = ".csproj";
     public static final String PATTERN = "**/*";
@@ -65,13 +62,12 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     /* --- Overridden methods --- */
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles, String npmAccessToken) {
-        Collection<NugetPackages> allConfigNugetPackages = parseNugetPackageFiles(configFiles);
-        Set<DependencyInfo> dependencies = new HashSet<>();
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles) {
+        return getResolutionResultFromParsing(topLevelFolder, configFiles, false);
+    }
 
-        for (NugetPackages configNugetPackage : allConfigNugetPackages) {
-            dependencies.addAll(collectDependenciesFromNugetConfig(configNugetPackage));
-        }
+    protected ResolutionResult getResolutionResultFromParsing(String topLevelFolder, Set<String> configFiles, boolean onlyDependenciesFromReferenceTag) {
+        Collection<DependencyInfo> dependencies = parseNugetPackageFiles(configFiles, onlyDependenciesFromReferenceTag);
 
         return new ResolutionResult(dependencies, new LinkedList<>(), getDependencyType(), topLevelFolder);
     }
@@ -101,11 +97,9 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
         return new ArrayList<>();
     }
 
-    /* --- Private methods --- */
-
-    private Collection<NugetPackages> parseNugetPackageFiles(Set<String> configFilesPath) {
+    protected Collection<DependencyInfo> parseNugetPackageFiles(Set<String> configFilesPath, boolean getDependenciesFromReferenceTag) {
         // get configuration file path
-        Collection<NugetPackages> nugetPackages = new ArrayList<>();
+        Set<DependencyInfo> dependencies = new HashSet<>();
         for (String configFilePath : configFilesPath) {
             // don't scan the whitesource configuration file
             // sometimes FSA is called from outside and there is no config file
@@ -114,28 +108,10 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
                 // check filename again (just in case)
                 if (!configFile.getName().equals(CommandLineArgs.CONFIG_FILE_NAME)) {
                     NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(configFile, this.nugetConfigFileType);
-                    NugetPackages packagesFromSingleFile = parser.parsePackagesConfigFile();
-                    if (packagesFromSingleFile != null) {
-                        nugetPackages.add(packagesFromSingleFile);
+                    Set<DependencyInfo> dependenciesFromSingleFile = parser.parsePackagesConfigFile(getDependenciesFromReferenceTag);
+                    if (dependenciesFromSingleFile != null) {
+                        dependencies.addAll(dependenciesFromSingleFile);
                     }
-                }
-            }
-        }
-        return nugetPackages;
-    }
-
-    private Set<DependencyInfo> collectDependenciesFromNugetConfig(NugetPackages configNugetPackage) {
-        Set<DependencyInfo> dependencies = new HashSet<>();
-        List<NugetPackage> nugetPackages = configNugetPackage.getNugetPackages();
-        if (nugetPackages != null) {
-            for (NugetPackage nugetPackage : nugetPackages) {
-                if (StringUtils.isNotBlank(nugetPackage.getPkgName()) && StringUtils.isNotBlank(nugetPackage.getPkgVersion())) {
-                    DependencyInfo dependency = new DependencyInfo();
-                    dependency.setGroupId(nugetPackage.getPkgName());
-                    dependency.setArtifactId(nugetPackage.getPkgName());
-                    dependency.setVersion(nugetPackage.getPkgVersion());
-                    dependency.setDependencyType(DependencyType.NUGET);
-                    dependencies.add(dependency);
                 }
             }
         }

@@ -24,7 +24,7 @@ public class SvnConnector extends ScmConnector {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(SvnConnector.class);
+    private final Logger logger = LoggerFactory.getLogger(SvnConnector.class);
 
     private static final String URL_BRANCHES = "/branches/";
     private static final String URL_TAGS = "/tags/";

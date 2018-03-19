@@ -4,6 +4,7 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.dependency.resolver.DependencyCollector;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -17,6 +18,7 @@ import java.util.concurrent.*;
  * @author raz.nitzan
  */
 public class CommandLineProcess {
+
     /* --- Members --- */
     private String rootDirectory;
     private String[] args;
@@ -26,11 +28,9 @@ public class CommandLineProcess {
     private Process processStart = null;
 
     /* --- Statics Members --- */
-    private static final String OS_NAME = "os.name";
-    private static final String WINDOWS = "win";
     private static final long DEFAULT_TIMEOUT_READLINE_SECONDS = 60;
     private static final long DEFAULT_TIMEOUT_PROCESS_MINUTES = 15;
-    private static final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.utils.CommandLineProcess.class);
+    private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.utils.CommandLineProcess.class);
 
     public CommandLineProcess(String rootDirectory, String[] args) {
         this.rootDirectory = rootDirectory;
@@ -48,7 +48,7 @@ public class CommandLineProcess {
         ProcessBuilder pb = new ProcessBuilder(args);
         pb.directory(new File(rootDirectory));
         // redirect the error output to avoid output of npm ls by operating system
-        String redirectErrorOutput = isWindows() ? "nul" : "/dev/null";
+        String redirectErrorOutput = DependencyCollector.isWindows() ? "nul" : "/dev/null";
         pb.redirectError(new File(redirectErrorOutput));
         if (!includeOutput) {
             pb.redirectOutput(new File(redirectErrorOutput));
@@ -77,18 +77,18 @@ public class CommandLineProcess {
                             logger.debug("Finished reading {} lines", lineIndex - 1);
                         }
                     } catch (TimeoutException e) {
-                        logger.debug("Received timeout when reading line #" + lineIndex, e);
+                        logger.debug("Received timeout when reading line #" + lineIndex, e.getStackTrace());
                         continueReadingLines = false;
                         this.errorInProcess = true;
                     } catch (Exception e) {
-                        logger.debug("Error reading line #" + lineIndex, e);
+                        logger.debug("Error reading line #" + lineIndex, e.getStackTrace());
                         continueReadingLines = false;
                         this.errorInProcess = true;
                     }
                     lineIndex++;
                 }
             } catch (Exception e) {
-                logger.error("error parsing output : {}", e.getMessage());
+                logger.error("error parsing output : {}", e.getStackTrace());
             } finally {
                 executorService.shutdown();
                 IOUtils.closeQuietly(inputStreamReader);
@@ -128,11 +128,6 @@ public class CommandLineProcess {
             return processStart.exitValue();
         }
         return 0;
-    }
-
-    /* --- Static methods --- */
-    private static boolean isWindows() {
-        return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
     }
 
         /* --- Nested classes --- */

@@ -40,6 +40,9 @@ public final class ConfigPropertyKeys {
     public static final String PROJECT_VERSION_PROPERTY_KEY = "projectVersion"; // optional
     public static final String INCLUDES_PATTERN_PROPERTY_KEY = "includes";
     public static final String EXCLUDES_PATTERN_PROPERTY_KEY = "excludes";
+    public static final String DOCKER_INCLUDES_PATTERN_PROPERTY_KEY = "dockerIncludes";
+    public static final String DOCKER_EXCLUDES_PATTERN_PROPERTY_KEY = "dockerExcludes";
+    public static final String SCAN_DOCKER_IMAGES = "scanDockerImages";
     public static final String ARCHIVE_EXTRACTION_DEPTH_KEY = "archiveExtractionDepth";
     public static final String ARCHIVE_INCLUDES_PATTERN_KEY = "archiveIncludes";
     public static final String ARCHIVE_EXCLUDES_PATTERN_KEY = "archiveExcludes";
@@ -70,6 +73,7 @@ public final class ConfigPropertyKeys {
     public static final String LOG_LEVEL_KEY = "log.level";
     public static final String FOLLOW_SYMBOLIC_LINKS = "followSymbolicLinks";
     public static final String SHOW_PROGRESS_BAR = "showProgressBar";
+    public static final String ACCEPT_EXTENSIONS_LIST = "acceptExtensionsList";
 
     public static final String NPM_RUN_PRE_STEP = "npm.runPreStep";
     public static final String NPM_RESOLVE_DEPENDENCIES = "npm.resolveDependencies";
@@ -89,6 +93,7 @@ public final class ConfigPropertyKeys {
     public static final String PYTHON_UNINSTALL_WSS_PLUGIN = "python.uninstallWssPlugin";
 
     public static final String NUGET_RESOLVE_DEPENDENCIES = "nuget.resolveDependencies";
+    public static final String NUGET_RESTORE_DEPENDENCIES = "nuget.restoreDependencies";
     public static final String MAVEN_IGNORED_SCOPES = "maven.ignoredScopes";
     public static final String MAVEN_RESOLVE_DEPENDENCIES = "maven.resolveDependencies";
     public static final String MAVEN_AGGREGATE_MODULES = "maven.aggregateModules";
@@ -104,6 +109,9 @@ public final class ConfigPropertyKeys {
     public static final String ENDPOINT_CERTIFICATE = "endpoint.certificate";
     public static final String ENDPOINT_PASS = "endpoint.pass";
     public static final String ENDPOINT_SSL_ENABLED = "endpoint.ssl";
+
+    public static final String GRADLE_RESOLVE_DEPENDENCIES = "gradle.resolveDependencies";
+    public static final String GRADLE_RUN_ASSEMBLE_COMMAND = "gradle.runAssembleCommand";
 
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 }

@@ -24,7 +24,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
-import org.whitesource.agent.api.model.AgentProjectInfo;
 
 import java.io.*;
 import java.util.Base64;
@@ -37,7 +36,7 @@ public class OfflineReader {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(OfflineReader.class);
+    private final Logger logger = LoggerFactory.getLogger(OfflineReader.class);
     private static final String UTF_8 = "UTF-8";
     private static final String EMPTY_STRING = "";
 

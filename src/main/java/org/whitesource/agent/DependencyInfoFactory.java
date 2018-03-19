@@ -22,7 +22,10 @@ import org.whitesource.agent.api.model.ChecksumType;
 import org.whitesource.agent.api.model.CopyrightInfo;
 import org.whitesource.agent.api.model.DependencyHintsInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.agent.hash.*;
+import org.whitesource.agent.hash.ChecksumUtils;
+import org.whitesource.agent.hash.HashAlgorithm;
+import org.whitesource.agent.hash.HashCalculator;
+import org.whitesource.agent.hash.HintUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,7 +41,7 @@ public class DependencyInfoFactory {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(DependencyInfoFactory.class);
+    private final Logger logger = LoggerFactory.getLogger(DependencyInfoFactory.class);
 
     private static final String COPYRIGHT_PATTERN = ".*copyright.*|.*\\(c\\).*";
 
@@ -144,8 +147,8 @@ public class DependencyInfoFactory {
                         dependency.addChecksum(entry.getKey(), entry.getValue());
                     }
                 } catch (Exception e) {
-                    // logger.info("Failed to calculate javaScript file hash for : {}", dependencyFile.getPath());
-                    logger.debug("Failed to calculate javaScript hash for file: {}, error: {}", dependencyFile.getPath(), e);
+                    logger.warn("Failed to calculate javaScript hash for file: {}, error: {}", dependencyFile.getPath(), e.getMessage());
+                    logger.debug("Failed to calculate javaScript hash for file: {}, error: {}", dependencyFile.getPath(), e.getStackTrace());
                 }
             }
 
@@ -155,7 +158,7 @@ public class DependencyInfoFactory {
             // super hash
             ChecksumUtils.calculateSuperHash(dependency, dependencyFile);
         } catch (IOException e) {
-            logger.warn("Failed to create dependency " + filename + " to dependency list: ", e);
+            logger.warn("Failed to create dependency " + filename + " to dependency list: {}", e.getMessage());
             dependency = null;
         }
         return dependency;

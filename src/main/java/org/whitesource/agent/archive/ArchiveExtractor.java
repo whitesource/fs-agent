@@ -61,7 +61,7 @@ public class ArchiveExtractor {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ArchiveExtractor.class);
+    private final Logger logger = LoggerFactory.getLogger(ArchiveExtractor.class);
     public static final int LONG_BOUND = 100000;
     public static final String DEPTH = "_depth_";
     public static final String DEPTH_REGEX = DEPTH + "[0-9]";
@@ -199,12 +199,12 @@ public class ArchiveExtractor {
                 folderToScan = getDepthFolder(curLevel - 1);
             }
             folderToExtract = getDepthFolder(curLevel);
-            Pair<String[], String> retiveFilesWithFolder = getSearchedFileNames(folderToScan);
-            if (retiveFilesWithFolder == null || retiveFilesWithFolder.getKey().length <= 0) {
+            Pair<String[], String> retrieveFilesWithFolder = getSearchedFileNames(folderToScan);
+            if (retrieveFilesWithFolder == null || retrieveFilesWithFolder.getKey().length <= 0) {
                 break;
             } else {
-                String[] fileNames = retiveFilesWithFolder.getKey();
-                folderToScan = retiveFilesWithFolder.getValue();
+                String[] fileNames = retrieveFilesWithFolder.getKey();
+                folderToScan = retrieveFilesWithFolder.getValue();
 
                 Pair<String, Collection<String>> filesFound = new Pair<>(folderToScan, Arrays.stream(fileNames).collect(Collectors.toList()));
                 Map<String, String> foundFiles;

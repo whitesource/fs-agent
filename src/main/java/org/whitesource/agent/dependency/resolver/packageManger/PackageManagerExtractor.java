@@ -21,7 +21,7 @@ public class PackageManagerExtractor {
 
     /* --- Statics Members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(PackageManagerExtractor.class);
+    private final Logger logger = LoggerFactory.getLogger(PackageManagerExtractor.class);
 
     private static final int DEBIAN_PACKAGE_NAME_INDEX = 0;
     private static final int DEBIAN_PACKAGE_VERSION_INDEX = 1;
@@ -185,7 +185,7 @@ public class PackageManagerExtractor {
 
     /* --- Private  methods --- */
 
-    public static String getSystemArchitecture() {
+    private String getSystemArchitecture() {
         String arch = "";
         String outputStr = null;
         BufferedReader bufferedReader = null;

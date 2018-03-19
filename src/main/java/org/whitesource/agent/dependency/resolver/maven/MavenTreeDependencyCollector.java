@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver.maven;
+
 import fr.dutra.tools.maven.deptree.core.Node;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -26,7 +27,8 @@ import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.CommandLineProcess;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,6 +43,9 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
 /* --- Statics Members --- */
 
+    protected static final String DOT = ".";
+    protected static final String DASH = "-";
+
     private static final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector.class);
 
     private static final String MVN_PARAMS_M2PATH_PATH = "help:evaluate";
@@ -48,12 +53,8 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
     private static final String MVN_PARAMS_TREE = "dependency:tree";
     private static final String MVN_COMMAND = "mvn";
-    private static final String OS_NAME = "os.name";
-    private static final String WINDOWS = "win";
     private static final String SCOPE_TEST = "test";
     private static final String SCOPE_PROVIDED = "provided";
-    private static final String DOT = ".";
-    private static final String DASH = "-";
     private static final String USER_HOME = "user.home";
     private static final String M2 = ".m2";
     private static final String REPOSITORY = "repository";
@@ -63,11 +64,10 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String EMPTY_STRING = "";
     private static final String POM = "pom";
 
-
     /* --- Members --- */
 
+    protected String M2Path;
     private final Set<String> mavenIgnoredScopes;
-    private String M2Path;
     private boolean showMavenTreeError;
     private MavenLinesParser mavenLinesParser;
 
@@ -129,7 +129,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                     return projectInfo;
                 }).collect(Collectors.toList());
             } else {
-                logger.error("Failed to scan and send {}", getLsCommandParams());
+                logger.warn("Failed to scan and send {}", getLsCommandParams());
             }
         } catch (IOException e) {
             logger.warn("Error getting dependencies after running {} on {}, {}" , getLsCommandParams() , rootDirectory, e.getMessage());
@@ -138,14 +138,14 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
         if (projects != null && projects.isEmpty()) {
             if (!showMavenTreeError) {
-                logger.info("Failed getting dependencies after running '{}' Please install maven ", getLsCommandParams());
+                logger.info("Failed to getting dependencies after running '{}' Please install maven ", getLsCommandParams());
                 showMavenTreeError = true;
             }
         }
         return projects;
     }
 
-    private String getSha1(String filePath) {
+    protected String getSha1(String filePath) {
         try {
             return ChecksumUtils.calculateSHA1(new File(filePath));
         } catch (IOException e) {
@@ -193,7 +193,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         }
     }
 
-    private String getMavenM2Path(String rootDirectory) {
+    protected String getMavenM2Path(String rootDirectory) {
         String currentUsersHomeDir = System.getProperty(USER_HOME);
         File m2Path = Paths.get(currentUsersHomeDir, M2, REPOSITORY).toFile();
 
@@ -214,24 +214,18 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 if (pathLine.isPresent()) {
                     return pathLine.get();
                 } else {
-                    logger.error("could not get m2 path : {} out: {}", rootDirectory, lines.stream().reduce("", String::concat));
+                    logger.warn("could not get m2 path : {} out: {}", rootDirectory, lines.stream().reduce("", String::concat));
                     showMavenTreeError = true;
                     return null;
                 }
             } else {
-                logger.error("Failed to scanAndSend {}", getLsCommandParams());
+                logger.warn("Failed to scan and send {}", getLsCommandParams());
                 return null;
             }
         } catch (IOException io) {
-            logger.error("could not get m2 path : {}", io.getMessage());
+            logger.warn("could not get m2 path : {}", io.getMessage());
             showMavenTreeError = true;
             return null;
         }
-    }
-
-    /* --- Static methods --- */
-
-    private static boolean isWindows() {
-        return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
     }
 }

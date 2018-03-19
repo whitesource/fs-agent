@@ -31,7 +31,7 @@ public abstract class BomParser implements IBomParser{
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(BomParser.class);
+    private final Logger logger = LoggerFactory.getLogger(BomParser.class);
 
     /* --- Public methods --- */
 

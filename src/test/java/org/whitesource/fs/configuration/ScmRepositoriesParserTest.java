@@ -14,7 +14,7 @@ public class ScmRepositoriesParserTest {
     @Test
     public void shouldParse() {
         String repos = TestHelper.getFileFromResources("repos.json").getAbsolutePath();
-        Collection<ScmConfiguration> configs = ScmRepositoriesParser.parseRepositoriesFile(repos, ScmType.GIT.toString(), "", "", "");
+        Collection<ScmConfiguration> configs = new ScmRepositoriesParser().parseRepositoriesFile(repos, ScmType.GIT.toString(), "", "", "");
 
         Assert.assertNotNull(configs);
         Assert.assertTrue(configs.size() > 0);

@@ -25,11 +25,10 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.archive.ArchiveExtractor;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
-import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.MemoryUsageHelper;
-import org.whitesource.fs.configuration.AgentConfiguration;
 import org.whitesource.fs.FileSystemAgent;
+import org.whitesource.fs.configuration.AgentConfiguration;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.io.File;
@@ -49,7 +48,7 @@ public class FileSystemScanner {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
+    private final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
     public static final String JAVA_SCRIPT = "javaScript";
     public static final String JAVA = "java";
     private static String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
@@ -152,7 +151,9 @@ public class FileSystemScanner {
         allProjects.put(mainProject, null);
 
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
-        Map<File, Collection<String>> fileMapBeforeResolve = fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
+        logger.info("Included file types: {}", String.join(",", includes));
+        logger.info("Excluded file types: {}", String.join(",", excludes));
+        Map<File, Collection<String>> fileMapBeforeResolve = new FilesUtils().fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
         Set<String> allFiles = fileMapBeforeResolve.entrySet().stream().flatMap(folder -> folder.getValue().stream()).collect(Collectors.toSet());
 
         Map<Collection<AgentProjectInfo>, String> projectsResult = new HashMap<>();
@@ -227,10 +228,10 @@ public class FileSystemScanner {
 
         String[] excludesExtended = excludeFileSystemAgent(excludes);
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
-        Map<File, Collection<String>> fileMap = fillFilesMap(pathsToScan, includes, excludesExtended, followSymlinks, globCaseSensitive);
+        Map<File, Collection<String>> fileMap = new FilesUtils().fillFilesMap(pathsToScan, includes, excludesExtended, followSymlinks, globCaseSensitive);
         long filesCount = fileMap.entrySet().stream().flatMap(folder -> folder.getValue().stream()).count();
         totalFiles += filesCount;
-        logger.info(MessageFormat.format("Total Files Found: {0}", totalFiles));
+        logger.info(MessageFormat.format("Total files found according to the includes/excludes pattern: {0}", totalFiles));
         DependencyCalculator dependencyCalculator = new DependencyCalculator(showProgressBar);
         final Collection<DependencyInfo> filesDependencies = new LinkedList<>();
 
@@ -254,7 +255,7 @@ public class FileSystemScanner {
             // create new projects if necessary
             if (!isDependenciesOnly && filesDependencies.size() > 0) {
                 scannerBaseDirs.stream().forEach(directory -> {
-                    List<Path> subDirectories = FilesUtils.getSubDirectories(directory);
+                    List<Path> subDirectories = new FilesUtils().getSubDirectories(directory);
                     subDirectories.forEach(subFolder -> {
                         if (filesDependencies.size() > 0) {
                             List<DependencyInfo> projectDependencies = filesDependencies.stream().
@@ -301,11 +302,7 @@ public class FileSystemScanner {
             for (String archiveDirectory : archiveDirectories) {
            File directory = new File(archiveDirectory);
            if (directory.exists()) {
-               try {
-                   FileUtils.deleteDirectory(directory);
-               } catch (IOException e) {
-                   logger.warn("Error deleting archive directory", e);
-               }
+               FileUtils.deleteQuietly(directory);
            }}
         }
         logger.info("Finished Analyzing Files");
@@ -340,39 +337,6 @@ public class FileSystemScanner {
             }
         }
         return pathsToScan;
-    }
-
-    private Map<File, Collection<String>> fillFilesMap(Collection<String> pathsToScan, String[] includes, String[] excludesExtended,
-                                                       boolean followSymlinks, boolean globCaseSensitive) {
-        Map<File, Collection<String>> fileMap = new HashMap<>();
-        for (String scannerBaseDir : pathsToScan) {
-            File file = new File(scannerBaseDir);
-            logger.debug("Scanning {}", file.getAbsolutePath());
-            if (file.exists()) {
-                FilesScanner filesScanner = new FilesScanner();
-                if (file.isDirectory()) {
-                    File basedir = new File(scannerBaseDir);
-                    String[] fileNames = filesScanner.getFileNames(scannerBaseDir, includes, excludesExtended, followSymlinks, globCaseSensitive);
-                    // convert array to list (don't use Arrays.asList, might be added to later)
-                    List<String> fileNameList = Arrays.stream(fileNames).collect(Collectors.toList());
-                    fileMap.put(basedir, fileNameList);
-                } else {
-                    // handle single file
-                    boolean included = filesScanner.isIncluded(file, includes, excludesExtended, followSymlinks, globCaseSensitive);
-                    if (included) {
-                        Collection<String> files = fileMap.get(file.getParentFile());
-                        if (files == null) {
-                            files = new ArrayList<>();
-                        }
-                        files.add(file.getName());
-                        fileMap.put(file.getParentFile(), files);
-                    }
-                }
-            } else {
-                logger.info(MessageFormat.format("File {0} doesn\'t exist", scannerBaseDir));
-            }
-        }
-        return fileMap;
     }
 
     private void increaseCount(DependencyInfo dependency, int[] totalDependencies) {
