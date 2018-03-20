@@ -4,7 +4,7 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>18.3.1-22</version>
+    <version>18.3.2-23-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -31,7 +31,7 @@
         <connection>scm:git:git@github.com:whitesource/fs-agent.git</connection>
         <developerConnection>scm:git:git@github.com:whitesource/fs-agent.git</developerConnection>
         <url>git@github.com:whitesource/fs-agent.git</url>
-        <tag>release-tag-18.3.1-22</tag>
+        <tag>release-tag-18.3.1-2</tag>
     </scm>
     <issueManagement>
         <url>https://github.com/whitesource/fs-agent/issues</url>
