@@ -41,9 +41,9 @@ public final class ConfigPropertyKeys {
     public static final String PROJECT_VERSION_PROPERTY_KEY = "projectVersion"; // optional
     public static final String INCLUDES_PATTERN_PROPERTY_KEY = "includes";
     public static final String EXCLUDES_PATTERN_PROPERTY_KEY = "excludes";
-    public static final String DOCKER_INCLUDES_PATTERN_PROPERTY_KEY = "dockerIncludes";
-    public static final String DOCKER_EXCLUDES_PATTERN_PROPERTY_KEY = "dockerExcludes";
-    public static final String SCAN_DOCKER_IMAGES = "scanDockerImages";
+    public static final String DOCKER_INCLUDES_PATTERN_PROPERTY_KEY = "docker.includes";
+    public static final String DOCKER_EXCLUDES_PATTERN_PROPERTY_KEY = "docker.excludes";
+    public static final String SCAN_DOCKER_IMAGES = "docker.scanImages";
     public static final String ARCHIVE_EXTRACTION_DEPTH_KEY = "archiveExtractionDepth";
     public static final String ARCHIVE_INCLUDES_PATTERN_KEY = "archiveIncludes";
     public static final String ARCHIVE_EXCLUDES_PATTERN_KEY = "archiveExcludes";
