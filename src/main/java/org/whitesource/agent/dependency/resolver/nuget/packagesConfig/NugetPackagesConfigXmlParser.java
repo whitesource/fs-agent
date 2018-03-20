@@ -59,7 +59,7 @@ public class NugetPackagesConfigXmlParser implements Serializable{
     /**
      * Parse packages.config or csproj file
      * @param getDependenciesFromReferenceTag - flag to indicate weather to get dependencies form reference tag or not
-     * @return Set<DependencyInfo> - found dependencies
+     * @return Set of DependencyInfos
      */
     public Set<DependencyInfo> parsePackagesConfigFile(boolean getDependenciesFromReferenceTag) {
         Persister persister = new Persister();

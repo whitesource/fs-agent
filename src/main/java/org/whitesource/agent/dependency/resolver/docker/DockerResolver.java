@@ -74,6 +74,7 @@ public class DockerResolver {
 
     /**
      * Create project for each image
+     * @return list of projects for all docker images
      */
     public Collection<AgentProjectInfo> resolveDockerImages() {
         logger.info("Resolving docker images");

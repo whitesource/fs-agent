@@ -72,8 +72,8 @@ public class ArchLinuxParser extends AbstractParser {
     }
 
     /**
-     * @param files
-     * @param pathToPackageManagerFolder
+     * @param files - list of files to look for
+     * @param pathToPackageManagerFolder the relevant path for the folder with all the installed packages
      * @return Folder file with all the information about the installed packages
      */
     @Override

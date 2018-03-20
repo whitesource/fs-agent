@@ -198,9 +198,8 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     /* --- Protected methods --- */
-    /**
-     * These methods are relevant only for npm and bower
-     */
+
+    // These methods are relevant only for npm and bower
 
     protected String getPreferredFileName() {
         return PACKAGE_JSON;

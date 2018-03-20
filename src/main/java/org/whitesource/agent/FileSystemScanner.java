@@ -87,7 +87,7 @@ public class FileSystemScanner {
      * @param followSymlinks use followSymlinks
      * @param excludedCopyrights use excludedCopyrights
      * @param partialSha1Match use partialSha1Match
-     * @return
+     * @return list of all the dependencies for project
      */
     public List<DependencyInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
                                                String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
