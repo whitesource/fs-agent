@@ -225,9 +225,10 @@ public class FSAConfiguration {
         String productVersion = config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
         String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
         String appPath = config.getProperty(APP_PATH, BLANK);
+        String viaDebug = config.getProperty(VIA_DEBUG, BLANK);
         boolean projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(REQUESTER_EMAIL);
-        return new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken, projectVersion, productName, productToken, productVersion, appPath);
+        return new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken, projectVersion, productName, productToken, productVersion, appPath,viaDebug);
     }
 
     private SenderConfiguration getSender(Properties config) {
@@ -504,6 +505,7 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, commandLineArgs.offline);
         //Impact Analysis parameters
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.APP_PATH, commandLineArgs.appPath);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.VIA_DEBUG, commandLineArgs.viaDebug);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, commandLineArgs.enableImpactAnalysis);
         // proxy
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);

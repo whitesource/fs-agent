@@ -18,6 +18,7 @@ import java.util.concurrent.*;
  * @author raz.nitzan
  */
 public class CommandLineProcess {
+
     /* --- Members --- */
     private String rootDirectory;
     private String[] args;
@@ -76,18 +77,18 @@ public class CommandLineProcess {
                             logger.debug("Finished reading {} lines", lineIndex - 1);
                         }
                     } catch (TimeoutException e) {
-                        logger.debug("Received timeout when reading line #" + lineIndex, e);
+                        logger.debug("Received timeout when reading line #" + lineIndex, e.getStackTrace());
                         continueReadingLines = false;
                         this.errorInProcess = true;
                     } catch (Exception e) {
-                        logger.debug("Error reading line #" + lineIndex, e);
+                        logger.debug("Error reading line #" + lineIndex, e.getStackTrace());
                         continueReadingLines = false;
                         this.errorInProcess = true;
                     }
                     lineIndex++;
                 }
             } catch (Exception e) {
-                logger.error("error parsing output : {}", e.getMessage());
+                logger.error("error parsing output : {}", e.getStackTrace());
             } finally {
                 executorService.shutdown();
                 IOUtils.closeQuietly(inputStreamReader);
