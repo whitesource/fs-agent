@@ -42,6 +42,7 @@ import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResul
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 
 /**
  * Class for sending projects for all WhiteSource command line agents.
