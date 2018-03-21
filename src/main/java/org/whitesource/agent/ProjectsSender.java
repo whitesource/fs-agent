@@ -112,7 +112,8 @@ public class ProjectsSender {
             if (senderConfig.isEnableImpactAnalysis() && projects.size() == 1) {
                 runViaAnalysis(projectsDetails, service);
             }  else if (!senderConfig.isEnableImpactAnalysis()) {
-                logger.info("Impact analysis won't run, via is not enabled");
+//                logger.info("Impact analysis won't run, via is not enabled");
+                //todo return logs when needed would be enabled for all WSE-342
             }
 
             int retries = senderConfig.getConnectionRetries();
