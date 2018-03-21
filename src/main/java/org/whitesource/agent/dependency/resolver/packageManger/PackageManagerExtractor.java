@@ -53,7 +53,7 @@ public class PackageManagerExtractor {
         InputStream inputStream = null;
         byte[] bytes = null;
         Process process = null;
-        logger.info("FSA will resolve package manger dependencies only");
+        logger.info("File System Agent is resolving package manger dependencies only");
         //For each flavor command check installed packages
         for (LinuxPkgManagerCommand linuxPkgManagerCommand : LinuxPkgManagerCommand.values()) {
             try {
@@ -61,7 +61,7 @@ public class PackageManagerExtractor {
                 process = Runtime.getRuntime().exec(linuxPkgManagerCommand.getCommand());
                 inputStream = process.getInputStream();
                 if (inputStream.read() == -1) {
-                    logger.error("Unable to execute - {} , flavor does not support this command ", linuxPkgManagerCommand.getCommand());
+                    logger.error("Unable to execute - {} , unix flavor does not support this command ", linuxPkgManagerCommand.getCommand());
                 } else {
                     bytes = ByteStreams.toByteArray(inputStream);
                     //Get the installed packages (name,version,architecture) from inputStream
@@ -87,7 +87,7 @@ public class PackageManagerExtractor {
                             break;
                     }
                 }
-                //Create new AgentProjectInfo object and add it into a list of AgentProjectInfo
+                // Create new AgentProjectInfo object and add it into a list of AgentProjectInfo
                 if (packages.size() > 0) {
                     logger.debug("Creating new AgentProjectInfo object");
                     AgentProjectInfo projectInfo = new AgentProjectInfo();
@@ -95,7 +95,7 @@ public class PackageManagerExtractor {
                     projectInfos.add(projectInfo);
                     packages = new LinkedList<>();
                 } else {
-                    logger.info("Couldn't find any dependencies");
+                    logger.info("Couldn't find unix package manager dependencies");
                 }
             } catch (IOException e) {
                 logger.warn("Couldn't resolve : {}", linuxPkgManagerCommand.name());
@@ -144,7 +144,7 @@ public class PackageManagerExtractor {
     }
 
     public void createRpmProject(byte[] bytes, List<DependencyInfo> packages) {
-        logger.info("Trying to resolve rpm packages");
+        logger.info("Trying to resolve RPM packages");
         String linesStr = new String(bytes);
         String[] lines = linesStr.split(NEW_LINE);
         for (String line : lines) {
@@ -155,7 +155,7 @@ public class PackageManagerExtractor {
     }
 
     public void createArchLinuxProject(byte[] bytes, List<DependencyInfo> packages) {
-        logger.info("Trying to resolve archlinux packages");
+        logger.info("Trying to resolve Arch Linux packages");
         String linesStr = new String(bytes);
         String[] lines = linesStr.split(NEW_LINE);
         String arch = getSystemArchitecture();
@@ -173,7 +173,7 @@ public class PackageManagerExtractor {
     }
 
     public void createAlpineProject(byte[] bytes, List<DependencyInfo> packages) {
-        logger.info("Trying to resolve alpine packages");
+        logger.info("Trying to resolve Alpine packages");
         String linesStr = new String(bytes);
         String[] lines = linesStr.split(NEW_LINE);
         for (String line : lines) {
@@ -191,7 +191,7 @@ public class PackageManagerExtractor {
     /* --- Private  methods --- */
 
     private String getSystemArchitecture() {
-        String arch = "";
+        String arch = EMPTY_STRING;
         String outputStr = null;
         BufferedReader bufferedReader = null;
         Process process = null;
