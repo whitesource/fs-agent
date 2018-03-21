@@ -155,7 +155,7 @@ public class DockerResolver {
     /**
      * Save docker images and scan files
      */
-    private void saveDockerImages(Collection<DockerImage> dockerImages, Collection<AgentProjectInfo> projects) {
+    private void saveDockerImages(Collection<DockerImage> dockerImages, Collection<AgentProjectInfo> projects) throws IOException {
         Process process = null;
         logger.info("Saving {} docker images", dockerImages.size());
         String osName = System.getProperty(OS_NAME);
@@ -216,7 +216,7 @@ public class DockerResolver {
 
                 // scan files
                 String extractPath = containerTarArchiveExtractDir.getPath();
-                List<DependencyInfo> dependencyInfos = new FileSystemScanner(config.getResolver(), config.getAgent(),false).createProjects(
+                List<DependencyInfo> dependencyInfos = new FileSystemScanner(config.getResolver(), config.getAgent(), false).createProjects(
                         Arrays.asList(extractPath), false, config.getAgent().getIncludes(), config.getAgent().getExcludes(),
                         config.getAgent().getGlobCaseSensitive(), config.getAgent().getArchiveExtractionDepth(), FileExtensions.ARCHIVE_INCLUDES,
                         FileExtensions.ARCHIVE_EXCLUDES, false, config.getAgent().isFollowSymlinks(),
@@ -263,10 +263,15 @@ public class DockerResolver {
 
     }
 
-    private void deleteDockerArchiveFiles(File containerTarFile, File containerTarExtractDir, File containerTarArchiveExtractDir) {
+    private void deleteDockerArchiveFiles(File containerTarFile, File containerTarExtractDir, File containerTarArchiveExtractDir) throws IOException {
         FileUtils.deleteQuietly(containerTarFile);
         FileUtils.deleteQuietly(containerTarExtractDir);
-        FileUtils.deleteQuietly(containerTarArchiveExtractDir);
+        boolean succeed = FileUtils.deleteQuietly(containerTarArchiveExtractDir);
+        // In some cases files with size zero are not deleted, retry should resolve the issue.
+        if (!succeed) {
+            logger.debug("Didn't succeed to delete, retrying");
+            FileUtils.deleteQuietly(containerTarArchiveExtractDir);
+        }
     }
 
 }

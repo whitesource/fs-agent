@@ -53,11 +53,11 @@ public class PackageManagerExtractor {
         InputStream inputStream = null;
         byte[] bytes = null;
         Process process = null;
-
+        logger.info("FSA will resolve package manger dependencies only");
         //For each flavor command check installed packages
         for (LinuxPkgManagerCommand linuxPkgManagerCommand : LinuxPkgManagerCommand.values()) {
             try {
-                logger.info("Trying to run command {}", linuxPkgManagerCommand.getCommand());
+                logger.debug("Trying to run command {}", linuxPkgManagerCommand.getCommand());
                 process = Runtime.getRuntime().exec(linuxPkgManagerCommand.getCommand());
                 inputStream = process.getInputStream();
                 if (inputStream.read() == -1) {
@@ -67,19 +67,19 @@ public class PackageManagerExtractor {
                     //Get the installed packages (name,version,architecture) from inputStream
                     logger.info("Succeed to run the command - {} ", linuxPkgManagerCommand.getCommand());
                     switch (linuxPkgManagerCommand) {
-                        case DEBIAN_COMMAND:
+                        case DEBIAN:
                             logger.debug("Getting Debian installed Packages");
                             createDebianProject(bytes, packages);
                             break;
-                        case RPM_COMMAND:
+                        case RPM:
                             logger.debug("Getting RPM installed Packages");
                             createRpmProject(bytes, packages);
                             break;
-                        case ARCH_LINUX_COMMAND:
+                        case ARCH_LINUX:
                             logger.debug("Getting Arch Linux installed Packages");
                             createArchLinuxProject(bytes, packages);
                             break;
-                        case ALPINE_COMMAND:
+                        case ALPINE:
                             logger.debug("Getting Alpine installed Packages");
                             createAlpineProject(bytes, packages);
                             break;
@@ -94,9 +94,11 @@ public class PackageManagerExtractor {
                     projectInfo.setDependencies(packages);
                     projectInfos.add(projectInfo);
                     packages = new LinkedList<>();
+                } else {
+                    logger.info("Couldn't find any dependencies");
                 }
             } catch (IOException e) {
-                logger.warn("Command line error : {}", e.getMessage());
+                logger.warn("Couldn't resolve : {}", linuxPkgManagerCommand.name());
             }
         }
         try {
@@ -110,6 +112,7 @@ public class PackageManagerExtractor {
     }
 
     public void createDebianProject(byte[] bytes, List<DependencyInfo> packages) {
+        logger.info("Trying to resolve debian packages");
         String linesStr = new String(bytes);
         String[] lines = linesStr.split(NEW_LINE);
         for (String line : lines) {
@@ -141,6 +144,7 @@ public class PackageManagerExtractor {
     }
 
     public void createRpmProject(byte[] bytes, List<DependencyInfo> packages) {
+        logger.info("Trying to resolve rpm packages");
         String linesStr = new String(bytes);
         String[] lines = linesStr.split(NEW_LINE);
         for (String line : lines) {
@@ -151,7 +155,7 @@ public class PackageManagerExtractor {
     }
 
     public void createArchLinuxProject(byte[] bytes, List<DependencyInfo> packages) {
-
+        logger.info("Trying to resolve archlinux packages");
         String linesStr = new String(bytes);
         String[] lines = linesStr.split(NEW_LINE);
         String arch = getSystemArchitecture();
@@ -169,6 +173,7 @@ public class PackageManagerExtractor {
     }
 
     public void createAlpineProject(byte[] bytes, List<DependencyInfo> packages) {
+        logger.info("Trying to resolve alpine packages");
         String linesStr = new String(bytes);
         String[] lines = linesStr.split(NEW_LINE);
         for (String line : lines) {
@@ -200,7 +205,7 @@ public class PackageManagerExtractor {
             }
             bufferedReader.close();
         } catch (IOException e) {
-            logger.warn("Error processing arch linux command {}, error : {}", LinuxPkgManagerCommand.ARCH_LINUX_COMMAND, e.getMessage());
+            logger.warn("Error processing arch linux command {}, error : {}", LinuxPkgManagerCommand.ARCH_LINUX, e.getMessage());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
