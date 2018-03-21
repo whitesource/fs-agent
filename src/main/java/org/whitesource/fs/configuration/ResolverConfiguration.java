@@ -96,7 +96,7 @@ public class ResolverConfiguration {
     private boolean     npmIgnoreJavaScriptFiles;
     private String      npmAccessToken;
     private long        npmTimeoutDependenciesCollector;
-    private boolean     npmIgnoreNpmLsErrors;
+    private boolean     npmIgnoreNpmLsErrors; 
     private boolean     bowerResolveDependencies;
     private boolean     bowerRunPreStep;
     private boolean     nugetResolveDependencies;

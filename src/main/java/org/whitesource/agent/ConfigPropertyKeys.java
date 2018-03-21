@@ -73,6 +73,7 @@ public final class ConfigPropertyKeys {
     public static final String LOG_LEVEL_KEY = "log.level";
     public static final String FOLLOW_SYMBOLIC_LINKS = "followSymbolicLinks";
     public static final String SHOW_PROGRESS_BAR = "showProgressBar";
+    public static final String ACCEPT_EXTENSIONS_LIST = "acceptExtensionsList";
 
     public static final String NPM_RUN_PRE_STEP = "npm.runPreStep";
     public static final String NPM_RESOLVE_DEPENDENCIES = "npm.resolveDependencies";
