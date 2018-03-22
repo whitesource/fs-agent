@@ -45,6 +45,7 @@ import org.whitesource.fs.configuration.SenderConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 
 /**
  * Class for sending projects for all WhiteSource command line agents.
@@ -54,6 +55,7 @@ import java.util.Collection;
  * @author anna.rozin
  */
 public class ProjectsSender {
+    public static final String PROJECT_URL_PREFIX = "Wss/WSS.html#!project;id=";
 
     /* --- Static members --- */
 
@@ -113,7 +115,8 @@ public class ProjectsSender {
             if (senderConfig.isEnableImpactAnalysis() && projects.size() == 1) {
 //                runViaAnalysis(projectsDetails, service);
             }  else if (!senderConfig.isEnableImpactAnalysis()) {
-                logger.info("Impact analysis won't run, via is not enabled");
+//                logger.info("Impact analysis won't run, via is not enabled");
+                //todo return logs when needed would be enabled for all WSE-342
             }
 
             int retries = senderConfig.getConnectionRetries();
@@ -345,6 +348,7 @@ public class ProjectsSender {
             }
         }
 
+
         // updated projects
         Collection<String> updatedProjects = updateResult.getUpdatedProjects();
         if (updatedProjects.isEmpty()) {
@@ -356,6 +360,17 @@ public class ProjectsSender {
             for (String projectName : updatedProjects) {
                 logger.info("# {}", projectName);
                 resultLogMsg.append(projectName).append(NEW_LINE);
+            }
+        }
+
+        // reading projects' URLs
+        HashMap<String, Integer> projectsUrls = updateResult.getProjectNamesToIds();
+        if (projectsUrls != null && !projectsUrls.isEmpty()) {
+            for (String projectName : projectsUrls.keySet()) {
+                String appUrl = senderConfig.getServiceUrl().replace("agent","");
+                String projectsUrl = appUrl + PROJECT_URL_PREFIX + projectsUrls.get(projectName);
+                logger.info("Project name: {}, URL: {}",projectName, projectsUrl);
+                resultLogMsg.append(NEW_LINE).append("Project name: ").append(projectName).append(", project URL:").append(projectsUrl);
             }
         }
 

@@ -79,7 +79,7 @@ public class GitConnector extends ScmConnector {
                         sshTransport.setSshSessionFactory(sshSessionFactory);
                     }
                 });
-                cloneCommand.setCredentialsProvider(new PassphraseCredentialsProvider(getPassword()));
+                cloneCommand.setCredentialsProvider(new passphraseCredentialsProvider(getPassword()));
             } else {
                 cloneCommand.setCredentialsProvider(new UsernamePasswordCredentialsProvider(getUsername(), getPassword()));
             }

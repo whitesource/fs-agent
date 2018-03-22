@@ -30,8 +30,8 @@ public class SingleFileScanner extends DirectoryScanner {
      * Exposes the {@link DirectoryScanner#isIncluded(String)} method to check if a single file should be included
      * in the scan.
      *
-     * @param file
-     * @return
+     * @param file for scanning
+     * @return weather the file shpuld be included or not
      */
     public boolean isIncluded(File file) {
         return isIncluded(file.getAbsolutePath());

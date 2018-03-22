@@ -2,10 +2,10 @@ package org.whitesource.agent.dependency.resolver.packageManger;
 
 public enum LinuxPkgManagerCommand {
 
-    DEBIAN_COMMAND("dpkg -l"),
-    RPM_COMMAND("rpm -qa"),
-    ALPINE_COMMAND("apk -vv info"),
-    ARCH_LINUX_COMMAND("pacman -Q");
+    DEBIAN("dpkg -l"),
+    RPM("rpm -qa"),
+    ALPINE("apk -vv info"),
+    ARCH_LINUX("pacman -Q");
 
     private String command;
 

@@ -41,8 +41,19 @@ public class ComponentScanTest {
 //        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\NPM-Plugin\\npm-plugin-for-test";
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
         String resolverFolder = Paths.get(config.getParent(), "resolver/npm").toString();
+//        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\CXBug\\package";
+//        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\Maven-Plugin\\maven-plugin1";
+//        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\Bower-Plugin\\bowerBug";
         props.put("d", resolverFolder);
-        String[] acceptExtensions = {"jar", "war"};
+        props.put("archiveExtractionDepth", 4);
+        props.put("includes", "**/**");
+        props.put("archiveIncludes", "**/*zip **/*war **/*ear **/*tgz **/*jar **/*sca **/*gem **/*whl **/*egg **/*tar **/*tar.gz **/*rar");
+        props.put("npm.ignoreJavaScriptFiles", "false");
+        String[] acceptExtensions = {"jar", "war", "ear", "aar", "dll", "exe", "msi", "nupkg", "egg", "whl",
+                "tar.gz", "gem", "deb", "udeb", "dmg", "drpm", "rpm", "pkg.tar.xz", "swf", "swc", "air", "apk", "zip", "gzip", "tar.bz2",
+                "tgz", "c", "cc", "cp", "cpp", "css", "c++", "h", "hh", "hpp", "hxx", "h++", "m", "mm", "pch", "c#", "cs", "csharp", "java",
+                "go", "goc", "js", "plx", "pm", "ph", "cgi", "fcgi", "psgi", "al", "perl", "t", "p6m", "p6l", "nqp", "6pl",
+                "6pm", "p6", "php", "py", "rb", "swift", "clj", "cljx", "cljs", "cljc"};
         props.put(ConfigPropertyKeys.ACCEPT_EXTENSIONS_LIST, acceptExtensions);
         ComponentScan componentScan = new ComponentScan(props);
         String scanResult = componentScan.scan();

@@ -88,7 +88,7 @@ public class ComponentScan {
         LinkedList<DependencyInfo> filteredDependencies = new LinkedList<>();
         for (DependencyInfo dependency : dependencies) {
             for (String extension : acceptExtensionsList) {
-                if (dependency.getArtifactId().endsWith(DOT + extension)) {
+                if (dependency.getDependencyType() != null || dependency.getArtifactId().endsWith(DOT + extension) || checkFileName(dependency, extension)) {
                     filteredDependencies.add(dependency);
                     dependency.setChildren(getDependenciesFromExtensionsListOnly(dependency.getChildren(), acceptExtensionsList));
                     break;
@@ -96,6 +96,14 @@ public class ComponentScan {
             }
         }
         return filteredDependencies;
+    }
+
+    private boolean checkFileName(DependencyInfo dependency, String extension) {
+        boolean fileNameEndsWithExtension = false;
+        if (dependency.getFilename() != null) {
+            fileNameEndsWithExtension = dependency.getFilename().endsWith(DOT + extension);
+        }
+        return fileNameEndsWithExtension;
     }
 }
 
