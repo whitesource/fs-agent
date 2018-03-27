@@ -38,7 +38,6 @@ public class ComponentScanTest {
     @Test
     public void testAcceptExtensionsList() {
         Properties props = TestHelper.getPropertiesFromFile();
-//        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\NPM-Plugin\\npm-plugin-for-test";
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
         String resolverFolder = Paths.get(config.getParent(), "resolver/npm").toString();
 //        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\CXBug\\package";
