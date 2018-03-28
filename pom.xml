@@ -140,8 +140,8 @@
         <dependency>
             <groupId>org.whitesource.analysis</groupId>
             <artifactId>whitesource-analysis-via</artifactId>
-            <version>0.0.7</version>
-        </dependency>
+            <version>0.0.9</version>
+         </dependency>
 
         <dependency>
             <groupId>guru.nidi</groupId>
