@@ -18,6 +18,12 @@ public class Package {
     public Package() {
     }
 
+    public Package(String packageName, String version, String architecture) {
+        this.packageName = packageName;
+        this.version = version;
+        this.architecture = architecture;
+    }
+
     /* --- Overridden methods --- */
 
     @Override
