@@ -20,8 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
-import static org.whitesource.agent.ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY;
-import static org.whitesource.agent.ConfigPropertyKeys.REQUESTER_EMAIL;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RequestConfiguration {
@@ -36,6 +34,7 @@ public class RequestConfiguration {
     private String productVersion;
     private final String projectName;
     private final String appPath;
+    private final String viaDebug;
 
     public RequestConfiguration(@JsonProperty(ORG_TOKEN_PROPERTY_KEY) String apiToken,
                                 @JsonProperty(REQUESTER_EMAIL) String requesterEmail,
@@ -46,7 +45,8 @@ public class RequestConfiguration {
                                 @JsonProperty(PRODUCT_NAME_PROPERTY_KEY) String productName,
                                 @JsonProperty(PRODUCT_TOKEN_PROPERTY_KEY) String productToken,
                                 @JsonProperty(PRODUCT_VERSION_PROPERTY_KEY) String productVersion,
-                                @JsonProperty(APP_PATH) String appPath) {
+                                @JsonProperty(APP_PATH) String appPath,
+                                @JsonProperty(VIA_DEBUG) String viaDebug) {
         this.apiToken = apiToken;
         this.requesterEmail = requesterEmail;
         this.projectPerSubFolder = projectPerSubFolder;
@@ -57,6 +57,7 @@ public class RequestConfiguration {
         this.productToken = productToken;
         this.productVersion = productVersion;
         this.appPath = appPath;
+        this.viaDebug=viaDebug;
     }
 
     @JsonProperty(PROJECT_NAME_PROPERTY_KEY)
@@ -107,6 +108,11 @@ public class RequestConfiguration {
     @JsonProperty(APP_PATH)
     public String getAppPath() {
         return appPath;
+    }
+
+    @JsonProperty(VIA_DEBUG)
+    public String getViaDebug() {
+        return viaDebug;
     }
 
     public String getProductNameOrToken() {

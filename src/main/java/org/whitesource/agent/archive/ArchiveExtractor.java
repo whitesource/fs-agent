@@ -53,8 +53,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * The class supports recursive deCompression of compressed files (Java, Python & Ruby types).
- *
  * @author anna.rozin
  */
 public class ArchiveExtractor {
@@ -180,7 +178,7 @@ public class ArchiveExtractor {
      *
      * @param scannerBaseDir         - directory for scanning.
      * @param archiveExtractionDepth - drill down hierarchy level in archive files
-     * @param archiveDirectories
+     * @param archiveDirectories list of directories
      * @return the temp directory for the extracted files.
      */
     public String extractArchives(String scannerBaseDir, int archiveExtractionDepth, List<String> archiveDirectories) {

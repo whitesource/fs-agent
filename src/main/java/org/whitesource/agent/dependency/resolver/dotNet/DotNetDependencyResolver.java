@@ -6,7 +6,9 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**

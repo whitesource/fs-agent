@@ -16,6 +16,7 @@
 package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 import static org.whitesource.agent.client.ClientConstants.CONNECTION_TIMEOUT_KEYWORD;
 import static org.whitesource.agent.client.ClientConstants.SERVICE_URL_KEYWORD;

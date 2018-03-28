@@ -56,7 +56,7 @@ import java.util.Arrays;
  * Implementation taken from {@link org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider} and modified
  * to support SSH connections.
  */
-public class PassphraseCredentialsProvider extends CredentialsProvider {
+public class passphraseCredentialsProvider extends CredentialsProvider {
 
     /* --- Members --- */
 
@@ -65,18 +65,18 @@ public class PassphraseCredentialsProvider extends CredentialsProvider {
     /**
      * Initialize the provider with a single username and password.
      *
-     * @param password
+     * @param password password according to credentials provider
      */
-    public PassphraseCredentialsProvider(String password) {
+    public passphraseCredentialsProvider(String password) {
         this(password.toCharArray());
     }
 
     /**
      * Initialize the provider with a single username and password.
      *
-     * @param password
+     * @param password password according to credentials provider
      */
-    public PassphraseCredentialsProvider(char[] password) {
+    public passphraseCredentialsProvider(char[] password) {
         this.password = password;
     }
 

@@ -28,8 +28,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,7 +57,6 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     private static final String LS_ONLY_PROD_ARGUMENT = "--only=prod";
     private static final String MISSING = "missing";
     public static final String PEER_MISSING = "peerMissing";
-    private static final String NAME = "name";
     private static final String DEDUPED = "deduped";
     private static final String REQUIRED = "required";
 
@@ -102,7 +103,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
 
         if (dependencies.isEmpty()) {
             if (!showNpmLsError) {
-                logger.info("Failed getting dependencies after running '{}' Please run {} on the folder {}", getLsCommandParams(),getInstallParams(), rootDirectory);
+                logger.info("Failed to getting dependencies after running '{}' Please run {} on the folder {}", getLsCommandParams(),getInstallParams(), rootDirectory);
                 showNpmLsError = true;
             }
         }

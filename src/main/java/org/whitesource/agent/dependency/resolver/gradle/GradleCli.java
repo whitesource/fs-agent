@@ -41,11 +41,11 @@ class GradleCli {
     }
 }
 
-enum MvnCommand {
-    DEPENDENCIES(GradleCli.GRADLE_PARAMS_TREE),
-    ASSEMBLE(GradleCli.GRADLE_ASSEMBLE);
+    enum MvnCommand {
+        DEPENDENCIES(GradleCli.GRADLE_PARAMS_TREE),
+        ASSEMBLE(GradleCli.GRADLE_ASSEMBLE);
 
-    MvnCommand(String value){
+        MvnCommand(String value){
 
+        }
     }
-}

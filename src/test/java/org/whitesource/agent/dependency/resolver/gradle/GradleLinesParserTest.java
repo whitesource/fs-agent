@@ -18,6 +18,8 @@ public class GradleLinesParserTest {
     public void setup(){
         gradleLinesParser = new GradleLinesParser(false);
     }
+
+    @Ignore
     @Test
     @Ignore
     public void parseLines() throws IOException {

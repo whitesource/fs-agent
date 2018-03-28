@@ -44,6 +44,8 @@ public class BomFile {
     private static String NPM_REGISTRY = "registry.npmjs.org";
     private static final String NPM_REGISTRY1 = "npm/registry/";
     private static final String SCOPED_PACKAGE = "@";
+    private static final String HTTPS = "https";
+    private static final String HTTP = "http";
 
     /* --- Constructors --- */
 
@@ -137,6 +139,10 @@ public class BomFile {
             String urlName = "/" + this.name + "/";
             registryPackageUrl = this.resolved.substring(0, this.resolved.indexOf(urlName) + urlName.length());
             registryPackageUrl = registryPackageUrl + this.version;
+            if (registryPackageUrl.startsWith(HTTPS)) {
+                String urlWithoutHttps = registryPackageUrl.substring(HTTPS.length());
+                registryPackageUrl = HTTP + urlWithoutHttps;
+            }
         }
         logger.debug("resolved url in link = " + registryPackageUrl);
         return registryPackageUrl;

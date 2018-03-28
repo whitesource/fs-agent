@@ -59,16 +59,16 @@ public class PackageManagerTest {
                 } else {
                     bytes = ByteStreams.toByteArray(inputStream);
                     switch (linuxPkgManagerCommand) {
-                        case DEBIAN_COMMAND:
+                        case DEBIAN:
                             createDebianProject(bytes, packages);
                             break;
-                        case RPM_COMMAND:
+                        case RPM:
                             createRpmProject(bytes, packages);
                             break;
-                        case ARCH_LINUX_COMMAND:
+                        case ARCH_LINUX:
                             //createArchLinuxProject(bytes, inputStream, packages);
                             break;
-                        case ALPINE_COMMAND:
+                        case ALPINE:
                             //createAlpineProject(bytes, inputStream, packages);
                             break;
                         default:

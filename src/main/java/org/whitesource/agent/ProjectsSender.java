@@ -23,13 +23,11 @@ import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.api.model.AgentProjectInfo;
-import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 import org.whitesource.agent.utils.Pair;
-import org.whitesource.agent.via.api.VulnerabilityAnalysisResult;
 import org.whitesource.contracts.PluginInfo;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
@@ -38,23 +36,13 @@ import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.fs.configuration.SenderConfiguration;
 import whitesource.analysis.server.FSAgentServer;
 import whitesource.analysis.server.Server;
-import whitesource.analysis.utils.Utils;
 import whitesource.analysis.vulnerabilities.VulnerabilitiesAnalysis;
-import whitesource.via.api.vulnerability.update.ApiTranslator;
 import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResult;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-
-//import whitesource.analysis.server.FSAgentServer;
-//import whitesource.analysis.server.Server;
-//import whitesource.analysis.utils.Utils;
-//import whitesource.analysis.vulnerabilities.VulnerabilitiesAnalysis;
-//import whitesource.via.api.vulnerability.update.ApiTranslator;
-//import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResult;
+import java.util.HashMap;
 
 /**
  * Class for sending projects for all WhiteSource command line agents.
@@ -64,6 +52,7 @@ import java.util.Set;
  * @author anna.rozin
  */
 public class ProjectsSender {
+    public static final String PROJECT_URL_PREFIX = "Wss/WSS.html#!project;id=";
 
     /* --- Static members --- */
 
@@ -123,7 +112,8 @@ public class ProjectsSender {
             if (senderConfig.isEnableImpactAnalysis() && projects.size() == 1) {
                 runViaAnalysis(projectsDetails, service);
             }  else if (!senderConfig.isEnableImpactAnalysis()) {
-                logger.info("Impact analysis won't run, via is not enabled");
+//                logger.info("Impact analysis won't run, via is not enabled");
+                //todo return logs when needed would be enabled for all WSE-342
             }
 
             int retries = senderConfig.getConnectionRetries();
@@ -193,7 +183,8 @@ public class ProjectsSender {
                 }
 
                 if (vulnerabilitiesAnalysis != null) {
-                    vulnerabilitiesAnalysis.runAnalysis(server, appPath, project.getDependencies());
+                    vulnerabilitiesAnalysis.runAnalysis(server, appPath, project.getDependencies(),
+                            Boolean.valueOf(requestConfig.getViaDebug()));
                     logger.info("Got impact analysis result from server");
                 }
             } catch (Exception e) {
@@ -342,6 +333,7 @@ public class ProjectsSender {
             }
         }
 
+
         // updated projects
         Collection<String> updatedProjects = updateResult.getUpdatedProjects();
         if (updatedProjects.isEmpty()) {
@@ -353,6 +345,17 @@ public class ProjectsSender {
             for (String projectName : updatedProjects) {
                 logger.info("# {}", projectName);
                 resultLogMsg.append(projectName).append(NEW_LINE);
+            }
+        }
+
+        // reading projects' URLs
+        HashMap<String, Integer> projectsUrls = updateResult.getProjectNamesToIds();
+        if (projectsUrls != null && !projectsUrls.isEmpty()) {
+            for (String projectName : projectsUrls.keySet()) {
+                String appUrl = senderConfig.getServiceUrl().replace("agent","");
+                String projectsUrl = appUrl + PROJECT_URL_PREFIX + projectsUrls.get(projectName);
+                logger.info("Project name: {}, URL: {}",projectName, projectsUrl);
+                resultLogMsg.append(NEW_LINE).append("Project name: ").append(projectName).append(", project URL:").append(projectsUrl);
             }
         }
 

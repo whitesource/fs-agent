@@ -18,6 +18,7 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class ResolverConfiguration {
@@ -95,7 +96,7 @@ public class ResolverConfiguration {
     private boolean     npmIgnoreJavaScriptFiles;
     private String      npmAccessToken;
     private long        npmTimeoutDependenciesCollector;
-    private boolean     npmIgnoreNpmLsErrors;
+    private boolean     npmIgnoreNpmLsErrors; 
     private boolean     bowerResolveDependencies;
     private boolean     bowerRunPreStep;
     private boolean     nugetResolveDependencies;
@@ -227,4 +228,28 @@ public class ResolverConfiguration {
 
     @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND)
     public boolean isGradleRunAssembleCommand() { return gradleRunAssembleCommand; }
+
+    public void setNpmResolveDependencies(boolean npmResolveDependencies) {
+        this.npmResolveDependencies = npmResolveDependencies;
+    }
+
+    public void setBowerResolveDependencies(boolean bowerResolveDependencies) {
+        this.bowerResolveDependencies = bowerResolveDependencies;
+    }
+
+    public void setNugetResolveDependencies(boolean nugetResolveDependencies) {
+        this.nugetResolveDependencies = nugetResolveDependencies;
+    }
+
+    public void setMavenResolveDependencies(boolean mavenResolveDependencies) {
+        this.mavenResolveDependencies = mavenResolveDependencies;
+    }
+
+    public void setPythonResolveDependencies(boolean pythonResolveDependencies) {
+        this.pythonResolveDependencies = pythonResolveDependencies;
+    }
+
+    public void setGradleResolveDependencies(boolean gradleResolveDependencies) {
+        this.gradleResolveDependencies = gradleResolveDependencies;
+    }
 }

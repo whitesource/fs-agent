@@ -87,7 +87,7 @@ public class FileSystemScanner {
      * @param followSymlinks use followSymlinks
      * @param excludedCopyrights use excludedCopyrights
      * @param partialSha1Match use partialSha1Match
-     * @return
+     * @return list of all the dependencies for project
      */
     public List<DependencyInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
                                                String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
@@ -151,6 +151,8 @@ public class FileSystemScanner {
         allProjects.put(mainProject, null);
 
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
+        logger.info("Included file types: {}", String.join(",", includes));
+        logger.info("Excluded file types: {}", String.join(",", excludes));
         Map<File, Collection<String>> fileMapBeforeResolve = new FilesUtils().fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
         Set<String> allFiles = fileMapBeforeResolve.entrySet().stream().flatMap(folder -> folder.getValue().stream()).collect(Collectors.toSet());
 
@@ -178,7 +180,8 @@ public class FileSystemScanner {
                     default: break;
                 }
             } else if (resolutionResults.size() > 1 && enableImpactAnalysis){
-                logger.info("Impact analysis won't run, more than one language detected");
+//                logger.info("Impact analysis won't run, more than one language detected");
+                // TODO return message when needed WSE-342
             }
 
 
@@ -229,7 +232,7 @@ public class FileSystemScanner {
         Map<File, Collection<String>> fileMap = new FilesUtils().fillFilesMap(pathsToScan, includes, excludesExtended, followSymlinks, globCaseSensitive);
         long filesCount = fileMap.entrySet().stream().flatMap(folder -> folder.getValue().stream()).count();
         totalFiles += filesCount;
-        logger.info(MessageFormat.format("Total Files Found: {0}", totalFiles));
+        logger.info(MessageFormat.format("Total files found according to the includes/excludes pattern: {0}", totalFiles));
         DependencyCalculator dependencyCalculator = new DependencyCalculator(showProgressBar);
         final Collection<DependencyInfo> filesDependencies = new LinkedList<>();
 
@@ -300,11 +303,7 @@ public class FileSystemScanner {
             for (String archiveDirectory : archiveDirectories) {
            File directory = new File(archiveDirectory);
            if (directory.exists()) {
-               try {
-                   FileUtils.deleteDirectory(directory);
-               } catch (IOException e) {
-                   logger.warn("Error deleting archive directory", e);
-               }
+               FileUtils.deleteQuietly(directory);
            }}
         }
         logger.info("Finished Analyzing Files");

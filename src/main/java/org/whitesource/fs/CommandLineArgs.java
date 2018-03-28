@@ -17,6 +17,7 @@ package org.whitesource.fs;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.CommaParameterSplitter;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -94,6 +95,9 @@ public class CommandLineArgs {
 
     @Parameter(names = "-appPath", description = "Impact Analysis application path")
     String appPath = null;
+
+    @Parameter(names = "-viaDebug", description = "Impact Analysis debug flag")
+    String viaDebug = null;
 
     @Parameter(names = "-enableImpactAnalysis", description = "Whether or not to enable impact analysis")
     String enableImpactAnalysis = null;

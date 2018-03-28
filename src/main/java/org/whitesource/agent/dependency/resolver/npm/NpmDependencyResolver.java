@@ -164,7 +164,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
             logger.debug("'npm ls failed");
             dependencies.addAll(collectPackageJsonDependencies(parsedBomFiles));
         }
-
+        //removeDependenciesWithoutSha1(dependencies);
         logger.debug("Creating excludes for .js files upon finding NPM dependencies");
         // create excludes for .js files upon finding NPM dependencies
         List<String> excludes = new LinkedList<>();
@@ -198,9 +198,8 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     /* --- Protected methods --- */
-    /**
-     * These methods are relevant only for npm and bower
-     */
+
+    // These methods are relevant only for npm and bower
 
     protected String getPreferredFileName() {
         return PACKAGE_JSON;
@@ -263,7 +262,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
                 responseFromRegistry = restTemplate.getForObject(registryPackageUrl, String.class);
             }
         } catch (Exception e) {
-            logger.error("Could not reach the registry using the URL: {}. Got an error: {}", registryPackageUrl, e.getMessage());
+            logger.warn("Could not reach the registry using the URL: {}. Got an error: {}", registryPackageUrl, e.getMessage());
             return EMPTY_STRING;
         }
         JSONObject jsonRegistry = new JSONObject(responseFromRegistry);
@@ -366,6 +365,19 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         }
         logger.debug("handle the children dependencies in the file: {}", dependency.getFilename());
         dependency.getChildren().forEach(childDependency -> handleLSDependencyRecursivelyImpl(childDependency, resultFiles, threadsCollection, npmAccessToken));
+    }
+
+    // currently deprecated - not relevant
+    private void removeDependenciesWithoutSha1(Collection<DependencyInfo> dependencies){
+        Collection<DependencyInfo> childDependencies = new ArrayList<>();
+        for (Iterator<DependencyInfo> iterator = dependencies.iterator(); iterator.hasNext();){
+            DependencyInfo dependencyInfo = iterator.next();
+            if (dependencyInfo.getSha1().isEmpty()){
+                childDependencies.addAll(dependencyInfo.getChildren());
+                iterator.remove();
+            }
+        }
+        dependencies.addAll(childDependencies);
     }
 
     private <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {

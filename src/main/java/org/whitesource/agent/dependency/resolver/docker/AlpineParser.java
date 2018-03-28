@@ -8,6 +8,10 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.LINUX_SEPARATOR;
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.WINDOWS;
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.WINDOWS_SEPARATOR;
+
 /**
  * @author chen.luigi
  */
@@ -20,7 +24,7 @@ public class AlpineParser extends AbstractParser {
     private static final String VERSION = "V";
     private static final String ARCHITECTURE = "A";
     private static final String COLON = ":";
-    private static final String ALPINE_PACKAGE_PATTERN = "{0}_{1}_{2}.apk";
+    private static final String ALPINE_PACKAGE_PATTERN = "{0}.apk";
 
     /* --- Overridden methods --- */
 
@@ -71,7 +75,10 @@ public class AlpineParser extends AbstractParser {
     }
 
     @Override
-    public File findFile(String[] files, String filename) {
+    public File findFile(String[] files, String filename,String operatingSystem) {
+        if (!operatingSystem.startsWith(WINDOWS)){
+            filename = filename.replace(WINDOWS_SEPARATOR,LINUX_SEPARATOR);
+        }
         for (String filepath : files) {
             if (filepath.endsWith(filename)) {
                 return new File(filepath);
@@ -87,8 +94,8 @@ public class AlpineParser extends AbstractParser {
         if (StringUtils.isNotBlank(packageInfo.getPackageName()) && StringUtils.isNotBlank(packageInfo.getVersion()) &&
                 StringUtils.isNotBlank(packageInfo.getArchitecture())) {
             dependencyInfo = new DependencyInfo(
-                    null, MessageFormat.format(ALPINE_PACKAGE_PATTERN, packageInfo.getPackageName(), packageInfo.getVersion(),
-                    packageInfo.getArchitecture()), packageInfo.getVersion());
+                    null, MessageFormat.format(ALPINE_PACKAGE_PATTERN, packageInfo.getPackageName()+ "-" +packageInfo.getVersion()), packageInfo.getVersion()+ "-" +
+                    packageInfo.getArchitecture());
         }
         if (dependencyInfo != null) {
             return dependencyInfo;

@@ -30,7 +30,11 @@ import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.web.FsaVerticle;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -41,7 +45,7 @@ public class Main {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-    public static final long MAX_TIMEOUT = 1000*60*60;
+    public static final long MAX_TIMEOUT = 1000 * 60 * 60;
     public static final String FALSE = "false";
     public static final String EMPPTY_STRING = "";
 
@@ -103,9 +107,9 @@ public class Main {
         Collection<AgentProjectInfo> offlineProjects = updateInventoryRequests.stream().flatMap(updateInventoryRequest ->
                 updateInventoryRequest.getProjects().stream()).collect(Collectors.toList());
 
-        if (fsaConfiguration.getOfflineRequestFiles() !=  null) {
+        if (fsaConfiguration.getOfflineRequestFiles() != null) {
             result.addOfflineProjects(offlineProjects);
-        }else{
+        } else {
             // in case of offline requests remove other
         }
 
@@ -125,7 +129,8 @@ public class Main {
         if (fsaConfiguration != null && !fsaConfiguration.getUseCommandLineProductName() && updateInventoryRequests.size() > 0) {
             UpdateInventoryRequest offLineReq = updateInventoryRequests.stream().findFirst().get();
             req = new RequestConfiguration(req.getApiToken(), req.getRequesterEmail(), req.isProjectPerSubFolder(), req.getProjectName(),
-                    req.getProjectToken(), req.getProjectVersion(), offLineReq.product(), null, offLineReq.productVersion(), req.getAppPath());
+                    req.getProjectToken(), req.getProjectVersion(), offLineReq.product(), null, offLineReq.productVersion(),
+                    req.getAppPath(), req.getViaDebug());
         }
 
         if (!result.getStatusCode().equals(StatusCode.SUCCESS)) {
