@@ -2,11 +2,14 @@ package org.whitesource.agent.dependency.resolver.gradle;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.agent.utils.CommandLineProcess;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,10 +20,13 @@ public class GradleLinesParserTest {
     public void setup(){
         gradleLinesParser = new GradleLinesParser(false);
     }
+
     @Test
+    @Ignore
     public void parseLines() throws IOException {
         String[] params = new String[] {"cmd", "/c", "gradle", "dependencies"};
-        CommandLineProcess commandLineProcess = new CommandLineProcess("C:\\Users\\ErezHuberman\\Documents\\gradle-build-scan-quickstart-master", params);
+        String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\gradle\\sample\\");
+        CommandLineProcess commandLineProcess = new CommandLineProcess(folderPath, params);
         List<String> lines = commandLineProcess.executeProcess();
         gradleLinesParser.parseLines(lines, "");
     }
