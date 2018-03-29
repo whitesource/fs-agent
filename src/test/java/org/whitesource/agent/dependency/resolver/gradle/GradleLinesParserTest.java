@@ -22,6 +22,7 @@ public class GradleLinesParserTest {
     }
 
     @Test
+    @Ignore
     public void parseLines() throws IOException {
         String[] params = new String[] {"cmd", "/c", "gradle", "dependencies"};
         String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\gradle\\sample\\");

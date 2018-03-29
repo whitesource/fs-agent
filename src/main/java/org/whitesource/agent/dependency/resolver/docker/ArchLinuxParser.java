@@ -8,6 +8,10 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.LINUX_SEPARATOR;
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.WINDOWS;
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.WINDOWS_SEPARATOR;
+
 
 /**
  * @author chen.luigi
@@ -21,7 +25,6 @@ public class ArchLinuxParser extends AbstractParser {
     private static final String ARCHITECTURE = "%ARCH%";
     private static final String DESC = "desc";
     private static final String ARCH_LINUX_PACKAGE_PATTERN = "{0}-{1}-{2}.pkg.tar.xz";
-    private static final String DESC_PATH = "var\\lib\\pacman\\local";
 
     /* --- Overridden methods --- */
 
@@ -77,14 +80,17 @@ public class ArchLinuxParser extends AbstractParser {
      * @return Folder file with all the information about the installed packages
      */
     @Override
-    public File findFile(String[] files, String pathToPackageManagerFolder) {
+    public File findFile(String[] files, String pathToPackageManagerFolder,String operatingSystem) {
         int max = 0;
         File archLinuxPackageManagerFile = null;
+        if (!operatingSystem.startsWith(WINDOWS)){
+            pathToPackageManagerFolder = pathToPackageManagerFolder.replace(WINDOWS_SEPARATOR,LINUX_SEPARATOR);
+        }
         for (String filepath : files) {
             if (filepath.contains(pathToPackageManagerFolder) && filepath.endsWith(DESC)) {
-                int descStartIndex = filepath.lastIndexOf(DESC_PATH);
+                int descStartIndex = filepath.lastIndexOf(pathToPackageManagerFolder);
                 if (descStartIndex > 0) {
-                    String descPath = filepath.substring(0, descStartIndex + DESC_PATH.length());
+                    String descPath = filepath.substring(0, descStartIndex + pathToPackageManagerFolder.length());
                     File file = new File(descPath);
                     if (max < file.listFiles().length) {
                         max = file.listFiles().length;

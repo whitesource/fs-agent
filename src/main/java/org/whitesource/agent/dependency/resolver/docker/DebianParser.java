@@ -9,6 +9,10 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.LINUX_SEPARATOR;
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.WINDOWS;
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.WINDOWS_SEPARATOR;
+
 /**
  * @author chen.luigi
  */
@@ -89,7 +93,10 @@ public class DebianParser extends AbstractParser {
     }
 
     @Override
-    public File findFile(String[] files, String filename) {
+    public File findFile(String[] files, String filename,String operatingSystem) {
+        if (!operatingSystem.startsWith(WINDOWS)){
+            filename = filename.replace(WINDOWS_SEPARATOR,LINUX_SEPARATOR);
+        }
         for (String filepath : files) {
             if (filepath.endsWith(filename)) {
                 return new File(filepath);
