@@ -66,6 +66,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     protected final boolean ignoreNpmLsErrors;
     private final Pattern patternOfNameOfPackageFromLine = Pattern.compile(".* (.*)@");
     private boolean showNpmLsError;
+    private boolean npmLsFailureStatus = false;
     private final long npmTimeoutDependenciesCollector;
 
     /* --- Constructors --- */
@@ -85,6 +86,8 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
             CommandLineProcess npmLsJson = new CommandLineProcess(rootDirectory, getLsCommandParamsJson());
             npmLsJson.setTimeoutReadLineSeconds(this.npmTimeoutDependenciesCollector);
             List<String> linesOfNpmLsJson = npmLsJson.executeProcess();
+            // flag that indicates if the 'npm ls' command failed
+            this.npmLsFailureStatus = npmLsJson.isErrorInProcess() && !this.ignoreNpmLsErrors;
             StringBuilder json = new StringBuilder();
             for (String line : linesOfNpmLsJson) {
                 json.append(line);
@@ -97,13 +100,14 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
                 getDependencies(new JSONObject(json.toString()), rootDirectory, dependencies);
             }
         } catch (IOException e) {
+            this.npmLsFailureStatus = true;
             logger.warn("Error getting dependencies after running 'npm ls --json' on {}, error : {}", rootDirectory, e.getMessage());
             logger.debug("Error: {}", e.getStackTrace());
         }
 
         if (dependencies.isEmpty()) {
-            if (!showNpmLsError) {
-                logger.info("Failed to getting dependencies after running '{}' Please run {} on the folder {}", getLsCommandParams(),getInstallParams(), rootDirectory);
+            if (!showNpmLsError && this.npmLsFailureStatus) {
+                logger.warn("Failed to getting dependencies after running '{}', run {} on {} folder", getLsCommandParams(), getInstallParams(), rootDirectory);
                 showNpmLsError = true;
             }
         }
@@ -244,6 +248,10 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
         dependency.setFilename(filename);
         dependency.setDependencyType(DependencyType.NPM);
         return dependency;
+    }
+
+    public boolean getNpmLsFailureStatus() {
+        return this.npmLsFailureStatus;
     }
 
     /* --- Nested classes --- */
