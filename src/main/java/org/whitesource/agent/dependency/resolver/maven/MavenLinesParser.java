@@ -52,6 +52,7 @@ public class MavenLinesParser {
                 logger.debug("error parsing output : {} ", e.getStackTrace());
             } catch (Exception e) {
                 // this can happen often - some parts of the output are not parsable
+                logger.warn("error parsing output : {}", e.getMessage());
                 logger.debug("error parsing output : {} {}", e.getMessage(), mvnLines);
             }
         });
