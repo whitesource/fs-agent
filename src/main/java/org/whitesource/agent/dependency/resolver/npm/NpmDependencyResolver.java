@@ -156,10 +156,16 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         Collection<AgentProjectInfo> projects = getDependencyCollector().collectDependencies(topLevelFolder);
         Collection<DependencyInfo> dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
 
-        boolean lsSuccess = dependencies.size() > 0;
+        boolean lsSuccess = !getDependencyCollector().getNpmLsFailureStatus();
+        // flag that indicates if the number of the dependencies is zero and npm ls succeeded
+        boolean zeroDependenciesList = false;
         if (lsSuccess) {
             logger.debug("'npm ls succeeded");
-            handleLsSuccess(parsedBomFiles, dependencies, npmAccessToken);
+            if (!dependencies.isEmpty()) {
+                handleLsSuccess(parsedBomFiles, dependencies, npmAccessToken);
+            } else {
+                zeroDependenciesList = true;
+            }
         } else {
             logger.debug("'npm ls failed");
             dependencies.addAll(collectPackageJsonDependencies(parsedBomFiles));
@@ -168,7 +174,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         logger.debug("Creating excludes for .js files upon finding NPM dependencies");
         // create excludes for .js files upon finding NPM dependencies
         List<String> excludes = new LinkedList<>();
-        if (!dependencies.isEmpty()) {
+        if (!dependencies.isEmpty() || zeroDependenciesList) {
             if (ignoreJavaScriptFiles) {
                 //return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
                 excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN), null));
