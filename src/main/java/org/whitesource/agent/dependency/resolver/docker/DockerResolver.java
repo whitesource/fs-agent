@@ -44,21 +44,23 @@ public class DockerResolver {
     private static final MessageFormat DOCKER_NAME_FORMAT = new MessageFormat(DOCKER_NAME_FORMAT_STRING);
     private static final String DOCKER_IMAGES = "docker images";
     private static final boolean PARTIAL_SHA1_MATCH = false;
-    private static final String WINDOWS_PATH_SEPARATOR = "\\";
     private static final String UNIX_PATH_SEPARATOR = "/";
     private static final String DEBIAN_PATTERN = "**/*available";
     private static final String ARCH_LINUX_PATTERN = "**/*desc";
     private static final String ALPINE_PATTERN = "**/*installed";
-
-    private static final String[] scanIncludes = {DEBIAN_PATTERN, ARCH_LINUX_PATTERN, ALPINE_PATTERN};
+    private static final String RPM_PATTERN = "**var\\lib\\yum\\yumdb/**";
+    private static final String[] scanIncludes = {DEBIAN_PATTERN, ARCH_LINUX_PATTERN, ALPINE_PATTERN,RPM_PATTERN};
     private static final String[] scanExcludes = {};
-    private static final String WINDOWS_SEPARATOR = "\\";
+    public static final String WINDOWS_SEPARATOR = "\\";
+    public static final String LINUX_SEPARATOR = "/";
     private static final String ARCH_LINUX_DESC_FOLDERS = "var\\lib\\pacman\\local";
-    private static final String DEBIAN_LIST_PACKAGES_FILE = "available";
-    private static final String ALPINE_LIST_PACKAGES_FILE = "installed";
+    private static final String RPM_YUM_DB_FOLDER_DEFAULT_PATH = "var\\lib\\yum\\yumdb";
+    private static final String DEBIAN_LIST_PACKAGES_FILE = "\\available";
+    private static final String ALPINE_LIST_PACKAGES_FILE = "\\installed";
     public static final String OS_NAME = "os.name";
     public static final String WINDOWS = "Windows";
-    public static final String LINUX_SEPARATOR = "/";
+    public static final String YUMDB = "yumdb";
+
 
     /* --- Members --- */
 
@@ -74,6 +76,7 @@ public class DockerResolver {
 
     /**
      * Create project for each image
+     *
      * @return list of projects for all docker images
      */
     public Collection<AgentProjectInfo> resolveDockerImages() {
@@ -187,7 +190,7 @@ public class DockerResolver {
                 FilesScanner filesScanner = new FilesScanner();
                 String[] fileNames = filesScanner.getFileNames(containerTarArchiveExtractDir.getPath(), scanIncludes, scanExcludes, true, false);
 
-                //Check the operating system to build the full path correctly
+                // check the operating system to build the full path correctly
                 if (osName.startsWith(WINDOWS)) {
                     for (int i = 0; i < fileNames.length; i++) {
                         fileNames[i] = containerTarArchiveExtractDir.getPath() + WINDOWS_SEPARATOR + fileNames[i];
@@ -198,21 +201,28 @@ public class DockerResolver {
                     }
                 }
 
-                //Check for dependencies for each docker operating system (Debian,Arch-Linux,Alpine)
+                // check for dependencies for each docker operating system (Debian,Arch-Linux,Alpine,Rpm)
                 AbstractParser parser = new DebianParser();
-                File file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE);
+                File file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE, osName);
                 int debianPackages = parseProjectInfo(projectInfo, parser, file);
                 logger.info("Found {} Debian Packages", debianPackages);
 
                 parser = new ArchLinuxParser();
-                file = parser.findFile(fileNames, ARCH_LINUX_DESC_FOLDERS);
+                file = parser.findFile(fileNames, ARCH_LINUX_DESC_FOLDERS,osName);
                 int archLinuxPackages = parseProjectInfo(projectInfo, parser, file);
                 logger.info("Found {} Arch linux Packages", archLinuxPackages);
 
                 parser = new AlpineParser();
-                file = parser.findFile(fileNames, ALPINE_LIST_PACKAGES_FILE);
+                file = parser.findFile(fileNames, ALPINE_LIST_PACKAGES_FILE,osName);
                 int alpinePackages = parseProjectInfo(projectInfo, parser, file);
                 logger.info("Found {} Alpine Packages", alpinePackages);
+
+                RpmParser rpmParser = new RpmParser();
+                Collection<String> yumDbFoldersPath = new LinkedList<>();
+                rpmParser.findFolder(containerTarArchiveExtractDir,YUMDB,yumDbFoldersPath,osName);
+                File yumDbFolder = rpmParser.checkFolders(yumDbFoldersPath,RPM_YUM_DB_FOLDER_DEFAULT_PATH,osName);
+                int rpmPackages = parseProjectInfo(projectInfo, rpmParser, yumDbFolder);
+                logger.info("Found {} Rpm Packages", rpmPackages);
 
                 // scan files
                 String extractPath = containerTarArchiveExtractDir.getPath();
@@ -227,10 +237,10 @@ public class DockerResolver {
                     String systemPath = dependencyInfo.getSystemPath();
                     if (StringUtils.isNotBlank(systemPath)) {
                         String containerRelativePath = systemPath;
-                        containerRelativePath.replace(WINDOWS_PATH_SEPARATOR, UNIX_PATH_SEPARATOR);
+                        containerRelativePath.replace(WINDOWS_SEPARATOR, UNIX_PATH_SEPARATOR);
                         containerRelativePath = containerRelativePath.substring(containerRelativePath.indexOf(WHITE_SOURCE_DOCKER +
-                                WINDOWS_PATH_SEPARATOR) + WHITE_SOURCE_DOCKER.length() + 1);
-                        containerRelativePath = containerRelativePath.substring(containerRelativePath.indexOf(WINDOWS_PATH_SEPARATOR) + 1);
+                                WINDOWS_SEPARATOR) + WHITE_SOURCE_DOCKER.length() + 1);
+                        containerRelativePath = containerRelativePath.substring(containerRelativePath.indexOf(WINDOWS_SEPARATOR) + 1);
                         dependencyInfo.setSystemPath(containerRelativePath);
                     }
                 }
