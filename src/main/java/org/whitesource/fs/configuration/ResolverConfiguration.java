@@ -55,7 +55,10 @@ public class ResolverConfiguration {
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
 
             @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean gradleResolveDependencies,
-            @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean gradleRunAssembleCommand
+            @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean gradleRunAssembleCommand,
+
+            @JsonProperty(PAKET_RESOLVE_DEPENDENCIES) boolean paketResolveDependencies,
+            @JsonProperty(PAKET_IGNORED_SCOPES) String[] paketIgnoredScopes
     ) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmResolveDependencies = npmResolveDependencies;
@@ -86,6 +89,9 @@ public class ResolverConfiguration {
 
         this.gradleResolveDependencies = gradleResolveDependencies;
         this.gradleRunAssembleCommand = gradleRunAssembleCommand;
+
+        this.paketResolveDependencies = paketResolveDependencies;
+        this.paketIgnoredScopes = paketIgnoredScopes;
     }
 
     /* --- Members --- */
@@ -115,6 +121,9 @@ public class ResolverConfiguration {
 
     private final boolean pythonIsWssPluginInstalled;
     private final boolean pythonUninstallWssPlugin;
+
+    private boolean     paketResolveDependencies;
+    private String[]    paketIgnoredScopes;
 
     /* --- Public getters --- */
 
@@ -228,6 +237,16 @@ public class ResolverConfiguration {
 
     @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND)
     public boolean isGradleRunAssembleCommand() { return gradleRunAssembleCommand; }
+
+    @JsonProperty(PAKET_RESOLVE_DEPENDENCIES)
+    public boolean isPaketResolveDependencies() {
+        return paketResolveDependencies;
+    }
+
+    @JsonProperty(PAKET_IGNORED_SCOPES)
+    public String[] getPaketIgnoredScopes() {
+        return paketIgnoredScopes;
+    }
 
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {
         this.npmResolveDependencies = npmResolveDependencies;

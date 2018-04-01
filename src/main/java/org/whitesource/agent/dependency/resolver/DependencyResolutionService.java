@@ -24,6 +24,7 @@ import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
+import org.whitesource.agent.dependency.resolver.paket.PaketDependencyResolver;
 import org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.configuration.ResolverConfiguration;
@@ -75,6 +76,9 @@ public class DependencyResolutionService {
 
         boolean gradleResolveDependencies = config.isGradleResolveDependencies();
 
+        final boolean paketResolveDependencies = config.isPaketResolveDependencies();
+        final String[] paketIgnoredScopes = config.getPaketIgnoredScopes();
+
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
@@ -100,6 +104,10 @@ public class DependencyResolutionService {
 
         if (gradleResolveDependencies) {
             dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand()));
+        }
+
+        if (paketResolveDependencies) {
+            dependencyResolvers.add(new PaketDependencyResolver(paketIgnoredScopes));
         }
     }
 

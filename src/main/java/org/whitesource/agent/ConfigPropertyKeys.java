@@ -114,5 +114,8 @@ public final class ConfigPropertyKeys {
     public static final String GRADLE_RESOLVE_DEPENDENCIES = "gradle.resolveDependencies";
     public static final String GRADLE_RUN_ASSEMBLE_COMMAND = "gradle.runAssembleCommand";
 
+    public static final String PAKET_RESOLVE_DEPENDENCIES = "paket.resolveDependencies";
+    public static final String PAKET_IGNORED_SCOPES = "PAKET.ignoredScopes";
+
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 }

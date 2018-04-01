@@ -212,11 +212,14 @@ public class FSAConfiguration {
         boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = FSAConfiguration.getBooleanProperty(config, GRADLE_RUN_ASSEMBLE_COMMAND, true);
 
+        boolean paketResolveDependencies = FSAConfiguration.getBooleanProperty(config, PAKET_RESOLVE_DEPENDENCIES, true);
+        String[] paketIgnoredScopes = FSAConfiguration.getListProperty(config, PAKET_IGNORED_SCOPES, null);
+
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
-                dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand);
+                dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken, String projectName, String projectToken) {
