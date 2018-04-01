@@ -40,7 +40,7 @@ public class RpmParser extends AbstractParser {
                 for (File packageDirectory : packageDirectories) {
                     // parse the package name from package directory
                     // get the start index of package name
-                    //package Directory Name for
+                    // package Directory Name for
                     int firstHyphenIndex = packageDirectory.getName().indexOf(DASH);
                     String packageInfoString = packageDirectory.getName().substring(firstHyphenIndex + 1, packageDirectory.getName().length());
                     // change rpm pattern name to application pattern
@@ -87,7 +87,7 @@ public class RpmParser extends AbstractParser {
         return null;
     }
 
-    // find the yumdb folder from collection and check
+    // find yumdb folder from collection
     public File checkFolders(Collection<String> yumDbFolders,String yumDbFolderPath,String osName) {
         if (!osName.startsWith(WINDOWS)){
             yumDbFolderPath = yumDbFolderPath.replace(WINDOWS_SEPARATOR,LINUX_SEPARATOR);

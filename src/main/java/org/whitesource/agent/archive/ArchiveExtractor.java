@@ -70,7 +70,7 @@ public class ArchiveExtractor {
 
     public static final List<String> ZIP_EXTENSIONS = Arrays.asList("jar", "war", "ear", "egg", "zip", "whl", "sca", "sda");
     public static final List<String> GEM_EXTENSIONS = Collections.singletonList("gem");
-    public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar", "tgz", "tar.bz2", "tar.xz");
+    public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar", "tgz", "tar.bz2", "tar.xz","xz");
     public static final List<String> RPM_EXTENSIONS = Collections.singletonList("rpm");
     public static final List<String> RAR_EXTENSIONS = Collections.singletonList("rar");
 
@@ -409,13 +409,9 @@ public class ArchiveExtractor {
             } else if (fileName.endsWith(TAR_BZ2_SUFFIX)) {
                 unArchiver = new TarBZip2UnArchiver();
             } else if (fileName.endsWith(XZ_SUFFIX)) {
-                XZUnArchiver XZUnArchiver = new XZUnArchiver();
-                XZUnArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
-                XZUnArchiver.setSourceFile(new File(archiveFile));
                 String destFileUrl = destDir.getCanonicalPath() + "\\" + XZ_UN_ARCHIVER_FILE_NAME;
                 File destFile = new File(destFileUrl);
-                XZUnArchiver.setDestFile(destFile);
-                XZUnArchiver.extract();
+                unXz(destFile,XZ_UN_ARCHIVER_FILE_NAME);
                 archiveFile = destFileUrl;
             }
             unArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
@@ -427,6 +423,21 @@ public class ArchiveExtractor {
             logger.warn("Error extracting file {}: {}", fileName, e.getMessage());
         }
         return success;
+    }
+
+    // extract xz files
+    public void unXz(File archiveFile,String filename){
+        try {
+            XZUnArchiver XZUnArchiver = new XZUnArchiver();
+            XZUnArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
+            XZUnArchiver.setSourceFile(new File(archiveFile.getPath()));
+
+            File destFile = new File(archiveFile.getParent() + filename);
+            XZUnArchiver.setDestFile(destFile);
+            XZUnArchiver.extract();
+        }catch (Exception e){
+            logger.warn("Failed to extract Xz file : {} - {}",archiveFile.getPath(),e.getMessage());
+        }
     }
 
     // Open and extract data from rpm files
