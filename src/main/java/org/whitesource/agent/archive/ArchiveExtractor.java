@@ -68,7 +68,7 @@ public class ArchiveExtractor {
     private final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
     private final String WHITESOURCE_TEMP_FOLDER = "WhiteSource-ArchiveExtractor";
 
-    public static final List<String> ZIP_EXTENSIONS = Arrays.asList("jar", "war", "ear", "egg", "zip", "whl", "sca", "sda");
+    public static final List<String> ZIP_EXTENSIONS = Arrays.asList("jar", "war", "ear", "egg", "zip", "whl", "sca", "sda","nupkg");
     public static final List<String> GEM_EXTENSIONS = Collections.singletonList("gem");
     public static final List<String> TAR_EXTENSIONS = Arrays.asList("tar.gz", "tar", "tgz", "tar.bz2", "tar.xz","xz");
     public static final List<String> RPM_EXTENSIONS = Collections.singletonList("rpm");
