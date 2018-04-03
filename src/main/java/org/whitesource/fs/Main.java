@@ -171,7 +171,7 @@ public class Main {
             logger.info("Exiting, nothing to update");
             return new Pair<>("Exiting, nothing to update", StatusCode.SUCCESS);
         } else {
-            return projectsSender.sendRequest(projectsDetails);//todo
+            return projectsSender.sendRequest(projectsDetails);
         }
     }
 }

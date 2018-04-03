@@ -18,10 +18,7 @@ package org.whitesource.agent;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.api.dispatch.CheckPolicyComplianceResult;
-import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
-import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
-import org.whitesource.agent.api.dispatch.UpdateType;
+import org.whitesource.agent.api.dispatch.*;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
@@ -52,12 +49,12 @@ import java.util.HashMap;
  * @author anna.rozin
  */
 public class ProjectsSender {
-    public static final String PROJECT_URL_PREFIX = "Wss/WSS.html#!project;id=";
-
-    /* --- Static members --- */
 
     private final Logger logger = LoggerFactory.getLogger(ProjectsSender.class);
 
+    /* --- Static members --- */
+
+    public static final String PROJECT_URL_PREFIX = "Wss/WSS.html#!project;id=";
     private static final String NEW_LINE = System.lineSeparator();
     private static final String DOT = ".";
     private static final String JAVA_NETWORKING = "java.net";
@@ -66,13 +63,17 @@ public class ProjectsSender {
     public static final String JAVA_SCRIPT = "javascript";
     public static final String BACK_SLASH = "\\";
     public static final String FORWARD_SLASH = "/";
+
     /* --- Members --- */
 
     private final SenderConfiguration senderConfig;
     private final OfflineConfiguration offlineConfig;
     private final RequestConfiguration requestConfig;
     private final PluginInfo pluginInfo;
+
     protected StatusCode prepStepStatusCode = StatusCode.SUCCESS;
+
+
 
     /* --- Constructors --- */
 
@@ -159,6 +160,24 @@ public class ProjectsSender {
         }
     }
 
+    public ConfigurationResult getUserConfigurationFromServer() {
+        logger.info("Initializing WhiteSource Client");
+        WhitesourceService service = createService();
+        // send request to get configuration from server
+        return getConfigurationFromServer(service);
+    }
+
+    private ConfigurationResult getConfigurationFromServer(WhitesourceService service) {
+        try {
+            ConfigurationResult configurationResult = service.getConfiguration(requestConfig.getApiToken(),//, requestConfig.getRequesterEmail(),
+                    requestConfig.getProductNameOrToken(), "");//requestConfig.getProjectVersion());
+            return  configurationResult;
+        } catch (WssServiceException e) {
+            logger.warn("Error getting user configuration from server - ", e.getMessage());
+        }
+        return  null;
+    }
+
     private void runViaAnalysis(ProjectsDetails projectsDetails, WhitesourceService service) {
         //todo comment in via code
         VulnerabilitiesAnalysis vulnerabilitiesAnalysis = null;
@@ -201,19 +220,35 @@ public class ProjectsSender {
     }
 
     private WhitesourceService createService() {
-        logger.info("Service URL is " + senderConfig.getServiceUrl());
+        String serviceUrl = senderConfig.getServiceUrl();
+        logger.info("Service URL is " + serviceUrl);
         boolean setProxy = false;
         if (StringUtils.isNotBlank(senderConfig.getProxyHost()) || !offlineConfig.isEnabled()) {
             setProxy = true;
         }
         int connectionTimeoutMinutes = senderConfig.getConnectionTimeOut();
         final WhitesourceService service = new WhitesourceService(pluginInfo.getAgentType(),pluginInfo.getAgentVersion(),pluginInfo.getPluginVersion(),
-                senderConfig.getServiceUrl(), setProxy, connectionTimeoutMinutes, senderConfig.isIgnoreCertificateCheck());
+                serviceUrl, setProxy, connectionTimeoutMinutes, senderConfig.isIgnoreCertificateCheck());
         if (StringUtils.isNotBlank(senderConfig.getProxyHost())) {
             service.getClient().setProxy(senderConfig.getProxyHost(), senderConfig.getProxyPort(), senderConfig.getProxyUser(), senderConfig.getProxyPassword());
         }
         return service;
     }
+
+//    private WhitesourceService createService(String serviceUrl, String proxyHost, boolean offline, int connectionTimeoutMinutes, String agentType,
+//                                             String agentVersion, String pluginVersion, boolean ignoreCertificateCheck, int proxyPort, String proxyUser, String proxyPassword) {
+//        logger.info("Service URL is " + serviceUrl);
+//        boolean setProxy = false;
+//        if (StringUtils.isNotBlank(proxyHost) || !offline) {
+//            setProxy = true;
+//        }
+//        final WhitesourceService service = new WhitesourceService(agentType, agentVersion, pluginVersion, serviceUrl, setProxy,
+//                connectionTimeoutMinutes, ignoreCertificateCheck);
+//        if (StringUtils.isNotBlank(proxyHost)) {
+//            service.getClient().setProxy(proxyHost, proxyPort, proxyUser, proxyPassword);
+//        }
+//        return service;
+//    }
 
     private StatusCode checkPolicies(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         boolean policyCompliance = true;
@@ -252,6 +287,10 @@ public class ProjectsSender {
         }
         return policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
     }
+
+//    private getConfiguration() {
+//
+//    }
 
     private String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");

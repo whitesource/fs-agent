@@ -102,6 +102,8 @@ public class CommandLineArgs {
     @Parameter(names = "-enableImpactAnalysis", description = "Whether or not to enable impact analysis")
     String enableImpactAnalysis = null;
 
+    @Parameter(names = "-applyConfig", description = "Whether or get configuration from application server")
+    String applyConfig = null;
     /* --- Public methods --- */
 
     public String getConfigFilePath() {

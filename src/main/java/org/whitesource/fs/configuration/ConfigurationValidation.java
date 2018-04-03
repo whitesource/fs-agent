@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 package org.whitesource.fs.configuration;
+
 import org.apache.commons.lang.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,11 +26,13 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
  * Author: eugen.horovitz
  */
 public class ConfigurationValidation {
+
     /* --- Static members --- */
 
     private static final int MAX_EXTRACTION_DEPTH = 7;
 
-    public List<String> getConfigurationErrors(boolean projectPerFolder, String configProjectToken, String configProjectName, String configApiToken, String configFilePath, int archiveDepth ,String[] includes) {
+    public List<String> getConfigurationErrors(boolean projectPerFolder, String configProjectToken, String configProjectName, String configApiToken,
+                                               String configFilePath, int archiveDepth ,String[] includes) {
         List<String> errors = new ArrayList<>();
 
         if (StringUtils.isBlank(configApiToken)) {

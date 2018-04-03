@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.ProjectsSender;
+import org.whitesource.agent.api.dispatch.ConfigurationResult;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.utils.Pair;
@@ -108,11 +110,11 @@ public class FSAConfiguration {
         configurationValidation = new ConfigurationValidation();
         String projectName;
         errors = new ArrayList<>();
+        CommandLineArgs commandLineArgs = new CommandLineArgs();
         if ((args != null)) {
             // read command line args
             // validate args // TODO use jCommander validators
             // TODO add usage command
-            CommandLineArgs commandLineArgs = new CommandLineArgs();
             new JCommander(commandLineArgs, args);
 
             if (config == null) {
@@ -126,12 +128,14 @@ public class FSAConfiguration {
 
             configFilePath = commandLineArgs.configFilePath;
             config.setProperty(PROJECT_CONFIGURATION_PATH, commandLineArgs.configFilePath);
-
             //override
-            offlineRequestFiles = updateProperties(config, commandLineArgs);
-            projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
+            updateMandatoryConfigProperties(config, commandLineArgs);
+
             fileListPath = commandLineArgs.fileListPath;
             dependencyDirs = commandLineArgs.dependencyDirs;
+
+            offlineRequestFiles = getConfigurationProperties(config, commandLineArgs);
+            projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             if (StringUtils.isNotBlank(commandLineArgs.whiteSourceFolder)) {
                 config.setProperty(WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
             }
@@ -145,16 +149,16 @@ public class FSAConfiguration {
             commandLineArgsOverride(null);
         }
 
-        scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);
-        scanDockerImages = getBooleanProperty(config,SCAN_DOCKER_IMAGES,false);
-
         // validate config
         String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
         String projectNameFinal = !StringUtils.isBlank(projectName) ? projectName : config.getProperty(PROJECT_NAME_PROPERTY_KEY);
-        boolean projectPerFolder = FSAConfiguration.getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         String apiToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
+
+        boolean projectPerFolder = FSAConfiguration.getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(config);
         String[] includes = FSAConfiguration.getIncludes(config);
+        scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);
+        scanDockerImages = getBooleanProperty(config,SCAN_DOCKER_IMAGES,false);
 
         // todo: check possibility to get the errors only in the end
         errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal, apiToken, configFilePath, archiveExtractionDepth, includes));
@@ -168,6 +172,15 @@ public class FSAConfiguration {
         sender = getSender(config);
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
+
+
+        // get configuration from server instead of config file
+        String applyConfig = config.getProperty(ConfigPropertyKeys.APPLY_CONFIG);
+        if (applyConfig != null && Boolean.valueOf(applyConfig)) {
+            ProjectsSender projectsSender = new ProjectsSender(sender, offline, request, new FileSystemAgentInfo());
+            ConfigurationResult serverConfigurationResult = projectsSender.getUserConfigurationFromServer();
+            //todo  override config parameters
+        }
     }
 
     private EndPointConfiguration getEndpoint(Properties config) {
@@ -488,14 +501,22 @@ public class FSAConfiguration {
 
     /* --- Private methods --- */
 
-    private List<String> updateProperties(Properties configProps, CommandLineArgs commandLineArgs) {
+    private void updateMandatoryConfigProperties(Properties configProps, CommandLineArgs commandLineArgs) {
         // Check whether the user inserted api key, project OR/AND product via command line
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY, commandLineArgs.apiKey);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.UPDATE_TYPE, commandLineArgs.updateType);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, commandLineArgs.product);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY, commandLineArgs.productVersion);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_VERSION_PROPERTY_KEY, commandLineArgs.projectVersion);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.APPLY_CONFIG, commandLineArgs.applyConfig);
+        // proxy
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PORT_PROPERTY_KEY, commandLineArgs.proxyPort);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_USER_PROPERTY_KEY, commandLineArgs.proxyUser);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY, commandLineArgs.proxyPass);
+    }
 
+    private List<String> getConfigurationProperties(Properties configProps, CommandLineArgs commandLineArgs) {
         // request file
         List<String> offlineRequestFiles = new LinkedList<>();
         offlineRequestFiles.addAll(commandLineArgs.requestFiles);
@@ -507,21 +528,13 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.APP_PATH, commandLineArgs.appPath);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.VIA_DEBUG, commandLineArgs.viaDebug);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, commandLineArgs.enableImpactAnalysis);
-        // proxy
-        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);
-        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PORT_PROPERTY_KEY, commandLineArgs.proxyPort);
-        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_USER_PROPERTY_KEY, commandLineArgs.proxyUser);
-        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY, commandLineArgs.proxyPass);
 
         // archiving
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ARCHIVE_FAST_UNPACK_KEY, commandLineArgs.archiveFastUnpack);
-
         // project per folder
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, commandLineArgs.projectPerFolder);
-
         // Check whether the user inserted scmRepositoriesFile via command line
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCM_REPOSITORIES_FILE, commandLineArgs.repositoriesFile);
-
         return offlineRequestFiles;
     }
 
