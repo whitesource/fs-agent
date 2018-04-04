@@ -58,7 +58,10 @@ public class ResolverConfiguration {
             @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean gradleRunAssembleCommand,
 
             @JsonProperty(PAKET_RESOLVE_DEPENDENCIES) boolean paketResolveDependencies,
-            @JsonProperty(PAKET_IGNORED_SCOPES) String[] paketIgnoredScopes
+            @JsonProperty(PAKET_IGNORED_GROUPS) String[] paketIgnoredScopes,
+            @JsonProperty(PAKET_IGNORE_FILES) boolean paketIgnoreFiles,
+            @JsonProperty(PAKET_RUN_PRE_STEP) boolean paketRunPreStep,
+            @JsonProperty(PAKET_EXE_PATH) String paketPath
     ) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmResolveDependencies = npmResolveDependencies;
@@ -92,6 +95,9 @@ public class ResolverConfiguration {
 
         this.paketResolveDependencies = paketResolveDependencies;
         this.paketIgnoredScopes = paketIgnoredScopes;
+        this.paketIgnoreFiles = paketIgnoreFiles;
+        this.paketRunPreStep = paketRunPreStep;
+        this.paketPath = paketPath;
     }
 
     /* --- Members --- */
@@ -124,6 +130,9 @@ public class ResolverConfiguration {
 
     private boolean     paketResolveDependencies;
     private String[]    paketIgnoredScopes;
+    private boolean     paketIgnoreFiles;
+    private boolean     paketRunPreStep;
+    private String     paketPath;
 
     /* --- Public getters --- */
 
@@ -243,9 +252,24 @@ public class ResolverConfiguration {
         return paketResolveDependencies;
     }
 
-    @JsonProperty(PAKET_IGNORED_SCOPES)
+    @JsonProperty(PAKET_IGNORED_GROUPS)
     public String[] getPaketIgnoredScopes() {
         return paketIgnoredScopes;
+    }
+
+    @JsonProperty(PAKET_IGNORE_FILES)
+    public boolean getPaketIgnoreFiles() {
+        return paketIgnoreFiles;
+    }
+
+    @JsonProperty(PAKET_RUN_PRE_STEP)
+    public boolean isPaketRunPreStep() {
+        return paketRunPreStep;
+    }
+
+    @JsonProperty(PAKET_EXE_PATH)
+    public String getPaketPath() {
+        return paketPath;
     }
 
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {

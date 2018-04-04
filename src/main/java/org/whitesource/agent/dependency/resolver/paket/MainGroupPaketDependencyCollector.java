@@ -10,13 +10,11 @@ public class MainGroupPaketDependencyCollector extends AbstractPaketDependencyCo
     /* --- Statics Members --- */
 
     private static final String MAIN = "Main";
-    private static final String EMPTY_STRING = "";
-    private static final String FORWARD_SLASH = "/";
 
     /* --- Constructors --- */
 
-    public MainGroupPaketDependencyCollector(List<String> linesOfDirectDependencies, String[] paketIgnoredScopes) {
-        super(linesOfDirectDependencies, paketIgnoredScopes);
+    public MainGroupPaketDependencyCollector(List<String> directDependenciesNames, String[] paketIgnoredGroups) {
+        super(directDependenciesNames, paketIgnoredGroups);
     }
 
     /* --- Override protected methods --- */

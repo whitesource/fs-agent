@@ -115,7 +115,10 @@ public final class ConfigPropertyKeys {
     public static final String GRADLE_RUN_ASSEMBLE_COMMAND = "gradle.runAssembleCommand";
 
     public static final String PAKET_RESOLVE_DEPENDENCIES = "paket.resolveDependencies";
-    public static final String PAKET_IGNORED_SCOPES = "PAKET.ignoredScopes";
+    public static final String PAKET_IGNORED_GROUPS = "paket.ignoredGroups";
+    public static final String PAKET_IGNORE_FILES = "paket.ignoreFiles";
+    public static final String PAKET_RUN_PRE_STEP = "paket.runPreStep";
+    public static final String PAKET_EXE_PATH = "paket.exePath";
 
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 }

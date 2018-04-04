@@ -78,6 +78,9 @@ public class DependencyResolutionService {
 
         final boolean paketResolveDependencies = config.isPaketResolveDependencies();
         final String[] paketIgnoredScopes = config.getPaketIgnoredScopes();
+        final boolean paketIgnoreFiles = config.getPaketIgnoreFiles();
+        final boolean paketRunPreStep = config.isPaketRunPreStep();
+        final String paketPath = config.getPaketPath();
 
         dependenciesOnly = config.isDependenciesOnly();
 
@@ -107,7 +110,7 @@ public class DependencyResolutionService {
         }
 
         if (paketResolveDependencies) {
-            dependencyResolvers.add(new PaketDependencyResolver(paketIgnoredScopes));
+            dependencyResolvers.add(new PaketDependencyResolver(paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath));
         }
     }
 
