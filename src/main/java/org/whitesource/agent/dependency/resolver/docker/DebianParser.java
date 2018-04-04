@@ -1,7 +1,6 @@
 package org.whitesource.agent.dependency.resolver.docker;
 
 import org.apache.commons.lang.StringUtils;
-import org.whitesource.agent.api.model.ChecksumType;
 import org.whitesource.agent.api.model.DependencyInfo;
 
 import java.io.*;
@@ -9,9 +8,7 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.LINUX_SEPARATOR;
-import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.WINDOWS;
-import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.WINDOWS_SEPARATOR;
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.*;
 
 /**
  * @author chen.luigi
@@ -29,6 +26,7 @@ public class DebianParser extends AbstractParser {
 
     private static final String DEBIAN_PACKAGE_PATTERN = "{0}_{1}_{2}.deb";
     private static final String SLASH_SEPERATOR = "/";
+    public static final String PLUS = "+";
 
 
     /* --- Overridden methods --- */
@@ -46,9 +44,6 @@ public class DebianParser extends AbstractParser {
             fr = new FileReader(file.getAbsoluteFile());
             br = new BufferedReader(fr);
             String line = null;
-            String filename = null;
-            String systemPath = null;
-            String md5 = null;
             Package packageInfo = new Package();
             // Create Debian package - package-version-architecture.deb
             while ((line = br.readLine()) != null) {
@@ -60,26 +55,24 @@ public class DebianParser extends AbstractParser {
                             packageInfo.setPackageName(dependencyParameter);
                             break;
                         case VERSION:
-                            packageInfo.setVersion(dependencyParameter);
+                            if(packageInfo.getPackageName()!=null){
+                                packageInfo.setVersion(dependencyParameter);
+                            }
                             break;
                         case ARCHITECTURE:
-                            packageInfo.setArchitecture(dependencyParameter);
-                            break;
-                        case SYSTEMPATH:
-                            systemPath = dependencyParameter;
-                            int lastSlashPos = dependencyParameter.lastIndexOf(SLASH_SEPERATOR);
-                            filename = dependencyParameter.substring(lastSlashPos + 1, dependencyParameter.length());
-                            break;
-                        case MD5:
-                            md5 = dependencyParameter;
+                            if(packageInfo.getPackageName()!=null) {
+                                packageInfo.setArchitecture(dependencyParameter);
+                            }
                             break;
                         default:
                             break;
                     }
                 } else {
-                    DependencyInfo dependencyInfo = createDependencyInfo(packageInfo, filename, systemPath, md5);
-                    packageInfo = new Package();
-                    dependencyInfos.add(dependencyInfo);
+                    if(packageInfo.getPackageName()!=null) {
+                        DependencyInfo dependencyInfo = createDependencyInfo(packageInfo);
+                        packageInfo = new Package();
+                        dependencyInfos.add(dependencyInfo);
+                    }
                 }
             }
         } catch (FileNotFoundException e) {
@@ -107,20 +100,16 @@ public class DebianParser extends AbstractParser {
 
     /* --- Private methods --- */
 
-    private DependencyInfo createDependencyInfo(Package packageInfo, String filename, String systemPath, String md5) {
+    private DependencyInfo createDependencyInfo(Package packageInfo) {
         DependencyInfo dependencyInfo = null;
         if (StringUtils.isNotBlank(packageInfo.getPackageName()) && StringUtils.isNotBlank(packageInfo.getVersion()) && StringUtils.isNotBlank(packageInfo.getArchitecture())) {
-            dependencyInfo = new DependencyInfo(
-                    null, MessageFormat.format(DEBIAN_PACKAGE_PATTERN, packageInfo.getPackageName(), packageInfo.getVersion(), packageInfo.getArchitecture()), packageInfo.getVersion());
-        }
-        if (StringUtils.isNotBlank(filename)) {
-            dependencyInfo.setFilename(filename);
-        }
-        if (StringUtils.isNotBlank(systemPath)) {
-            dependencyInfo.setSystemPath(systemPath);
-        }
-        if (StringUtils.isNotBlank(md5)) {
-            dependencyInfo.getChecksums().put(ChecksumType.MD5, md5);
+            if (packageInfo.getVersion().contains(PLUS)) {
+                dependencyInfo = new DependencyInfo(
+                        null, MessageFormat.format(DEBIAN_PACKAGE_PATTERN, packageInfo.getPackageName(), packageInfo.getVersion().substring(0, packageInfo.getVersion().lastIndexOf(PLUS)), packageInfo.getArchitecture()), packageInfo.getVersion());
+            } else {
+                dependencyInfo = new DependencyInfo(
+                        null, MessageFormat.format(DEBIAN_PACKAGE_PATTERN, packageInfo.getPackageName(), packageInfo.getVersion(), packageInfo.getArchitecture()), packageInfo.getVersion());
+            }
         }
         if (dependencyInfo != null) {
             return dependencyInfo;
@@ -129,6 +118,5 @@ public class DebianParser extends AbstractParser {
 
         }
     }
-
 
 }
