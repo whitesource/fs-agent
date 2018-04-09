@@ -42,6 +42,11 @@ import static org.whitesource.fs.FileSystemAgent.EXCLUDED_COPYRIGHTS_SEPARATOR_R
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FSAConfiguration {
+    public static final String CHECK_POLICIES = "checkPolicies";
+    public static final String FORCE_CHECK_ALL_DEPENDENCIES = "forceCheckAllDependencies";
+    public static final String FORCE_UPDATE = "forceUpdate";
+    public static final String INCLUDES = "includes";
+    public static final String EXCLUDES = "excludes";
 
     /* --- Static members --- */
 
@@ -164,23 +169,33 @@ public class FSAConfiguration {
         errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal, apiToken, configFilePath, archiveExtractionDepth, includes));
 
         logLevel = config.getProperty(LOG_LEVEL_KEY, INFO);
-
+        String applyConfig = config.getProperty(ConfigPropertyKeys.APPLY_CONFIG);
         request = getRequest(config, apiToken, projectName, projectToken);
         scm = getScm(config);
-        agent = getAgent(config);
         offline = getOffline(config);
-        sender = getSender(config);
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
 
-
         // get configuration from server instead of config file
-        String applyConfig = config.getProperty(ConfigPropertyKeys.APPLY_CONFIG);
         if (applyConfig != null && Boolean.valueOf(applyConfig)) {
+            SenderConfiguration sender = getSender(config);
             ProjectsSender projectsSender = new ProjectsSender(sender, offline, request, new FileSystemAgentInfo());
             ConfigurationResult serverConfigurationResult = projectsSender.getUserConfigurationFromServer();
+            overrideConfigParameters(config,serverConfigurationResult);
+
             //todo  override config parameters
         }
+        this.sender = getSender(config);
+        agent = getAgent(config);
+
+    }
+
+    private void overrideConfigParameters(Properties config, ConfigurationResult serverConfigurationResult) {
+            config.setProperty(CHECK_POLICIES,String.valueOf(serverConfigurationResult.isCheckPolicies()));
+            config.setProperty(FORCE_CHECK_ALL_DEPENDENCIES,String.valueOf(serverConfigurationResult.isForceCheckAllDependencies()));
+            config.setProperty(FORCE_UPDATE,String.valueOf(serverConfigurationResult.isForceUpdate()));
+            config.setProperty(INCLUDES,serverConfigurationResult.getIncludes());
+            config.setProperty(EXCLUDES,serverConfigurationResult.getExcludes());
     }
 
     private EndPointConfiguration getEndpoint(Properties config) {
@@ -247,8 +262,8 @@ public class FSAConfiguration {
     private SenderConfiguration getSender(Properties config) {
         String updateTypeValue = config.getProperty(UPDATE_TYPE, UpdateType.OVERRIDE.toString());
         boolean checkPolicies = FSAConfiguration.getBooleanProperty(config, CHECK_POLICIES_PROPERTY_KEY, false);
-        boolean forceCheckAllDependencies = FSAConfiguration.getBooleanProperty(config, FORCE_CHECK_ALL_DEPENDENCIES, false);
-        boolean forceUpdate = FSAConfiguration.getBooleanProperty(config, FORCE_UPDATE, false);
+        boolean forceCheckAllDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.FORCE_CHECK_ALL_DEPENDENCIES, false);
+        boolean forceUpdate = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.FORCE_UPDATE, false);
         boolean enableImpactAnalysis = FSAConfiguration.getBooleanProperty(config, ENABLE_IMPACT_ANALYSIS, false);
         String serviceUrl = config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
         String proxyHost = config.getProperty(PROXY_HOST_PROPERTY_KEY);

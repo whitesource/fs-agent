@@ -140,4 +140,5 @@ public class SenderConfiguration {
     public boolean isIgnoreCertificateCheck() {
         return ignoreCertificateCheck;
     }
+
 }
