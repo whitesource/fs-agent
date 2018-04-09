@@ -185,7 +185,7 @@ public class FSAConfiguration {
 
             //todo  override config parameters
         }
-        this.sender = getSender(config);
+        sender = getSender(config);
         agent = getAgent(config);
 
     }
