@@ -23,7 +23,6 @@ import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.api.model.AgentProjectInfo;
-import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
@@ -35,17 +34,18 @@ import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.OfflineConfiguration;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.fs.configuration.SenderConfiguration;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+
 //import whitesource.analysis.server.FSAgentServer;
 //import whitesource.analysis.server.Server;
 //import whitesource.analysis.utils.Utils;
 //import whitesource.analysis.vulnerabilities.VulnerabilitiesAnalysis;
 //import whitesource.via.api.vulnerability.update.ApiTranslator;
 //import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResult;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
 
 /**
  * Class for sending projects for all WhiteSource command line agents.
@@ -163,7 +163,7 @@ public class ProjectsSender {
         }
     }
 
-    private void runViaAnalysis(ProjectsDetails projectsDetails, WhitesourceService service) {
+  /*  private void runViaAnalysis(ProjectsDetails projectsDetails, WhitesourceService service) {
         //todo comment in via code
         VulnerabilitiesAnalysis vulnerabilitiesAnalysis = null;
         GlobalVulnerabilityAnalysisResult result = null;
@@ -193,8 +193,7 @@ public class ProjectsSender {
                 logger.error("Failed to run impact analysis {}", e.getMessage());
             }
         }
-    }
-
+    }*/
 
     private void checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
         int numberOfDependencies = projects.stream().map(x -> x.getDependencies()).mapToInt(x -> x.size()).sum();
