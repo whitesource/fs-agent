@@ -41,7 +41,7 @@ import java.util.stream.Stream;
  */
 public class MavenTreeDependencyCollector extends DependencyCollector {
 
-/* --- Statics Members --- */
+    /* --- Statics Members --- */
 
     protected static final String DOT = ".";
     protected static final String DASH = "-";
@@ -63,6 +63,8 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String C_Char_WINDOWS = "/c";
     private static final String EMPTY_STRING = "";
     private static final String POM = "pom";
+    public static final String TEST_JAR = "test-jar";
+    public static final String JAR = "jar";
 
     /* --- Members --- */
 
@@ -164,7 +166,11 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         if (StringUtils.isBlank(node.getClassifier())) {
             shortName = dependency.getArtifactId() + DASH + dependency.getVersion() + DOT + node.getPackaging();
         } else {
-            shortName = dependency.getArtifactId() + DASH + dependency.getVersion() + DASH + node.getClassifier() + DOT + node.getPackaging();
+            String nodePackaging = node.getPackaging();
+            if (nodePackaging.equals(TEST_JAR)){
+                nodePackaging = JAR;
+            }
+            shortName = dependency.getArtifactId() + DASH + dependency.getVersion() + DASH + node.getClassifier() + DOT + nodePackaging;
         }
 
         String filePath = Paths.get(M2Path, dependency.getGroupId().replace(DOT, File.separator), dependency.getArtifactId(), dependency.getVersion(), shortName).toString();
