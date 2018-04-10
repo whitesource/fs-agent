@@ -16,13 +16,27 @@ class GradleCli {
     protected static final String GRADLE_PARAMS_TREE = "dependencies";
     protected static final String GRADLE_ASSEMBLE = "assemble";
     private final String GRADLE_COMMAND = "gradle";
+    private final String GRADLE_COMMAND_W = "gradlew";
 
     protected List<String> runCmd(String rootDirectory, String[] params){
         try {
             // run gradle dependencies to get dependency tree
             CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, params);
             List<String> lines = commandLineProcess.executeProcess();
-            if (!commandLineProcess.isErrorInProcess()) {
+            if (commandLineProcess.isErrorInProcess()) {
+                // in case gradle is not installed on the local machine, using 'gradlew' command, which uses local gradle wrapper
+                for (int i = 0; i < params.length; i++){
+                    if (params[i].equals(GRADLE_COMMAND)){
+                        params[i] = GRADLE_COMMAND_W;
+                        break;
+                    }
+                }
+                commandLineProcess = new CommandLineProcess(rootDirectory,params);
+                lines = commandLineProcess.executeProcess();
+                if (!commandLineProcess.isErrorInProcess()){
+                    return lines;
+                }
+            } else {
                 return lines;
             }
         } catch (IOException e) {

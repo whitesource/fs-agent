@@ -57,7 +57,7 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
     public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
         this.rootDirectory = rootDirectory;
         Collection<DependencyInfo> dependencies = new LinkedList<>();
-        // check weather paket group is not ignored & it has dependencies
+        // check if paket group is not ignored & it has dependencies
         if (paketIgnoredGroups == null || !Arrays.asList(paketIgnoredGroups).contains(getGroupName().toLowerCase())) {
             if (!this.directDependenciesNames.isEmpty()) {
                 List<String> groupLines = getGroupDependenciesFromPaketLock();
@@ -119,7 +119,7 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
         String dependencyVersionLowerCase = dependencyVersion.toLowerCase();
         if (folder.exists()) {
             for (File file : folder.listFiles()) {
-                // check weather the file exists: 'package-name.package-version' && ends with .nupkg
+                // check if the file exists: 'package-name.package-version' && ends with .nupkg
                 if (file.getName().toLowerCase().startsWith(dependencyNameLowerCase + DOT + dependencyVersionLowerCase) && file.getName().endsWith(DOT + NUPKG)) {
                     dependencyFile = file;
                     break;
@@ -152,7 +152,7 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
             boolean rightGroup = false;
             boolean nugetSection = false;
             while ((line = bufferedReader.readLine()) != null) {
-                // check weather we should read group lines, for example: 'GROUP Build'
+                // check if we should read group lines, for example: 'GROUP Build'
                 if (!rightGroup && line.startsWith(beginGroupLine())) {
                     rightGroup = true;
                 }
