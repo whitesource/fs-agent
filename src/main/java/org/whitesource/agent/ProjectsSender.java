@@ -183,8 +183,7 @@ public class ProjectsSender {
                 }
 
                 if (vulnerabilitiesAnalysis != null) {
-                    vulnerabilitiesAnalysis.runAnalysis(server, appPath, project.getDependencies(),
-                            Boolean.valueOf(requestConfig.getViaDebug()));
+                    vulnerabilitiesAnalysis.runAnalysis(server, appPath, project.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
                     logger.info("Got impact analysis result from server");
                 }
             } catch (Exception e) {
