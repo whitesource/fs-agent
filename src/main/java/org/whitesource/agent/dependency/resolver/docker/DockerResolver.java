@@ -1,5 +1,6 @@
 package org.whitesource.agent.dependency.resolver.docker;
 
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.archiver.ArchiverException;
@@ -45,21 +46,25 @@ public class DockerResolver {
     private static final String DOCKER_IMAGES = "docker images";
     private static final boolean PARTIAL_SHA1_MATCH = false;
     private static final String UNIX_PATH_SEPARATOR = "/";
-    private static final String DEBIAN_PATTERN = "**/*available";
+    private static final String DEBIAN_PATTERN = "**/*eipp.log.xz";
     private static final String ARCH_LINUX_PATTERN = "**/*desc";
     private static final String ALPINE_PATTERN = "**/*installed";
+    private static final String DEBIAN_PATTERN_AVAILABLE = "**/*available";
     private static final String RPM_PATTERN = "**var\\lib\\yum\\yumdb/**";
-    private static final String[] scanIncludes = {DEBIAN_PATTERN, ARCH_LINUX_PATTERN, ALPINE_PATTERN,RPM_PATTERN};
+    private static final String[] scanIncludes = {DEBIAN_PATTERN, ARCH_LINUX_PATTERN, ALPINE_PATTERN,RPM_PATTERN,DEBIAN_PATTERN_AVAILABLE};
     private static final String[] scanExcludes = {};
     public static final String WINDOWS_SEPARATOR = "\\";
     public static final String LINUX_SEPARATOR = "/";
     private static final String ARCH_LINUX_DESC_FOLDERS = "var\\lib\\pacman\\local";
     private static final String RPM_YUM_DB_FOLDER_DEFAULT_PATH = "var\\lib\\yum\\yumdb";
-    private static final String DEBIAN_LIST_PACKAGES_FILE = "\\available";
+    private static final String DEBIAN_LIST_PACKAGES_FILE = "\\eipp.log.xz";
     private static final String ALPINE_LIST_PACKAGES_FILE = "\\installed";
+    private static final String DEBIAN_LIST_PACKAGES_FILE_AVAILABLE = "\\available";
     public static final String OS_NAME = "os.name";
     public static final String WINDOWS = "Windows";
     public static final String YUMDB = "yumdb";
+    public static final String PACKAGE_LOG_TXT = "packageLog.txt";
+    public static final String UNDER_SCORE = "_";
 
 
     /* --- Members --- */
@@ -204,8 +209,24 @@ public class DockerResolver {
                 // check for dependencies for each docker operating system (Debian,Arch-Linux,Alpine,Rpm)
                 AbstractParser parser = new DebianParser();
                 File file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE, osName);
-                int debianPackages = parseProjectInfo(projectInfo, parser, file);
-                logger.info("Found {} Debian Packages", debianPackages);
+
+                // extract .xz file to read the package log file
+                if (file != null) {
+                    file = getPackagesLogFile(file,osName,archiveExtractor);
+                }
+                parseProjectInfo(projectInfo, parser, file);
+                file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE_AVAILABLE, osName);
+                if (file != null) {
+                    parseProjectInfo(projectInfo, parser, file);
+                }
+
+                // try to find duplicates and clear them
+                Collection<DependencyInfo> debianDependencyInfos = mergeDependencyInfos(projectInfo);
+                if(debianDependencyInfos !=null && !debianDependencyInfos.isEmpty()){
+                    projectInfo.getDependencies().clear();
+                    projectInfo.getDependencies().addAll(debianDependencyInfos);
+                }
+                logger.info("Found {} Debian Packages", debianDependencyInfos.size());
 
                 parser = new ArchLinuxParser();
                 file = parser.findFile(fileNames, ARCH_LINUX_DESC_FOLDERS,osName);
@@ -259,6 +280,37 @@ public class DockerResolver {
             }
 
         }
+    }
+
+    private Collection<DependencyInfo> mergeDependencyInfos(AgentProjectInfo projectInfo) {
+        Map<String,DependencyInfo> infoMap = new HashedMap();
+        Collection<DependencyInfo> dependencyInfos = new LinkedList<>();
+        if(projectInfo!=null){
+            Collection<DependencyInfo> dependencies = projectInfo.getDependencies();
+            for (DependencyInfo dependencyInfo:dependencies) {
+                infoMap.putIfAbsent(dependencyInfo.getArtifactId(),dependencyInfo);
+            }
+        }
+        for(Map.Entry<String, DependencyInfo> entry : infoMap.entrySet()) {
+            if(entry.getValue()!=null){
+                dependencyInfos.add(entry.getValue());
+            }
+        }
+        return dependencyInfos;
+    }
+
+    private File getPackagesLogFile(File file,String osName,ArchiveExtractor archiveExtractor) throws IOException {
+
+       if(osName.startsWith(WINDOWS)){
+           archiveExtractor.unXz(file, WINDOWS_SEPARATOR+PACKAGE_LOG_TXT);
+           return new File(file.getParent()+WINDOWS_SEPARATOR+PACKAGE_LOG_TXT);
+       }
+       else {
+           archiveExtractor.unXz(file, LINUX_SEPARATOR+PACKAGE_LOG_TXT);
+           return new File(file.getParent()+LINUX_SEPARATOR+PACKAGE_LOG_TXT);
+       }
+
+
     }
 
     private int parseProjectInfo(AgentProjectInfo projectInfo, AbstractParser parser, File file) {

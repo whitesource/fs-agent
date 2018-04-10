@@ -38,17 +38,17 @@ public class ComponentScanTest {
     @Test
     public void testAcceptExtensionsList() {
         Properties props = TestHelper.getPropertiesFromFile();
-//        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\NPM-Plugin\\npm-plugin-for-test";
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
         String resolverFolder = Paths.get(config.getParent(), "resolver/npm").toString();
 //        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\CXBug\\package";
 //        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\Maven-Plugin\\maven-plugin1";
 //        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\Bower-Plugin\\bowerBug";
+//        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\Bower-Plugin\\Bower";
         props.put("d", resolverFolder);
         props.put("archiveExtractionDepth", 4);
         props.put("includes", "**/**");
         props.put("archiveIncludes", "**/*zip **/*war **/*ear **/*tgz **/*jar **/*sca **/*gem **/*whl **/*egg **/*tar **/*tar.gz **/*rar");
-        props.put("npm.ignoreJavaScriptFiles", "false");
+//        props.put("bower.runPreStep", "true");
         String[] acceptExtensions = {"jar", "war", "ear", "aar", "dll", "exe", "msi", "nupkg", "egg", "whl",
                 "tar.gz", "gem", "deb", "udeb", "dmg", "drpm", "rpm", "pkg.tar.xz", "swf", "swc", "air", "apk", "zip", "gzip", "tar.bz2",
                 "tgz", "c", "cc", "cp", "cpp", "css", "c++", "h", "hh", "hpp", "hxx", "h++", "m", "mm", "pch", "c#", "cs", "csharp", "java",

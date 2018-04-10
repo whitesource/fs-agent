@@ -8,9 +8,7 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.LINUX_SEPARATOR;
-import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.WINDOWS;
-import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.WINDOWS_SEPARATOR;
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.*;
 
 
 /**
