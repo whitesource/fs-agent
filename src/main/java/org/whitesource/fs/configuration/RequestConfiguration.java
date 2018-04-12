@@ -28,6 +28,7 @@ public class RequestConfiguration {
     private final String projectToken;
     private final boolean projectPerSubFolder;
     private final String apiToken;
+    private final String userKey;
     private final String requesterEmail;
     private final String productToken;
     private String productName;
@@ -37,6 +38,7 @@ public class RequestConfiguration {
     private final String viaDebug;
 
     public RequestConfiguration(@JsonProperty(ORG_TOKEN_PROPERTY_KEY) String apiToken,
+                                @JsonProperty(USER_KEY_PROPERTY_KEY) String userKey,
                                 @JsonProperty(REQUESTER_EMAIL) String requesterEmail,
                                 @JsonProperty(PROJECT_PER_SUBFOLDER) boolean projectPerSubFolder,
                                 @JsonProperty(PROJECT_NAME_PROPERTY_KEY) String projectName,
@@ -48,6 +50,7 @@ public class RequestConfiguration {
                                 @JsonProperty(APP_PATH) String appPath,
                                 @JsonProperty(VIA_DEBUG) String viaDebug) {
         this.apiToken = apiToken;
+        this.userKey = userKey;
         this.requesterEmail = requesterEmail;
         this.projectPerSubFolder = projectPerSubFolder;
         this.projectName = projectName;
@@ -114,6 +117,9 @@ public class RequestConfiguration {
     public String getViaDebug() {
         return viaDebug;
     }
+
+    @JsonProperty(USER_KEY_PROPERTY_KEY)
+    public String getUserKey() { return userKey; }
 
     public String getProductNameOrToken() {
         if (StringUtils.isBlank(getProductToken())) {

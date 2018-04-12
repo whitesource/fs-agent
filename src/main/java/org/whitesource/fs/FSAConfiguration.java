@@ -153,6 +153,7 @@ public class FSAConfiguration {
         String projectNameFinal = !StringUtils.isBlank(projectName) ? projectName : config.getProperty(PROJECT_NAME_PROPERTY_KEY);
         boolean projectPerFolder = FSAConfiguration.getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         String apiToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
+        String userKey = config.getProperty(USER_KEY_PROPERTY_KEY);
         int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(config);
         String[] includes = FSAConfiguration.getIncludes(config);
 
@@ -161,7 +162,7 @@ public class FSAConfiguration {
 
         logLevel = config.getProperty(LOG_LEVEL_KEY, INFO);
 
-        request = getRequest(config, apiToken, projectName, projectToken);
+        request = getRequest(config, apiToken, userKey, projectName, projectToken);
         scm = getScm(config);
         agent = getAgent(config);
         offline = getOffline(config);
@@ -225,7 +226,7 @@ public class FSAConfiguration {
                 dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath);
     }
 
-    private RequestConfiguration getRequest(Properties config, String apiToken, String projectName, String projectToken) {
+    private RequestConfiguration getRequest(Properties config, String apiToken,String userKey, String projectName, String projectToken) {
         String productToken = config.getProperty(ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY);
         String productName = config.getProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY);
         String productVersion = config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
@@ -234,7 +235,7 @@ public class FSAConfiguration {
         String viaDebug = config.getProperty(VIA_DEBUG, BLANK);
         boolean projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(REQUESTER_EMAIL);
-        return new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken, projectVersion, productName, productToken, productVersion, appPath,viaDebug);
+        return new RequestConfiguration(apiToken, userKey, requesterEmail, projectPerSubFolder, projectName, projectToken, projectVersion, productName, productToken, productVersion, appPath,viaDebug);
     }
 
     private SenderConfiguration getSender(Properties config) {
