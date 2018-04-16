@@ -40,6 +40,7 @@ import static org.whitesource.fs.FileSystemAgent.EXCLUDED_COPYRIGHTS_SEPARATOR_R
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FSAConfiguration {
+    public static final int VIA_DEFAULT_ANALYSIS_LEVEL = 1;
 
     /* --- Static members --- */
 
@@ -234,7 +235,10 @@ public class FSAConfiguration {
         String viaDebug = config.getProperty(VIA_DEBUG, BLANK);
         boolean projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(REQUESTER_EMAIL);
-        return new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken, projectVersion, productName, productToken, productVersion, appPath,viaDebug);
+
+        int viaAnalysis = getIntProperty(config, VIA_ANALYSIS_LEVEL, VIA_DEFAULT_ANALYSIS_LEVEL);
+        return new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken,
+                projectVersion, productName, productToken, productVersion, appPath,viaDebug,viaAnalysis);
     }
 
     private SenderConfiguration getSender(Properties config) {
@@ -512,6 +516,7 @@ public class FSAConfiguration {
         //Impact Analysis parameters
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.APP_PATH, commandLineArgs.appPath);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.VIA_DEBUG, commandLineArgs.viaDebug);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.VIA_ANALYSIS_LEVEL, commandLineArgs.viaLevel);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, commandLineArgs.enableImpactAnalysis);
         // proxy
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);

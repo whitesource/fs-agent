@@ -99,6 +99,9 @@ public class CommandLineArgs {
     @Parameter(names = "-viaDebug", description = "Impact Analysis debug flag")
     String viaDebug = null;
 
+    @Parameter(names = "-viaLevel", description = "Impact Analysis level")
+    String viaLevel = "1";
+
     @Parameter(names = "-enableImpactAnalysis", description = "Whether or not to enable impact analysis")
     String enableImpactAnalysis = null;
 
