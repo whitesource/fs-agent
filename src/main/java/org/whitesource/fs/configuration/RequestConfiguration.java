@@ -36,6 +36,7 @@ public class RequestConfiguration {
     private final String projectName;
     private final String appPath;
     private final String viaDebug;
+    private final int viaAnalisysLevel;
 
     public RequestConfiguration(@JsonProperty(ORG_TOKEN_PROPERTY_KEY) String apiToken,
                                 @JsonProperty(USER_KEY_PROPERTY_KEY) String userKey,
@@ -48,7 +49,8 @@ public class RequestConfiguration {
                                 @JsonProperty(PRODUCT_TOKEN_PROPERTY_KEY) String productToken,
                                 @JsonProperty(PRODUCT_VERSION_PROPERTY_KEY) String productVersion,
                                 @JsonProperty(APP_PATH) String appPath,
-                                @JsonProperty(VIA_DEBUG) String viaDebug) {
+                                @JsonProperty(VIA_DEBUG) String viaDebug,
+                                @JsonProperty(VIA_ANALYSIS_LEVEL) int viaAnalisysLevel) {
         this.apiToken = apiToken;
         this.userKey = userKey;
         this.requesterEmail = requesterEmail;
@@ -60,7 +62,8 @@ public class RequestConfiguration {
         this.productToken = productToken;
         this.productVersion = productVersion;
         this.appPath = appPath;
-        this.viaDebug=viaDebug;
+        this.viaDebug = viaDebug;
+        this.viaAnalisysLevel = viaAnalisysLevel;
     }
 
     @JsonProperty(PROJECT_NAME_PROPERTY_KEY)
@@ -116,6 +119,11 @@ public class RequestConfiguration {
     @JsonProperty(VIA_DEBUG)
     public String getViaDebug() {
         return viaDebug;
+    }
+
+    @JsonProperty(VIA_ANALYSIS_LEVEL)
+    public int getViaAnalisysLevel() {
+        return viaAnalisysLevel;
     }
 
     @JsonProperty(USER_KEY_PROPERTY_KEY)
