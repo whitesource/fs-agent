@@ -61,7 +61,10 @@ public class ResolverConfiguration {
             @JsonProperty(PAKET_IGNORED_GROUPS) String[] paketIgnoredScopes,
             @JsonProperty(PAKET_IGNORE_FILES) boolean paketIgnoreFiles,
             @JsonProperty(PAKET_RUN_PRE_STEP) boolean paketRunPreStep,
-            @JsonProperty(PAKET_EXE_PATH) String paketPath
+            @JsonProperty(PAKET_EXE_PATH) String paketPath,
+
+            @JsonProperty(GO_RESOLVE_DEPENDENCIES) boolean goResolveDependencies,
+            @JsonProperty(GO_IGNORE_SCRIPT_FILES) boolean goIgnoreScriptFiles
     ) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmResolveDependencies = npmResolveDependencies;
@@ -98,6 +101,9 @@ public class ResolverConfiguration {
         this.paketIgnoreFiles = paketIgnoreFiles;
         this.paketRunPreStep = paketRunPreStep;
         this.paketPath = paketPath;
+
+        this.goResolveDependencies = goResolveDependencies;
+        this.goIgnoreScriptFiles = goIgnoreScriptFiles;
     }
 
     /* --- Members --- */
@@ -132,7 +138,10 @@ public class ResolverConfiguration {
     private String[]    paketIgnoredScopes;
     private boolean     paketIgnoreFiles;
     private boolean     paketRunPreStep;
-    private String     paketPath;
+    private String      paketPath;
+
+    private boolean     goResolveDependencies;
+    private boolean     goIgnoreScriptFiles;
 
     /* --- Public getters --- */
 
@@ -271,6 +280,12 @@ public class ResolverConfiguration {
     public String getPaketPath() {
         return paketPath;
     }
+
+    @JsonProperty(GO_RESOLVE_DEPENDENCIES)
+    public boolean isGoResolveDependencies() { return goResolveDependencies; }
+
+    @JsonProperty(GO_IGNORE_SCRIPT_FILES)
+    public boolean isGoIgnoreScriptFiles() {    return goIgnoreScriptFiles; }
 
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {
         this.npmResolveDependencies = npmResolveDependencies;
