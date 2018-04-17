@@ -19,6 +19,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.AppPathLanguageDependenciesToVia;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
@@ -93,16 +94,19 @@ public class FileSystemAgent {
     public ProjectsDetails createProjects() {
         ProjectsDetails projects;
         if (projectPerSubFolder) {
+            if (this.config.getSender().isEnableImpactAnalysis()) {
+                logger.warn("Could not executing VIA impact analysis with the 'projectPerFolder' flag.");
+            }
             projects = new ProjectsDetails(new ArrayList<>(), StatusCode.SUCCESS, "");
             for (String directory : dependencyDirs) {
-                ProjectsDetails projectsDetails = getProjects(Collections.singletonList(directory));
+                ProjectsDetails projectsDetails = getProjects(Collections.singletonList(directory), null);
                 if (projectsDetails.getProjects().size() == 1) {
                     String projectName = new File(directory).getName();
                     String projectVersion = config.getRequest().getProjectVersion();
                     AgentProjectInfo projectInfo = projectsDetails.getProjects().stream().findFirst().get();
                     projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
                     // TODO: 1. Check when via will support multi project
-                    projects.getProjectToLanguage().put(projectInfo, projectsDetails.getProjectToLanguage().get(projectInfo));
+                    projects.getProjectToAppPathAndLanguage().put(projectInfo, projectsDetails.getProjectToAppPathAndLanguage().get(projectInfo));
                 }
                 // return on the first project that fails
                 if (!projectsDetails.getStatusCode().equals(StatusCode.SUCCESS)) {
@@ -112,7 +116,7 @@ public class FileSystemAgent {
             }
             return projects;
         } else {
-            projects = getProjects(dependencyDirs);
+            projects = getProjects(dependencyDirs, config.getAppPathsToDependencyDirs());
             if (projects.getProjects().size() > 0) {
                 AgentProjectInfo projectInfo = projects.getProjects().stream().findFirst().get();
                 if (projectInfo.getCoordinates() == null) {
@@ -135,7 +139,7 @@ public class FileSystemAgent {
 
     /* --- Private methods --- */
 
-    private ProjectsDetails getProjects(List<String> scannerBaseDirs) {
+    private ProjectsDetails getProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs) {
         // create getScm connector
         final StatusCode[] success = new StatusCode[]{StatusCode.SUCCESS};
         String separatorFiles = NpmLsJsonDependencyCollector.isWindows() ? "\\" : "/";
@@ -168,6 +172,10 @@ public class FileSystemAgent {
                     success[0] = result.getValue();
                     scmPaths.add(scmPath);
                     scannerBaseDirs.add(scmPath);
+                    if (!appPathsToDependencyDirs.containsKey(FSAConfiguration.DEFAULT_KEY)) {
+                        appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, new HashSet<>());
+                    }
+                    appPathsToDependencyDirs.get(FSAConfiguration.DEFAULT_KEY).add(scmPath);
                     hasScmConnectors[0] = true;
                 }
             });
@@ -182,7 +190,7 @@ public class FileSystemAgent {
         }
 
         Collection<AgentProjectInfo> projects = null;
-        Map<AgentProjectInfo, String> projectToLanguage = null;
+        Map<AgentProjectInfo, LinkedList<AppPathLanguageDependenciesToVia>> projectToAppPathAndLanguage = null;
         ProjectsDetails projectsDetails;
         // Use FSA a as a package manger extractor for Debian/RPM/Arch Linux/Alpine
         if (config.isScanProjectManager()) {
@@ -192,9 +200,9 @@ public class FileSystemAgent {
             projects = new DockerResolver(config).resolveDockerImages();
             projectsDetails = new ProjectsDetails(projects, success[0], EMPTY_STRING);
         } else {
-            projectToLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis())
-                    .createProjects(scannerBaseDirs, hasScmConnectors[0], this.config.getResolver().getNpmAccessToken());
-            projectsDetails = new ProjectsDetails(projectToLanguage, success[0], EMPTY_STRING);
+            projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis())
+                    .createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnectors[0]);
+            projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], EMPTY_STRING);
         }
         // delete all temp scm files
         scmPaths.forEach(directory -> {

@@ -9,7 +9,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <agent.api.version>2.6.5</agent.api.version>
+        <agent.api.version>2.6.8-SNAPSHOT</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
         <skipTests>true</skipTests>
     </properties>
@@ -140,7 +140,7 @@
         <dependency>
             <groupId>org.whitesource.analysis</groupId>
             <artifactId>whitesource-analysis-via</artifactId>
-            <version>0.0.10</version>
+            <version>0.0.14</version>
          </dependency>
 
         <dependency>

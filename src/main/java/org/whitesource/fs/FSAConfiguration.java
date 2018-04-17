@@ -28,6 +28,9 @@ import org.whitesource.fs.configuration.*;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
@@ -40,6 +43,10 @@ import static org.whitesource.fs.FileSystemAgent.EXCLUDED_COPYRIGHTS_SEPARATOR_R
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FSAConfiguration {
+    public static final String COMMA = ",";
+    public static final String DEFAULT_KEY = "defaultKey";
+    public static final String APP_PATH = "-appPath";
+    public static final String D_PARAMETER = "-d";
 
     /* --- Static members --- */
 
@@ -89,6 +96,8 @@ public class FSAConfiguration {
     private String logLevel;
     private boolean useCommandLineProductName;
     private boolean useCommandLineProjectName;
+    private List<String> appPaths;
+    private Map<String, Set<String>> appPathsToDependencyDirs;
 
     /* --- Constructors --- */
 
@@ -108,6 +117,8 @@ public class FSAConfiguration {
         configurationValidation = new ConfigurationValidation();
         String projectName;
         errors = new ArrayList<>();
+        appPathsToDependencyDirs = new HashMap<>();
+        appPaths = null;
         if ((args != null)) {
             // read command line args
             // validate args // TODO use jCommander validators
@@ -132,6 +143,7 @@ public class FSAConfiguration {
             projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             fileListPath = commandLineArgs.fileListPath;
             dependencyDirs = commandLineArgs.dependencyDirs;
+            appPaths = commandLineArgs.appPath;
             if (StringUtils.isNotBlank(commandLineArgs.whiteSourceFolder)) {
                 config.setProperty(WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
             }
@@ -155,6 +167,27 @@ public class FSAConfiguration {
         String apiToken = config.getProperty(ORG_TOKEN_PROPERTY_KEY);
         int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(config);
         String[] includes = FSAConfiguration.getIncludes(config);
+
+        String[] argsForAppPathAndDirs = args;
+        if (StringUtils.isNotEmpty(config.getProperty(X_PATHS))) {
+            try {
+                String textFromFile = new String(Files.readAllBytes(Paths.get(config.getProperty(X_PATHS))), StandardCharsets.UTF_8);
+                textFromFile = textFromFile.replaceAll(COMMA + SPACE, COMMA);
+                textFromFile = textFromFile.replaceAll(System.lineSeparator(), SPACE);
+                argsForAppPathAndDirs = textFromFile.split(SPACE);
+                initializeDependencyDirsToAppPath(argsForAppPathAndDirs);
+                for (String appPath : this.appPathsToDependencyDirs.keySet()) {
+                    for (String dir : this.appPathsToDependencyDirs.get(appPath)) {
+                        this.dependencyDirs.add(dir);
+                    }
+                }
+            } catch (IOException e) {
+                errors.add("Error: Could not read the xPaths file: " + config.getProperty(X_PATHS));
+            }
+        } else {
+            initializeDependencyDirsToAppPath(argsForAppPathAndDirs);
+        }
+
 
         // todo: check possibility to get the errors only in the end
         errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal, apiToken, configFilePath, archiveExtractionDepth, includes));
@@ -230,7 +263,7 @@ public class FSAConfiguration {
         String productName = config.getProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY);
         String productVersion = config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
         String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
-        String appPath = config.getProperty(APP_PATH, BLANK);
+        List<String> appPath = (List<String>) config.get(ConfigPropertyKeys.APP_PATH);
         String viaDebug = config.getProperty(VIA_DEBUG, BLANK);
         boolean projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(REQUESTER_EMAIL);
@@ -297,7 +330,7 @@ public class FSAConfiguration {
 
         return new AgentConfiguration(includes, excludes, dockerIncludes, dockerExcludes,
                 archiveExtractionDepth, archiveIncludes, archiveExcludes, archiveFastUnpack, archiveFollowSymbolicLinks,
-                partialSha1Match, calculateHints, calculateMd5, showProgress, globalCaseSensitive.getKey(), dockerScan, globalCaseSensitive.getValue(), excludesCopyrights);
+                partialSha1Match, calculateHints, calculateMd5, showProgress, globalCaseSensitive.getKey(), dockerScan, excludesCopyrights,globalCaseSensitive.getValue());
     }
 
     private Collection<String> getExcludeCopyrights(String excludedCopyrightsValue) {
@@ -340,6 +373,43 @@ public class FSAConfiguration {
         int npmInstallTimeoutMinutes = FSAConfiguration.getIntProperty(config, SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
 
         return new ScmConfiguration(type, user, pass, ppk, url, branch, tag, repositoriesPath, npmInstall, npmInstallTimeoutMinutes);
+    }
+
+    private void initializeDependencyDirsToAppPath(String[] args) {
+        boolean wasDir = false;
+        for (int i = 0; i < args.length; i++) {
+            if (!wasDir && args[i].equals(APP_PATH)) {
+                if (i + 3 < args.length && args[i + 2].equals(D_PARAMETER)) {
+                    List<String> paths = Arrays.asList(args[i + 3].split(COMMA));
+                    Set<String> value = new HashSet<>();
+                    value.addAll(paths);
+                    appPathsToDependencyDirs.put(args[i + 1], value);
+                    i = i + 3;
+                } else {
+                    errors.add("Error: the '-appPath' parameter must have '-d' just after it.");
+                    break;
+                }
+            } else if (wasDir && args[i].equals(APP_PATH)) {
+                errors.add("Error: the '-appPath' parameter cannot follow the parameter '-d'.");
+                break;
+            } else if (args[i].equals(D_PARAMETER)) {
+                if (i + 1 < args.length) {
+                    if (appPathsToDependencyDirs.containsKey(DEFAULT_KEY)) {
+                        appPathsToDependencyDirs.get(DEFAULT_KEY).addAll(Arrays.asList(args[i + 1].split(COMMA)));
+                    } else {
+                        List<String> paths = Arrays.asList(args[i + 1].split(COMMA));
+                        Set<String> value = new HashSet<>();
+                        value.addAll(paths);
+                        appPathsToDependencyDirs.put(DEFAULT_KEY, value);
+                    }
+                    i++;
+                } else {
+                    errors.add("Error: there is not path after the '-d' parameter.");
+                    break;
+                }
+                wasDir = true;
+            }
+        }
     }
 
     public static Pair<Properties, List<String>> readWithError(String configFilePath) {
@@ -413,6 +483,14 @@ public class FSAConfiguration {
 
     public boolean getUseCommandLineProjectName() {
         return useCommandLineProjectName;
+    }
+
+    public List<String> getAppPaths() {
+        return appPaths;
+    }
+
+    public Map<String, Set<String>> getAppPathsToDependencyDirs() {
+        return appPathsToDependencyDirs;
     }
 
     @JsonProperty(SCAN_PACKAGE_MANAGER)
@@ -510,9 +588,10 @@ public class FSAConfiguration {
         }
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, commandLineArgs.offline);
         //Impact Analysis parameters
-        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.APP_PATH, commandLineArgs.appPath);
+        readListFromCommandLine(configProps, ConfigPropertyKeys.APP_PATH, commandLineArgs.appPath);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.VIA_DEBUG, commandLineArgs.viaDebug);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, commandLineArgs.enableImpactAnalysis);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.X_PATHS, commandLineArgs.xPaths);
         // proxy
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PORT_PROPERTY_KEY, commandLineArgs.proxyPort);
@@ -533,6 +612,12 @@ public class FSAConfiguration {
 
     private void readPropertyFromCommandLine(Properties configProps, String propertyKey, String propertyValue) {
         if (StringUtils.isNotBlank(propertyValue)) {
+            configProps.put(propertyKey, propertyValue);
+        }
+    }
+
+    private void readListFromCommandLine(Properties configProps, String propertyKey, List<String> propertyValue) {
+        if (!propertyValue.isEmpty()) {
             configProps.put(propertyKey, propertyValue);
         }
     }

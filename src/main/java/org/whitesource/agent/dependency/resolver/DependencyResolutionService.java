@@ -136,7 +136,7 @@ public class DependencyResolutionService {
         return false;
     }
 
-    public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes, String npmAccessToken) {
+    public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes) {
         Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap = new HashMap<>();
         dependencyResolvers.forEach(dependencyResolver -> {
             // add resolver excludes

@@ -16,6 +16,7 @@
 package org.whitesource.fs.configuration;
 import org.apache.commons.lang.StringUtils;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
@@ -28,7 +29,8 @@ public class ConfigurationValidation {
 
     private static final int MAX_EXTRACTION_DEPTH = 7;
 
-    public List<String> getConfigurationErrors(boolean projectPerFolder, String configProjectToken, String configProjectName, String configApiToken, String configFilePath, int archiveDepth ,String[] includes) {
+    public List<String> getConfigurationErrors(boolean projectPerFolder, String configProjectToken, String configProjectName, String configApiToken, String configFilePath,
+                                               int archiveDepth, String[] includes) {
         List<String> errors = new ArrayList<>();
 
         if (StringUtils.isBlank(configApiToken)) {
@@ -53,6 +55,7 @@ public class ConfigurationValidation {
         if (includes.length < 1 || StringUtils.isBlank(includes[0])) {
             errors.add("Error: includes parameter must have at list one scanning pattern");
         }
+
         return errors;
     }
 }

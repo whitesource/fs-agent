@@ -41,8 +41,7 @@ import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResul
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * Class for sending projects for all WhiteSource command line agents.
@@ -109,7 +108,7 @@ public class ProjectsSender {
             StatusCode statusCode = StatusCode.SUCCESS;
 
 //            // TODO remove projects.size() == 1 when via will scan more than one project
-            if (senderConfig.isEnableImpactAnalysis() && projects.size() == 1) {
+            if (senderConfig.isEnableImpactAnalysis()) {
                 runViaAnalysis(projectsDetails, service);
             }  else if (!senderConfig.isEnableImpactAnalysis()) {
 //                logger.info("Impact analysis won't run, via is not enabled");
@@ -164,34 +163,34 @@ public class ProjectsSender {
         //todo comment in via code
         VulnerabilitiesAnalysis vulnerabilitiesAnalysis = null;
         GlobalVulnerabilityAnalysisResult result = null;
-
-        for (AgentProjectInfo project : projectsDetails.getProjectToLanguage().keySet()) {
+        for (AgentProjectInfo project : projectsDetails.getProjectToAppPathAndLanguage().keySet()) {
             Server server = new FSAgentServer(project, service, requestConfig.getApiToken());
             //TODO remove later
 //            Server server = new DemoServerProjInfo();
 //            server.setdb("c:/Users/AharonAbadi/work/vulnerabilityCleaner/via-visual-studio-integration/examples/via-server/via.db");
             try {
-                String appPath = requestConfig.getAppPath();
                 // check language for scan according to user file
                 logger.info("Starting VIA impact analysis");
-                String language = projectsDetails.getProjectToLanguage().get(project);
-                vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language);
-                // set app path for java script
-                if (language.equals(JAVA_SCRIPT)) {
-                    int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
-                    appPath = appPath.substring(0, lastIndex);
-                }
-
-                if (vulnerabilitiesAnalysis != null) {
-                    vulnerabilitiesAnalysis.runAnalysis(server, appPath, project.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
-                    logger.info("Got impact analysis result from server");
+                LinkedList<AppPathLanguageDependenciesToVia> appPathLanguageDependenciesList = projectsDetails.getProjectToAppPathAndLanguage().get(project);
+                for (AppPathLanguageDependenciesToVia appPathLanguageDependencies : appPathLanguageDependenciesList) {
+                    String appPath = appPathLanguageDependencies.getAppPath();
+                    LanguageForVia language = appPathLanguageDependencies.getLanguage();
+                    vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language.toString());
+                    // set app path for java script
+                    if (language == LanguageForVia.JAVA_SCRIPT) {
+                        int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
+                        appPath = appPath.substring(0, lastIndex);
+                    }
+                    if (vulnerabilitiesAnalysis != null) {
+                        vulnerabilitiesAnalysis.runAnalysis(server, appPath, appPathLanguageDependencies.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
+                        logger.info("Got impact analysis result from server");
+                    }
                 }
             } catch (Exception e) {
                 logger.error("Failed to run impact analysis {}", e.getMessage());
             }
         }
     }
-
 
     private void checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
         int numberOfDependencies = projects.stream().map(x -> x.getDependencies()).mapToInt(x -> x.size()).sum();

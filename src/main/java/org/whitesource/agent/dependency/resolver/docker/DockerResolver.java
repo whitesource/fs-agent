@@ -247,8 +247,12 @@ public class DockerResolver {
 
                 // scan files
                 String extractPath = containerTarArchiveExtractDir.getPath();
+                Set<String> setDirs = new HashSet<>();
+                setDirs.add(extractPath);
+                Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
+                appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
                 List<DependencyInfo> dependencyInfos = new FileSystemScanner(config.getResolver(), config.getAgent(), false).createProjects(
-                        Arrays.asList(extractPath), false, config.getAgent().getIncludes(), config.getAgent().getExcludes(),
+                        Arrays.asList(extractPath), appPathsToDependencyDirs, false, config.getAgent().getIncludes(), config.getAgent().getExcludes(),
                         config.getAgent().getGlobCaseSensitive(), config.getAgent().getArchiveExtractionDepth(), FileExtensions.ARCHIVE_INCLUDES,
                         FileExtensions.ARCHIVE_EXCLUDES, false, config.getAgent().isFollowSymlinks(),
                         new ArrayList<>(), PARTIAL_SHA1_MATCH);

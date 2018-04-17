@@ -15,33 +15,37 @@
  */
 package org.whitesource.fs;
 
+import org.whitesource.agent.AppPathLanguageDependenciesToVia;
 import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.utils.Pair;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class ProjectsDetails {
 
 //    private Collection<AgentProjectInfo> projects;
-    private Map<AgentProjectInfo, String> projectToLanguage;
+    private Map<AgentProjectInfo, LinkedList<AppPathLanguageDependenciesToVia>> projectToAppPathAndLanguage;
     private String details;
     private StatusCode statusCode;
 
 
-    public ProjectsDetails(Map<AgentProjectInfo, String> projectToLanguage, StatusCode statusCode , String details) {
+    public ProjectsDetails(Map<AgentProjectInfo, LinkedList<AppPathLanguageDependenciesToVia>> projectToAppPathAndLanguage, StatusCode statusCode , String details) {
         this.statusCode = statusCode;
-        this.projectToLanguage = projectToLanguage;
+        this.projectToAppPathAndLanguage = projectToAppPathAndLanguage;
         this.details = details;
     }
 
     public ProjectsDetails(Collection<AgentProjectInfo> projects, StatusCode statusCode , String details) {
-        Map<AgentProjectInfo, String> projectToLanguage = new HashMap<>();
+        Map<AgentProjectInfo, LinkedList<AppPathLanguageDependenciesToVia>> projectToAppPathAndLanguage = new HashMap<>();
         for (AgentProjectInfo project : projects) {
-            projectToLanguage.put(project, null);
+            projectToAppPathAndLanguage.put(project, new LinkedList<>());
         }
         this.statusCode = statusCode;
-        this.projectToLanguage = projectToLanguage;
+        this.projectToAppPathAndLanguage = projectToAppPathAndLanguage;
         this.details = details;
 //        this(projects.stream().collect(Collectors.toMap(project->project,null)), statusCode, details);
     }
@@ -57,24 +61,24 @@ public class ProjectsDetails {
         return details;
     }
 
-    public Map<AgentProjectInfo, String> getProjectToLanguage() {
-        return projectToLanguage;
+    public Map<AgentProjectInfo, LinkedList<AppPathLanguageDependenciesToVia>> getProjectToAppPathAndLanguage() {
+        return projectToAppPathAndLanguage;
     }
 
-    public void setProjectToLanguage(Map<AgentProjectInfo, String> projectToLanguage) {
-        this.projectToLanguage = projectToLanguage;
+    public void setProjectToAppPathAndLanguage(Map<AgentProjectInfo, LinkedList<AppPathLanguageDependenciesToVia>> projectToAppPathAndLanguage) {
+        this.projectToAppPathAndLanguage = projectToAppPathAndLanguage;
     }
 
     public void addOfflineProjects(Collection<AgentProjectInfo> projects) {
         if (projects.size() > 0){
             for (AgentProjectInfo agentProjectInfo : projects) {
-                getProjectToLanguage().put(agentProjectInfo, null);
+                getProjectToAppPathAndLanguage().put(agentProjectInfo, null);
             }
         }
 //            setProjectToLanguage(projects.stream().collect(Collectors.toMap(project-> project, null)));
     }
 
     public Collection<AgentProjectInfo> getProjects() {
-        return getProjectToLanguage().keySet();
+        return getProjectToAppPathAndLanguage().keySet();
     }
 }
