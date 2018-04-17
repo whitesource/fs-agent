@@ -3,13 +3,13 @@ package org.whitesource.agent;
 /**
  * @author raz.nitzan
  */
-public enum LanguageForVia {
+public enum ViaLanguage {
     JAVA("java"),
     JAVA_SCRIPT("javascript");
 
     private final String language;
 
-    LanguageForVia(String language) {
+    ViaLanguage(String language) {
         this.language = language;
     }
 

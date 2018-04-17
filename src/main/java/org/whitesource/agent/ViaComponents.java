@@ -3,22 +3,22 @@ package org.whitesource.agent;
 import org.whitesource.agent.api.model.DependencyInfo;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * @author raz.nitzan
  */
-public class AppPathLanguageDependenciesToVia {
+public class ViaComponents {
 
     /* --- Members --- */
 
     private String appPath;
-    private LanguageForVia language;
-    private Collection<DependencyInfo> dependencies = new ArrayList<>();
+    private ViaLanguage language;
+    private List<DependencyInfo> dependencies = new ArrayList<>();
 
     /* --- Constructor --- */
 
-    public AppPathLanguageDependenciesToVia(String appPath, LanguageForVia language) {
+    public ViaComponents(String appPath, ViaLanguage language) {
         this.appPath = appPath;
         this.language = language;
     }
@@ -27,11 +27,11 @@ public class AppPathLanguageDependenciesToVia {
         return this.appPath;
     }
 
-    public LanguageForVia getLanguage() {
+    public ViaLanguage getLanguage() {
         return this.language;
     }
 
-    public Collection<DependencyInfo> getDependencies() {
+    public List<DependencyInfo> getDependencies() {
         return dependencies;
     }
 }

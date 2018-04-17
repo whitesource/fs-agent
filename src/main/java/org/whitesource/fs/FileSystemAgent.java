@@ -19,7 +19,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.AppPathLanguageDependenciesToVia;
+import org.whitesource.agent.ViaComponents;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
@@ -95,18 +95,18 @@ public class FileSystemAgent {
         ProjectsDetails projects;
         if (projectPerSubFolder) {
             if (this.config.getSender().isEnableImpactAnalysis()) {
-                logger.warn("Could not executing VIA impact analysis with the 'projectPerFolder' flag.");
+                logger.warn("Could not executing VIA impact analysis with the 'projectPerFolder' flag");
             }
             projects = new ProjectsDetails(new ArrayList<>(), StatusCode.SUCCESS, "");
             for (String directory : dependencyDirs) {
-                ProjectsDetails projectsDetails = getProjects(Collections.singletonList(directory), null);
+                ProjectsDetails projectsDetails = getProjects(Collections.singletonList(directory), new HashMap<>());
                 if (projectsDetails.getProjects().size() == 1) {
                     String projectName = new File(directory).getName();
                     String projectVersion = config.getRequest().getProjectVersion();
                     AgentProjectInfo projectInfo = projectsDetails.getProjects().stream().findFirst().get();
                     projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
                     // TODO: 1. Check when via will support multi project
-                    projects.getProjectToAppPathAndLanguage().put(projectInfo, projectsDetails.getProjectToAppPathAndLanguage().get(projectInfo));
+                    projects.getProjectToViaComponents().put(projectInfo, projectsDetails.getProjectToViaComponents().get(projectInfo));
                 }
                 // return on the first project that fails
                 if (!projectsDetails.getStatusCode().equals(StatusCode.SUCCESS)) {
@@ -190,7 +190,7 @@ public class FileSystemAgent {
         }
 
         Collection<AgentProjectInfo> projects = null;
-        Map<AgentProjectInfo, LinkedList<AppPathLanguageDependenciesToVia>> projectToAppPathAndLanguage = null;
+        Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToAppPathAndLanguage = null;
         ProjectsDetails projectsDetails;
         // Use FSA a as a package manger extractor for Debian/RPM/Arch Linux/Alpine
         if (config.isScanProjectManager()) {

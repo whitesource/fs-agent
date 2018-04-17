@@ -391,7 +391,7 @@ public class FSAConfiguration {
                     appPathsToDependencyDirs.put(args[i + 1], value);
                     i = i + 3;
                 } else {
-                    errors.add("Error: the '-appPath' parameter must have '-d' just after it.");
+                    errors.add("Error: the '-appPath' parameter must have a following '-d'.");
                     break;
                 }
             } else if (wasDir && args[i].equals(APP_PATH)) {
