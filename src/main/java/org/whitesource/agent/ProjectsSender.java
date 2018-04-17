@@ -175,7 +175,7 @@ public class ProjectsSender {
                 // check language for scan according to user file
                 logger.info("Starting VIA impact analysis");
                 String language = projectsDetails.getProjectToLanguage().get(project);
-                vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language,requestConfig.getViaAnalisysLevel());
+                vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language, requestConfig.getViaAnalysisLevel());
                 // set app path for java script
                 if (language.equals(JAVA_SCRIPT)) {
                     int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);

@@ -40,7 +40,6 @@ import static org.whitesource.fs.FileSystemAgent.EXCLUDED_COPYRIGHTS_SEPARATOR_R
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FSAConfiguration {
-    public static final int VIA_DEFAULT_ANALYSIS_LEVEL = 1;
 
     /* --- Static members --- */
 
@@ -64,6 +63,8 @@ public class FSAConfiguration {
     public static final int DEFAULT_PORT = 443;
     public static final boolean DEFAULT_SSL = true;
     private static final boolean DEFAULT_ENABLED = false;
+
+    public static final int VIA_DEFAULT_ANALYSIS_LEVEL = 1;
 
     /* --- Private fields --- */
 
@@ -235,8 +236,8 @@ public class FSAConfiguration {
         String viaDebug = config.getProperty(VIA_DEBUG, BLANK);
         boolean projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(REQUESTER_EMAIL);
-
         int viaAnalysis = getIntProperty(config, VIA_ANALYSIS_LEVEL, VIA_DEFAULT_ANALYSIS_LEVEL);
+
         return new RequestConfiguration(apiToken, requesterEmail, projectPerSubFolder, projectName, projectToken,
                 projectVersion, productName, productToken, productVersion, appPath,viaDebug,viaAnalysis);
     }
