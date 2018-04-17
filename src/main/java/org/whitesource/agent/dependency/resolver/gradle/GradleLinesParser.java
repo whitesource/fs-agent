@@ -29,6 +29,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private static final String MAIN = "main";
     private static final String JAVA = "java";
     private static final String JAVA_EXTENSION = ".java";
+    private static final String AAR_EXTENTION = ".aar";
     private final Logger logger = LoggerFactory.getLogger(GradleLinesParser.class);
     private static final String PLUS = "+---";
     private static final String SLASH = "\\---";
@@ -85,6 +86,9 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         int prevLineIndentation = 0;
         boolean duplicateDependency = false;
         for (String line : projectsLines){
+            if (line.indexOf(COLON) == -1){
+                continue;
+            }
             String[] strings = line.split(COLON);
             String groupId = strings[0];
             int lastSpace = groupId.lastIndexOf(SPACE);
@@ -192,7 +196,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 for (File folder : dependencyFolder.listFiles()) {
                     if (folder.isDirectory()) {
                         for (File file : folder.listFiles()) {
-                            if (file.getName().contains(JAR_EXTENSION) && !file.getName().contains("-sources")) {
+                            if ((file.getName().contains(JAR_EXTENSION) || file.getName().contains(AAR_EXTENTION)) && !file.getName().contains("-sources")) {
                                 String pattern = Pattern.quote(fileSeparator);
                                 String[] splitFileName = folder.getName().split(pattern);
                                 sha1 = splitFileName[splitFileName.length - 1];

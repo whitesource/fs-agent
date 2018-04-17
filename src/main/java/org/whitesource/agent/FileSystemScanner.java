@@ -182,6 +182,7 @@ public class FileSystemScanner {
                             impactAnalysisLanguage = LanguageForVia.JAVA_SCRIPT;
                             break;
                         case MAVEN:
+                        case GRADLE:
                             impactAnalysisLanguage = LanguageForVia.JAVA;
                             break;
                         default: break;

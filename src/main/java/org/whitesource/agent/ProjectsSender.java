@@ -175,7 +175,7 @@ public class ProjectsSender {
                 for (AppPathLanguageDependenciesToVia appPathLanguageDependencies : appPathLanguageDependenciesList) {
                     String appPath = appPathLanguageDependencies.getAppPath();
                     LanguageForVia language = appPathLanguageDependencies.getLanguage();
-                    vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language.toString());
+                    vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language.toString(), requestConfig.getViaAnalisysLevel());
                     // set app path for java script
                     if (language == LanguageForVia.JAVA_SCRIPT) {
                         int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
@@ -218,7 +218,7 @@ public class ProjectsSender {
         boolean policyCompliance = true;
         if (senderConfig.isCheckPolicies()) {
             logger.info("Checking policies");
-            CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies());
+            CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(),requestConfig.getUserKey(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies());
             if (checkPoliciesResult.hasRejections()) {
                 if (senderConfig.isForceUpdate()) {
                     logger.info("Some dependencies violate open source policies, however all were force " +
@@ -254,7 +254,7 @@ public class ProjectsSender {
 
     private String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
-        UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(),
+        UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(),requestConfig.getUserKey(), requestConfig.getRequesterEmail(),
                 UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProjectVersion(), projects);
         String resultInfo = logResult(updateResult);
 
@@ -268,7 +268,7 @@ public class ProjectsSender {
         logger.info("Generating offline update request");
 
         // generate offline request
-        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects);
+        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(),requestConfig.getUserKey(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects);
 
         updateRequest.setRequesterEmail(requestConfig.getRequesterEmail());
         try {

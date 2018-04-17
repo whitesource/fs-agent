@@ -30,6 +30,7 @@ public final class ConfigPropertyKeys {
     public static final String CONNECTION_RETRIES = "connectionRetries";
     public static final String CONNECTION_RETRIES_INTERVALS = "connectionRetriesInterval";
     public static final String ORG_TOKEN_PROPERTY_KEY = "apiKey";
+    public static final String USER_KEY_PROPERTY_KEY = "userKey";
     public static final String PARTIAL_SHA1_MATCH_KEY = "partialSha1Match";
     public static final String PRODUCT_TOKEN_PROPERTY_KEY = "productToken"; // optional
     public static final String PRODUCT_NAME_PROPERTY_KEY = "productName"; // optional
@@ -37,6 +38,7 @@ public final class ConfigPropertyKeys {
     public static final String APP_PATH = "appPath"; // optional
     public static final String X_PATHS = "xPaths"; // optional
     public static final String VIA_DEBUG="viaDebug"; // optional
+    public static final String VIA_ANALYSIS_LEVEL="viaAnalysysLevel"; // optional
     public static final String PROJECT_TOKEN_PROPERTY_KEY = "projectToken";
     public static final String PROJECT_NAME_PROPERTY_KEY = "projectName";
     public static final String PROJECT_VERSION_PROPERTY_KEY = "projectVersion"; // optional
