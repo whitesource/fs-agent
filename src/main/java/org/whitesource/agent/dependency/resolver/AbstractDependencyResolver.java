@@ -32,7 +32,7 @@ public abstract class AbstractDependencyResolver {
     /* --- Static Members --- */
 
     private static final String BACK_SLASH = "\\";
-    private static final String FORWARD_SLASH = "/";
+    protected static final String FORWARD_SLASH = "/";
     private static final String EMPTY_STRING = "";
     protected static final String GLOB_PATTERN = "**/";
     private static final String FILE_SEPARATOR = "file.separator";

@@ -221,13 +221,14 @@ public class FSAConfiguration {
 
         boolean goResolveDependencies = FSAConfiguration.getBooleanProperty(config, GO_RESOLVE_DEPENDENCIES, true);
         boolean goIgnoreSciprtFiles = FSAConfiguration.getBooleanProperty(config, GO_IGNORE_SCRIPT_FILES, true);
+        String goDependencyManager = config.getProperty(GO_DEPENDENCY_MANAGER);
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
-                goResolveDependencies,goIgnoreSciprtFiles);
+                goResolveDependencies,goIgnoreSciprtFiles, goDependencyManager);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken,String userKey, String projectName, String projectToken) {
