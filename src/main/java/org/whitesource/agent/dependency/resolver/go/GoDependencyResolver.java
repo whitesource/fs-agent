@@ -16,15 +16,16 @@ import java.util.*;
 
 public class GoDependencyResolver extends AbstractDependencyResolver {
 
-    private static final String DEPS = "Deps";
-    private static final String REV = "Rev";
-    private static final String COMMENT = "Comment";
-    private static final String IMPORT_PATH = "ImportPath";
+    private static final String DEPS            = "Deps";
+    private static final String REV             = "Rev";
+    private static final String COMMENT         = "Comment";
+    private static final String IMPORT_PATH     = "ImportPath";
     private final Logger logger = LoggerFactory.getLogger(GoDependencyResolver.class);
 
-    private static final String GOPKG_LOCK = "Gopkg.lock";
-    private static final String GODEPS_JSON = "Godeps.json";
-    private static final String GO_EXTENTION = ".go";
+    private static final String GOPKG_LOCK      = "Gopkg.lock";
+    private static final String GODEPS_JSON     = "Godeps.json";
+    private static final String VNDR_CONF       = "vendor.conf";
+    private static final String GO_EXTENTION    = ".go";
     private static final List<String> GO_SCRIPT_EXTENSION = Arrays.asList(".lock", ".json", GO_EXTENTION);
 
     private GoCli goCli;
@@ -70,6 +71,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 return GLOB_PATTERN + "*" + GOPKG_LOCK;
             case GO_DEP:
                 return GLOB_PATTERN + "*" + GODEPS_JSON;
+            case VNDR:
+                return GLOB_PATTERN + "*" + VNDR_CONF;
         }
         return "";
     }
@@ -90,6 +93,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         break;
                     case GO_DEP:
                         collectGoDepDependencies(rootDirectory, dependencyInfos);
+                        break;
+                    case VNDR:
+                        collectVndrDependencies(rootDirectory, dependencyInfos);
                         break;
                     default:
                         error = "The selected dependency manager - " + goDependencyManager.getType() + " - is not supported.";
@@ -167,23 +173,20 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            logger.error("Can't find " + goPckLock.getPath());
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Can't read " + goPckLock.getPath());
         }
         return dependencyInfos;
     }
 
     private void collectGoDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         File goDepJson = new File(rootDirectory + fileSeparator + GODEPS_JSON);
-        String error;
         if (goDepJson.isFile()){
             dependencyInfos.addAll(parseGoDeps(goDepJson));
-            return;
         } else {
-            error = "Can't find Godeps.json file.  Please run 'godep save' command";
+            throw new Exception("Can't find Godeps.json file.  Please run 'godep save' command");
         }
-        throw new Exception(error);
     }
 
     private List<DependencyInfo> parseGoDeps(File goDeps) throws FileNotFoundException {
@@ -222,14 +225,48 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private DependencyGroupArtifact getGroupAndArtifact(String name){
         String groupId = "";
         String artifactId = "";
-        if (name.contains("/")) {
-            String[] split = name.split("/");
+        if (name.contains(FORWARD_SLASH)) {
+            String[] split = name.split(FORWARD_SLASH);
             groupId = split[1];
             artifactId = name.substring(name.indexOf(split[2]));
         } else {
             artifactId = name;
         }
         return new DependencyGroupArtifact(groupId,artifactId);
+    }
+
+    private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
+        File vndrConf = new File(rootDirectory + fileSeparator + VNDR_CONF);
+        if (vndrConf.isFile()){
+            dependencyInfos.addAll(parseVendorConf(vndrConf));
+        } else {
+            throw new Exception("Can't find vendor.conf file.  Please run 'vndr init' command");
+        }
+    }
+
+    private List<DependencyInfo> parseVendorConf(File vendorConf){
+        List<DependencyInfo> dependencyInfos = new ArrayList<>();
+        try {
+            FileReader fileReader = new FileReader(vendorConf);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String currLine;
+            DependencyInfo dependencyInfo;
+            DependencyGroupArtifact dependencyGroupArtifact;
+            while ((currLine = bufferedReader.readLine()) != null){
+                dependencyInfo = new DependencyInfo();
+                String[] split = currLine.split(" ");
+                dependencyGroupArtifact = getGroupAndArtifact(split[0]);
+                dependencyInfo.setGroupId(dependencyGroupArtifact.getGroupId());
+                dependencyInfo.setArtifactId(dependencyGroupArtifact.getArtifactId());
+                dependencyInfo.setCommit(split[1]);
+                dependencyInfos.add(dependencyInfo);
+            }
+        } catch (FileNotFoundException e) {
+            logger.error("Can't find " + vendorConf.getPath());
+        } catch (IOException e) {
+            logger.error("Can't read " + vendorConf.getPath());
+        }
+        return dependencyInfos;
     }
 
     private class DependencyGroupArtifact {

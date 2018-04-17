@@ -2,7 +2,8 @@ package org.whitesource.agent.dependency.resolver.go;
 
 public enum GoDependencyManager {
     DEP("dep"),
-    GO_DEP("godep");
+    GO_DEP("godep"),
+    VNDR("vndr");
 
 
     private final String type;
