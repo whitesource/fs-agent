@@ -13,9 +13,7 @@ class GoCli {
     private final String CMD = "cmd";
     private final String C_CHAR_WINDOWS = "/c";
     protected static final String GO_ENSURE = "ensure";
-    protected static final String GO_STATUS = "status";
-    private final String DEP_COMMAND = "dep";
-    private final String GRADLE_COMMAND_W = "gradlew";
+    private final String DEP_COMMAND = "dep";;
 
     protected boolean runCmd(String rootDirectory, String[] params){
         try {

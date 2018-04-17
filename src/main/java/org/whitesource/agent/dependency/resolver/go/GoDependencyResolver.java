@@ -14,7 +14,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private final Logger logger = LoggerFactory.getLogger(GoDependencyResolver.class);
 
-    private static final String GOPKG_LOCK = "**/*Gopkg.lock";
+    private static final String GOPKG_LOCK = "Gopkg.lock";
     protected static final String GO_EXTENTION = ".go";
     private static final List<String> GO_SCRIPT_EXTENSION = Arrays.asList(".lock", GO_EXTENTION);
 
@@ -54,7 +54,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String getBomPattern() {
-        return GOPKG_LOCK;
+        return GLOB_PATTERN + "*" + GOPKG_LOCK;
     }
 
     @Override
@@ -64,7 +64,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private List<DependencyInfo> collectDependencies(String rootDirectory) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
-        File goPkgLock = new File(rootDirectory + "\\Gopkg.lock");
+        File goPkgLock = new File(rootDirectory + fileSeparator + GOPKG_LOCK);
         if (goPkgLock.isFile()){
             if (goCli.runCmd(rootDirectory,goCli.getGoCommandParams(GoCli.GO_ENSURE))) {
                 dependencyInfos.addAll(parseGopckLock(goPkgLock));
@@ -72,9 +72,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                logger.error("Can't run 'dep ensure' command.  Make sure no files from the 'vendor' folder are in use.");
             }
         } else {
-            if (goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_STATUS))) {
-                dependencyInfos.addAll(parseGopckLock(goPkgLock));
-            }
+            logger.error("Can't find Gopkg.lock file.  Please run `dep init` command");
         }
         return dependencyInfos;
     }
@@ -122,7 +120,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             firstIndex = currLine.indexOf("\"");
                             lastIndex = currLine.lastIndexOf("\"");
                             commit = currLine.substring(firstIndex + 1, lastIndex);
-                            // TODO - add commit to DependencyInfo when field is added to the class
+                            dependencyInfo.setCommit(commit);
                         }
                     }
                 } else if (currLine.equals("[[projects]]")){
