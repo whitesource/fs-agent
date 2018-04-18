@@ -18,6 +18,7 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.whitesource.agent.dependency.resolver.go.GoDependencyManager;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
@@ -61,8 +62,11 @@ public class ResolverConfiguration {
             @JsonProperty(PAKET_IGNORED_GROUPS) String[] paketIgnoredScopes,
             @JsonProperty(PAKET_IGNORE_FILES) boolean paketIgnoreFiles,
             @JsonProperty(PAKET_RUN_PRE_STEP) boolean paketRunPreStep,
-            @JsonProperty(PAKET_EXE_PATH) String paketPath
-    ) {
+            @JsonProperty(PAKET_EXE_PATH) String paketPath,
+
+            @JsonProperty(GO_RESOLVE_DEPENDENCIES) boolean goResolveDependencies,
+            @JsonProperty(GO_IGNORE_SCRIPT_FILES) boolean goIgnoreScriptFiles,
+            @JsonProperty(GO_DEPENDENCY_MANAGER) String goDependencyManager) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmResolveDependencies = npmResolveDependencies;
         this.npmIncludeDevDependencies = npmIncludeDevDependencies;
@@ -98,6 +102,12 @@ public class ResolverConfiguration {
         this.paketIgnoreFiles = paketIgnoreFiles;
         this.paketRunPreStep = paketRunPreStep;
         this.paketPath = paketPath;
+
+        this.goResolveDependencies = goResolveDependencies;
+        this.goIgnoreScriptFiles = goIgnoreScriptFiles;
+        if (!goDependencyManager.isEmpty()) {
+            this.goDependencyManager = GoDependencyManager.getFromType(goDependencyManager);
+        }
     }
 
     /* --- Members --- */
@@ -132,7 +142,11 @@ public class ResolverConfiguration {
     private String[]    paketIgnoredScopes;
     private boolean     paketIgnoreFiles;
     private boolean     paketRunPreStep;
-    private String     paketPath;
+    private String      paketPath;
+
+    private boolean     goResolveDependencies;
+    private boolean     goIgnoreScriptFiles;
+    private GoDependencyManager goDependencyManager;
 
     /* --- Public getters --- */
 
@@ -271,6 +285,15 @@ public class ResolverConfiguration {
     public String getPaketPath() {
         return paketPath;
     }
+
+    @JsonProperty(GO_RESOLVE_DEPENDENCIES)
+    public boolean isGoResolveDependencies() { return goResolveDependencies; }
+
+    @JsonProperty(GO_IGNORE_SCRIPT_FILES)
+    public boolean isGoIgnoreScriptFiles() {    return goIgnoreScriptFiles; }
+
+    @JsonProperty(GO_DEPENDENCY_MANAGER)
+    public GoDependencyManager getGoDependencyManager() {   return goDependencyManager; }
 
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {
         this.npmResolveDependencies = npmResolveDependencies;

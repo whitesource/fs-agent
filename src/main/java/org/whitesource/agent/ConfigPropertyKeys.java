@@ -123,5 +123,9 @@ public final class ConfigPropertyKeys {
     public static final String PAKET_RUN_PRE_STEP = "paket.runPreStep";
     public static final String PAKET_EXE_PATH = "paket.exePath";
 
+    public static final String GO_RESOLVE_DEPENDENCIES = "go.resolveDependencies";
+    public static final String GO_IGNORE_SCRIPT_FILES = "go.ignoreGoScriptFiles";
+    public static final String GO_DEPENDENCY_MANAGER = "go.dependencyManager";
+
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 }
