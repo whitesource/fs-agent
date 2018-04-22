@@ -105,7 +105,7 @@ public class ResolverConfiguration {
 
         this.goResolveDependencies = goResolveDependencies;
         this.goIgnoreScriptFiles = goIgnoreScriptFiles;
-        if (!goDependencyManager.isEmpty()) {
+        if (goDependencyManager != null && !goDependencyManager.isEmpty()) {
             this.goDependencyManager = GoDependencyManager.getFromType(goDependencyManager);
         }
     }
