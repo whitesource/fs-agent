@@ -141,7 +141,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
         List<File> files = mapBomFiles.entrySet().stream().map(entry -> {
             if (entry.getValue().size() > 1) {
-                return entry.getValue().stream().filter(file -> fileShouldBeParsed(file)).findFirst().get();
+                return entry.getValue().stream().filter(this::fileShouldBeParsed).findFirst().get();
             } else {
                 return entry.getValue().stream().findFirst().get();
             }

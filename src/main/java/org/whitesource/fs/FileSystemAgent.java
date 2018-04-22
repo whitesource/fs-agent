@@ -99,7 +99,11 @@ public class FileSystemAgent {
             }
             projects = new ProjectsDetails(new ArrayList<>(), StatusCode.SUCCESS, "");
             for (String directory : dependencyDirs) {
-                ProjectsDetails projectsDetails = getProjects(Collections.singletonList(directory), new HashMap<>());
+                Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
+                Set<String> setDirs = new HashSet<>();
+                setDirs.add(directory);
+                appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
+                ProjectsDetails projectsDetails = getProjects(Collections.singletonList(directory), appPathsToDependencyDirs);
                 if (projectsDetails.getProjects().size() == 1) {
                     String projectName = new File(directory).getName();
                     String projectVersion = config.getRequest().getProjectVersion();
