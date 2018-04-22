@@ -64,11 +64,15 @@ public class ComponentScan {
             // Resolving dependencies
             logger.info("Resolving dependencies");
             // via should not run for componentScan
+            Set<String> setDirs = new HashSet<>();
+            setDirs.addAll(scannerBaseDirs);
+            Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
+            appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
             Collection<AgentProjectInfo> projects = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent(), false).createProjects(
-                    scannerBaseDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getAgent().getArchiveExtractionDepth(),
+                    scannerBaseDirs, appPathsToDependencyDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getAgent().getArchiveExtractionDepth(),
                     fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(),
                     followSymlinks, excludedCopyrights, fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(),
-                    fsaConfiguration.getAgent().isCalculateMd5(), fsaConfiguration.getResolver().getNpmAccessToken()).keySet();
+                    fsaConfiguration.getAgent().isCalculateMd5()).keySet();
             logger.info("Finished dependency resolution");
             for (AgentProjectInfo project : projects) {
                 project.setProjectToken(EMPTY_PROJECT_TOKEN);

@@ -36,7 +36,9 @@ public final class ConfigPropertyKeys {
     public static final String PRODUCT_NAME_PROPERTY_KEY = "productName"; // optional
     public static final String PRODUCT_VERSION_PROPERTY_KEY = "productVersion"; // optional
     public static final String APP_PATH = "appPath"; // optional
+    public static final String X_PATHS = "xPaths"; // optional
     public static final String VIA_DEBUG="viaDebug"; // optional
+    public static final String VIA_ANALYSIS_LEVEL="viaAnalysysLevel"; // optional
     public static final String PROJECT_TOKEN_PROPERTY_KEY = "projectToken";
     public static final String PROJECT_NAME_PROPERTY_KEY = "projectName";
     public static final String PROJECT_VERSION_PROPERTY_KEY = "projectVersion"; // optional
@@ -120,6 +122,10 @@ public final class ConfigPropertyKeys {
     public static final String PAKET_IGNORE_FILES = "paket.ignoreFiles";
     public static final String PAKET_RUN_PRE_STEP = "paket.runPreStep";
     public static final String PAKET_EXE_PATH = "paket.exePath";
+
+    public static final String GO_RESOLVE_DEPENDENCIES = "go.resolveDependencies";
+    public static final String GO_IGNORE_SCRIPT_FILES = "go.ignoreGoScriptFiles";
+    public static final String GO_DEPENDENCY_MANAGER = "go.dependencyManager";
 
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 }

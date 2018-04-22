@@ -56,7 +56,10 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     private static final String PACKAGE_JSON = "package.json";
     private static final String JAVA_SCRIPT_EXTENSION = ".js";
+    private static final String TYPE_SCRIPT_EXTENSION = ".ts";
+    private static final String TSX_EXTENSION = ".tsx";
     private static final String JS_PATTERN = "**/*.js";
+    private static final String PATTERN = "**/*";
     private static final String EXAMPLE = "**/example/**/";
     private static final String EXAMPLES = "**/examples/**/";
     private static final String WS_BOWER_FOLDER = "**/.ws_bower/**/";
@@ -177,9 +180,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         if (!dependencies.isEmpty() || zeroDependenciesList) {
             if (ignoreJavaScriptFiles) {
                 //return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
-                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN), null));
+                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN, PATTERN + TYPE_SCRIPT_EXTENSION, PATTERN + TSX_EXTENSION), null));
             } else {
-                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN), EXCLUDE_TOP_FOLDER));
+                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN, PATTERN + TYPE_SCRIPT_EXTENSION, PATTERN + TSX_EXTENSION), EXCLUDE_TOP_FOLDER));
             }
         }
         return new ResolutionResult(dependencies, excludes, getDependencyType(), topLevelFolder);
@@ -200,7 +203,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected Collection<String> getSourceFileExtensions() {
-        return Arrays.asList(JAVA_SCRIPT_EXTENSION);
+        return Arrays.asList(JAVA_SCRIPT_EXTENSION, TYPE_SCRIPT_EXTENSION, TSX_EXTENSION);
     }
 
     /* --- Protected methods --- */

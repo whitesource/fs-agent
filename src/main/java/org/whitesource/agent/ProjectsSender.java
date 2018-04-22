@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 /**
  * Class for sending projects for all WhiteSource command line agents.
@@ -62,8 +63,6 @@ public class ProjectsSender {
     private static final String DOT = ".";
     private static final String JAVA_NETWORKING = "java.net";
     private static final int MAX_NUMBER_OF_DEPENDENCIES = 1000000;
-    public static final String JAVA = "java";
-    public static final String JAVA_SCRIPT = "javascript";
     public static final String BACK_SLASH = "\\";
     public static final String FORWARD_SLASH = "/";
     /* --- Members --- */
@@ -109,7 +108,7 @@ public class ProjectsSender {
             StatusCode statusCode = StatusCode.SUCCESS;
 
 //            // TODO remove projects.size() == 1 when via will scan more than one project
-            if (senderConfig.isEnableImpactAnalysis() && projects.size() == 1) {
+            if (senderConfig.isEnableImpactAnalysis()) {
                 runViaAnalysis(projectsDetails, service);
             }  else if (!senderConfig.isEnableImpactAnalysis()) {
 //                logger.info("Impact analysis won't run, via is not enabled");
@@ -164,34 +163,42 @@ public class ProjectsSender {
         //todo comment in via code
         VulnerabilitiesAnalysis vulnerabilitiesAnalysis = null;
         GlobalVulnerabilityAnalysisResult result = null;
-
-        for (AgentProjectInfo project : projectsDetails.getProjectToLanguage().keySet()) {
-            Server server = new FSAgentServer(project, service, requestConfig.getApiToken());
+        for (AgentProjectInfo project : projectsDetails.getProjectToViaComponents().keySet()) {
             //TODO remove later
 //            Server server = new DemoServerProjInfo();
 //            server.setdb("c:/Users/AharonAbadi/work/vulnerabilityCleaner/via-visual-studio-integration/examples/via-server/via.db");
-            try {
-                String appPath = requestConfig.getAppPath();
-                // check language for scan according to user file
+            // check language for scan according to user file
+            LinkedList<ViaComponents> viaComponentsList = projectsDetails.getProjectToViaComponents().get(project);
+            for (ViaComponents viaComponents : viaComponentsList) {
                 logger.info("Starting VIA impact analysis");
-                String language = projectsDetails.getProjectToLanguage().get(project);
-                vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language);
-                // set app path for java script
-                if (language.equals(JAVA_SCRIPT)) {
-                    int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
-                    appPath = appPath.substring(0, lastIndex);
+                String appPath = viaComponents.getAppPath();
+                ViaLanguage language = viaComponents.getLanguage();
+                try {
+                    vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language.toString(), requestConfig.getViaAnalisysLevel());
+                    // set app path for java script
+                    if (language == ViaLanguage.JAVA_SCRIPT) {
+                        int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
+                        appPath = appPath.substring(0, lastIndex);
+                    }
+                    if (vulnerabilitiesAnalysis != null) {
+                        AgentProjectInfo projectToServer = new AgentProjectInfo();
+                        projectToServer.setDependencies(viaComponents.getDependencies());
+                        projectToServer.setProjectSetupDescription(project.getProjectSetupDescription());
+                        projectToServer.setCoordinates(project.getCoordinates());
+                        projectToServer.setProjectToken(project.getProjectToken());
+                        projectToServer.setProjectSetupStatus(project.getProjectSetupStatus());
+                        projectToServer.setParentCoordinates(project.getParentCoordinates());
+                        Server server = new FSAgentServer(projectToServer, service, requestConfig.getApiToken());
+                        logger.info("Starting analysis for: {}", appPath);
+                        vulnerabilitiesAnalysis.runAnalysis(server, appPath, viaComponents.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
+                        logger.info("Got impact analysis result from server");
+                    }
+                } catch (Exception e) {
+                    logger.error("Failed to run impact analysis {}", e.getMessage());
                 }
-
-                if (vulnerabilitiesAnalysis != null) {
-                    vulnerabilitiesAnalysis.runAnalysis(server, appPath, project.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
-                    logger.info("Got impact analysis result from server");
-                }
-            } catch (Exception e) {
-                logger.error("Failed to run impact analysis {}", e.getMessage());
             }
         }
     }
-
 
     private void checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
         int numberOfDependencies = projects.stream().map(x -> x.getDependencies()).mapToInt(x -> x.size()).sum();

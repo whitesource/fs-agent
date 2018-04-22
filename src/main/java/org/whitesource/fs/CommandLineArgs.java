@@ -94,10 +94,16 @@ public class CommandLineArgs {
     String whiteSourceFolder = "";
 
     @Parameter(names = "-appPath", description = "Impact Analysis application path")
-    String appPath = null;
+    List<String> appPath = new LinkedList<>();
+
+    @Parameter(names = "-xPaths", description = "Path to impact Analysis application paths and directories")
+    String xPaths = null;
 
     @Parameter(names = "-viaDebug", description = "Impact Analysis debug flag")
     String viaDebug = null;
+
+    @Parameter(names = "-viaLevel", description = "Impact Analysis level")
+    String viaLevel = "1";
 
     @Parameter(names = "-enableImpactAnalysis", description = "Whether or not to enable impact analysis")
     String enableImpactAnalysis = null;

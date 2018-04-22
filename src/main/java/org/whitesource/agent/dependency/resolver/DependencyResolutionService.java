@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.dotNet.DotNetDependencyResolver;
+import org.whitesource.agent.dependency.resolver.go.GoDependencyResolver;
 import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
@@ -82,6 +83,8 @@ public class DependencyResolutionService {
         final boolean paketRunPreStep = config.isPaketRunPreStep();
         final String paketPath = config.getPaketPath();
 
+        final boolean goResolveDependencies = config.isGoResolveDependencies();
+
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
@@ -112,6 +115,10 @@ public class DependencyResolutionService {
         if (paketResolveDependencies) {
             dependencyResolvers.add(new PaketDependencyResolver(paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath));
         }
+
+        if (goResolveDependencies){
+            dependencyResolvers.add(new GoDependencyResolver(config.isGoIgnoreScriptFiles(), config.getGoDependencyManager()));
+        }
     }
 
     /* --- Public methods --- */
@@ -136,7 +143,7 @@ public class DependencyResolutionService {
         return false;
     }
 
-    public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes, String npmAccessToken) {
+    public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes) {
         Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap = new HashMap<>();
         dependencyResolvers.forEach(dependencyResolver -> {
             // add resolver excludes

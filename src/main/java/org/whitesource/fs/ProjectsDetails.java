@@ -15,35 +15,36 @@
  */
 package org.whitesource.fs;
 
+import org.whitesource.agent.ViaComponents;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class ProjectsDetails {
 
 //    private Collection<AgentProjectInfo> projects;
-    private Map<AgentProjectInfo, String> projectToLanguage;
+    private Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToViaComponents;
     private String details;
     private StatusCode statusCode;
 
 
-    public ProjectsDetails(Map<AgentProjectInfo, String> projectToLanguage, StatusCode statusCode , String details) {
+    public ProjectsDetails(Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToViaComponents, StatusCode statusCode , String details) {
         this.statusCode = statusCode;
-        this.projectToLanguage = projectToLanguage;
+        this.projectToViaComponents = projectToViaComponents;
         this.details = details;
     }
 
     public ProjectsDetails(Collection<AgentProjectInfo> projects, StatusCode statusCode , String details) {
-        Map<AgentProjectInfo, String> projectToLanguage = new HashMap<>();
+        Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToAppPathAndLanguage = new HashMap<>();
         for (AgentProjectInfo project : projects) {
-            projectToLanguage.put(project, null);
+            projectToAppPathAndLanguage.put(project, new LinkedList<>());
         }
         this.statusCode = statusCode;
-        this.projectToLanguage = projectToLanguage;
+        this.projectToViaComponents = projectToAppPathAndLanguage;
         this.details = details;
-//        this(projects.stream().collect(Collectors.toMap(project->project,null)), statusCode, details);
     }
 
     public ProjectsDetails() {
@@ -57,24 +58,23 @@ public class ProjectsDetails {
         return details;
     }
 
-    public Map<AgentProjectInfo, String> getProjectToLanguage() {
-        return projectToLanguage;
+    public Map<AgentProjectInfo, LinkedList<ViaComponents>> getProjectToViaComponents() {
+        return projectToViaComponents;
     }
 
-    public void setProjectToLanguage(Map<AgentProjectInfo, String> projectToLanguage) {
-        this.projectToLanguage = projectToLanguage;
+    public void setProjectToViaComponents(Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToViaComponents) {
+        this.projectToViaComponents = projectToViaComponents;
     }
 
     public void addOfflineProjects(Collection<AgentProjectInfo> projects) {
         if (projects.size() > 0){
             for (AgentProjectInfo agentProjectInfo : projects) {
-                getProjectToLanguage().put(agentProjectInfo, null);
+                getProjectToViaComponents().put(agentProjectInfo, null);
             }
         }
-//            setProjectToLanguage(projects.stream().collect(Collectors.toMap(project-> project, null)));
     }
 
     public Collection<AgentProjectInfo> getProjects() {
-        return getProjectToLanguage().keySet();
+        return getProjectToViaComponents().keySet();
     }
 }

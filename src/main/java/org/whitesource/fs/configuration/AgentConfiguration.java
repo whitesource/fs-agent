@@ -24,6 +24,7 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class AgentConfiguration {
 
+    public static final String ERROR = "error";
     private final String[] includes;
     private final String[] excludes;
     private final String[] dockerIncludes;
@@ -42,6 +43,7 @@ public class AgentConfiguration {
     private final Collection<String> excludedCopyrights;
     private final String error;
 
+    @JsonProperty(ERROR)
     public String getError() {
         return error;
     }
@@ -62,8 +64,8 @@ public class AgentConfiguration {
                               @JsonProperty(SHOW_PROGRESS_BAR) boolean showProgressBar,
                               @JsonProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY) boolean globCaseSensitive,
                               @JsonProperty(SCAN_DOCKER_IMAGES) boolean dockerScan,
-                              String error,
-                              @JsonProperty(EXCLUDED_COPYRIGHT_KEY) Collection<String> excludedCopyrights) {
+                              @JsonProperty(EXCLUDED_COPYRIGHT_KEY) Collection<String> excludedCopyrights,
+                              @JsonProperty(ERROR) String error) {
         this.includes = includes == null ? new String[0] : includes;
         this.excludes = excludes == null ? new String[0] : excludes;
         this.dockerIncludes = dockerIncludes == null ? new String[0] : dockerIncludes;
@@ -148,14 +150,17 @@ public class AgentConfiguration {
         return calculateMd5;
     }
 
+    @JsonProperty(DOCKER_INCLUDES_PATTERN_PROPERTY_KEY)
     public String[] getDockerIncludes() {
         return dockerIncludes;
     }
 
+    @JsonProperty(DOCKER_EXCLUDES_PATTERN_PROPERTY_KEY)
     public String[] getDockerExcludes() {
         return dockerExcludes;
     }
 
+    @JsonProperty(SCAN_DOCKER_IMAGES)
     public boolean isDockerScan() {
         return dockerScan;
     }

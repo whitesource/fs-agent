@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
 
+import java.util.List;
+
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -34,8 +36,9 @@ public class RequestConfiguration {
     private String productName;
     private String productVersion;
     private final String projectName;
-    private final String appPath;
+    private final List<String> appPaths;
     private final String viaDebug;
+    private final int viaAnalisysLevel;
 
     public RequestConfiguration(@JsonProperty(ORG_TOKEN_PROPERTY_KEY) String apiToken,
                                 @JsonProperty(USER_KEY_PROPERTY_KEY) String userKey,
@@ -47,8 +50,9 @@ public class RequestConfiguration {
                                 @JsonProperty(PRODUCT_NAME_PROPERTY_KEY) String productName,
                                 @JsonProperty(PRODUCT_TOKEN_PROPERTY_KEY) String productToken,
                                 @JsonProperty(PRODUCT_VERSION_PROPERTY_KEY) String productVersion,
-                                @JsonProperty(APP_PATH) String appPath,
-                                @JsonProperty(VIA_DEBUG) String viaDebug) {
+                                @JsonProperty(APP_PATH) List<String> appPaths,
+                                @JsonProperty(VIA_DEBUG) String viaDebug,
+                                @JsonProperty(VIA_ANALYSIS_LEVEL) int viaAnalisysLevel) {
         this.apiToken = apiToken;
         this.userKey = userKey;
         this.requesterEmail = requesterEmail;
@@ -59,7 +63,8 @@ public class RequestConfiguration {
         this.productName = productName;
         this.productToken = productToken;
         this.productVersion = productVersion;
-        this.appPath = appPath;
+        this.viaAnalisysLevel = viaAnalisysLevel;
+        this.appPaths = appPaths;
         this.viaDebug=viaDebug;
     }
 
@@ -109,13 +114,18 @@ public class RequestConfiguration {
     }
 
     @JsonProperty(APP_PATH)
-    public String getAppPath() {
-        return appPath;
+    public List<String> getAppPaths() {
+        return appPaths;
     }
 
     @JsonProperty(VIA_DEBUG)
     public String getViaDebug() {
         return viaDebug;
+    }
+
+    @JsonProperty(VIA_ANALYSIS_LEVEL)
+    public int getViaAnalisysLevel() {
+        return viaAnalisysLevel;
     }
 
     @JsonProperty(USER_KEY_PROPERTY_KEY)

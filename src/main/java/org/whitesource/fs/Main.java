@@ -31,10 +31,7 @@ import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.web.FsaVerticle;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -116,7 +113,11 @@ public class Main {
         if (fsaConfiguration.getUseCommandLineProjectName()) {
             // change project name from command line in case the user sent name via commandLine
             String projectName = fsaConfiguration.getRequest().getProjectName();
-            Set<AgentProjectInfo> agentProjectInfos = result.getProjectToLanguage().keySet();
+
+            Set<AgentProjectInfo> agentProjectInfos = new HashSet<>();
+            for (AgentProjectInfo projectInfo : result.getProjectToViaComponents().keySet()) {
+                agentProjectInfos.add(projectInfo);
+            }
             if (agentProjectInfos.size() == 1 && projectName != null) {
                 for (AgentProjectInfo project : agentProjectInfos) {
                     project.getCoordinates().setArtifactId(projectName);
@@ -130,7 +131,7 @@ public class Main {
             UpdateInventoryRequest offLineReq = updateInventoryRequests.stream().findFirst().get();
             req = new RequestConfiguration(req.getApiToken(),req.getUserKey(), req.getRequesterEmail(), req.isProjectPerSubFolder(), req.getProjectName(),
                     req.getProjectToken(), req.getProjectVersion(), offLineReq.product(), null, offLineReq.productVersion(),
-                    req.getAppPath(), req.getViaDebug());
+                    req.getAppPaths(), req.getViaDebug(),req.getViaAnalisysLevel());
         }
 
         if (!result.getStatusCode().equals(StatusCode.SUCCESS)) {

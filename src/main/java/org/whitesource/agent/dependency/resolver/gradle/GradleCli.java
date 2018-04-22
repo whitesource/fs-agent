@@ -50,7 +50,7 @@ class GradleCli {
         if (DependencyCollector.isWindows()) {
             return new String[] {CMD, C_CHAR_WINDOWS, GRADLE_COMMAND, command.name()};
         } else {
-            return new String[] {GRADLE_COMMAND, GRADLE_PARAMS_TREE};
+            return new String[] {GRADLE_COMMAND, command.name()};
         }
     }
 }

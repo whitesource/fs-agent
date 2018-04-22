@@ -11,9 +11,8 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private static final String BUILD_GRADLE = "**/*build.gradle";
     private static final List<String> GRADLE_SCRIPT_EXTENSION = Arrays.asList(".gradle",".groovy", ".java", ".jar", ".war", ".ear", ".car", ".class");
-    private static final String FILE_SEPARATOR = "file.separator";
     private static final String JAR_EXTENSION = ".jar";
-    public static final String GLOB_PATTERN = "**/";
+
 
     private GradleLinesParser gradleLinesParser;
     private GradleCli gradleCli;
@@ -30,7 +29,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         List<DependencyInfo> dependencies = collectDependencies(topLevelFolder);
-        topLevelFoldersNames.add(topLevelFolder.substring(topLevelFolder.lastIndexOf(System.getProperty(FILE_SEPARATOR)) + 1));
+        topLevelFoldersNames.add(topLevelFolder.substring(topLevelFolder.lastIndexOf(fileSeparator) + 1));
         return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
     }
 
