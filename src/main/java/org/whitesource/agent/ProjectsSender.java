@@ -107,11 +107,11 @@ public class ProjectsSender {
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
 
-//            // TODO remove projects.size() == 1 when via will scan more than one project
+            //            // TODO remove projects.size() == 1 when via will scan more than one project
             if (senderConfig.isEnableImpactAnalysis()) {
                 runViaAnalysis(projectsDetails, service);
-            }  else if (!senderConfig.isEnableImpactAnalysis()) {
-//                logger.info("Impact analysis won't run, via is not enabled");
+            } else if (!senderConfig.isEnableImpactAnalysis()) {
+                //                logger.info("Impact analysis won't run, via is not enabled");
                 //todo return logs when needed would be enabled for all WSE-342
             }
 
@@ -165,8 +165,8 @@ public class ProjectsSender {
         GlobalVulnerabilityAnalysisResult result = null;
         for (AgentProjectInfo project : projectsDetails.getProjectToViaComponents().keySet()) {
             //TODO remove later
-//            Server server = new DemoServerProjInfo();
-//            server.setdb("c:/Users/AharonAbadi/work/vulnerabilityCleaner/via-visual-studio-integration/examples/via-server/via.db");
+            //            Server server = new DemoServerProjInfo();
+            //            server.setdb("c:/Users/AharonAbadi/work/vulnerabilityCleaner/via-visual-studio-integration/examples/via-server/via.db");
             // check language for scan according to user file
             LinkedList<ViaComponents> viaComponentsList = projectsDetails.getProjectToViaComponents().get(project);
             for (ViaComponents viaComponents : viaComponentsList) {
@@ -214,7 +214,7 @@ public class ProjectsSender {
             setProxy = true;
         }
         int connectionTimeoutMinutes = senderConfig.getConnectionTimeOut();
-        final WhitesourceService service = new WhitesourceService(pluginInfo.getAgentType(),pluginInfo.getAgentVersion(),pluginInfo.getPluginVersion(),
+        final WhitesourceService service = new WhitesourceService(pluginInfo.getAgentType(), pluginInfo.getAgentVersion(), pluginInfo.getPluginVersion(),
                 senderConfig.getServiceUrl(), setProxy, connectionTimeoutMinutes, senderConfig.isIgnoreCertificateCheck());
         if (StringUtils.isNotBlank(senderConfig.getProxyHost())) {
             service.getClient().setProxy(senderConfig.getProxyHost(), senderConfig.getProxyPort(), senderConfig.getProxyUser(), senderConfig.getProxyPassword());
@@ -226,7 +226,7 @@ public class ProjectsSender {
         boolean policyCompliance = true;
         if (senderConfig.isCheckPolicies()) {
             logger.info("Checking policies");
-            CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(),requestConfig.getUserKey(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies());
+            CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey());
             if (checkPoliciesResult.hasRejections()) {
                 if (senderConfig.isForceUpdate()) {
                     logger.info("Some dependencies violate open source policies, however all were force " +
@@ -262,8 +262,8 @@ public class ProjectsSender {
 
     private String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
-        UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(),requestConfig.getUserKey(), requestConfig.getRequesterEmail(),
-                UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProjectVersion(), projects);
+        UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(),
+                UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProjectVersion(), projects, requestConfig.getUserKey());
         String resultInfo = logResult(updateResult);
 
         // remove line separators
@@ -276,7 +276,7 @@ public class ProjectsSender {
         logger.info("Generating offline update request");
 
         // generate offline request
-        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(),requestConfig.getUserKey(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects);
+        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
 
         updateRequest.setRequesterEmail(requestConfig.getRequesterEmail());
         try {
@@ -358,9 +358,9 @@ public class ProjectsSender {
         HashMap<String, Integer> projectsUrls = updateResult.getProjectNamesToIds();
         if (projectsUrls != null && !projectsUrls.isEmpty()) {
             for (String projectName : projectsUrls.keySet()) {
-                String appUrl = senderConfig.getServiceUrl().replace("agent","");
+                String appUrl = senderConfig.getServiceUrl().replace("agent", "");
                 String projectsUrl = appUrl + PROJECT_URL_PREFIX + projectsUrls.get(projectName);
-                logger.info("Project name: {}, URL: {}",projectName, projectsUrl);
+                logger.info("Project name: {}, URL: {}", projectName, projectsUrl);
                 resultLogMsg.append(NEW_LINE).append("Project name: ").append(projectName).append(", project URL:").append(projectsUrl);
             }
         }
