@@ -253,11 +253,16 @@ public class FSAConfiguration {
         boolean paketRunPreStep = FSAConfiguration.getBooleanProperty(config, PAKET_RUN_PRE_STEP, false);
         String paketPath = config.getProperty(PAKET_EXE_PATH, null);
 
+        boolean goResolveDependencies = FSAConfiguration.getBooleanProperty(config, GO_RESOLVE_DEPENDENCIES, true);
+        boolean goIgnoreSciprtFiles = FSAConfiguration.getBooleanProperty(config, GO_IGNORE_SCRIPT_FILES, true);
+        String goDependencyManager = config.getProperty(GO_DEPENDENCY_MANAGER, EMPTY_STRING);
+
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
-                dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath);
+                dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
+                goResolveDependencies,goIgnoreSciprtFiles, goDependencyManager);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken,String userKey, String projectName, String projectToken) {
