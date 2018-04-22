@@ -66,13 +66,15 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String getBomPattern() {
-        switch (goDependencyManager){
-            case DEP:
-                return GLOB_PATTERN + "*" + GOPKG_LOCK;
-            case GO_DEP:
-                return GLOB_PATTERN + "*" + GODEPS_JSON;
-            case VNDR:
-                return GLOB_PATTERN + "*" + VNDR_CONF;
+        if (goDependencyManager != null) {
+            switch (goDependencyManager) {
+                case DEP:
+                    return GLOB_PATTERN + "*" + GOPKG_LOCK;
+                case GO_DEP:
+                    return GLOB_PATTERN + "*" + GODEPS_JSON;
+                case VNDR:
+                    return GLOB_PATTERN + "*" + VNDR_CONF;
+            }
         }
         return "";
     }
