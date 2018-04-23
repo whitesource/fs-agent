@@ -118,16 +118,16 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         File goPkgLock = new File(rootDirectory + fileSeparator + GOPKG_LOCK);
         String error = "";
         if (goPkgLock.isFile()){
-            if (goCli.runCmd(rootDirectory,goCli.getGoCommandParams(GoCli.GO_ENSURE))) {
-                dependencyInfos.addAll(parseGopckLock(goPkgLock));
-                return;
-            } else {
-               error = "Can't run 'dep ensure' command.  Make sure no files from the 'vendor' folder are in use.";
+            if (goCli.runCmd(rootDirectory,goCli.getGoCommandParams(GoCli.GO_ENSURE)) == false) {
+                error = "Can't run 'dep ensure' command, output might be outdated  Run the 'dep ensure' command manually.";
             }
+            dependencyInfos.addAll(parseGopckLock(goPkgLock));
         } else {
             error = "Can't find Gopkg.lock file.  Please run `dep init` command";
         }
-        throw new Exception(error);
+        if (!error.isEmpty()) {
+            throw new Exception(error);
+        }
     }
 
     private List<DependencyInfo> parseGopckLock(File goPckLock){
