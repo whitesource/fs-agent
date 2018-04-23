@@ -168,6 +168,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             commit = currLine.substring(firstIndex + 1, lastIndex);
                             dependencyInfo.setCommit(commit);
                         }
+                        dependencyInfo.setDependencyType(DependencyType.GO);
                     }
                 } else if (currLine.equals("[[projects]]")){
                     dependencyInfo = new DependencyInfo();
