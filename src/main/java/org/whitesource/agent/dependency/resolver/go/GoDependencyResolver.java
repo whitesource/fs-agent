@@ -211,6 +211,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 dependencyInfo.setGroupId(groupId);
                 dependencyInfo.setArtifactId(artifactId);
                 dependencyInfo.setCommit(dep.get(REV).getAsString());
+                dependencyInfo.setDependencyType(DependencyType.GO);
                 JsonElement commentElement = dep.get(COMMENT);
                 if (commentElement != null){
                     String comment = commentElement.getAsString();
@@ -231,7 +232,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         if (name.contains(FORWARD_SLASH)) {
             String[] split = name.split(FORWARD_SLASH);
             groupId = split[1];
-            artifactId = name.substring(name.indexOf(split[2]));
+            if (split.length > 2) {
+                artifactId = name.substring(name.indexOf(split[2]));
+            }
         } else {
             artifactId = name;
         }
@@ -262,6 +265,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 dependencyInfo.setGroupId(dependencyGroupArtifact.getGroupId());
                 dependencyInfo.setArtifactId(dependencyGroupArtifact.getArtifactId());
                 dependencyInfo.setCommit(split[1]);
+                dependencyInfo.setDependencyType(DependencyType.GO);
                 dependencyInfos.add(dependencyInfo);
             }
         } catch (FileNotFoundException e) {
