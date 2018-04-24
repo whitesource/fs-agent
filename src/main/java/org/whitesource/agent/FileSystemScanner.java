@@ -297,6 +297,7 @@ public class FileSystemScanner {
                                 if(isSeparateProjects) {
                                     subProject = new AgentProjectInfo();
                                     allProjects.put(subProject, null);
+                                    allProjectsToViaComponents.put(subProject, new LinkedList<>());
                                     subProject.setCoordinates(new Coordinates(null, subFolder.toFile().getName(), null));
                                 }else{
                                     subProject = allProjects.entrySet().stream().findFirst().get().getKey();
