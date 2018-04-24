@@ -208,17 +208,17 @@ public class ProjectsSender {
                             logger.info("Got impact analysis result from server");
                         }
                     } catch (InvocationTargetException e){
-                        logger.error("Failed to run impact analysis {}", e.getTargetException().getMessage());
+                        logger.error("Failed to run VIA impact analysis {}", e.getTargetException().getMessage());
                     } catch (Exception e) {
-                        logger.error("Failed to run impact analysis {}", e.getMessage());
+                        logger.error("Failed to run VIA impact analysis {}", e.getMessage());
                     }
                 }
             }
         } catch (NoSuchMethodException e) {
-            logger.error("Failed to run impact analysis, couldn't find method {}", e.getMessage());
+            logger.error("Failed to run VIA impact analysis, couldn't find method {}", e.getMessage());
         }
         catch (ClassNotFoundException e){
-            logger.error("Failed to run impact analysis, couldn't find class {}", e.getMessage());
+            logger.error("Failed to run VIA impact analysis, couldn't find class {}", e.getMessage());
         }
     }
 
