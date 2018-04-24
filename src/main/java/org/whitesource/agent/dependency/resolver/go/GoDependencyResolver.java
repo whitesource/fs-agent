@@ -118,16 +118,16 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         File goPkgLock = new File(rootDirectory + fileSeparator + GOPKG_LOCK);
         String error = "";
         if (goPkgLock.isFile()){
-            if (goCli.runCmd(rootDirectory,goCli.getGoCommandParams(GoCli.GO_ENSURE))) {
-                dependencyInfos.addAll(parseGopckLock(goPkgLock));
-                return;
-            } else {
-               error = "Can't run 'dep ensure' command.  Make sure no files from the 'vendor' folder are in use.";
+            if (goCli.runCmd(rootDirectory,goCli.getGoCommandParams(GoCli.GO_ENSURE)) == false) {
+                error = "Can't run 'dep ensure' command, output might be outdated  Run the 'dep ensure' command manually.";
             }
+            dependencyInfos.addAll(parseGopckLock(goPkgLock));
         } else {
             error = "Can't find Gopkg.lock file.  Please run `dep init` command";
         }
-        throw new Exception(error);
+        if (!error.isEmpty()) {
+            throw new Exception(error);
+        }
     }
 
     private List<DependencyInfo> parseGopckLock(File goPckLock){
@@ -168,6 +168,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             commit = currLine.substring(firstIndex + 1, lastIndex);
                             dependencyInfo.setCommit(commit);
                         }
+                        dependencyInfo.setDependencyType(DependencyType.GO);
                     }
                 } else if (currLine.equals("[[projects]]")){
                     dependencyInfo = new DependencyInfo();
@@ -210,6 +211,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 dependencyInfo.setGroupId(groupId);
                 dependencyInfo.setArtifactId(artifactId);
                 dependencyInfo.setCommit(dep.get(REV).getAsString());
+                dependencyInfo.setDependencyType(DependencyType.GO);
                 JsonElement commentElement = dep.get(COMMENT);
                 if (commentElement != null){
                     String comment = commentElement.getAsString();
@@ -230,7 +232,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         if (name.contains(FORWARD_SLASH)) {
             String[] split = name.split(FORWARD_SLASH);
             groupId = split[1];
-            artifactId = name.substring(name.indexOf(split[2]));
+            if (split.length > 2) {
+                artifactId = name.substring(name.indexOf(split[2]));
+            }
         } else {
             artifactId = name;
         }
@@ -261,6 +265,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 dependencyInfo.setGroupId(dependencyGroupArtifact.getGroupId());
                 dependencyInfo.setArtifactId(dependencyGroupArtifact.getArtifactId());
                 dependencyInfo.setCommit(split[1]);
+                dependencyInfo.setDependencyType(DependencyType.GO);
                 dependencyInfos.add(dependencyInfo);
             }
         } catch (FileNotFoundException e) {

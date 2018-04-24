@@ -34,13 +34,15 @@ import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.OfflineConfiguration;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.fs.configuration.SenderConfiguration;
-import whitesource.analysis.server.FSAgentServer;
-import whitesource.analysis.server.Server;
-import whitesource.analysis.vulnerabilities.VulnerabilitiesAnalysis;
-import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResult;
+//import whitesource.analysis.server.FSAgentServer;
+//import whitesource.analysis.server.Server;
+//import whitesource.analysis.vulnerabilities.VulnerabilitiesAnalysis;
+//import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResult;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -107,11 +109,11 @@ public class ProjectsSender {
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
 
-//            // TODO remove projects.size() == 1 when via will scan more than one project
+            //            // TODO remove projects.size() == 1 when via will scan more than one project
             if (senderConfig.isEnableImpactAnalysis()) {
                 runViaAnalysis(projectsDetails, service);
-            }  else if (!senderConfig.isEnableImpactAnalysis()) {
-//                logger.info("Impact analysis won't run, via is not enabled");
+            } else if (!senderConfig.isEnableImpactAnalysis()) {
+                //                logger.info("Impact analysis won't run, via is not enabled");
                 //todo return logs when needed would be enabled for all WSE-342
             }
 
@@ -161,44 +163,65 @@ public class ProjectsSender {
 
     private void runViaAnalysis(ProjectsDetails projectsDetails, WhitesourceService service) {
         //todo comment in via code
-        VulnerabilitiesAnalysis vulnerabilitiesAnalysis = null;
-        GlobalVulnerabilityAnalysisResult result = null;
-        for (AgentProjectInfo project : projectsDetails.getProjectToViaComponents().keySet()) {
-            //TODO remove later
-//            Server server = new DemoServerProjInfo();
-//            server.setdb("c:/Users/AharonAbadi/work/vulnerabilityCleaner/via-visual-studio-integration/examples/via-server/via.db");
-            // check language for scan according to user file
-            LinkedList<ViaComponents> viaComponentsList = projectsDetails.getProjectToViaComponents().get(project);
-            for (ViaComponents viaComponents : viaComponentsList) {
-                logger.info("Starting VIA impact analysis");
-                String appPath = viaComponents.getAppPath();
-                ViaLanguage language = viaComponents.getLanguage();
-                try {
-                    vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language.toString(), requestConfig.getViaAnalisysLevel());
-                    // set app path for java script
-                    if (language == ViaLanguage.JAVA_SCRIPT) {
-                        int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
-                        appPath = appPath.substring(0, lastIndex);
+        try {
+            Class<?> vulnerabilitiesAnalysisClass = Class.forName("whitesource.analysis.vulnerabilities.VulnerabilitiesAnalysis");
+            Method getAnalysisMethod
+                    = vulnerabilitiesAnalysisClass.getMethod("getAnalysis", String.class, int.class);
+            Object vulnerabilitiesAnalysis = null;
+            //GlobalVulnerabilityAnalysisResult result = null;
+
+            for (AgentProjectInfo project : projectsDetails.getProjectToViaComponents().keySet()) {
+                //TODO remove later
+                //            Server server = new DemoServerProjInfo();
+                //            server.setdb("c:/Users/AharonAbadi/work/vulnerabilityCleaner/via-visual-studio-integration/examples/via-server/via.db");
+                // check language for scan according to user file
+                LinkedList<ViaComponents> viaComponentsList = projectsDetails.getProjectToViaComponents().get(project);
+                for (ViaComponents viaComponents : viaComponentsList) {
+                    logger.info("Starting VIA impact analysis");
+                    String appPath = viaComponents.getAppPath();
+                    ViaLanguage language = viaComponents.getLanguage();
+                    try {
+                        vulnerabilitiesAnalysis = getAnalysisMethod.invoke(null, language.toString(), requestConfig.getViaAnalisysLevel());
+                        //vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language.toString(), requestConfig.getViaAnalisysLevel());
+                        // set app path for java script
+                        if (language.equals(ViaLanguage.JAVA_SCRIPT)) {
+                            int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
+                            appPath = appPath.substring(0, lastIndex);
+                        }
+
+                        if (vulnerabilitiesAnalysis != null) {
+                            AgentProjectInfo projectToServer = new AgentProjectInfo();
+                            projectToServer.setDependencies(viaComponents.getDependencies());
+                            projectToServer.setProjectSetupDescription(project.getProjectSetupDescription());
+                            projectToServer.setCoordinates(project.getCoordinates());
+                            projectToServer.setProjectToken(project.getProjectToken());
+                            projectToServer.setProjectSetupStatus(project.getProjectSetupStatus());
+                            projectToServer.setParentCoordinates(project.getParentCoordinates());
+                            Class<?> fsaAgentServerClass = Class.forName("whitesource.analysis.server.FSAgentServer");
+                            Object server = fsaAgentServerClass.getConstructor(AgentProjectInfo.class, WhitesourceService.class, String.class).newInstance(projectToServer, service, requestConfig.getApiToken());
+                            //Server server = new FSAgentServer(projectToServer, service, requestConfig.getApiToken());
+                            logger.info("Starting analysis for: {}", appPath);
+                            Class<?> serverClass = Class.forName("whitesource.analysis.server.Server");
+                            Method runAnalysis = vulnerabilitiesAnalysisClass.getDeclaredMethod("runAnalysis", serverClass, String.class, Collection.class, Boolean.class);
+                            runAnalysis.invoke(vulnerabilitiesAnalysis, server, appPath, project.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
+                            //vulnerabilitiesAnalysis.runAnalysis(server, appPath, viaComponents.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
+                            logger.info("Got impact analysis result from server");
+                        }
+                    } catch (InvocationTargetException e){
+                        logger.error("Failed to run impact analysis {}", e.getTargetException().getMessage());
+                    } catch (Exception e) {
+                        logger.error("Failed to run impact analysis {}", e.getMessage());
                     }
-                    if (vulnerabilitiesAnalysis != null) {
-                        AgentProjectInfo projectToServer = new AgentProjectInfo();
-                        projectToServer.setDependencies(viaComponents.getDependencies());
-                        projectToServer.setProjectSetupDescription(project.getProjectSetupDescription());
-                        projectToServer.setCoordinates(project.getCoordinates());
-                        projectToServer.setProjectToken(project.getProjectToken());
-                        projectToServer.setProjectSetupStatus(project.getProjectSetupStatus());
-                        projectToServer.setParentCoordinates(project.getParentCoordinates());
-                        Server server = new FSAgentServer(projectToServer, service, requestConfig.getApiToken());
-                        logger.info("Starting analysis for: {}", appPath);
-                        vulnerabilitiesAnalysis.runAnalysis(server, appPath, viaComponents.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
-                        logger.info("Got impact analysis result from server");
-                    }
-                } catch (Exception e) {
-                    logger.error("Failed to run impact analysis {}", e.getMessage());
                 }
             }
+        } catch (NoSuchMethodException e) {
+            logger.error("Failed to run impact analysis, couldn't find method {}", e.getMessage());
+        }
+        catch (ClassNotFoundException e){
+            logger.error("Failed to run impact analysis, couldn't find class {}", e.getMessage());
         }
     }
+
 
     private void checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
         int numberOfDependencies = projects.stream().map(x -> x.getDependencies()).mapToInt(x -> x.size()).sum();
@@ -226,7 +249,7 @@ public class ProjectsSender {
         boolean policyCompliance = true;
         if (senderConfig.isCheckPolicies()) {
             logger.info("Checking policies");
-            CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(),requestConfig.getUserKey(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies());
+            CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies());
             if (checkPoliciesResult.hasRejections()) {
                 if (senderConfig.isForceUpdate()) {
                     logger.info("Some dependencies violate open source policies, however all were force " +
@@ -262,7 +285,7 @@ public class ProjectsSender {
 
     private String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
-        UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(),requestConfig.getUserKey(), requestConfig.getRequesterEmail(),
+        UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(),
                 UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProjectVersion(), projects);
         String resultInfo = logResult(updateResult);
 
@@ -276,7 +299,7 @@ public class ProjectsSender {
         logger.info("Generating offline update request");
 
         // generate offline request
-        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(),requestConfig.getUserKey(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects);
+        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects);
 
         updateRequest.setRequesterEmail(requestConfig.getRequesterEmail());
         try {
@@ -360,7 +383,7 @@ public class ProjectsSender {
             for (String projectName : projectsUrls.keySet()) {
                 String appUrl = senderConfig.getServiceUrl().replace("agent","");
                 String projectsUrl = appUrl + PROJECT_URL_PREFIX + projectsUrls.get(projectName);
-                logger.info("Project name: {}, URL: {}",projectName, projectsUrl);
+                logger.info("Project name: {}, URL: {}", projectName, projectsUrl);
                 resultLogMsg.append(NEW_LINE).append("Project name: ").append(projectName).append(", project URL:").append(projectsUrl);
             }
         }
