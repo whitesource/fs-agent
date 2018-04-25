@@ -104,11 +104,13 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             }
             // Create dependencyInfo & calculate SHA1
             DependencyInfo currentDependency = new DependencyInfo(groupId, artifactId, version);
-            String sha1 = getDependencySha1(currentDependency);
-            if (sha1 == null || sha1.equals(EMPTY_STRING) || sha1s.contains(sha1))
+            DependencyFile dependencyFile = getDependencySha1(currentDependency);
+            if (dependencyFile == null || dependencyFile.getSha1().equals(EMPTY_STRING) || sha1s.contains(dependencyFile.getSha1()))
                 continue;
-            sha1s.add(sha1);
-            currentDependency.setSha1(sha1);
+            sha1s.add(dependencyFile.getSha1());
+            currentDependency.setSha1(dependencyFile.getSha1());
+            currentDependency.setSystemPath(dependencyFile.getFilePath());
+            currentDependency.setFilename(dependencyFile.getFileName());
             if (dependenciesList.contains(currentDependency)){
                 duplicateDependency = true;
                 continue;
@@ -160,30 +162,30 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         return  null;
     }
 
-    private String getDependencySha1(DependencyInfo dependencyInfo){
-        String sha1 = getSha1FromGradleCache(dependencyInfo);
-        if (sha1 == null){
+    private DependencyFile getDependencySha1(DependencyInfo dependencyInfo){
+        DependencyFile dependencyFile = getSha1FromGradleCache(dependencyInfo);
+        if (dependencyFile == null){
             // if dependency not found in .gradle cache - looking for it in .m2 cache
-            sha1 = getSha1FromM2(dependencyInfo);
-            if (sha1 == null || sha1.equals(EMPTY_STRING)){
+            dependencyFile = getSha1FromM2(dependencyInfo);
+            if (dependencyFile == null || dependencyFile.getSha1().equals(EMPTY_STRING)){
                 // if dependency not found in .m2 cache - running 'gradel assemble' command which should download the dependency to .grade cache
                 // making sure the download attempt is performed only once, otherwise there might be an infinite loop
                 if (!dependenciesDownloadAttemptPerformed && downloadDependencies()){
-                    sha1 = getDependencySha1(dependencyInfo);
+                    dependencyFile = getDependencySha1(dependencyInfo);
                 } else {
                     logger.error("Couldn't find sha1 for " + dependencyInfo.getGroupId() + "." + dependencyInfo.getArtifactId() + "." + dependencyInfo.getVersion());
                 }
             }
         }
-        return sha1;
+        return dependencyFile;
     }
 
-    private String getSha1FromGradleCache(DependencyInfo dependencyInfo){
+    private DependencyFile getSha1FromGradleCache(DependencyInfo dependencyInfo){
         String groupId = dependencyInfo.getGroupId();
         String artifactId = dependencyInfo.getArtifactId();
         String version = dependencyInfo.getVersion();
         logger.debug("looking for " + groupId + "." + artifactId + "." + version + " in .gradle cache");
-        String sha1 = null;
+        DependencyFile dependencyFile = null;
         // gradle file path includes the sha1
         if (dotGradlePath != null) {
             String pathToDependency = dotGradlePath.concat(fileSeparator + groupId + fileSeparator + artifactId + fileSeparator + version);
@@ -199,7 +201,8 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                             if ((file.getName().contains(JAR_EXTENSION) || file.getName().contains(AAR_EXTENTION)) && !file.getName().contains("-sources")) {
                                 String pattern = Pattern.quote(fileSeparator);
                                 String[] splitFileName = folder.getName().split(pattern);
-                                sha1 = splitFileName[splitFileName.length - 1];
+                                String sha1 = splitFileName[splitFileName.length - 1];
+                                dependencyFile = new DependencyFile(sha1,file);
                                 break outerloop;
                             }
                         }
@@ -207,18 +210,18 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 }
             }
         }
-        if (sha1 == null){
+        if (dependencyFile == null){
             logger.debug("Couldn't find sha1 for " + groupId + "." + artifactId + "." + version + " inside .gradle cache." );
         }
-        return sha1;
+        return dependencyFile;
     }
 
-    private String getSha1FromM2(DependencyInfo dependencyInfo){
+    private DependencyFile getSha1FromM2(DependencyInfo dependencyInfo){
         String groupId = dependencyInfo.getGroupId();
         String artifactId = dependencyInfo.getArtifactId();
         String version = dependencyInfo.getVersion();
         logger.debug("looking for " + groupId + "." + artifactId + "." + version + " in .m2 cache");
-        String sha1 = null;
+        DependencyFile dependencyFile = null;
         if (StringUtils.isBlank(M2Path)){
             this.M2Path = getMavenM2Path(DOT);
         }
@@ -227,14 +230,15 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 + fileSeparator + artifactId + DASH + version + JAR_EXTENSION);
         File file = new File(pathToDependency);
         if (file.isFile()) {
-            sha1 = getSha1(pathToDependency);
+            String sha1 = getSha1(pathToDependency);
+            dependencyFile = new DependencyFile(sha1,file);
             if (sha1.equals(EMPTY_STRING)) {
                 logger.debug("Couldn't calculate sha1 for " + groupId + "." + artifactId + "." + version + ".  ");
             }
         } else {
             logger.debug("Couldn't find sha1 for " + groupId + "." + artifactId + "." + version + " inside .m2 cache." );
         }
-        return sha1;
+        return dependencyFile;
     }
 
     private boolean downloadDependencies() {
@@ -321,6 +325,30 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             FileUtils.forceDelete(new File(rootDirectory + this.srcDirPath));
         } else if (removeJavaFile){
             FileUtils.forceDelete(new File(rootDirectory + javaDirPath + fileSeparator + TMP_JAVA_FILE));
+        }
+    }
+
+    private class DependencyFile {
+       private String sha1;
+       private String filePath;
+       private String fileName;
+
+       public DependencyFile(String sha1, File file){
+           this.sha1 = sha1;
+           this.filePath = file.getPath();
+           this.fileName = file.getName();
+       }
+
+        public String getSha1() {
+            return sha1;
+        }
+
+        public String getFilePath() {
+            return filePath;
+        }
+
+        public String getFileName() {
+            return fileName;
         }
     }
 }
