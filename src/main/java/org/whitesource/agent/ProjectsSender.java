@@ -207,7 +207,7 @@ public class ProjectsSender {
                             //vulnerabilitiesAnalysis.runAnalysis(server, appPath, viaComponents.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
                             logger.info("Got impact analysis result from server");
                         }
-                    } catch (InvocationTargetException e){
+                    } catch (InvocationTargetException e) {
                         logger.error("Failed to run VIA impact analysis {}", e.getTargetException().getMessage());
                     } catch (Exception e) {
                         logger.error("Failed to run VIA impact analysis {}", e.getMessage());
@@ -216,8 +216,7 @@ public class ProjectsSender {
             }
         } catch (NoSuchMethodException e) {
             logger.error("Failed to run VIA impact analysis, couldn't find method {}", e.getMessage());
-        }
-        catch (ClassNotFoundException e){
+        } catch (ClassNotFoundException e) {
             logger.error("Failed to run VIA impact analysis, couldn't find class {}", e.getMessage());
         }
     }
@@ -237,7 +236,7 @@ public class ProjectsSender {
             setProxy = true;
         }
         int connectionTimeoutMinutes = senderConfig.getConnectionTimeOut();
-        final WhitesourceService service = new WhitesourceService(pluginInfo.getAgentType(),pluginInfo.getAgentVersion(),pluginInfo.getPluginVersion(),
+        final WhitesourceService service = new WhitesourceService(pluginInfo.getAgentType(), pluginInfo.getAgentVersion(), pluginInfo.getPluginVersion(),
                 senderConfig.getServiceUrl(), setProxy, connectionTimeoutMinutes, senderConfig.isIgnoreCertificateCheck());
         if (StringUtils.isNotBlank(senderConfig.getProxyHost())) {
             service.getClient().setProxy(senderConfig.getProxyHost(), senderConfig.getProxyPort(), senderConfig.getProxyUser(), senderConfig.getProxyPassword());
@@ -249,7 +248,7 @@ public class ProjectsSender {
         boolean policyCompliance = true;
         if (senderConfig.isCheckPolicies()) {
             logger.info("Checking policies");
-            CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies());
+            CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey());
             if (checkPoliciesResult.hasRejections()) {
                 if (senderConfig.isForceUpdate()) {
                     logger.info("Some dependencies violate open source policies, however all were force " +
@@ -286,7 +285,7 @@ public class ProjectsSender {
     private String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
         UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(),
-                UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProjectVersion(), projects);
+                UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProjectVersion(), projects, requestConfig.getUserKey());
         String resultInfo = logResult(updateResult);
 
         // remove line separators
@@ -299,7 +298,7 @@ public class ProjectsSender {
         logger.info("Generating offline update request");
 
         // generate offline request
-        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects);
+        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects,requestConfig.getUserKey());
 
         updateRequest.setRequesterEmail(requestConfig.getRequesterEmail());
         try {
@@ -381,7 +380,7 @@ public class ProjectsSender {
         HashMap<String, Integer> projectsUrls = updateResult.getProjectNamesToIds();
         if (projectsUrls != null && !projectsUrls.isEmpty()) {
             for (String projectName : projectsUrls.keySet()) {
-                String appUrl = senderConfig.getServiceUrl().replace("agent","");
+                String appUrl = senderConfig.getServiceUrl().replace("agent", "");
                 String projectsUrl = appUrl + PROJECT_URL_PREFIX + projectsUrls.get(projectName);
                 logger.info("Project name: {}, URL: {}", projectName, projectsUrl);
                 resultLogMsg.append(NEW_LINE).append("Project name: ").append(projectName).append(", project URL:").append(projectsUrl);
