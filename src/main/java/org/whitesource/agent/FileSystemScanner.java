@@ -116,6 +116,10 @@ public class FileSystemScanner {
         // get canonical paths
         Set<String> pathsToScan = getCanonicalPaths(scannerBaseDirs);
 
+        for (String appPath : appPathsToDependencyDirs.keySet()) {
+            appPathsToDependencyDirs.put(appPath, getCanonicalPaths(appPathsToDependencyDirs.get(appPath)));
+        }
+
         // todo: consider adding exit since this can be called from other components
         //validateParams(archiveExtractionDepth, includes);
 
@@ -138,6 +142,10 @@ public class FileSystemScanner {
                     logger.debug("Unpack directory: {}, parent file: {}", unpackDirectory, parentFileUrl);
                     archiveToBaseDirMap.put(unpackDirectory, parentFileUrl);
                     pathsToScan.add(unpackDirectory);
+                    if (!appPathsToDependencyDirs.containsKey(FSAConfiguration.DEFAULT_KEY)) {
+                        appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, new HashSet<>());
+                    }
+                    appPathsToDependencyDirs.get(FSAConfiguration.DEFAULT_KEY).add(unpackDirectory);
                 }
             }
         }
@@ -289,6 +297,7 @@ public class FileSystemScanner {
                                 if(isSeparateProjects) {
                                     subProject = new AgentProjectInfo();
                                     allProjects.put(subProject, null);
+                                    allProjectsToViaComponents.put(subProject, new LinkedList<>());
                                     subProject.setCoordinates(new Coordinates(null, subFolder.toFile().getName(), null));
                                 }else{
                                     subProject = allProjects.entrySet().stream().findFirst().get().getKey();
@@ -338,7 +347,7 @@ public class FileSystemScanner {
 
     /* --- Private methods --- */
 
-    private Set<String> getCanonicalPaths(List<String> scannerBaseDirs) {
+    private Set<String> getCanonicalPaths(Collection<String> scannerBaseDirs) {
         // use canonical paths to resolve '.' in path
         Set<String> pathsToScan = new HashSet<>();
         for (String path : scannerBaseDirs) {
