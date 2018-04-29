@@ -140,7 +140,6 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             DependencyInfo dependencyInfo = null;
             String version;
             String commit;
-            DependencyGroupArtifact dependencyGroupArtifact;
             int firstIndex, lastIndex;
             while ((currLine = bufferedReader.readLine()) != null){
                 if (insideProject) {
@@ -154,9 +153,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             firstIndex = currLine.indexOf("\"");
                             lastIndex = currLine.lastIndexOf("\"");
                             String name = currLine.substring(firstIndex + 1, lastIndex);
-                            dependencyGroupArtifact = getGroupAndArtifact(name);
-                            dependencyInfo.setGroupId(dependencyGroupArtifact.getGroupId());
-                            dependencyInfo.setArtifactId(dependencyGroupArtifact.getArtifactId());
+                            dependencyInfo.setGroupId(getGroupId(name));
+                            dependencyInfo.setArtifactId(name);
                         } else if (currLine.contains("version = ")){
                             firstIndex = currLine.indexOf("\"");
                             lastIndex = currLine.lastIndexOf("\"");
@@ -199,17 +197,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         if (element.isJsonObject()){
             JsonArray deps = element.getAsJsonObject().getAsJsonArray(DEPS);
             DependencyInfo dependencyInfo;
-            String groupId;
-            String artifactId;
             for (int i = 0; i < deps.size(); i++){
                 dependencyInfo = new DependencyInfo();
                 JsonObject dep = deps.get(i).getAsJsonObject();
                 String importPath = dep.get(IMPORT_PATH).getAsString();
-                DependencyGroupArtifact dependencyGroupArtifact = getGroupAndArtifact(importPath);
-                groupId = dependencyGroupArtifact.getGroupId();
-                artifactId = dependencyGroupArtifact.getArtifactId();
-                dependencyInfo.setGroupId(groupId);
-                dependencyInfo.setArtifactId(artifactId);
+                dependencyInfo.setGroupId(getGroupId(importPath));
+                dependencyInfo.setArtifactId(importPath);
                 dependencyInfo.setCommit(dep.get(REV).getAsString());
                 dependencyInfo.setDependencyType(DependencyType.GO);
                 JsonElement commentElement = dep.get(COMMENT);
@@ -226,19 +219,13 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         return dependencyInfos;
     }
 
-    private DependencyGroupArtifact getGroupAndArtifact(String name){
+    private String getGroupId(String name){
         String groupId = "";
-        String artifactId = "";
         if (name.contains(FORWARD_SLASH)) {
             String[] split = name.split(FORWARD_SLASH);
             groupId = split[1];
-            if (split.length > 2) {
-                artifactId = name.substring(name.indexOf(split[2]));
-            }
-        } else {
-            artifactId = name;
         }
-        return new DependencyGroupArtifact(groupId,artifactId);
+        return groupId;
     }
 
     private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
@@ -257,13 +244,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             String currLine;
             DependencyInfo dependencyInfo;
-            DependencyGroupArtifact dependencyGroupArtifact;
             while ((currLine = bufferedReader.readLine()) != null){
                 dependencyInfo = new DependencyInfo();
                 String[] split = currLine.split(" ");
-                dependencyGroupArtifact = getGroupAndArtifact(split[0]);
-                dependencyInfo.setGroupId(dependencyGroupArtifact.getGroupId());
-                dependencyInfo.setArtifactId(dependencyGroupArtifact.getArtifactId());
+                String name = split[0];
+                dependencyInfo.setGroupId(getGroupId(name));
+                dependencyInfo.setArtifactId(name);
                 dependencyInfo.setCommit(split[1]);
                 dependencyInfo.setDependencyType(DependencyType.GO);
                 dependencyInfos.add(dependencyInfo);
@@ -274,23 +260,5 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             logger.error("Can't read " + vendorConf.getPath());
         }
         return dependencyInfos;
-    }
-
-    private class DependencyGroupArtifact {
-        private String groupId;
-        private String artifactId;
-
-        public DependencyGroupArtifact(String groupdId, String artifactId) {
-            this.groupId = groupdId;
-            this.artifactId = artifactId;
-        }
-
-        public String getGroupId() {
-            return groupId;
-        }
-
-        public String getArtifactId() {
-            return artifactId;
-        }
     }
 }
