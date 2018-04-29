@@ -26,7 +26,6 @@ public class CommandLineProcess {
     private long timeoutProcessMinutes;
     private boolean errorInProcess = false;
     private Process processStart = null;
-    private List<String> errorLines = new LinkedList<>();
 
     /* --- Statics Members --- */
     private static final long DEFAULT_TIMEOUT_READLINE_SECONDS = 300;
@@ -53,31 +52,24 @@ public class CommandLineProcess {
         if (!includeErrorLines) {
             pb.redirectError(new File(redirectErrorOutput));
         }
-        if (!includeOutput) {
+        if (!includeOutput || includeErrorLines) {
             pb.redirectOutput(new File(redirectErrorOutput));
         }
-        logger.debug("start execute command '{}' in '{}'", String.join(" ", args), rootDirectory);
+        if (!includeErrorLines) {
+            logger.debug("start execute command '{}' in '{}'", String.join(" ", args), rootDirectory);
+        }
         this.processStart = pb.start();
         if (includeOutput) {
-            InputStreamReader inputStreamReaderOfOutput;
-            InputStreamReader inputStreamReaderError = null;
-            BufferedReader readerOutput;
-            BufferedReader readerError = null;
-            ExecutorService executorServiceOutput = Executors.newFixedThreadPool(1);
-            ExecutorService executorServiceError = null;
-            if (includeErrorLines) {
-                executorServiceError = Executors.newFixedThreadPool(1);
+            InputStreamReader inputStreamReader;
+            BufferedReader reader;
+            ExecutorService executorService = Executors.newFixedThreadPool(1);
+            if (!includeErrorLines) {
+                inputStreamReader = new InputStreamReader(this.processStart.getInputStream());
+            } else {
+                inputStreamReader = new InputStreamReader(this.processStart.getErrorStream());
             }
-            inputStreamReaderOfOutput = new InputStreamReader(this.processStart.getInputStream());
-            readerOutput = new BufferedReader(inputStreamReaderOfOutput);
-            if (includeErrorLines) {
-                inputStreamReaderError = new InputStreamReader(this.processStart.getErrorStream());
-                readerError = new BufferedReader(inputStreamReaderError);
-            }
-            this.errorInProcess = readBlock(inputStreamReaderOfOutput, readerOutput, executorServiceOutput, linesOutput);
-            if (includeErrorLines) {
-                readBlock(inputStreamReaderError, readerError, executorServiceError, this.errorLines);
-            }
+            reader = new BufferedReader(inputStreamReader);
+            this.errorInProcess = readBlock(inputStreamReader, reader, executorService, linesOutput, includeErrorLines);
         }
         try {
             this.processStart.waitFor(this.timeoutProcessMinutes, TimeUnit.MINUTES);
@@ -91,22 +83,30 @@ public class CommandLineProcess {
         return linesOutput;
     }
 
-    private boolean readBlock(InputStreamReader inputStreamReader, BufferedReader reader, ExecutorService executorService, List<String> lines) {
+    private boolean readBlock(InputStreamReader inputStreamReader, BufferedReader reader, ExecutorService executorService, List<String> lines, boolean includeErrorLines) {
         boolean wasError = false;
         boolean continueReadingLines = true;
         try {
-            logger.debug("trying to read lines using '{}'", args);
+            if (!includeErrorLines) {
+                logger.debug("trying to read lines using '{}'", args);
+            }
             int lineIndex = 1;
             String line = "";
             while (continueReadingLines && line != null) {
                 Future<String> future = executorService.submit(new CommandLineProcess.ReadLineTask(reader));
                 try {
                     line = future.get(this.timeoutReadLineSeconds, TimeUnit.SECONDS);
-                    if (StringUtils.isNotBlank(line)) {
-                        logger.debug("Read line #{}: {}", lineIndex, line);
-                        lines.add(line);
+                    if (!includeErrorLines) {
+                        if (StringUtils.isNotBlank(line)) {
+                            logger.debug("Read line #{}: {}", lineIndex, line);
+                            lines.add(line);
+                        } else {
+                            logger.debug("Finished reading {} lines", lineIndex - 1);
+                        }
                     } else {
-                        logger.debug("Finished reading {} lines", lineIndex - 1);
+                        if (StringUtils.isNotBlank(line)) {
+                            lines.add(line);
+                        }
                     }
                 } catch (TimeoutException e) {
                     logger.debug("Received timeout when reading line #" + lineIndex, e.getStackTrace());
@@ -154,10 +154,6 @@ public class CommandLineProcess {
             return processStart.exitValue();
         }
         return 0;
-    }
-
-    public List<String> getErrorLines() {
-        return errorLines;
     }
 
     /* --- Nested classes --- */

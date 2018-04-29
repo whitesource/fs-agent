@@ -189,13 +189,16 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     private List<String> processCommand(String tempDir, String[] args, boolean setupInstall) throws IOException {
         try {
             CommandLineProcess commandLineProcess = new CommandLineProcess(tempDir, args);
-            List<String> lines = commandLineProcess.executeProcessWithErrorOutput();
+            List<String> lines = commandLineProcess.executeProcess();
             if (commandLineProcess.isErrorInProcess()) {
                 logger.debug("Fail to run '" + String.join(" ", args) + "' in '" + tempDir + "'.\n");
-                if (!String.join(" ", args).equals(WS_PYTHON_PACKAGE_NAME_UNINSTALL_COMMAND) && commandLineProcess.getErrorLines() != null && commandLineProcess.getErrorLines().size() > 0) {
+                if (!String.join(" ", args).equals(WS_PYTHON_PACKAGE_NAME_UNINSTALL_COMMAND)) {
                     StringBuilder result = new StringBuilder();
-                    for (String line : commandLineProcess.getErrorLines()) {
-                        result.append(System.lineSeparator() + line);
+                    if (logger.isDebugEnabled()) {
+                        lines = commandLineProcess.executeProcessWithErrorOutput();
+                        for (String line : lines) {
+                            result.append(System.lineSeparator() + line);
+                        }
                     }
                     if (setupInstall) {
                         if (!logger.isDebugEnabled()) {
