@@ -177,7 +177,9 @@ public class FSAConfiguration {
                 textFromFile = textFromFile.replaceAll(COMMA + SPACE, COMMA);
                 textFromFile = textFromFile.replaceAll(System.lineSeparator(), SPACE);
                 argsForAppPathAndDirs = textFromFile.split(SPACE);
-                initializeDependencyDirsToAppPath(argsForAppPathAndDirs);
+                if (argsForAppPathAndDirs != null && argsForAppPathAndDirs.length > 0) {
+                    initializeDependencyDirsToAppPath(argsForAppPathAndDirs);
+                }
                 for (String appPath : this.appPathsToDependencyDirs.keySet()) {
                     for (String dir : this.appPathsToDependencyDirs.get(appPath)) {
                         this.dependencyDirs.add(dir);
@@ -187,7 +189,9 @@ public class FSAConfiguration {
                 errors.add("Error: Could not read the xPaths file: " + config.getProperty(X_PATHS));
             }
         } else {
-            initializeDependencyDirsToAppPath(argsForAppPathAndDirs);
+            if (argsForAppPathAndDirs != null && argsForAppPathAndDirs.length > 0) {
+                initializeDependencyDirsToAppPath(argsForAppPathAndDirs);
+            }
         }
 
 

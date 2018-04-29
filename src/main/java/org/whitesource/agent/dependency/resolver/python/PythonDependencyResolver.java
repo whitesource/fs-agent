@@ -61,6 +61,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     private static final String TRUE = "True";
     private static final String WS_PYTHON_PACKAGE_VERSION = "9.9.9.9";
     private static final String PY_EXT = ".py";
+    private static final String SPACE = " ";
     private final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
 
     private final String[] pythonConfig = new String[]{
@@ -95,6 +96,8 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             "    description=\"This is an example package\",",
             ")"};
 
+    private final String WS_PYTHON_PACKAGE_NAME_UNINSTALL_COMMAND;
+
     private final Collection<String> excludes = Arrays.asList("**/*" + PY_EXT);
     private final String pythonPath;
     private final String pipPath;
@@ -105,6 +108,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         super();
         this.pythonPath = pythonPath;
         this.pipPath = pipPath;
+        WS_PYTHON_PACKAGE_NAME_UNINSTALL_COMMAND = pipPath + SPACE + UNINSTALL + SPACE + YES + SPACE + WS_PYTHON_PACKAGE_NAME;
         this.isPythonIsWssPluginInstalled = isPythonIsWssPluginInstalled;
         this.uninstallPythonPlugin = uninstallPythonPlugin;
     }
@@ -137,12 +141,12 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
             // FSA will run "pip install wss_plugin"
             if (!isPythonIsWssPluginInstalled) {
-                output = processCommand(tempDir, new String[]{pipPath, INSTALL, WSS_PLUGIN});
+                output = processCommand(tempDir, new String[]{pipPath, INSTALL, WSS_PLUGIN}, false);
             }
             // FSA will run "python setup.py install"
-            output = processCommand(tempDir, new String[]{pythonPath, WS_SETUP_PY, INSTALL});
+            output = processCommand(tempDir, new String[]{pythonPath, WS_SETUP_PY, INSTALL}, true);
             // FSA will run "python setup.py whitesource_update -p "custom_config.py"
-            output = processCommand(tempDir, new String[]{pythonPath, WS_SETUP_PY, WHITESOURCE_UPDATE_COMMAND, CONFIG_FLAG, WS_CONFIG, OFFLINE_FLAG, TRUE});
+            output = processCommand(tempDir, new String[]{pythonPath, WS_SETUP_PY, WHITESOURCE_UPDATE_COMMAND, CONFIG_FLAG, WS_CONFIG, OFFLINE_FLAG, TRUE}, false);
 
             // Python-plugin will export an offline file
             // FSA will read the python offline request
@@ -159,15 +163,15 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
                     resolvedProjects.put(project, Paths.get(tempDir));
                 }
             } else {
-                logger.warn("Offline file '" + offlineFile + "' could not be found");
+                logger.warn("Failed getting python dependencies");
             }
 
             // FSA will run pip uninstall "project-name"
-            output = processCommand(tempDir, new String[]{pipPath, UNINSTALL, YES, WS_PYTHON_PACKAGE_NAME});
+            output = processCommand(tempDir, new String[]{pipPath, UNINSTALL, YES, WS_PYTHON_PACKAGE_NAME}, false);
 
             // FSA will run "pip uninstall wss_plugin" if we already installed and the user asked for uninstall
             if (uninstallPythonPlugin && !isPythonIsWssPluginInstalled) {
-                output = processCommand(tempDir, new String[]{pipPath, UNINSTALL, YES, WSS_PLUGIN});
+                output = processCommand(tempDir, new String[]{pipPath, UNINSTALL, YES, WSS_PLUGIN}, false);
             }
 
             if (!isTempDirectory) {
@@ -182,12 +186,31 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         return new ResolutionResult(resolvedProjects, getExcludes(), DependencyType.PYTHON, topLevelFolder);
     }
 
-    private List<String> processCommand(String tempDir, String[] args) throws IOException {
+    private List<String> processCommand(String tempDir, String[] args, boolean setupInstall) throws IOException {
         try {
             CommandLineProcess commandLineProcess = new CommandLineProcess(tempDir, args);
             List<String> lines = commandLineProcess.executeProcess();
             if (commandLineProcess.isErrorInProcess()) {
-                logger.debug("Fail to run '" + String.join(" ", args) + "' in '" + tempDir + "'.\n  Try running custom process manually");
+                logger.debug("Fail to run '" + String.join(" ", args) + "' in '" + tempDir + "'.\n");
+                if (!String.join(" ", args).equals(WS_PYTHON_PACKAGE_NAME_UNINSTALL_COMMAND)) {
+                    StringBuilder result = new StringBuilder();
+                    if (logger.isDebugEnabled()) {
+                        lines = commandLineProcess.executeProcessWithErrorOutput();
+                        for (String line : lines) {
+                            result.append(System.lineSeparator() + line);
+                        }
+                    }
+                    if (setupInstall) {
+                        if (!logger.isDebugEnabled()) {
+                            logger.warn("Fail to install requirements.txt dependencies. To see the full error, re-run the plugin with this parameter in the config file: log.level=debug");
+                        } else {
+                            logger.debug("Fail to install requirements.txt dependencies. The error output is: {}", result);
+                        }
+                    }
+                    if (!setupInstall) {
+                        logger.debug("Fail to run '" + String.join(" ", args) + "' in '" + tempDir + ". " + "The error output is: {}", result);
+                    }
+                }
             }
             return lines;
         } catch (IOException ioe) {
