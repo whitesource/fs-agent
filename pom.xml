@@ -4,8 +4,12 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>18.4.1</version>
+    <version>18.4.2-SNAPSHOT</version>
     <packaging>jar</packaging>
+
+    <name>White Source File System Agent</name>
+    <description>File System Agent is a simple java command line tool which extracts descriptive information from your open source libraries</description>
+    <url>https://github.com/whitesource/fs-agent</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -31,7 +35,7 @@
         <connection>scm:git:git@github.com:whitesource/fs-agent.git</connection>
         <developerConnection>scm:git:git@github.com:whitesource/fs-agent.git</developerConnection>
         <url>git@github.com:whitesource/fs-agent.git</url>
-        <tag>release-tag-18.3.1-2</tag>
+        <tag>whitesource-fs-agent-18.4.1</tag>
     </scm>
     <issueManagement>
         <url>https://github.com/whitesource/fs-agent/issues</url>
@@ -140,7 +144,7 @@
         <dependency>
             <groupId>org.whitesource.analysis</groupId>
             <artifactId>whitesource-analysis-via</artifactId>
-            <version>0.0.17</version>
+            <version>0.0.18</version>
          </dependency>
 
         <dependency>
@@ -427,4 +431,19 @@
             </build>
         </profile>
     </profiles>
+
+    <distributionManagement>
+        <repository>
+            <id>sonatype-nexus-staging</id>
+            <name>Sonatype staging repository</name>
+            <uniqueVersion>false</uniqueVersion>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+        <snapshotRepository>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype snapshots repository</name>
+            <uniqueVersion>false</uniqueVersion>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>

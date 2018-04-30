@@ -64,7 +64,8 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
 
     protected final boolean includeDevDependencies;
     protected final boolean ignoreNpmLsErrors;
-    private final Pattern patternOfNameOfPackageFromLine = Pattern.compile(".* (.*)@");
+    private final Pattern patternOfNameOfPackageFromLine = Pattern.compile(".* (.*)@(\\^)?[0-9]+\\.[0-9]+");
+    private final Pattern patternOfNameOfPackageFromLineSecondChance = Pattern.compile(".* (.*)@");
     private boolean showNpmLsError;
     private boolean npmLsFailureStatus = false;
     private final long npmTimeoutDependenciesCollector;
@@ -164,10 +165,16 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     }
 
     private String getTheNextPackageNameFromNpmLs(String line) {
+        String result;
         Matcher matcher = this.patternOfNameOfPackageFromLine.matcher(line);
         matcher.find();
         // take only the name of the package from the match
-        return matcher.group(1);
+        result = matcher.group(1);
+        if (result == null) {
+            matcher = this.patternOfNameOfPackageFromLineSecondChance.matcher(line);
+            result = matcher.group(1);
+        }
+        return result;
     }
 
     private String getVersionFromLink(String linkResolved) {

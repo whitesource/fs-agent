@@ -74,19 +74,18 @@ public class FileSystemScanner {
 
     /**
      * This method is usually called from outside by different other tools
-     *
-     * @param scannerBaseDirs        folders to scan
-     * @param scmConnector           use scmConnector
-     * @param includes               includes glob patterns
-     * @param excludes               excludes glob patterns
-     * @param globCaseSensitive      global case sensitive
+     * @param scannerBaseDirs folders to scan
+     * @param scmConnector use scmConnector
+     * @param includes includes glob patterns
+     * @param excludes excludes glob patterns
+     * @param globCaseSensitive global case sensitive
      * @param archiveExtractionDepth depth of recursive extraction
-     * @param archiveIncludes        includes glob patterns for extraction
-     * @param archiveExcludes        exclude glob patterns for extraction
-     * @param archiveFastUnpack      use fast extraction
-     * @param followSymlinks         use followSymlinks
-     * @param excludedCopyrights     use excludedCopyrights
-     * @param partialSha1Match       use partialSha1Match
+     * @param archiveIncludes includes glob patterns for extraction
+     * @param archiveExcludes exclude glob patterns for extraction
+     * @param archiveFastUnpack use fast extraction
+     * @param followSymlinks use followSymlinks
+     * @param excludedCopyrights use excludedCopyrights
+     * @param partialSha1Match use partialSha1Match
      * @return list of all the dependencies for project
      */
     public List<DependencyInfo> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean scmConnector,
@@ -99,17 +98,17 @@ public class FileSystemScanner {
         return projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
     }
 
-    public Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean hasScmConnector) {
+    public  Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean hasScmConnector) {
         return createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnector, agent.getIncludes(), agent.getExcludes(), agent.getGlobCaseSensitive(), agent.getArchiveExtractionDepth(),
-                agent.getArchiveIncludes(), agent.getArchiveExcludes(), agent.isArchiveFastUnpack(), agent.isFollowSymlinks(),
+        agent.getArchiveIncludes(), agent.getArchiveExcludes(), agent.isArchiveFastUnpack(), agent.isFollowSymlinks(),
                 agent.getExcludedCopyrights(), agent.isPartialSha1Match(), agent.isCalculateHints(), agent.isCalculateMd5());
     }
 
-    //        public Collection<AgentProjectInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
-    public Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean scmConnector,
-                                                                           String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
-                                                                           String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
-                                                                           Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
+//        public Collection<AgentProjectInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
+    public  Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean scmConnector,
+                                                                            String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
+                                                                            String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
+                                                                            Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
 
         MemoryUsageHelper.SystemStats systemStats = MemoryUsageHelper.getMemoryUsage();
         logger.debug(systemStats.toString());
@@ -191,11 +190,10 @@ public class FileSystemScanner {
                         case GRADLE:
                             impactAnalysisLanguage = ViaLanguage.JAVA;
                             break;
-                        default:
-                            break;
+                        default: break;
                     }
-                } else if (resolutionResult.size() > 1 && enableImpactAnalysis) {
-                    //                logger.info("Impact analysis won't run, more than one language detected");
+                } else if (resolutionResult.size() > 1 && enableImpactAnalysis){
+//                logger.info("Impact analysis won't run, more than one language detected");
                     // TODO return message when needed WSE-342
                 }
                 if (impactAnalysisLanguage != null) {
@@ -274,16 +272,16 @@ public class FileSystemScanner {
                     scmConnector, totalFiles, fileMap, excludedCopyrights, partialSha1Match, calculateHints, calculateMd5));
         }
 
-        if (allProjects.size() == 1) {
+        if (allProjects.size() == 1 ) {
             AgentProjectInfo project = allProjects.keySet().stream().findFirst().get();
             project.getDependencies().addAll(filesDependencies);
         } else {
             // remove files from handled projects
             allProjects.entrySet().forEach(project -> {
-                Collection<DependencyInfo> projectDependencies = filesDependencies.stream()
-                        .filter(dependencyInfo -> project.getValue() != null && dependencyInfo.getSystemPath().contains(project.getValue().toString())).collect(Collectors.toList());
-                project.getKey().getDependencies().addAll(projectDependencies);
-                filesDependencies.removeAll(projectDependencies);
+                    Collection<DependencyInfo> projectDependencies = filesDependencies.stream()
+                            .filter(dependencyInfo -> project.getValue()!=null && dependencyInfo.getSystemPath().contains(project.getValue().toString())).collect(Collectors.toList());
+                    project.getKey().getDependencies().addAll(projectDependencies);
+                    filesDependencies.removeAll(projectDependencies);
             });
 
             // create new projects if necessary
@@ -296,12 +294,12 @@ public class FileSystemScanner {
                                     filter(dependencyInfo -> dependencyInfo.getSystemPath().contains(subFolder.toString())).collect(Collectors.toList());
                             if (!projectDependencies.isEmpty()) {
                                 AgentProjectInfo subProject;
-                                if (isSeparateProjects) {
+                                if(isSeparateProjects) {
                                     subProject = new AgentProjectInfo();
                                     allProjects.put(subProject, null);
                                     allProjectsToViaComponents.put(subProject, new LinkedList<>());
                                     subProject.setCoordinates(new Coordinates(null, subFolder.toFile().getName(), null));
-                                } else {
+                                }else{
                                     subProject = allProjects.entrySet().stream().findFirst().get().getKey();
                                 }
                                 subProject.setDependencies(projectDependencies);
@@ -335,11 +333,10 @@ public class FileSystemScanner {
         // delete all archive temp folders
         if (!archiveDirectories.isEmpty()) {
             for (String archiveDirectory : archiveDirectories) {
-                File directory = new File(archiveDirectory);
-                if (directory.exists()) {
-                    FileUtils.deleteQuietly(directory);
-                }
-            }
+           File directory = new File(archiveDirectory);
+           if (directory.exists()) {
+               FileUtils.deleteQuietly(directory);
+           }}
         }
         logger.info("Finished Analyzing Files");
 

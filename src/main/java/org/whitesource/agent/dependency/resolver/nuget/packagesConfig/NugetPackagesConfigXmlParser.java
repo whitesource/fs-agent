@@ -80,6 +80,7 @@ public class NugetPackagesConfigXmlParser implements Serializable{
                 }
                 dependencies.addAll(getDependenciesFromReferencesTag(csprojPackages));
             }
+            dependencies.stream().forEach(dependencyInfo -> dependencyInfo.setSystemPath(this.xml.getPath()));
         } catch (Exception e) {
             logger.warn("Unable to parse suspected Nuget package configuration file {}", xml, e.getMessage());
         }
