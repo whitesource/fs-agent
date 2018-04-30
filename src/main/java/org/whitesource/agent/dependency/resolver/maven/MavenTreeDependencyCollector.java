@@ -140,7 +140,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
         if (projects != null && projects.isEmpty()) {
             if (!showMavenTreeError) {
-                logger.info("Failed to getting dependencies after running '{}' Please install maven ", getLsCommandParams());
+                logger.warn("Failed to getting dependencies after running '{}' Please install maven ", getLsCommandParams());
                 showMavenTreeError = true;
             }
         }
@@ -151,7 +151,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         try {
             return ChecksumUtils.calculateSHA1(new File(filePath));
         } catch (IOException e) {
-            logger.info("Failed getting " + filePath + ". File will not be send to WhiteSource server.");
+            logger.warn("Failed getting " + filePath + ". File will not be send to WhiteSource server.");
             return EMPTY_STRING;
         }
     }
