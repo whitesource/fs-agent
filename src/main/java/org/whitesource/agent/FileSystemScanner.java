@@ -86,6 +86,7 @@ public class FileSystemScanner {
      * @param followSymlinks use followSymlinks
      * @param excludedCopyrights use excludedCopyrights
      * @param partialSha1Match use partialSha1Match
+     * @param appPathsToDependencyDirs map of application path to its directories
      * @return list of all the dependencies for project
      */
     public List<DependencyInfo> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean scmConnector,
