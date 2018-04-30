@@ -38,8 +38,14 @@ public class FilesScanner {
 
     /* --- Public methods --- */
 
-    public String[] getFileNames(String scannerBaseDir, String[] includes, String[] excludes, boolean followSymlinks, boolean globCaseSensitive) {
+    public String[] getDirectoryContent(String scannerBaseDir, String[] includes, String[] excludes, boolean followSymlinks, boolean globCaseSensitive) {
+        return getDirectoryContent(scannerBaseDir, includes, excludes, followSymlinks, globCaseSensitive, false);
+    }
+
+    // get the content of directory by includes, excludes, followSymlinks and globCaseSensitive, the scanDirectories property define if the scanner will scan to find directories
+    public String[] getDirectoryContent(String scannerBaseDir, String[] includes, String[] excludes, boolean followSymlinks, boolean globCaseSensitive, boolean scanDirectories) {
         File file = new File(scannerBaseDir);
+        String[] fileNames;
         if (file.exists() && file.isDirectory()) {
             DirectoryScanner scanner = new DirectoryScanner();
             scanner.setBasedir(scannerBaseDir);
@@ -48,7 +54,11 @@ public class FilesScanner {
             scanner.setFollowSymlinks(followSymlinks);
             scanner.setCaseSensitive(globCaseSensitive);
             scanner.scan();
-            String[] fileNames = scanner.getIncludedFiles();
+            if (!scanDirectories) {
+                fileNames = scanner.getIncludedFiles();
+            } else {
+                fileNames = scanner.getIncludedDirectories();
+            }
             return fileNames;
         } else {
             logger.debug("{} is not a folder", scannerBaseDir);
@@ -70,12 +80,12 @@ public class FilesScanner {
         return resolvedFolders;
     }
 
-   /* --- Private methods --- */
+    /* --- Private methods --- */
 
     private Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
         Map pathToIncludedFilesMap = new HashMap();
         pathsToScan.stream().forEach(scanFolder -> {
-            String[] includedFiles = getFileNames(new File(scanFolder).getPath(), new String[]{ includesPattern },
+            String[] includedFiles = getDirectoryContent(new File(scanFolder).getPath(), new String[]{includesPattern},
                     excludes.toArray(new String[excludes.size()]), false, false);
             pathToIncludedFilesMap.put(new File(scanFolder).getAbsolutePath(), includedFiles);
         });

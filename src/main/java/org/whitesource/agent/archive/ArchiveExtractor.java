@@ -253,7 +253,7 @@ public class ArchiveExtractor {
             FilesScanner filesScanner = new FilesScanner();
             if (file.isDirectory()) {
                 // scan directory
-                foundFiles = filesScanner.getFileNames(fileOrFolderToScan, archiveIncludesPattern, archiveExcludesPattern, false, false);
+                foundFiles = filesScanner.getDirectoryContent(fileOrFolderToScan, archiveIncludesPattern, archiveExcludesPattern, false, false);
                 folderToScan = fileOrFolderToScan;
                 return new Pair<>(foundFiles,folderToScan);
             } else {
