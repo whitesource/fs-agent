@@ -76,7 +76,7 @@ public class FileSystemAgent {
 
                 File file = new File(directory);
                 if (file.isDirectory()) {
-                    List<Path> directories = new FilesUtils().getSubDirectories(directory);
+                    List<Path> directories = new FilesUtils().getSubDirectories(directory,this.config.getAgent().getIncludes(),config.getAgent().getExcludes(),config.getAgent().isFollowSymlinks(),config.getAgent().getGlobCaseSensitive());
                     directories.forEach(subDir -> this.dependencyDirs.add(subDir.toString()));
                 } else if (file.isFile()) {
                     this.dependencyDirs.add(directory);

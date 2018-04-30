@@ -38,10 +38,10 @@ public class ArchiveExtractorTest {
         String unzipFolderAll = archiveExtractor.extractArchives(scannerFile, archiveExtractionDepth, new ArrayList<>());
 
         FilesScanner fs = new FilesScanner();
-        String[] filesAll = fs.getFileNames(unzipFolderAll, new String[]{"**/*.*"}, new String[0], false, false);
-        String[] filesClass = fs.getFileNames(unzipFolderAll, fileExcludes, new String[0], false, false);
+        String[] filesAll = fs.getDirectoryContent(unzipFolderAll, new String[]{"**/*.*"}, new String[0], false, false);
+        String[] filesClass = fs.getDirectoryContent(unzipFolderAll, fileExcludes, new String[0], false, false);
 
-        String[] filesFiltered = fs.getFileNames(unzipFolderFilter, new String[]{"**/*.*"}, new String[0], false, false);
+        String[] filesFiltered = fs.getDirectoryContent(unzipFolderFilter, new String[]{"**/*.*"}, new String[0], false, false);
         Assert.assertEquals(filesAll.length, filesClass.length + filesFiltered.length);
     }
 

@@ -36,24 +36,20 @@ public class FilesUtils {
 
     private final Logger logger = LoggerFactory.getLogger(FilesUtils.class);
 
-    public List<Path> getSubDirectories(String directory) {
+    public List<Path> getSubDirectories(String directory, String[] includes, String[] excludesExtended, boolean followSymlinks, boolean globCaseSensitive) {
         String[] files;
+        FilesScanner filesScanner = new FilesScanner();
         try {
-            File file = new File(directory);
-            files = file.list((current, name) -> new File(current, name).isDirectory());
-            if (files == null) {
-                logger.info("Error getting sub directories from: " + directory);
-                files = new String[0];
-            }
+            files = filesScanner.getDirectoryContent(directory, includes, excludesExtended, followSymlinks, globCaseSensitive,true);
         } catch (Exception ex) {
-            logger.info("Error getting sub directories from: " + directory, ex);
+            logger.info("Error getting sub directories from: " + directory, ex.getMessage());
             files = new String[0];
         }
         return Arrays.stream(files).map(subDir -> Paths.get(directory, subDir)).collect(Collectors.toList());
     }
 
     public Map<File, Collection<String>> fillFilesMap(Collection<String> pathsToScan, String[] includes, String[] excludesExtended,
-                                                       boolean followSymlinks, boolean globCaseSensitive) {
+                                                      boolean followSymlinks, boolean globCaseSensitive) {
         Map<File, Collection<String>> fileMap = new HashMap<>();
         for (String scannerBaseDir : pathsToScan) {
             File file = new File(scannerBaseDir);
@@ -62,7 +58,7 @@ public class FilesUtils {
                 FilesScanner filesScanner = new FilesScanner();
                 if (file.isDirectory()) {
                     File basedir = new File(scannerBaseDir);
-                    String[] fileNames = filesScanner.getFileNames(scannerBaseDir, includes, excludesExtended, followSymlinks, globCaseSensitive);
+                    String[] fileNames = filesScanner.getDirectoryContent(scannerBaseDir, includes, excludesExtended, followSymlinks, globCaseSensitive);
                     // convert array to list (don't use Arrays.asList, might be added to later)
                     List<String> fileNameList = Arrays.stream(fileNames).collect(Collectors.toList());
                     fileMap.put(basedir, fileNameList);

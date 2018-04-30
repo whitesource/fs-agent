@@ -133,7 +133,8 @@ public class ProjectsSender {
                         statusCode = StatusCode.SERVER_FAILURE;
                     }
                     resultInfo = "Failed to send request to WhiteSource server: " + e.getMessage();
-                    logger.error(resultInfo, e);
+                    logger.error(resultInfo, e.getMessage());
+                    logger.debug(resultInfo, e);
                     logger.error("Trying " + (retries + 1) + " more time" + (retries != 0 ? "s" : ""));
                     if (retries > -1) {
                         try {
@@ -285,7 +286,7 @@ public class ProjectsSender {
     private String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
         UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(),
-                UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProjectVersion(), projects, requestConfig.getUserKey());
+                UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
         String resultInfo = logResult(updateResult);
 
         // remove line separators

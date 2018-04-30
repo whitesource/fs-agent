@@ -21,14 +21,14 @@ public class FileSystemScannerTest {
     public void shouldRemoveJsFilesFromNpmFolders() {
         FilesScanner f = new FilesScanner();
         Properties p = TestHelper.getPropertiesFromFile();
-        String[] filesJSBegin = f.getFileNames(
+        String[] filesJSBegin = f.getDirectoryContent(
                 FOLDER_TO_TEST,
                 p.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY).split(" "),
                 p.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY).split(" "),
                 false,
                 false);
 
-        String[] filesPackageJson = f.getFileNames(
+        String[] filesPackageJson = f.getDirectoryContent(
                 FOLDER_TO_TEST,
                 new String[]{"**/*package.json"},
                 p.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY).split(" "),
@@ -42,7 +42,7 @@ public class FileSystemScannerTest {
         String[] stockArr = excludes.toArray(new String[excludes.size()]);
 
         FilesScanner fs = new FilesScanner();
-        String[] filesJSEnd = fs.getFileNames(
+        String[] filesJSEnd = fs.getDirectoryContent(
                 FOLDER_TO_TEST,
                 p.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY).split(" "),
                 stockArr,
