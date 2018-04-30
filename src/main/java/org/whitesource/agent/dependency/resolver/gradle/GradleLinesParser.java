@@ -5,6 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
 
 import java.io.File;
@@ -111,6 +112,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             currentDependency.setSha1(dependencyFile.getSha1());
             currentDependency.setSystemPath(dependencyFile.getFilePath());
             currentDependency.setFilename(dependencyFile.getFileName());
+            currentDependency.setDependencyType(DependencyType.GRADLE);
             if (dependenciesList.contains(currentDependency)){
                 duplicateDependency = true;
                 continue;
