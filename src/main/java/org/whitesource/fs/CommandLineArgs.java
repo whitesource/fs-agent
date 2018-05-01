@@ -108,6 +108,9 @@ public class CommandLineArgs {
     @Parameter(names = "-enableImpactAnalysis", description = "Whether or not to enable impact analysis")
     String enableImpactAnalysis = null;
 
+    @Parameter(names = "-userKey", description = "user key uniquely identifying the account at white source")
+    String userKey = null;
+
     /* --- Public methods --- */
 
     public String getConfigFilePath() {
