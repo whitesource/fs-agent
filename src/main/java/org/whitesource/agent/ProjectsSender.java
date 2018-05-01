@@ -34,10 +34,6 @@ import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.OfflineConfiguration;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.fs.configuration.SenderConfiguration;
-//import whitesource.analysis.server.FSAgentServer;
-//import whitesource.analysis.server.Server;
-//import whitesource.analysis.vulnerabilities.VulnerabilitiesAnalysis;
-//import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResult;
 
 import java.io.File;
 import java.io.IOException;
@@ -169,7 +165,6 @@ public class ProjectsSender {
             Method getAnalysisMethod
                     = vulnerabilitiesAnalysisClass.getMethod("getAnalysis", String.class, int.class);
             Object vulnerabilitiesAnalysis = null;
-            //GlobalVulnerabilityAnalysisResult result = null;
 
             for (AgentProjectInfo project : projectsDetails.getProjectToViaComponents().keySet()) {
                 //TODO remove later
@@ -183,7 +178,6 @@ public class ProjectsSender {
                     ViaLanguage language = viaComponents.getLanguage();
                     try {
                         vulnerabilitiesAnalysis = getAnalysisMethod.invoke(null, language.toString(), requestConfig.getViaAnalisysLevel());
-                        //vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language.toString(), requestConfig.getViaAnalisysLevel());
                         // set app path for java script
                         if (language.equals(ViaLanguage.JAVA_SCRIPT)) {
                             int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
@@ -200,12 +194,10 @@ public class ProjectsSender {
                             projectToServer.setParentCoordinates(project.getParentCoordinates());
                             Class<?> fsaAgentServerClass = Class.forName("whitesource.analysis.server.FSAgentServer");
                             Object server = fsaAgentServerClass.getConstructor(AgentProjectInfo.class, WhitesourceService.class, String.class).newInstance(projectToServer, service, requestConfig.getApiToken());
-                            //Server server = new FSAgentServer(projectToServer, service, requestConfig.getApiToken());
                             logger.info("Starting analysis for: {}", appPath);
                             Class<?> serverClass = Class.forName("whitesource.analysis.server.Server");
                             Method runAnalysis = vulnerabilitiesAnalysisClass.getDeclaredMethod("runAnalysis", serverClass, String.class, Collection.class, Boolean.class);
                             runAnalysis.invoke(vulnerabilitiesAnalysis, server, appPath, project.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
-                            //vulnerabilitiesAnalysis.runAnalysis(server, appPath, viaComponents.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
                             logger.info("Got impact analysis result from server");
                         }
                     } catch (InvocationTargetException e) {
