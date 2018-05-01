@@ -193,7 +193,7 @@ public class DockerResolver {
                 archiveExtractor.extractArchives(containerTarFile.getPath(), config.getAgent().getArchiveExtractionDepth(), archiveDirs);
 
                 FilesScanner filesScanner = new FilesScanner();
-                String[] fileNames = filesScanner.getFileNames(containerTarArchiveExtractDir.getPath(), scanIncludes, scanExcludes, true, false);
+                String[] fileNames = filesScanner.getDirectoryContent(containerTarArchiveExtractDir.getPath(), scanIncludes, scanExcludes, true, false);
 
                 // check the operating system to build the full path correctly
                 if (osName.startsWith(WINDOWS)) {

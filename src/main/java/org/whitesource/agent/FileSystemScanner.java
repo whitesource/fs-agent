@@ -86,7 +86,6 @@ public class FileSystemScanner {
      * @param followSymlinks use followSymlinks
      * @param excludedCopyrights use excludedCopyrights
      * @param partialSha1Match use partialSha1Match
-     * @param appPathsToDependencyDirs map of application path to its directories
      * @return list of all the dependencies for project
      */
 
@@ -308,7 +307,7 @@ public class FileSystemScanner {
             // create new projects if necessary
             if (!isDependenciesOnly && filesDependencies.size() > 0) {
                 scannerBaseDirs.stream().forEach(directory -> {
-                    List<Path> subDirectories = new FilesUtils().getSubDirectories(directory);
+                    List<Path> subDirectories = new FilesUtils().getSubDirectories(directory, includes, excludesExtended, followSymlinks, globCaseSensitive);
                     subDirectories.forEach(subFolder -> {
                         if (filesDependencies.size() > 0) {
                             List<DependencyInfo> projectDependencies = filesDependencies.stream().

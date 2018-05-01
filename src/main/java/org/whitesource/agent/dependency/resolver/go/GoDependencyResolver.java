@@ -16,11 +16,20 @@ import java.util.*;
 
 public class GoDependencyResolver extends AbstractDependencyResolver {
 
+    private final Logger logger = LoggerFactory.getLogger(GoDependencyResolver.class);
+
+    private static final String PROJECTS =      "[[projects]]";
     private static final String DEPS            = "Deps";
     private static final String REV             = "Rev";
     private static final String COMMENT         = "Comment";
     private static final String IMPORT_PATH     = "ImportPath";
-    private final Logger logger = LoggerFactory.getLogger(GoDependencyResolver.class);
+    private static final String NAME            = "name = ";
+    private static final String VERSION         = "version = ";
+    private static final String REVISION        = "revision = ";
+    private static final String PACKAGES        = "packages = ";
+    private static final String BRACKET         = "]";
+    private static final String ASTRIX          = "*";
+    private static final String DOT =           ".";
 
     private static final String GOPKG_LOCK      = "Gopkg.lock";
     private static final String GODEPS_JSON     = "Godeps.json";
@@ -49,7 +58,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
         if (ignoreSourceFiles){
-            excludes.add(GLOB_PATTERN + "*" + GO_EXTENTION);
+            excludes.add(GLOB_PATTERN + ASTRIX + GO_EXTENTION);
         }
         return excludes;
     }
@@ -69,11 +78,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         if (goDependencyManager != null) {
             switch (goDependencyManager) {
                 case DEP:
-                    return GLOB_PATTERN + "*" + GOPKG_LOCK;
+                    return GLOB_PATTERN + ASTRIX + GOPKG_LOCK;
                 case GO_DEP:
-                    return GLOB_PATTERN + "*" + GODEPS_JSON;
+                    return GLOB_PATTERN + ASTRIX + GODEPS_JSON;
                 case VNDR:
-                    return GLOB_PATTERN + "*" + VNDR_CONF;
+                    return GLOB_PATTERN + ASTRIX + VNDR_CONF;
             }
         }
         return "";
@@ -137,40 +146,59 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             String currLine;
             boolean insideProject = false;
+            boolean resolveRepositoryPackages = false;
+            boolean useParent = false;
             DependencyInfo dependencyInfo = null;
-            String version;
-            String commit;
-            int firstIndex, lastIndex;
+            ArrayList<String> repositoryPackages = null;
             while ((currLine = bufferedReader.readLine()) != null){
                 if (insideProject) {
                     if (currLine.isEmpty()){
                         insideProject = false;
                         if (dependencyInfo != null) {
-                            dependencyInfos.add(dependencyInfo);
+                            if (repositoryPackages == null || useParent)
+                                dependencyInfos.add(dependencyInfo);
+                            if (repositoryPackages != null){
+                                for (String name : repositoryPackages){
+                                    DependencyInfo packageDependencyInfo = new DependencyInfo(dependencyInfo.getGroupId(),
+                                                                                       dependencyInfo.getArtifactId() + FORWARD_SLASH + name,
+                                                                                                dependencyInfo.getVersion());
+                                    packageDependencyInfo.setDependencyType(DependencyType.GO);
+                                    packageDependencyInfo.setCommit(dependencyInfo.getCommit());
+                                    dependencyInfos.add(packageDependencyInfo);
+                                }
+                                repositoryPackages = null;
+                            }
                         }
                     } else {
-                        if (currLine.contains("name = ")){
-                            firstIndex = currLine.indexOf("\"");
-                            lastIndex = currLine.lastIndexOf("\"");
-                            String name = currLine.substring(firstIndex + 1, lastIndex);
+                        if (resolveRepositoryPackages){
+                            if (currLine.contains(BRACKET)){
+                                resolveRepositoryPackages = false;
+                            } else {
+                                String name  = getValue(currLine);
+                                if (name.equals(DOT)){
+                                    useParent = true;
+                                } else {
+                                    repositoryPackages.add(getValue(currLine));
+                                }
+                            }
+                        } else if (currLine.contains(NAME)){
+                            String name = getValue(currLine);
                             dependencyInfo.setGroupId(getGroupId(name));
                             dependencyInfo.setArtifactId(name);
-                        } else if (currLine.contains("version = ")){
-                            firstIndex = currLine.indexOf("\"");
-                            lastIndex = currLine.lastIndexOf("\"");
-                            version = currLine.substring(firstIndex + 1, lastIndex);
-                            dependencyInfo.setVersion(version);
-                        } else if (currLine.contains("revision = ")){
-                            firstIndex = currLine.indexOf("\"");
-                            lastIndex = currLine.lastIndexOf("\"");
-                            commit = currLine.substring(firstIndex + 1, lastIndex);
-                            dependencyInfo.setCommit(commit);
+                        } else if (currLine.contains(VERSION)){
+                            dependencyInfo.setVersion(getValue(currLine));
+                        } else if (currLine.contains(REVISION)){
+                            dependencyInfo.setCommit(getValue(currLine));
+                        } else if (currLine.contains(PACKAGES) && !currLine.contains(BRACKET)){
+                            resolveRepositoryPackages = true;
+                            repositoryPackages = new ArrayList<>();
                         }
-                        dependencyInfo.setDependencyType(DependencyType.GO);
                     }
-                } else if (currLine.equals("[[projects]]")){
+                } else if (currLine.equals(PROJECTS)){
                     dependencyInfo = new DependencyInfo();
+                    dependencyInfo.setDependencyType(DependencyType.GO);
                     insideProject = true;
+                    useParent = false;
                 }
             }
         } catch (FileNotFoundException e) {
@@ -179,6 +207,13 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             logger.error("Can't read " + goPckLock.getPath());
         }
         return dependencyInfos;
+    }
+
+    private String getValue(String line){
+        int firstIndex = line.indexOf("\"");
+        int lastIndex = line.lastIndexOf("\"");
+        String value = line.substring(firstIndex + 1, lastIndex);
+        return value;
     }
 
     private void collectGoDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
