@@ -146,7 +146,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             String currLine;
             boolean insideProject = false;
-            boolean resolveRepositoryPakages = false;
+            boolean resolveRepositoryPackages = false;
+            boolean useParent = false;
             DependencyInfo dependencyInfo = null;
             ArrayList<String> repositoryPackages = null;
             while ((currLine = bufferedReader.readLine()) != null){
@@ -154,7 +155,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     if (currLine.isEmpty()){
                         insideProject = false;
                         if (dependencyInfo != null) {
-                            dependencyInfos.add(dependencyInfo);
+                            if (repositoryPackages == null || useParent)
+                                dependencyInfos.add(dependencyInfo);
                             if (repositoryPackages != null){
                                 for (String name : repositoryPackages){
                                     DependencyInfo packageDependencyInfo = new DependencyInfo(dependencyInfo.getGroupId(),
@@ -168,13 +170,16 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             }
                         }
                     } else {
-                        if (resolveRepositoryPakages){
+                        if (resolveRepositoryPackages){
                             if (currLine.contains(BRACKET)){
-                                resolveRepositoryPakages = false;
+                                resolveRepositoryPackages = false;
                             } else {
                                 String name  = getValue(currLine);
-                                if (!name.equals(DOT))
+                                if (name.equals(DOT)){
+                                    useParent = true;
+                                } else {
                                     repositoryPackages.add(getValue(currLine));
+                                }
                             }
                         } else if (currLine.contains(NAME)){
                             String name = getValue(currLine);
@@ -185,7 +190,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         } else if (currLine.contains(REVISION)){
                             dependencyInfo.setCommit(getValue(currLine));
                         } else if (currLine.contains(PACKAGES) && !currLine.contains(BRACKET)){
-                            resolveRepositoryPakages = true;
+                            resolveRepositoryPackages = true;
                             repositoryPackages = new ArrayList<>();
                         }
                     }
@@ -193,6 +198,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     dependencyInfo = new DependencyInfo();
                     dependencyInfo.setDependencyType(DependencyType.GO);
                     insideProject = true;
+                    useParent = false;
                 }
             }
         } catch (FileNotFoundException e) {
