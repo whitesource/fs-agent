@@ -89,6 +89,7 @@ public class FileSystemScanner {
      * @param appPathsToDependencyDirs map of application path to its directories
      * @return list of all the dependencies for project
      */
+
     public List<DependencyInfo> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean scmConnector,
                                                String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
@@ -99,13 +100,32 @@ public class FileSystemScanner {
         return projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
     }
 
+    public List<DependencyInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
+                                               String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
+                                               String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
+                                               Collection<String> excludedCopyrights, boolean partialSha1Match) {
+        return createProjects(scannerBaseDirs, convertListDirsToMap(scannerBaseDirs), scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth, archiveIncludes, archiveExcludes,
+                archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match);
+    }
+
+    public Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, boolean hasScmConnector) {
+        return createProjects(scannerBaseDirs, convertListDirsToMap(scannerBaseDirs), hasScmConnector);
+    }
+
     public  Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean hasScmConnector) {
         return createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnector, agent.getIncludes(), agent.getExcludes(), agent.getGlobCaseSensitive(), agent.getArchiveExtractionDepth(),
         agent.getArchiveIncludes(), agent.getArchiveExcludes(), agent.isArchiveFastUnpack(), agent.isFollowSymlinks(),
                 agent.getExcludedCopyrights(), agent.isPartialSha1Match(), agent.isCalculateHints(), agent.isCalculateMd5());
     }
 
-//        public Collection<AgentProjectInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
+    public  Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
+                                                                            String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
+                                                                            String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
+                                                                            Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
+        return createProjects(scannerBaseDirs, convertListDirsToMap(scannerBaseDirs), scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth, archiveIncludes, archiveExcludes,
+                archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match, calculateHints, calculateMd5);
+    }
+
     public  Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean scmConnector,
                                                                             String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                                             String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
@@ -347,6 +367,15 @@ public class FileSystemScanner {
     }
 
     /* --- Private methods --- */
+
+    private Map<String, Set<String>> convertListDirsToMap(List<String> scannerBaseDirs) {
+        Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
+        appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, new HashSet<>());
+        for (String dir : scannerBaseDirs) {
+            appPathsToDependencyDirs.get(FSAConfiguration.DEFAULT_KEY).add(dir);
+        }
+        return appPathsToDependencyDirs;
+    }
 
     private Set<String> getCanonicalPaths(Collection<String> scannerBaseDirs) {
         // use canonical paths to resolve '.' in path
