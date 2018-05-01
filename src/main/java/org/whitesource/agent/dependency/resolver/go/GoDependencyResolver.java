@@ -192,6 +192,10 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         } else if (currLine.contains(PACKAGES) && !currLine.contains(BRACKET)){
                             resolveRepositoryPackages = true;
                             repositoryPackages = new ArrayList<>();
+                        } else if (currLine.contains(PACKAGES) && !currLine.contains(DOT)){
+                            // taking care of lines like 'packages = ["spew"]' (and ignoring lines like 'packages = ["."]')
+                            String name = getValue(currLine);
+                            repositoryPackages = new ArrayList<>(Arrays.asList(name));
                         }
                     }
                 } else if (currLine.equals(PROJECTS)){
