@@ -162,7 +162,6 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                                     DependencyInfo packageDependencyInfo = new DependencyInfo(dependencyInfo.getGroupId(),
                                                                                        dependencyInfo.getArtifactId() + FORWARD_SLASH + name,
                                                                                                 dependencyInfo.getVersion());
-                                    packageDependencyInfo.setDependencyType(DependencyType.GO);
                                     packageDependencyInfo.setCommit(dependencyInfo.getCommit());
                                     dependencyInfos.add(packageDependencyInfo);
                                 }
@@ -200,7 +199,6 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     }
                 } else if (currLine.equals(PROJECTS)){
                     dependencyInfo = new DependencyInfo();
-                    dependencyInfo.setDependencyType(DependencyType.GO);
                     insideProject = true;
                     useParent = false;
                 }
@@ -210,6 +208,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         } catch (IOException e) {
             logger.error("Can't read " + goPckLock.getPath());
         }
+        dependencyInfos.stream().forEach(dependencyInfo -> {dependencyInfo.setSystemPath(goPckLock.getPath()); dependencyInfo.setDependencyType(DependencyType.GO);});
         return dependencyInfos;
     }
 
