@@ -13,7 +13,8 @@ class GoCli {
     private final String CMD = "cmd";
     private final String C_CHAR_WINDOWS = "/c";
     protected static final String GO_ENSURE = "ensure";
-    private final String DEP_COMMAND = "dep";;
+    protected static final String GO_INIT = "init";
+    protected static final String GO_SAVE = "save";
 
     protected boolean runCmd(String rootDirectory, String[] params){
         try {
@@ -31,11 +32,11 @@ class GoCli {
         return false;
     }
 
-    protected String[] getGoCommandParams(String command){
+    protected String[] getGoCommandParams(String command, GoDependencyManager dependencyManager){
         if (DependencyCollector.isWindows()) {
-            return new String[] {CMD, C_CHAR_WINDOWS, DEP_COMMAND, command};
+            return new String[] {CMD, C_CHAR_WINDOWS, dependencyManager.getType(), command};
         } else {
-            return new String[] {DEP_COMMAND, GO_ENSURE};
+            return new String[] {dependencyManager.getType(), command};
         }
     }
 }

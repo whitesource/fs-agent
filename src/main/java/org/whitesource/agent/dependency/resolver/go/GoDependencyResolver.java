@@ -56,11 +56,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected Collection<String> getExcludes() {
-        Set<String> excludes = new HashSet<>();
-        if (ignoreSourceFiles){
-            excludes.add(GLOB_PATTERN + ASTRIX + GO_EXTENTION);
-        }
-        return excludes;
+        return new HashSet<>();
     }
 
     @Override
@@ -75,17 +71,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String getBomPattern() {
-        if (goDependencyManager != null) {
-            switch (goDependencyManager) {
-                case DEP:
-                    return GLOB_PATTERN + ASTRIX + GOPKG_LOCK;
-                case GO_DEP:
-                    return GLOB_PATTERN + ASTRIX + GODEPS_JSON;
-                case VNDR:
-                    return GLOB_PATTERN + ASTRIX + VNDR_CONF;
-            }
-        }
-        return "";
+        return GLOB_PATTERN + ASTRIX + GO_EXTENTION;
     }
 
     @Override
@@ -127,12 +113,16 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         File goPkgLock = new File(rootDirectory + fileSeparator + GOPKG_LOCK);
         String error = "";
         if (goPkgLock.isFile()){
-            if (goCli.runCmd(rootDirectory,goCli.getGoCommandParams(GoCli.GO_ENSURE)) == false) {
+            if (goCli.runCmd(rootDirectory,goCli.getGoCommandParams(GoCli.GO_ENSURE, GoDependencyManager.DEP)) == false) {
                 error = "Can't run 'dep ensure' command, output might be outdated.  Run the 'dep ensure' command manually.";
             }
             dependencyInfos.addAll(parseGopckLock(goPkgLock));
         } else {
-            error = "Can't find Gopkg.lock file.  Please run `dep init` command";
+            if (goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_INIT, GoDependencyManager.DEP))) {
+                dependencyInfos.addAll(parseGopckLock(goPkgLock));
+            } else {
+                error = "Can't run 'dep status' command.  Run the 'dep status' command manually.";
+            }
         }
         if (!error.isEmpty()) {
             throw new Exception(error);
@@ -220,8 +210,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     }
 
     private void collectGoDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
-        File goDepJson = new File(rootDirectory + fileSeparator + GODEPS_JSON);
-        if (goDepJson.isFile()){
+        File goDepJson = new File(rootDirectory + fileSeparator + "GoDeps" + fileSeparator +  GODEPS_JSON);
+        if (goDepJson.isFile() || goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_SAVE, GoDependencyManager.GO_DEP))){
             dependencyInfos.addAll(parseGoDeps(goDepJson));
         } else {
             throw new Exception("Can't find Godeps.json file.  Please run 'godep save' command");
@@ -243,6 +233,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 dependencyInfo.setArtifactId(importPath);
                 dependencyInfo.setCommit(dep.get(REV).getAsString());
                 dependencyInfo.setDependencyType(DependencyType.GO);
+                dependencyInfo.setSystemPath(goDeps.getPath());
                 JsonElement commentElement = dep.get(COMMENT);
                 if (commentElement != null){
                     String comment = commentElement.getAsString();
@@ -268,7 +259,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         File vndrConf = new File(rootDirectory + fileSeparator + VNDR_CONF);
-        if (vndrConf.isFile()){
+        if (vndrConf.isFile() || goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_INIT, GoDependencyManager.VNDR))) {
             dependencyInfos.addAll(parseVendorConf(vndrConf));
         } else {
             throw new Exception("Can't find vendor.conf file.  Please run 'vndr init' command");
@@ -290,6 +281,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 dependencyInfo.setArtifactId(name);
                 dependencyInfo.setCommit(split[1]);
                 dependencyInfo.setDependencyType(DependencyType.GO);
+                dependencyInfo.setSystemPath(vendorConf.getPath());
                 dependencyInfos.add(dependencyInfo);
             }
         } catch (FileNotFoundException e) {
