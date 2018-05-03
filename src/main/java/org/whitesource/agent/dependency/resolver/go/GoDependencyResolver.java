@@ -38,14 +38,14 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final List<String> GO_SCRIPT_EXTENSION = Arrays.asList(".lock", ".json", GO_EXTENTION);
 
     private GoCli goCli;
-    private boolean ignoreSourceFiles;
     private GoDependencyManager goDependencyManager;
+    private boolean resolveDependenciesAtRuntime;
 
-    public GoDependencyResolver(boolean ignoreSourceFiles, GoDependencyManager goDependencyManager){
+    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean resolveDependenciesAtRuntime){
         super();
         this.goCli = new GoCli();
-        this.ignoreSourceFiles = ignoreSourceFiles;
         this.goDependencyManager = goDependencyManager;
+        this.resolveDependenciesAtRuntime = resolveDependenciesAtRuntime;
     }
 
     @Override
@@ -56,7 +56,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected Collection<String> getExcludes() {
-        return new HashSet<>();
+        Set<String> excludes = new HashSet<>();
+        if (!resolveDependenciesAtRuntime){
+            excludes.add(GLOB_PATTERN + ASTRIX + GO_EXTENTION);
+        }
+        return excludes;
     }
 
     @Override
@@ -71,7 +75,20 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String getBomPattern() {
-        return GLOB_PATTERN + ASTRIX + GO_EXTENTION;
+        if (resolveDependenciesAtRuntime) {
+            return GLOB_PATTERN + ASTRIX + GO_EXTENTION;
+        }
+        if (goDependencyManager != null) {
+            switch (goDependencyManager) {
+                case DEP:
+                    return GLOB_PATTERN + ASTRIX + GOPKG_LOCK;
+                case GO_DEP:
+                    return GLOB_PATTERN + ASTRIX + GODEPS_JSON;
+                case VNDR:
+                    return GLOB_PATTERN + ASTRIX + VNDR_CONF;
+            }
+        }
+        return "";
     }
 
     @Override
@@ -117,12 +134,14 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 error = "Can't run 'dep ensure' command, output might be outdated.  Run the 'dep ensure' command manually.";
             }
             dependencyInfos.addAll(parseGopckLock(goPkgLock));
-        } else {
+        } else if (resolveDependenciesAtRuntime) {
             if (goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_INIT, GoDependencyManager.DEP))) {
                 dependencyInfos.addAll(parseGopckLock(goPkgLock));
             } else {
                 error = "Can't run 'dep status' command.  Run the 'dep status' command manually.";
             }
+        } else {
+            error = "Can't find " + GOPKG_LOCK + " file.  Run the 'dep init' command.";
         }
         if (!error.isEmpty()) {
             throw new Exception(error);
@@ -211,10 +230,10 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         File goDepJson = new File(rootDirectory + fileSeparator + "GoDeps" + fileSeparator +  GODEPS_JSON);
-        if (goDepJson.isFile() || goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_SAVE, GoDependencyManager.GO_DEP))){
+        if (goDepJson.isFile() || (resolveDependenciesAtRuntime && goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_SAVE, GoDependencyManager.GO_DEP)))){
             dependencyInfos.addAll(parseGoDeps(goDepJson));
         } else {
-            throw new Exception("Can't find Godeps.json file.  Please run 'godep save' command");
+            throw new Exception("Can't find " + GODEPS_JSON + " file.  Please run 'godep save' command");
         }
     }
 
@@ -259,10 +278,10 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         File vndrConf = new File(rootDirectory + fileSeparator + VNDR_CONF);
-        if (vndrConf.isFile() || goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_INIT, GoDependencyManager.VNDR))) {
+        if (vndrConf.isFile() || (resolveDependenciesAtRuntime && goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_INIT, GoDependencyManager.VNDR)))) {
             dependencyInfos.addAll(parseVendorConf(vndrConf));
         } else {
-            throw new Exception("Can't find vendor.conf file.  Please run 'vndr init' command");
+            throw new Exception("Can't find " + VNDR_CONF + " file.  Please run 'vndr init' command");
         }
     }
 
