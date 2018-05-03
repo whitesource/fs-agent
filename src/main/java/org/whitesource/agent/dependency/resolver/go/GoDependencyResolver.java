@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -12,6 +13,9 @@ import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
 
 public class GoDependencyResolver extends AbstractDependencyResolver {
@@ -39,13 +43,15 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private GoCli goCli;
     private GoDependencyManager goDependencyManager;
-    private boolean resolveDependenciesAtRuntime;
+    private boolean collectDependenciesAtRuntime;
+    private boolean isDependenciesOnly;
 
-    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean resolveDependenciesAtRuntime){
+    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean isDependenciesOnly){
         super();
         this.goCli = new GoCli();
         this.goDependencyManager = goDependencyManager;
-        this.resolveDependenciesAtRuntime = resolveDependenciesAtRuntime;
+        this.collectDependenciesAtRuntime = collectDependenciesAtRuntime;
+        this.isDependenciesOnly = isDependenciesOnly;
     }
 
     @Override
@@ -57,7 +63,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
-        if (!resolveDependenciesAtRuntime){
+        if (!collectDependenciesAtRuntime && goDependencyManager != null && isDependenciesOnly){
             excludes.add(GLOB_PATTERN + ASTRIX + GO_EXTENTION);
         }
         return excludes;
@@ -75,7 +81,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String getBomPattern() {
-        if (resolveDependenciesAtRuntime) {
+        if (collectDependenciesAtRuntime || goDependencyManager == null) {
             return GLOB_PATTERN + ASTRIX + GO_EXTENTION;
         }
         if (goDependencyManager != null) {
@@ -99,6 +105,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private List<DependencyInfo> collectDependencies(String rootDirectory) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
         String error = null;
+        long creationTime = new Date().getTime();
         if (goDependencyManager != null) {
             try {
                 switch (goDependencyManager) {
@@ -118,27 +125,42 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 error = e.getMessage();
             }
         } else {
-            error = "No valid dependency manager was defined";
+            try {
+                collectDepDependencies(rootDirectory, dependencyInfos);
+            } catch (Exception e){
+                try {
+                    collectGoDepDependencies(rootDirectory, dependencyInfos);
+                } catch (Exception e1){
+                    try {
+                        collectVndrDependencies(rootDirectory, dependencyInfos);
+                    } catch (Exception e2){
+                        error = "couldn't collect dependencies - no dependency manager is installed";
+                    }
+                }
+            }
         }
         if (error != null){
             logger.error(error);
         }
+        if (collectDependenciesAtRuntime)
+            removeTempFiles(rootDirectory, creationTime);
         return dependencyInfos;
     }
 
     private void collectDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
+        logger.debug("collecting dependencies using 'dep'");
         File goPkgLock = new File(rootDirectory + fileSeparator + GOPKG_LOCK);
         String error = "";
         if (goPkgLock.isFile()){
             if (goCli.runCmd(rootDirectory,goCli.getGoCommandParams(GoCli.GO_ENSURE, GoDependencyManager.DEP)) == false) {
-                error = "Can't run 'dep ensure' command, output might be outdated.  Run the 'dep ensure' command manually.";
+                logger.error("Can't run 'dep ensure' command, output might be outdated.  Run the 'dep ensure' command manually.");
             }
             dependencyInfos.addAll(parseGopckLock(goPkgLock));
-        } else if (resolveDependenciesAtRuntime) {
+        } else if (collectDependenciesAtRuntime) {
             if (goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_INIT, GoDependencyManager.DEP))) {
                 dependencyInfos.addAll(parseGopckLock(goPkgLock));
             } else {
-                error = "Can't run 'dep status' command.  Run the 'dep status' command manually.";
+                error = "Can't run 'dep status' command.  Make sure 'dep is installed and run the 'dep status' command manually.";
             }
         } else {
             error = "Can't find " + GOPKG_LOCK + " file.  Run the 'dep init' command.";
@@ -150,8 +172,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private List<DependencyInfo> parseGopckLock(File goPckLock){
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
+        FileReader fileReader = null;
         try {
-            FileReader fileReader = new FileReader(goPckLock);
+            fileReader = new FileReader(goPckLock);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             String currLine;
             boolean insideProject = false;
@@ -169,8 +192,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             if (repositoryPackages != null){
                                 for (String name : repositoryPackages){
                                     DependencyInfo packageDependencyInfo = new DependencyInfo(dependencyInfo.getGroupId(),
-                                                                                       dependencyInfo.getArtifactId() + FORWARD_SLASH + name,
-                                                                                                dependencyInfo.getVersion());
+                                            dependencyInfo.getArtifactId() + FORWARD_SLASH + name,
+                                            dependencyInfo.getVersion());
                                     packageDependencyInfo.setCommit(dependencyInfo.getCommit());
                                     dependencyInfos.add(packageDependencyInfo);
                                 }
@@ -216,6 +239,14 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             logger.error("Can't find " + goPckLock.getPath());
         } catch (IOException e) {
             logger.error("Can't read " + goPckLock.getPath());
+        } finally {
+            if (fileReader != null){
+                try {
+                    fileReader.close();
+                } catch (IOException e) {
+                    logger.error("can't close {}: {}", goPckLock.getPath(), e.getMessage());
+                }
+            }
         }
         dependencyInfos.stream().forEach(dependencyInfo -> {dependencyInfo.setSystemPath(goPckLock.getPath()); dependencyInfo.setDependencyType(DependencyType.GO);});
         return dependencyInfos;
@@ -229,39 +260,50 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     }
 
     private void collectGoDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
+        logger.debug("collecting dependencies using 'godep'");
         File goDepJson = new File(rootDirectory + fileSeparator + "GoDeps" + fileSeparator +  GODEPS_JSON);
-        if (goDepJson.isFile() || (resolveDependenciesAtRuntime && goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_SAVE, GoDependencyManager.GO_DEP)))){
+        if (goDepJson.isFile() || (collectDependenciesAtRuntime && goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_SAVE, GoDependencyManager.GO_DEP)))){
             dependencyInfos.addAll(parseGoDeps(goDepJson));
         } else {
-            throw new Exception("Can't find " + GODEPS_JSON + " file.  Please run 'godep save' command");
+            throw new Exception("Can't find " + GODEPS_JSON + " file.  Please make sure 'godep' is installed and run 'godep save' command");
         }
     }
 
-    private List<DependencyInfo> parseGoDeps(File goDeps) throws FileNotFoundException {
+    private List<DependencyInfo> parseGoDeps(File goDeps) throws IOException {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
         JsonParser parser = new JsonParser();
-        JsonElement element = parser.parse(new FileReader(goDeps.getPath()));
-        if (element.isJsonObject()){
-            JsonArray deps = element.getAsJsonObject().getAsJsonArray(DEPS);
-            DependencyInfo dependencyInfo;
-            for (int i = 0; i < deps.size(); i++){
-                dependencyInfo = new DependencyInfo();
-                JsonObject dep = deps.get(i).getAsJsonObject();
-                String importPath = dep.get(IMPORT_PATH).getAsString();
-                dependencyInfo.setGroupId(getGroupId(importPath));
-                dependencyInfo.setArtifactId(importPath);
-                dependencyInfo.setCommit(dep.get(REV).getAsString());
-                dependencyInfo.setDependencyType(DependencyType.GO);
-                dependencyInfo.setSystemPath(goDeps.getPath());
-                JsonElement commentElement = dep.get(COMMENT);
-                if (commentElement != null){
-                    String comment = commentElement.getAsString();
-                    if (comment.indexOf("-") > -1) {
-                        comment = comment.substring(0, comment.indexOf("-"));
+        FileReader fileReader = null;
+        try {
+            fileReader = new FileReader(goDeps.getPath());
+            JsonElement element = parser.parse(fileReader);
+            if (element.isJsonObject()){
+                JsonArray deps = element.getAsJsonObject().getAsJsonArray(DEPS);
+                DependencyInfo dependencyInfo;
+                for (int i = 0; i < deps.size(); i++){
+                    dependencyInfo = new DependencyInfo();
+                    JsonObject dep = deps.get(i).getAsJsonObject();
+                    String importPath = dep.get(IMPORT_PATH).getAsString();
+                    dependencyInfo.setGroupId(getGroupId(importPath));
+                    dependencyInfo.setArtifactId(importPath);
+                    dependencyInfo.setCommit(dep.get(REV).getAsString());
+                    dependencyInfo.setDependencyType(DependencyType.GO);
+                    dependencyInfo.setSystemPath(goDeps.getPath());
+                    JsonElement commentElement = dep.get(COMMENT);
+                    if (commentElement != null){
+                        String comment = commentElement.getAsString();
+                        if (comment.indexOf("-") > -1) {
+                            comment = comment.substring(0, comment.indexOf("-"));
+                        }
+                        dependencyInfo.setVersion(comment);
                     }
-                    dependencyInfo.setVersion(comment);
+                    dependencyInfos.add(dependencyInfo);
                 }
-                dependencyInfos.add(dependencyInfo);
+            }
+        } catch (FileNotFoundException e){
+            throw e;
+        } finally {
+            if (fileReader != null){
+                fileReader.close();
             }
         }
         return dependencyInfos;
@@ -277,18 +319,20 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     }
 
     private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
+        logger.debug("collecting dependencies using 'vndr'");
         File vndrConf = new File(rootDirectory + fileSeparator + VNDR_CONF);
-        if (vndrConf.isFile() || (resolveDependenciesAtRuntime && goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_INIT, GoDependencyManager.VNDR)))) {
+        if (vndrConf.isFile() || (collectDependenciesAtRuntime && goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_INIT, GoDependencyManager.VNDR)))) {
             dependencyInfos.addAll(parseVendorConf(vndrConf));
         } else {
-            throw new Exception("Can't find " + VNDR_CONF + " file.  Please run 'vndr init' command");
+            throw new Exception("Can't find " + VNDR_CONF + " file.  Please make sure 'vndr' is installed and run 'vndr init' command");
         }
     }
 
-    private List<DependencyInfo> parseVendorConf(File vendorConf){
+    private List<DependencyInfo> parseVendorConf(File vendorConf) throws IOException {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
+        FileReader fileReader = null;
         try {
-            FileReader fileReader = new FileReader(vendorConf);
+            fileReader = new FileReader(vendorConf);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             String currLine;
             DependencyInfo dependencyInfo;
@@ -304,10 +348,28 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 dependencyInfos.add(dependencyInfo);
             }
         } catch (FileNotFoundException e) {
-            logger.error("Can't find " + vendorConf.getPath());
-        } catch (IOException e) {
-            logger.error("Can't read " + vendorConf.getPath());
+            throw e;
+        } finally {
+            fileReader.close();
         }
         return dependencyInfos;
+    }
+
+    private void removeTempFiles(String rootDirectory, long creationTime){
+        FileTime fileCreationTime = FileTime.fromMillis(creationTime);
+        File directory = new File(rootDirectory);
+        File[] fList = directory.listFiles();
+        if (fList != null) {
+            for (File file : fList) {
+                try {
+                    BasicFileAttributes fileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+                    if (fileAttributes.creationTime().compareTo(fileCreationTime) > 0){
+                        FileUtils.forceDelete(file);
+                    }
+                } catch (IOException e) {
+                    logger.error("can't remove {}: {}", file.getPath(), e.getMessage());
+                }
+            }
+        }
     }
 }
