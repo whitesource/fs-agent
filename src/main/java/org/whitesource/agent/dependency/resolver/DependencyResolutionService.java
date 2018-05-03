@@ -117,7 +117,7 @@ public class DependencyResolutionService {
         }
 
         if (goResolveDependencies){
-            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime()));
+            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), config.isDependenciesOnly()));
         }
     }
 
