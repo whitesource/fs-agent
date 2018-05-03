@@ -66,7 +66,7 @@ public class ResolverConfiguration {
 
             @JsonProperty(GO_RESOLVE_DEPENDENCIES) boolean goResolveDependencies,
             @JsonProperty(GO_DEPENDENCY_MANAGER) String goDependencyManager,
-            @JsonProperty(GO_RESOLVE_DEPENDENCIES_AT_RUNTIME) boolean goResolveDependenciesAtRuntime) {
+            @JsonProperty(GO_COLLECT_DEPENDENCIES_AT_RUNTIME) boolean goCollecteDependenciesAtRuntime) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmResolveDependencies = npmResolveDependencies;
         this.npmIncludeDevDependencies = npmIncludeDevDependencies;
@@ -107,7 +107,7 @@ public class ResolverConfiguration {
         if (goDependencyManager != null && !goDependencyManager.isEmpty()) {
             this.goDependencyManager = GoDependencyManager.getFromType(goDependencyManager);
         }
-        this.goResolveDependenciesAtRuntime = goResolveDependenciesAtRuntime;
+        this.goCollectDependenciesAtRuntime = goCollecteDependenciesAtRuntime;
     }
 
     /* --- Members --- */
@@ -146,7 +146,7 @@ public class ResolverConfiguration {
 
     private boolean     goResolveDependencies;
     private GoDependencyManager goDependencyManager;
-    private boolean     goResolveDependenciesAtRuntime;
+    private boolean goCollectDependenciesAtRuntime;
 
     /* --- Public getters --- */
 
@@ -292,8 +292,8 @@ public class ResolverConfiguration {
     @JsonProperty(GO_DEPENDENCY_MANAGER)
     public GoDependencyManager getGoDependencyManager() {   return goDependencyManager; }
 
-    @JsonProperty(GO_RESOLVE_DEPENDENCIES_AT_RUNTIME)
-    public boolean isGoResolveDependenciesAtRuntime() { return goResolveDependenciesAtRuntime; }
+    @JsonProperty(GO_COLLECT_DEPENDENCIES_AT_RUNTIME)
+    public boolean isGoCollectDependenciesAtRuntime() { return goCollectDependenciesAtRuntime; }
 
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {
         this.npmResolveDependencies = npmResolveDependencies;
