@@ -105,11 +105,9 @@ public class ProjectsSender {
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
 
-            //            // TODO remove projects.size() == 1 when via will scan more than one project
             if (senderConfig.isEnableImpactAnalysis()) {
                 runViaAnalysis(projectsDetails, service);
             } else if (!senderConfig.isEnableImpactAnalysis()) {
-                //                logger.info("Impact analysis won't run, via is not enabled");
                 //todo return logs when needed would be enabled for all WSE-342
             }
 
@@ -159,7 +157,6 @@ public class ProjectsSender {
     }
 
     private void runViaAnalysis(ProjectsDetails projectsDetails, WhitesourceService service) {
-        //todo comment in via code
         try {
             Class<?> vulnerabilitiesAnalysisClass = Class.forName("whitesource.analysis.vulnerabilities.VulnerabilitiesAnalysis");
             Method getAnalysisMethod
@@ -167,9 +164,6 @@ public class ProjectsSender {
             Object vulnerabilitiesAnalysis = null;
 
             for (AgentProjectInfo project : projectsDetails.getProjectToViaComponents().keySet()) {
-                //TODO remove later
-                //            Server server = new DemoServerProjInfo();
-                //            server.setdb("c:/Users/AharonAbadi/work/vulnerabilityCleaner/via-visual-studio-integration/examples/via-server/via.db");
                 // check language for scan according to user file
                 LinkedList<ViaComponents> viaComponentsList = projectsDetails.getProjectToViaComponents().get(project);
                 for (ViaComponents viaComponents : viaComponentsList) {
@@ -177,7 +171,7 @@ public class ProjectsSender {
                     String appPath = viaComponents.getAppPath();
                     ViaLanguage language = viaComponents.getLanguage();
                     try {
-                        vulnerabilitiesAnalysis = getAnalysisMethod.invoke(null, language.toString(), requestConfig.getViaAnalisysLevel());
+                        vulnerabilitiesAnalysis = getAnalysisMethod.invoke(null, language.toString(), requestConfig.getViaAnalysisLevel());
                         // set app path for java script
                         if (language.equals(ViaLanguage.JAVA_SCRIPT)) {
                             int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
@@ -193,7 +187,8 @@ public class ProjectsSender {
                             projectToServer.setProjectSetupStatus(project.getProjectSetupStatus());
                             projectToServer.setParentCoordinates(project.getParentCoordinates());
                             Class<?> fsaAgentServerClass = Class.forName("whitesource.analysis.server.FSAgentServer");
-                            Object server = fsaAgentServerClass.getConstructor(AgentProjectInfo.class, WhitesourceService.class, String.class).newInstance(projectToServer, service, requestConfig.getApiToken());
+                            Object server = fsaAgentServerClass.getConstructor(AgentProjectInfo.class, WhitesourceService.class, String.class).newInstance(
+                                    projectToServer, service, requestConfig.getApiToken());
                             logger.info("Starting analysis for: {}", appPath);
                             Class<?> serverClass = Class.forName("whitesource.analysis.server.Server");
                             Method runAnalysis = vulnerabilitiesAnalysisClass.getDeclaredMethod("runAnalysis", serverClass, String.class, Collection.class, Boolean.class);

@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.ViaComponents;
 import org.whitesource.agent.FileSystemScanner;
+import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.docker.DockerResolver;
@@ -76,7 +77,8 @@ public class FileSystemAgent {
 
                 File file = new File(directory);
                 if (file.isDirectory()) {
-                    List<Path> directories = new FilesUtils().getSubDirectories(directory,this.config.getAgent().getIncludes(),config.getAgent().getExcludes(),config.getAgent().isFollowSymlinks(),config.getAgent().getGlobCaseSensitive());
+                    List<Path> directories = new FilesUtils().getSubDirectories(directory,this.config.getAgent().getIncludes(),config.getAgent().getExcludes(),
+                            config.getAgent().isFollowSymlinks(),config.getAgent().getGlobCaseSensitive());
                     directories.forEach(subDir -> this.dependencyDirs.add(subDir.toString()));
                 } else if (file.isFile()) {
                     this.dependencyDirs.add(directory);
@@ -204,7 +206,8 @@ public class FileSystemAgent {
             projects = new DockerResolver(config).resolveDockerImages();
             projectsDetails = new ProjectsDetails(projects, success[0], EMPTY_STRING);
         } else {
-            projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis())
+            ViaLanguage viaLanguage = config.getRequest().getIaLanguage() != null ? ViaLanguage.valueOf(config.getRequest().getIaLanguage()) : null;
+            projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis(), viaLanguage)
                     .createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnectors[0]);
             projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], EMPTY_STRING);
         }

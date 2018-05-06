@@ -27,6 +27,7 @@ public final class ConfigPropertyKeys {
     public static final String FORCE_UPDATE = "forceUpdate";
     public static final String FORCE_CHECK_ALL_DEPENDENCIES = "forceCheckAllDependencies"; // optional
     public static final String ENABLE_IMPACT_ANALYSIS = "enableImpactAnalysis"; // optional
+    public static final String IA_LANGUAGE = "iaLanguage"; // optional
     public static final String CONNECTION_RETRIES = "connectionRetries";
     public static final String CONNECTION_RETRIES_INTERVALS = "connectionRetriesInterval";
     public static final String ORG_TOKEN_PROPERTY_KEY = "apiKey";

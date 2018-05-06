@@ -38,7 +38,8 @@ public class RequestConfiguration {
     private final String projectName;
     private final List<String> appPaths;
     private final String viaDebug;
-    private final int viaAnalisysLevel;
+    private final int viaAnalysisLevel;
+    private final String iaLanguage;
 
     public RequestConfiguration(@JsonProperty(ORG_TOKEN_PROPERTY_KEY) String apiToken,
                                 @JsonProperty(USER_KEY_PROPERTY_KEY) String userKey,
@@ -52,7 +53,8 @@ public class RequestConfiguration {
                                 @JsonProperty(PRODUCT_VERSION_PROPERTY_KEY) String productVersion,
                                 @JsonProperty(APP_PATH) List<String> appPaths,
                                 @JsonProperty(VIA_DEBUG) String viaDebug,
-                                @JsonProperty(VIA_ANALYSIS_LEVEL) int viaAnalisysLevel) {
+                                @JsonProperty(VIA_ANALYSIS_LEVEL) int viaAnalysisLevel,
+                                @JsonProperty(IA_LANGUAGE) String  iaLanguage) {
         this.apiToken = apiToken;
         this.userKey = userKey;
         this.requesterEmail = requesterEmail;
@@ -63,9 +65,10 @@ public class RequestConfiguration {
         this.productName = productName;
         this.productToken = productToken;
         this.productVersion = productVersion;
-        this.viaAnalisysLevel = viaAnalisysLevel;
+        this.viaAnalysisLevel = viaAnalysisLevel;
         this.appPaths = appPaths;
         this.viaDebug=viaDebug;
+        this.iaLanguage=iaLanguage;
     }
 
     @JsonProperty(PROJECT_NAME_PROPERTY_KEY)
@@ -124,12 +127,17 @@ public class RequestConfiguration {
     }
 
     @JsonProperty(VIA_ANALYSIS_LEVEL)
-    public int getViaAnalisysLevel() {
-        return viaAnalisysLevel;
+    public int getViaAnalysisLevel() {
+        return viaAnalysisLevel;
     }
 
     @JsonProperty(USER_KEY_PROPERTY_KEY)
     public String getUserKey() { return userKey; }
+
+    @JsonProperty(IA_LANGUAGE)
+    public String getIaLanguage() {
+        return iaLanguage;
+    }
 
     public String getProductNameOrToken() {
         if (StringUtils.isBlank(getProductToken())) {

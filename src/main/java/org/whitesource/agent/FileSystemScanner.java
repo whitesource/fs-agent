@@ -58,6 +58,7 @@ public class FileSystemScanner {
     private final AgentConfiguration agent;
     private final boolean showProgressBar;
     private boolean enableImpactAnalysis;
+    private ViaLanguage iaLanguage;
     private DependencyResolutionService dependencyResolutionService;
 
     /* --- Constructors --- */
@@ -68,6 +69,11 @@ public class FileSystemScanner {
         this.agent = agentConfiguration;
         this.showProgressBar = agentConfiguration.isShowProgressBar();
         this.enableImpactAnalysis = enableImpactAnalysis;
+    }
+
+    public FileSystemScanner(ResolverConfiguration resolver, AgentConfiguration agentConfiguration, boolean enableImpactAnalysis, ViaLanguage iaLanguage) {
+       this(resolver, agentConfiguration, enableImpactAnalysis);
+       this.iaLanguage = iaLanguage;
     }
 
     /* --- Public methods --- */
@@ -186,96 +192,105 @@ public class FileSystemScanner {
 
         final int[] totalDependencies = {0};
         boolean isDependenciesOnly = false;
-        if (dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies(allFiles)) {
-            logger.info("Attempting to resolve dependencies");
-            isDependenciesOnly = dependencyResolutionService.isDependenciesOnly();
+        if (enableImpactAnalysis && iaLanguage == null) {
+            if (dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies(allFiles)) {
+                logger.info("Attempting to resolve dependencies");
+                isDependenciesOnly = dependencyResolutionService.isDependenciesOnly();
 
-            // get all resolution results
-            Collection<ResolutionResult> resolutionResults = new ArrayList<>();
-            for (String appPath : appPathsToDependencyDirs.keySet()) {
-                ViaComponents viaComponents = null;
-                ViaLanguage impactAnalysisLanguage = null;
-                LinkedList<String> pathsList = new LinkedList<>();
-                pathsList.addAll(appPathsToDependencyDirs.get(appPath));
-                Collection<ResolutionResult> resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, excludes);
-                if (resolutionResult.size() == 1 && !appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
-                    DependencyType dependencyType = resolutionResult.stream().findFirst().get().getDependencyType();
-                    // validate scanned language and set the
-                    switch (dependencyType) {
-                        case NPM:
-                        case BOWER:
-                            impactAnalysisLanguage = ViaLanguage.JAVA_SCRIPT;
-                            break;
-                        case MAVEN:
-                        case GRADLE:
-                            impactAnalysisLanguage = ViaLanguage.JAVA;
-                            break;
-                        default: break;
-                    }
-                } else if (resolutionResult.size() > 1 && enableImpactAnalysis){
+                // get all resolution results
+                Collection<ResolutionResult> resolutionResults = new ArrayList<>();
+                for (String appPath : appPathsToDependencyDirs.keySet()) {
+                    ViaComponents viaComponents = null;
+                    ViaLanguage impactAnalysisLanguage = null;
+                    LinkedList<String> pathsList = new LinkedList<>();
+                    pathsList.addAll(appPathsToDependencyDirs.get(appPath));
+                    Collection<ResolutionResult> resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, excludes);
+                    if (resolutionResult.size() == 1 && !appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
+                        DependencyType dependencyType = resolutionResult.stream().findFirst().get().getDependencyType();
+                        // validate scanned language and set the
+                        switch (dependencyType) {
+                            case NPM:
+                            case BOWER:
+                                impactAnalysisLanguage = ViaLanguage.JAVA_SCRIPT;
+                                break;
+                            case MAVEN:
+                            case GRADLE:
+                                impactAnalysisLanguage = ViaLanguage.JAVA;
+                                break;
+                            default:
+                                break;
+                        }
+                    } else if (resolutionResult.size() > 1 && enableImpactAnalysis) {
 //                logger.info("Impact analysis won't run, more than one language detected");
-                    // TODO return message when needed WSE-342
-                }
-                if (impactAnalysisLanguage != null) {
-                    viaComponents = new ViaComponents(appPath, impactAnalysisLanguage);
-                }
-                for (ResolutionResult result : resolutionResult) {
-                    Map<AgentProjectInfo, Path> projects = result.getResolvedProjects();
-                    Collection<DependencyInfo> dependenciesToVia = new ArrayList<>();
-                    for (Map.Entry<AgentProjectInfo, Path> project : projects.entrySet()) {
-                        Collection<DependencyInfo> dependencies = project.getKey().getDependencies();
-                        dependenciesToVia.addAll(dependencies);
-                        // do not add projects with no dependencies
-                        if (!dependencies.isEmpty()) {
-                            AgentProjectInfo currentProject;
+                        // TODO return message when needed WSE-342
+                    }
+                    if (impactAnalysisLanguage != null) {
+                        viaComponents = new ViaComponents(appPath, impactAnalysisLanguage);
+                    }
+                    for (ResolutionResult result : resolutionResult) {
+                        Map<AgentProjectInfo, Path> projects = result.getResolvedProjects();
+                        Collection<DependencyInfo> dependenciesToVia = new ArrayList<>();
+                        for (Map.Entry<AgentProjectInfo, Path> project : projects.entrySet()) {
+                            Collection<DependencyInfo> dependencies = project.getKey().getDependencies();
+                            dependenciesToVia.addAll(dependencies);
+                            // do not add projects with no dependencies
+                            if (!dependencies.isEmpty()) {
+                                AgentProjectInfo currentProject;
 
-                            // if it is single project threat it as the main
-                            if (dependencyResolutionService.isSeparateProjects()) {
-                                if (result.getDependencyType().equals(DependencyType.MAVEN) && result.getResolvedProjects().size() > 1) {
-                                    allProjects.put(project.getKey(), project.getValue());
-                                    LinkedList<ViaComponents> listToNewProject = new LinkedList<>();
-                                    if (impactAnalysisLanguage != null) {
-                                        listToNewProject.add(viaComponents);
+                                // if it is single project threat it as the main
+                                if (dependencyResolutionService.isSeparateProjects()) {
+                                    if (result.getDependencyType().equals(DependencyType.MAVEN) && result.getResolvedProjects().size() > 1) {
+                                        allProjects.put(project.getKey(), project.getValue());
+                                        LinkedList<ViaComponents> listToNewProject = new LinkedList<>();
+                                        if (impactAnalysisLanguage != null) {
+                                            listToNewProject.add(viaComponents);
+                                        }
+                                        allProjectsToViaComponents.put(project.getKey(), listToNewProject);
+                                    } else {
+                                        currentProject = allProjects.keySet().stream().findFirst().get();
+                                        currentProject.getDependencies().addAll(project.getKey().getDependencies());
+                                        if (impactAnalysisLanguage != null) {
+                                            allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(viaComponents);
+                                        }
                                     }
-                                    allProjectsToViaComponents.put(project.getKey(), listToNewProject);
                                 } else {
+                                    //allProjects.put(project.getKey(), project.getValue());
                                     currentProject = allProjects.keySet().stream().findFirst().get();
                                     currentProject.getDependencies().addAll(project.getKey().getDependencies());
                                     if (impactAnalysisLanguage != null) {
                                         allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(viaComponents);
                                     }
                                 }
-                            } else {
-                                //allProjects.put(project.getKey(), project.getValue());
-                                currentProject = allProjects.keySet().stream().findFirst().get();
-                                currentProject.getDependencies().addAll(project.getKey().getDependencies());
-                                if (impactAnalysisLanguage != null) {
-                                    allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(viaComponents);
-                                }
+                                impactAnalysisLanguage = null;
+                                totalDependencies[0] += dependencies.size();
+                                dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies));
                             }
-                            // TODO Check this one more time
-                            impactAnalysisLanguage = null;
-                            totalDependencies[0] += dependencies.size();
-                            dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies));
+                        }
+                        if (viaComponents != null) {
+                            viaComponents.getDependencies().addAll(dependenciesToVia);
                         }
                     }
-                    if (viaComponents != null) {
-                        viaComponents.getDependencies().addAll(dependenciesToVia);
-                    }
+                    resolutionResults.addAll(resolutionResult);
                 }
-                resolutionResults.addAll(resolutionResult);
+
+                logger.info(MessageFormat.format("Total dependencies Found: {0}", totalDependencies[0]));
+
+                // merge additional excludes
+                Set<String> allExcludes = resolutionResults.stream().flatMap(resolution -> resolution.getExcludes().stream()).collect(Collectors.toSet());
+                allExcludes.addAll(Arrays.stream(excludes).collect(Collectors.toList()));
+
+                // change the original excludes with the merged values
+                excludes = new String[allExcludes.size()];
+                excludes = allExcludes.toArray(excludes);
+                dependencyResolutionService = null;
             }
-
-            logger.info(MessageFormat.format("Total dependencies Found: {0}", totalDependencies[0]));
-
-            // merge additional excludes
-            Set<String> allExcludes = resolutionResults.stream().flatMap(resolution -> resolution.getExcludes().stream()).collect(Collectors.toSet());
-            allExcludes.addAll(Arrays.stream(excludes).collect(Collectors.toList()));
-
-            // change the original excludes with the merged values
-            excludes = new String[allExcludes.size()];
-            excludes = allExcludes.toArray(excludes);
-            dependencyResolutionService = null;
+        } else if(enableImpactAnalysis && iaLanguage != null) {
+            for (String appPath : appPathsToDependencyDirs.keySet()) {
+                if (!appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
+                    String pojoAppPath = ((LinkedList<String>) appPathsToDependencyDirs.get(appPath)).get(0);
+                    allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(new ViaComponents(pojoAppPath, iaLanguage));
+                }
+            }
         }
 
         String[] excludesExtended = excludeFileSystemAgent(excludes);
@@ -292,7 +307,7 @@ public class FileSystemScanner {
                     scmConnector, totalFiles, fileMap, excludedCopyrights, partialSha1Match, calculateHints, calculateMd5));
         }
 
-        if (allProjects.size() == 1 ) {
+        if (allProjects.size() == 1) {
             AgentProjectInfo project = allProjects.keySet().stream().findFirst().get();
             project.getDependencies().addAll(filesDependencies);
         } else {

@@ -112,9 +112,11 @@ public class DockerResolver {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("IO exception : ", e.getMessage());
+            logger.debug("IO exception : ", e.getStackTrace());
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.error("Interrupted exception : ", e.getMessage());
+            logger.debug("Interrupted exception : ", e.getStackTrace());
         } finally {
             if (process != null) {
                 process.destroy();
@@ -251,7 +253,7 @@ public class DockerResolver {
                 setDirs.add(extractPath);
                 Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
                 appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
-                List<DependencyInfo> dependencyInfos = new FileSystemScanner(config.getResolver(), config.getAgent(), false).createProjects(
+                List<DependencyInfo> dependencyInfos = new FileSystemScanner(config.getResolver(), config.getAgent(), false, viaLanguage).createProjects(
                         Arrays.asList(extractPath), appPathsToDependencyDirs, false, config.getAgent().getIncludes(), config.getAgent().getExcludes(),
                         config.getAgent().getGlobCaseSensitive(), config.getAgent().getArchiveExtractionDepth(), FileExtensions.ARCHIVE_INCLUDES,
                         FileExtensions.ARCHIVE_EXCLUDES, false, config.getAgent().isFollowSymlinks(),

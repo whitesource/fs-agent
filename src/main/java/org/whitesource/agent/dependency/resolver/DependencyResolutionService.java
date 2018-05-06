@@ -38,7 +38,6 @@ import java.util.*;
  * @author eugen.horovitz
  */
 public class DependencyResolutionService {
-    public static final String SPACE = " ";
 
     /* --- Members --- */
 

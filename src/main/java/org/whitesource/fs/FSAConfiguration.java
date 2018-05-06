@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.utils.Pair;
@@ -275,13 +276,14 @@ public class FSAConfiguration {
         String productVersion = config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
         String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
         List<String> appPath = (List<String>) config.get(ConfigPropertyKeys.APP_PATH);
+        String iaLanguage = config.getProperty(ConfigPropertyKeys.IA_LANGUAGE, null);
         String viaDebug = config.getProperty(VIA_DEBUG, BLANK);
         boolean projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(REQUESTER_EMAIL);
 
         int viaAnalysis = getIntProperty(config, VIA_ANALYSIS_LEVEL, VIA_DEFAULT_ANALYSIS_LEVEL);
         return new RequestConfiguration(apiToken, userKey, requesterEmail, projectPerSubFolder, projectName, projectToken,
-                projectVersion, productName, productToken, productVersion, appPath,viaDebug,viaAnalysis);
+                projectVersion, productName, productToken, productVersion, appPath, viaDebug, viaAnalysis, iaLanguage);
     }
 
     private SenderConfiguration getSender(Properties config) {
@@ -607,6 +609,7 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.VIA_DEBUG, commandLineArgs.viaDebug);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.VIA_ANALYSIS_LEVEL, commandLineArgs.viaLevel);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, commandLineArgs.enableImpactAnalysis);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.IA_LANGUAGE, commandLineArgs.iaLanguage);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.X_PATHS, commandLineArgs.xPaths);
         // proxy
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);
