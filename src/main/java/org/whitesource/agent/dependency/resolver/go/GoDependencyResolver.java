@@ -105,7 +105,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private List<DependencyInfo> collectDependencies(String rootDirectory) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
         String error = null;
-        long creationTime = new Date().getTime();
+        long creationTime = new Date().getTime(); // will be used later for removing temp files/folders
         if (goDependencyManager != null) {
             try {
                 switch (goDependencyManager) {
@@ -125,19 +125,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 error = e.getMessage();
             }
         } else {
-            try {
-                collectDepDependencies(rootDirectory, dependencyInfos);
-            } catch (Exception e){
-                try {
-                    collectGoDepDependencies(rootDirectory, dependencyInfos);
-                } catch (Exception e1){
-                    try {
-                        collectVndrDependencies(rootDirectory, dependencyInfos);
-                    } catch (Exception e2){
-                        error = "couldn't collect dependencies - no dependency manager is installed";
-                    }
-                }
-            }
+           error = collectDependenciesWithoutDefinedManager(rootDirectory, dependencyInfos);
         }
         if (error != null){
             logger.error(error);
@@ -145,6 +133,25 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         if (collectDependenciesAtRuntime)
             removeTempFiles(rootDirectory, creationTime);
         return dependencyInfos;
+    }
+
+    // when no dependency manager is defined - trying to run one manager after the other, till one succeeds.  if not - returning an error
+    private String collectDependenciesWithoutDefinedManager(String rootDirectory, List<DependencyInfo> dependencyInfos){
+        String error = null;
+        try {
+            collectDepDependencies(rootDirectory, dependencyInfos);
+        } catch (Exception e){
+            try {
+                collectGoDepDependencies(rootDirectory, dependencyInfos);
+            } catch (Exception e1){
+                try {
+                    collectVndrDependencies(rootDirectory, dependencyInfos);
+                } catch (Exception e2){
+                    error = "Couldn't collect dependencies - no dependency manager is installed";
+                }
+            }
+        }
+        return error;
     }
 
     private void collectDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
@@ -355,6 +362,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         return dependencyInfos;
     }
 
+    // when running the dependency manager at run time different files (and folders) are created.  removing them according to their creatin time
     private void removeTempFiles(String rootDirectory, long creationTime){
         FileTime fileCreationTime = FileTime.fromMillis(creationTime);
         File directory = new File(rootDirectory);
