@@ -193,8 +193,15 @@ public class FileSystemScanner {
 
         final int[] totalDependencies = {0};
         boolean isDependenciesOnly = false;
-        if (enableImpactAnalysis && iaLanguage == null) {
-            if (dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies(allFiles)) {
+//        if (enableImpactAnalysis && iaLanguage == null) {
+        if(enableImpactAnalysis && iaLanguage != null) {
+            for (String appPath : appPathsToDependencyDirs.keySet()) {
+                if (!appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
+                    String pojoAppPath = ((HashSet<String>) appPathsToDependencyDirs.get(appPath)).iterator().next();
+                    allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(new ViaComponents(pojoAppPath, iaLanguage));
+                }
+            }
+        } else if (dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies(allFiles)) {
                 logger.info("Attempting to resolve dependencies");
                 isDependenciesOnly = dependencyResolutionService.isDependenciesOnly();
 
@@ -285,19 +292,7 @@ public class FileSystemScanner {
                 excludes = allExcludes.toArray(excludes);
                 dependencyResolutionService = null;
             }
-        } else if(enableImpactAnalysis && iaLanguage != null) {
-            for (String appPath : appPathsToDependencyDirs.keySet()) {
-                if (!appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
-                    String pojoAppPath = ((HashSet<String>) appPathsToDependencyDirs.get(appPath)).iterator().next();
-                    allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(new ViaComponents(pojoAppPath, iaLanguage));
-                }
-            }
-        }
-//         else if (!enableImpactAnalysis && iaLanguage != null) {
-//            //todo move to logger.error/warning when released officially
-//            logger.debug("Error: Via setting are not applicable when via is not enabled. exiting...");
-//            System.exit(StatusCode.ERROR.getValue());
-//        }
+
 
         String[] excludesExtended = excludeFileSystemAgent(excludes);
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
