@@ -205,7 +205,7 @@ public class FileSystemAgent {
             projects = new DockerResolver(config).resolveDockerImages();
             projectsDetails = new ProjectsDetails(projects, success[0], EMPTY_STRING);
         } else {
-            ViaLanguage viaLanguage = getIaIaLanguage(config.getRequest().getIaLanguage());
+            ViaLanguage viaLanguage = getIaLanguage(config.getRequest().getIaLanguage());
             projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis(), viaLanguage)
                     .createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnectors[0]);
             projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], EMPTY_STRING);
@@ -223,7 +223,7 @@ public class FileSystemAgent {
         return projectsDetails;
     }
 
-    private ViaLanguage getIaIaLanguage(String iaLanguage) {
+    private ViaLanguage getIaLanguage(String iaLanguage) {
         ViaLanguage[] values = ViaLanguage.values();
         for (ViaLanguage value : values) {
             if (value.toString().equals(iaLanguage)) {

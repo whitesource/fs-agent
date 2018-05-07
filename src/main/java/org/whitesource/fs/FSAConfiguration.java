@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.utils.Pair;
@@ -191,6 +192,20 @@ public class FSAConfiguration {
         } else {
             if (argsForAppPathAndDirs != null && argsForAppPathAndDirs.length > 0) {
                 initializeDependencyDirsToAppPath(argsForAppPathAndDirs);
+            }
+        }
+
+        // validate iaLanguage
+        String iaLanguage = config.getProperty(ConfigPropertyKeys.IA_LANGUAGE);
+        if (iaLanguage != null) {
+            boolean iaLanguageValid = false;
+            for (ViaLanguage viaLanguage : ViaLanguage.values()) {
+                if (iaLanguage.equals(viaLanguage.toString())) {
+                    iaLanguageValid = true;
+                }
+            }
+            if(!iaLanguageValid) {
+                errors.add("Error: Via setting are not applicable iaLanguage is not valid. exiting... " );
             }
         }
 
