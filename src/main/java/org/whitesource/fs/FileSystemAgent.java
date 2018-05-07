@@ -111,7 +111,6 @@ public class FileSystemAgent {
                     String projectVersion = config.getRequest().getProjectVersion();
                     AgentProjectInfo projectInfo = projectsDetails.getProjects().stream().findFirst().get();
                     projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
-                    // TODO: 1. Check when via will support multi project
                     projects.getProjectToViaComponents().put(projectInfo, projectsDetails.getProjectToViaComponents().get(projectInfo));
                 }
                 // return on the first project that fails
@@ -206,7 +205,7 @@ public class FileSystemAgent {
             projects = new DockerResolver(config).resolveDockerImages();
             projectsDetails = new ProjectsDetails(projects, success[0], EMPTY_STRING);
         } else {
-            ViaLanguage viaLanguage = config.getRequest().getIaLanguage() != null ? ViaLanguage.valueOf(config.getRequest().getIaLanguage()) : null;
+            ViaLanguage viaLanguage = getIaIaLanguage(config.getRequest().getIaLanguage());
             projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis(), viaLanguage)
                     .createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnectors[0]);
             projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], EMPTY_STRING);
@@ -222,6 +221,16 @@ public class FileSystemAgent {
             }
         });
         return projectsDetails;
+    }
+
+    private ViaLanguage getIaIaLanguage(String iaLanguage) {
+        ViaLanguage[] values = ViaLanguage.values();
+        for (ViaLanguage value : values) {
+            if (value.toString().equals(iaLanguage)) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private Pair<String, StatusCode> npmInstallScmRepository(boolean scmNpmInstall, int npmInstallTimeoutMinutes, ScmConnector scmConnector,

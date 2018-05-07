@@ -29,6 +29,7 @@ import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.MemoryUsageHelper;
 import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.FileSystemAgent;
+import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.AgentConfiguration;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
@@ -287,10 +288,14 @@ public class FileSystemScanner {
         } else if(enableImpactAnalysis && iaLanguage != null) {
             for (String appPath : appPathsToDependencyDirs.keySet()) {
                 if (!appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
-                    String pojoAppPath = ((LinkedList<String>) appPathsToDependencyDirs.get(appPath)).get(0);
+                    String pojoAppPath = ((HashSet<String>)appPathsToDependencyDirs.get(appPath)).iterator().next();
                     allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(new ViaComponents(pojoAppPath, iaLanguage));
                 }
             }
+        } else if (!enableImpactAnalysis && iaLanguage != null) {
+            //todo move to logger.error/warning when released officially
+            logger.debug("Error: Via setting are not applicable when via is not enabled. exiting...");
+            System.exit(StatusCode.ERROR.getValue());
         }
 
         String[] excludesExtended = excludeFileSystemAgent(excludes);

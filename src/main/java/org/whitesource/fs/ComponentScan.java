@@ -68,7 +68,7 @@ public class ComponentScan {
             setDirs.addAll(scannerBaseDirs);
             Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
             appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
-            Collection<AgentProjectInfo> projects = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent(), false, viaLanguage).createProjects(
+            Collection<AgentProjectInfo> projects = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent(), false).createProjects(
                     scannerBaseDirs, appPathsToDependencyDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getAgent().getArchiveExtractionDepth(),
                     fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(),
                     followSymlinks, excludedCopyrights, fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(),
