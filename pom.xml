@@ -4,7 +4,7 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>18.4.2-SNAPSHOT</version>
+    <version>18.4.2-test</version>
     <packaging>jar</packaging>
 
     <name>White Source File System Agent</name>
@@ -434,16 +434,21 @@
 
     <distributionManagement>
         <repository>
-            <id>sonatype-nexus-staging</id>
-            <name>Sonatype staging repository</name>
-            <uniqueVersion>false</uniqueVersion>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+            <id>github</id>
+            <name>GitHub OWNER Maven Packages</name>
+            <url>https://maven.registry.github.com/whitesource</url>
         </repository>
-        <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <name>Sonatype snapshots repository</name>
-            <uniqueVersion>false</uniqueVersion>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
+        <!--<repository>-->
+            <!--<id>sonatype-nexus-staging</id>-->
+            <!--<name>Sonatype staging repository</name>-->
+            <!--<uniqueVersion>false</uniqueVersion>-->
+            <!--<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>-->
+        <!--</repository>-->
+        <!--<snapshotRepository>-->
+            <!--<id>sonatype-nexus-snapshots</id>-->
+            <!--<name>Sonatype snapshots repository</name>-->
+            <!--<uniqueVersion>false</uniqueVersion>-->
+            <!--<url>https://oss.sonatype.org/content/repositories/snapshots</url>-->
+        <!--</snapshotRepository>-->
     </distributionManagement>
 </project>
