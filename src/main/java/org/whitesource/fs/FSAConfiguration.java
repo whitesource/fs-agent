@@ -197,18 +197,22 @@ public class FSAConfiguration {
 
         // validate iaLanguage
         String iaLanguage = config.getProperty(ConfigPropertyKeys.IA_LANGUAGE);
+        boolean iaLanguageValid = false;
         if (iaLanguage != null) {
-            boolean iaLanguageValid = false;
             for (ViaLanguage viaLanguage : ViaLanguage.values()) {
                 if (iaLanguage.equals(viaLanguage.toString())) {
                     iaLanguageValid = true;
                 }
             }
-            if(!iaLanguageValid) {
-                errors.add("Error: Via setting are not applicable iaLanguage is not valid. exiting... " );
+            if (!iaLanguageValid) {
+                //todo move to debug mode after QA
+                errors.add("Error: VIA setting are not applicable parameters are not valid. exiting... ");
+            }
+            if (iaLanguageValid && !getBooleanProperty(config, ENABLE_IMPACT_ANALYSIS, false)) {
+                //todo move to debug mode after QA
+                errors.add("Error: VIA setting are not applicable parameters are not valid. exiting... ");
             }
         }
-
 
         // todo: check possibility to get the errors only in the end
         errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal, apiToken, configFilePath, archiveExtractionDepth, includes));

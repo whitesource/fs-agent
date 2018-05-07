@@ -118,6 +118,7 @@ public class ProjectsSender {
                     if (statusCode == StatusCode.SUCCESS) {
                         resultInfo = update(service, projects);
                     }
+                    break;
                 } catch (WssServiceException e) {
                     if (e.getCause() != null &&
                             e.getCause().getClass().getCanonicalName().substring(0, e.getCause().getClass().getCanonicalName().lastIndexOf(DOT)).equals(JAVA_NETWORKING)) {
