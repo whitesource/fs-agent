@@ -118,18 +118,18 @@ public class ProjectsSender {
                     if (statusCode == StatusCode.SUCCESS) {
                         resultInfo = update(service, projects);
                     }
-                    retries = -1;
                 } catch (WssServiceException e) {
                     if (e.getCause() != null &&
                             e.getCause().getClass().getCanonicalName().substring(0, e.getCause().getClass().getCanonicalName().lastIndexOf(DOT)).equals(JAVA_NETWORKING)) {
                         statusCode = StatusCode.CONNECTION_FAILURE;
+                        logger.error("Trying " + (retries + 1) + " more time" + (retries != 0 ? "s" : ""));
                     } else {
                         statusCode = StatusCode.SERVER_FAILURE;
+                        retries = -1;
                     }
                     resultInfo = "Failed to send request to WhiteSource server: " + e.getMessage();
                     logger.error(resultInfo, e.getMessage());
                     logger.debug(resultInfo, e);
-                    logger.error("Trying " + (retries + 1) + " more time" + (retries != 0 ? "s" : ""));
                     if (retries > -1) {
                         try {
                             Thread.sleep(senderConfig.getConnectionRetriesIntervals());
@@ -286,7 +286,7 @@ public class ProjectsSender {
         logger.info("Generating offline update request");
 
         // generate offline request
-        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects,requestConfig.getUserKey());
+        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
 
         updateRequest.setRequesterEmail(requestConfig.getRequesterEmail());
         try {

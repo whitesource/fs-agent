@@ -108,7 +108,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
                 // check filename again (just in case)
                 if (!configFile.getName().equals(CommandLineArgs.CONFIG_FILE_NAME)) {
                     NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(configFile, this.nugetConfigFileType);
-                    Set<DependencyInfo> dependenciesFromSingleFile = parser.parsePackagesConfigFile(getDependenciesFromReferenceTag);
+                    Set<DependencyInfo> dependenciesFromSingleFile = parser.parsePackagesConfigFile(getDependenciesFromReferenceTag,configFilePath);
                     if (dependenciesFromSingleFile != null) {
                         dependencies.addAll(dependenciesFromSingleFile);
                     }
