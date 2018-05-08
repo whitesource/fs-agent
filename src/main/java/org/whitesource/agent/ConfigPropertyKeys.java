@@ -27,6 +27,7 @@ public final class ConfigPropertyKeys {
     public static final String FORCE_UPDATE = "forceUpdate";
     public static final String FORCE_CHECK_ALL_DEPENDENCIES = "forceCheckAllDependencies"; // optional
     public static final String ENABLE_IMPACT_ANALYSIS = "enableImpactAnalysis"; // optional
+    public static final String IA_LANGUAGE = "iaLanguage"; // optional
     public static final String CONNECTION_RETRIES = "connectionRetries";
     public static final String CONNECTION_RETRIES_INTERVALS = "connectionRetriesInterval";
     public static final String ORG_TOKEN_PROPERTY_KEY = "apiKey";
@@ -124,8 +125,8 @@ public final class ConfigPropertyKeys {
     public static final String PAKET_EXE_PATH = "paket.exePath";
 
     public static final String GO_RESOLVE_DEPENDENCIES = "go.resolveDependencies";
-    public static final String GO_IGNORE_SCRIPT_FILES = "go.ignoreGoScriptFiles";
     public static final String GO_DEPENDENCY_MANAGER = "go.dependencyManager";
+    public static final String GO_COLLECT_DEPENDENCIES_AT_RUNTIME = "go.collectDependenciesAtRuntime";
 
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 }

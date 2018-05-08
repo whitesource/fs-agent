@@ -112,9 +112,11 @@ public class DockerResolver {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("IO exception : ", e.getMessage());
+            logger.debug("IO exception : ", e.getStackTrace());
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.error("Interrupted exception : ", e.getMessage());
+            logger.debug("Interrupted exception : ", e.getStackTrace());
         } finally {
             if (process != null) {
                 process.destroy();

@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.ViaComponents;
 import org.whitesource.agent.FileSystemScanner;
+import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.docker.DockerResolver;
@@ -76,7 +77,8 @@ public class FileSystemAgent {
 
                 File file = new File(directory);
                 if (file.isDirectory()) {
-                    List<Path> directories = new FilesUtils().getSubDirectories(directory,this.config.getAgent().getIncludes(),config.getAgent().getExcludes(),config.getAgent().isFollowSymlinks(),config.getAgent().getGlobCaseSensitive());
+                    List<Path> directories = new FilesUtils().getSubDirectories(directory,this.config.getAgent().getIncludes(),config.getAgent().getExcludes(),
+                            config.getAgent().isFollowSymlinks(),config.getAgent().getGlobCaseSensitive());
                     directories.forEach(subDir -> this.dependencyDirs.add(subDir.toString()));
                 } else if (file.isFile()) {
                     this.dependencyDirs.add(directory);
@@ -109,7 +111,6 @@ public class FileSystemAgent {
                     String projectVersion = config.getRequest().getProjectVersion();
                     AgentProjectInfo projectInfo = projectsDetails.getProjects().stream().findFirst().get();
                     projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
-                    // TODO: 1. Check when via will support multi project
                     projects.getProjectToViaComponents().put(projectInfo, projectsDetails.getProjectToViaComponents().get(projectInfo));
                 }
                 // return on the first project that fails
@@ -204,7 +205,8 @@ public class FileSystemAgent {
             projects = new DockerResolver(config).resolveDockerImages();
             projectsDetails = new ProjectsDetails(projects, success[0], EMPTY_STRING);
         } else {
-            projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis())
+            ViaLanguage viaLanguage = getIaLanguage(config.getRequest().getIaLanguage());
+            projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis(), viaLanguage)
                     .createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnectors[0]);
             projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], EMPTY_STRING);
         }
@@ -219,6 +221,16 @@ public class FileSystemAgent {
             }
         });
         return projectsDetails;
+    }
+
+    private ViaLanguage getIaLanguage(String iaLanguage) {
+        ViaLanguage[] values = ViaLanguage.values();
+        for (ViaLanguage value : values) {
+            if (value.toString().equals(iaLanguage)) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private Pair<String, StatusCode> npmInstallScmRepository(boolean scmNpmInstall, int npmInstallTimeoutMinutes, ScmConnector scmConnector,

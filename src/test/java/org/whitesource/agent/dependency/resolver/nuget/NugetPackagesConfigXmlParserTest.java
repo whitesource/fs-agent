@@ -36,7 +36,7 @@ public class NugetPackagesConfigXmlParserTest {
 
         NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(xmlFile, NugetConfigFileType.CONFIG_FILE_TYPE);
 
-        Set<DependencyInfo> dependecnies = parser.parsePackagesConfigFile(false);
+        Set<DependencyInfo> dependecnies = parser.parsePackagesConfigFile(false, xmlFile.getAbsolutePath());
         Assert.assertNotNull("Object was deserialized", dependecnies);
         Assert.assertEquals(5, dependecnies.size());
     }

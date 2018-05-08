@@ -65,8 +65,8 @@ public class ResolverConfiguration {
             @JsonProperty(PAKET_EXE_PATH) String paketPath,
 
             @JsonProperty(GO_RESOLVE_DEPENDENCIES) boolean goResolveDependencies,
-            @JsonProperty(GO_IGNORE_SCRIPT_FILES) boolean goIgnoreScriptFiles,
-            @JsonProperty(GO_DEPENDENCY_MANAGER) String goDependencyManager) {
+            @JsonProperty(GO_DEPENDENCY_MANAGER) String goDependencyManager,
+            @JsonProperty(GO_COLLECT_DEPENDENCIES_AT_RUNTIME) boolean goCollectDependenciesAtRuntime) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmResolveDependencies = npmResolveDependencies;
         this.npmIncludeDevDependencies = npmIncludeDevDependencies;
@@ -104,10 +104,10 @@ public class ResolverConfiguration {
         this.paketPath = paketPath;
 
         this.goResolveDependencies = goResolveDependencies;
-        this.goIgnoreScriptFiles = goIgnoreScriptFiles;
         if (goDependencyManager != null && !goDependencyManager.isEmpty()) {
             this.goDependencyManager = GoDependencyManager.getFromType(goDependencyManager);
         }
+        this.goCollectDependenciesAtRuntime = goCollectDependenciesAtRuntime;
     }
 
     /* --- Members --- */
@@ -145,8 +145,8 @@ public class ResolverConfiguration {
     private String      paketPath;
 
     private boolean     goResolveDependencies;
-    private boolean     goIgnoreScriptFiles;
     private GoDependencyManager goDependencyManager;
+    private boolean goCollectDependenciesAtRuntime;
 
     /* --- Public getters --- */
 
@@ -289,11 +289,11 @@ public class ResolverConfiguration {
     @JsonProperty(GO_RESOLVE_DEPENDENCIES)
     public boolean isGoResolveDependencies() { return goResolveDependencies; }
 
-    @JsonProperty(GO_IGNORE_SCRIPT_FILES)
-    public boolean isGoIgnoreScriptFiles() {    return goIgnoreScriptFiles; }
-
     @JsonProperty(GO_DEPENDENCY_MANAGER)
     public GoDependencyManager getGoDependencyManager() {   return goDependencyManager; }
+
+    @JsonProperty(GO_COLLECT_DEPENDENCIES_AT_RUNTIME)
+    public boolean isGoCollectDependenciesAtRuntime() { return goCollectDependenciesAtRuntime; }
 
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {
         this.npmResolveDependencies = npmResolveDependencies;

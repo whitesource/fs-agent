@@ -35,7 +35,7 @@ import java.util.Set;
 /**
  * @author yossi.weinberg
  */
-public class NugetPackagesConfigXmlParser implements Serializable{
+public class NugetPackagesConfigXmlParser implements Serializable {
 
     /* --- Static members --- */
 
@@ -58,25 +58,26 @@ public class NugetPackagesConfigXmlParser implements Serializable{
 
     /**
      * Parse packages.config or csproj file
+     *
      * @param getDependenciesFromReferenceTag - flag to indicate weather to get dependencies form reference tag or not
      * @return Set of DependencyInfos
      */
-    public Set<DependencyInfo> parsePackagesConfigFile(boolean getDependenciesFromReferenceTag) {
+    public Set<DependencyInfo> parsePackagesConfigFile(boolean getDependenciesFromReferenceTag, String configFilePath) {
         Persister persister = new Persister();
         Set<DependencyInfo> dependencies = new HashSet<>();
         try {
             // case of packages.config file
             if (this.nugetConfigFileType == NugetConfigFileType.CONFIG_FILE_TYPE) {
-               NugetPackages packages = persister.read(NugetPackages.class, xml);
-               if (!getDependenciesFromReferenceTag) {
-                   dependencies.addAll(collectDependenciesFromNugetConfig(packages));
-               }
-               // case of csproj file
+                NugetPackages packages = persister.read(NugetPackages.class, xml);
+                if (!getDependenciesFromReferenceTag) {
+                    dependencies.addAll(collectDependenciesFromNugetConfig(packages, configFilePath));
+                }
+                // case of csproj file
             } else {
                 NugetCsprojPackages csprojPackages = persister.read(NugetCsprojPackages.class, xml);
                 NugetPackages packages = getNugetPackagesFromCsproj(csprojPackages);
                 if (!getDependenciesFromReferenceTag) {
-                    dependencies.addAll(collectDependenciesFromNugetConfig(packages));
+                    dependencies.addAll(collectDependenciesFromNugetConfig(packages, configFilePath));
                 }
                 dependencies.addAll(getDependenciesFromReferencesTag(csprojPackages));
             }
@@ -90,7 +91,7 @@ public class NugetPackagesConfigXmlParser implements Serializable{
     private NugetPackages getNugetPackagesFromCsproj(NugetCsprojPackages csprojPackages) {
         List<NugetPackage> nugetPackages = new LinkedList<>();
         for (NugetCsprojItemGroup csprojPackage : csprojPackages.getNugetItemGroups()) {
-            for(PackageReference packageReference : csprojPackage.getPackageReference()) {
+            for (PackageReference packageReference : csprojPackage.getPackageReference()) {
                 if (packageReference != null && packageReference.getPkgName() != null && packageReference.getPkgVersion() != null) {
                     nugetPackages.add(new NugetPackage(packageReference.getPkgName(), packageReference.getPkgVersion()));
                 }
@@ -125,7 +126,7 @@ public class NugetPackagesConfigXmlParser implements Serializable{
         return dependencies;
     }
 
-    private Set<DependencyInfo> collectDependenciesFromNugetConfig(NugetPackages configNugetPackage) {
+    private Set<DependencyInfo> collectDependenciesFromNugetConfig(NugetPackages configNugetPackage, String configFilePath) {
         Set<DependencyInfo> dependencies = new HashSet<>();
         List<NugetPackage> nugetPackages = configNugetPackage.getNugetPackages();
         if (nugetPackages != null) {
@@ -136,6 +137,7 @@ public class NugetPackagesConfigXmlParser implements Serializable{
                     dependency.setArtifactId(nugetPackage.getPkgName());
                     dependency.setVersion(nugetPackage.getPkgVersion());
                     dependency.setDependencyType(DependencyType.NUGET);
+                    dependency.setSystemPath(configFilePath);
                     dependencies.add(dependency);
                 }
             }

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.utils.Pair;
@@ -194,6 +195,24 @@ public class FSAConfiguration {
             }
         }
 
+        // validate iaLanguage
+        String iaLanguage = config.getProperty(ConfigPropertyKeys.IA_LANGUAGE);
+        boolean iaLanguageValid = false;
+        if (iaLanguage != null) {
+            for (ViaLanguage viaLanguage : ViaLanguage.values()) {
+                if (iaLanguage.equals(viaLanguage.toString())) {
+                    iaLanguageValid = true;
+                }
+            }
+            if (!iaLanguageValid) {
+                //todo move to debug mode after QA
+                errors.add("Error: VIA setting are not applicable parameters are not valid. exiting... ");
+            }
+            if (iaLanguageValid && !getBooleanProperty(config, ENABLE_IMPACT_ANALYSIS, false)) {
+                //todo move to debug mode after QA
+                errors.add("Error: VIA setting are not applicable parameters are not valid. exiting... ");
+            }
+        }
 
         // todo: check possibility to get the errors only in the end
         errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal, apiToken, configFilePath, archiveExtractionDepth, includes));
@@ -220,53 +239,53 @@ public class FSAConfiguration {
     private ResolverConfiguration getResolver(Properties config) {
 
         // todo split this in multiple configuration before release fsa as a service
-        boolean npmRunPreStep = FSAConfiguration.getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
-        boolean npmResolveDependencies = FSAConfiguration.getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
-        boolean npmIncludeDevDependencies = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
-        boolean npmIgnoreJavaScriptFiles = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
+        boolean npmRunPreStep               = FSAConfiguration.getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
+        boolean npmResolveDependencies      = FSAConfiguration.getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
+        boolean npmIncludeDevDependencies   = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
+        boolean npmIgnoreJavaScriptFiles    = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
         long npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
-        boolean npmIgnoreNpmLsErrors = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_NPM_LS_ERRORS, false);
-        String npmAccessToken = config.getProperty(NPM_ACCESS_TOKEN);
+        boolean npmIgnoreNpmLsErrors        = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_NPM_LS_ERRORS, false);
+        String npmAccessToken               = config.getProperty(NPM_ACCESS_TOKEN);
 
-        boolean bowerResolveDependencies = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
-        boolean bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
+        boolean bowerResolveDependencies    = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
+        boolean bowerRunPreStep             = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
 
-        boolean nugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
-        boolean nugetRestoreDependencies = FSAConfiguration.getBooleanProperty(config, NUGET_RESTORE_DEPENDENCIES, false);
+        boolean nugetResolveDependencies    = FSAConfiguration.getBooleanProperty(config, NUGET_RESOLVE_DEPENDENCIES, true);
+        boolean nugetRestoreDependencies    = FSAConfiguration.getBooleanProperty(config, NUGET_RESTORE_DEPENDENCIES, false);
 
-        boolean mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
-        String[] mavenIgnoredScopes = FSAConfiguration.getListProperty(config, MAVEN_IGNORED_SCOPES, null);
-        boolean mavenAggregateModules = FSAConfiguration.getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
+        boolean mavenResolveDependencies    = FSAConfiguration.getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
+        String[] mavenIgnoredScopes         = FSAConfiguration.getListProperty(config, MAVEN_IGNORED_SCOPES, null);
+        boolean mavenAggregateModules       = FSAConfiguration.getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
 
-        boolean dependenciesOnly = FSAConfiguration.getBooleanProperty(config, DEPENDENCIES_ONLY, false);
+        boolean dependenciesOnly            = FSAConfiguration.getBooleanProperty(config, DEPENDENCIES_ONLY, false);
 
-        String whitesourceConfiguration = config.getProperty(PROJECT_CONFIGURATION_PATH);
+        String whitesourceConfiguration     = config.getProperty(PROJECT_CONFIGURATION_PATH);
 
-        boolean pythonResolveDependencies = FSAConfiguration.getBooleanProperty(config, PYTHON_RESOLVE_DEPENDENCIES, true);
-        String pipPath = config.getProperty(PYTHON_PIP_PATH, PIP);
-        String pythonPath = config.getProperty(PYTHON_PATH, PYTHON);
-        boolean pythonIsWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, PYTHON_IS_WSS_PLUGIN_INSTALLED, false);
-        boolean pythonUninstallWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, PYTHON_UNINSTALL_WSS_PLUGIN, false);
+        boolean pythonResolveDependencies           = FSAConfiguration.getBooleanProperty(config, PYTHON_RESOLVE_DEPENDENCIES, true);
+        String pipPath                              = config.getProperty(PYTHON_PIP_PATH, PIP);
+        String pythonPath                           = config.getProperty(PYTHON_PATH, PYTHON);
+        boolean pythonIsWssPluginInstalled          = FSAConfiguration.getBooleanProperty(config, PYTHON_IS_WSS_PLUGIN_INSTALLED, false);
+        boolean pythonUninstallWssPluginInstalled   = FSAConfiguration.getBooleanProperty(config, PYTHON_UNINSTALL_WSS_PLUGIN, false);
 
-        boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, GRADLE_RESOLVE_DEPENDENCIES, true);
-        boolean gradleRunAssembleCommand = FSAConfiguration.getBooleanProperty(config, GRADLE_RUN_ASSEMBLE_COMMAND, true);
+        boolean gradleResolveDependencies   = FSAConfiguration.getBooleanProperty(config, GRADLE_RESOLVE_DEPENDENCIES, true);
+        boolean gradleRunAssembleCommand    = FSAConfiguration.getBooleanProperty(config, GRADLE_RUN_ASSEMBLE_COMMAND, true);
 
-        boolean paketResolveDependencies = FSAConfiguration.getBooleanProperty(config, PAKET_RESOLVE_DEPENDENCIES, true);
-        String[] paketIgnoredScopes = FSAConfiguration.getListProperty(config, PAKET_IGNORED_GROUPS, null);
-        boolean paketIgnoreFiles = FSAConfiguration.getBooleanProperty(config, PAKET_IGNORE_FILES, true);
-        boolean paketRunPreStep = FSAConfiguration.getBooleanProperty(config, PAKET_RUN_PRE_STEP, false);
-        String paketPath = config.getProperty(PAKET_EXE_PATH, null);
+        boolean paketResolveDependencies    = FSAConfiguration.getBooleanProperty(config, PAKET_RESOLVE_DEPENDENCIES, true);
+        String[] paketIgnoredScopes         = FSAConfiguration.getListProperty(config, PAKET_IGNORED_GROUPS, null);
+        boolean paketIgnoreFiles            = FSAConfiguration.getBooleanProperty(config, PAKET_IGNORE_FILES, true);
+        boolean paketRunPreStep             = FSAConfiguration.getBooleanProperty(config, PAKET_RUN_PRE_STEP, false);
+        String paketPath                    = config.getProperty(PAKET_EXE_PATH, null);
 
-        boolean goResolveDependencies = FSAConfiguration.getBooleanProperty(config, GO_RESOLVE_DEPENDENCIES, true);
-        boolean goIgnoreSciprtFiles = FSAConfiguration.getBooleanProperty(config, GO_IGNORE_SCRIPT_FILES, true);
-        String goDependencyManager = config.getProperty(GO_DEPENDENCY_MANAGER, EMPTY_STRING);
+        boolean goResolveDependencies           = FSAConfiguration.getBooleanProperty(config, GO_RESOLVE_DEPENDENCIES, true);
+        String goDependencyManager              = config.getProperty(GO_DEPENDENCY_MANAGER, EMPTY_STRING);
+        boolean goCollectDependenciesAtRuntime  = FSAConfiguration.getBooleanProperty(config, GO_COLLECT_DEPENDENCIES_AT_RUNTIME, false);
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
-                goResolveDependencies,goIgnoreSciprtFiles, goDependencyManager);
+                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken,String userKey, String projectName, String projectToken) {
@@ -275,13 +294,14 @@ public class FSAConfiguration {
         String productVersion = config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
         String projectVersion = config.getProperty(PROJECT_VERSION_PROPERTY_KEY);
         List<String> appPath = (List<String>) config.get(ConfigPropertyKeys.APP_PATH);
+        String iaLanguage = config.getProperty(ConfigPropertyKeys.IA_LANGUAGE, null);
         String viaDebug = config.getProperty(VIA_DEBUG, BLANK);
         boolean projectPerSubFolder = getBooleanProperty(config, PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(REQUESTER_EMAIL);
 
         int viaAnalysis = getIntProperty(config, VIA_ANALYSIS_LEVEL, VIA_DEFAULT_ANALYSIS_LEVEL);
         return new RequestConfiguration(apiToken, userKey, requesterEmail, projectPerSubFolder, projectName, projectToken,
-                projectVersion, productName, productToken, productVersion, appPath,viaDebug,viaAnalysis);
+                projectVersion, productName, productToken, productVersion, appPath, viaDebug, viaAnalysis, iaLanguage);
     }
 
     private SenderConfiguration getSender(Properties config) {
@@ -607,6 +627,7 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.VIA_DEBUG, commandLineArgs.viaDebug);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.VIA_ANALYSIS_LEVEL, commandLineArgs.viaLevel);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, commandLineArgs.enableImpactAnalysis);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.IA_LANGUAGE, commandLineArgs.iaLanguage);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.X_PATHS, commandLineArgs.xPaths);
         // proxy
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);
