@@ -23,6 +23,7 @@ import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.archive.ArchiveExtractor;
+import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.FilesUtils;
@@ -307,7 +308,10 @@ public class FileSystemScanner {
             // create new projects if necessary
             if (!isDependenciesOnly && filesDependencies.size() > 0) {
                 scannerBaseDirs.stream().forEach(directory -> {
-                    List<Path> subDirectories = new FilesUtils().getSubDirectories(directory, includes, excludesExtended, followSymlinks, globCaseSensitive);
+                    List<Path> subDirectories;
+                    // check all folders
+                    String[] includesAll = {AbstractDependencyResolver.PATTERN};
+                    subDirectories = new FilesUtils().getSubDirectories(directory, includesAll, null, followSymlinks, globCaseSensitive);
                     subDirectories.forEach(subFolder -> {
                         if (filesDependencies.size() > 0) {
                             List<DependencyInfo> projectDependencies = filesDependencies.stream().
