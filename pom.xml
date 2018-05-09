@@ -147,12 +147,6 @@
             <version>0.0.21</version>
          </dependency>
 
-        <dependency>
-            <groupId>guru.nidi</groupId>
-            <artifactId>graphviz-java</artifactId>
-            <version>0.2.3</version>
-        </dependency>
-
         <!-- LZMA -->
         <dependency>
             <groupId>org.apache.commons</groupId>
