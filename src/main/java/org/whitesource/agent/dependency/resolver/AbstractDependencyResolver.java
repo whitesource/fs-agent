@@ -31,6 +31,7 @@ public abstract class AbstractDependencyResolver {
 
     /* --- Static Members --- */
 
+    public static final String PATTERN = "**/*";
     private static final String BACK_SLASH = "\\";
     protected static final String FORWARD_SLASH = "/";
     private static final String EMPTY_STRING = "";

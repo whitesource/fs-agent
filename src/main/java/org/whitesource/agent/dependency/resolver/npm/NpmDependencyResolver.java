@@ -59,7 +59,6 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private static final String TYPE_SCRIPT_EXTENSION = ".ts";
     private static final String TSX_EXTENSION = ".tsx";
     private static final String JS_PATTERN = "**/*.js";
-    private static final String PATTERN = "**/*";
     private static final String EXAMPLE = "**/example/**/";
     private static final String EXAMPLES = "**/examples/**/";
     private static final String WS_BOWER_FOLDER = "**/.ws_bower/**/";
