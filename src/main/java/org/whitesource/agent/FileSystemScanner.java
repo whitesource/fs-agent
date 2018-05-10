@@ -198,8 +198,10 @@ public class FileSystemScanner {
         if(enableImpactAnalysis && iaLanguage != null) {
             for (String appPath : appPathsToDependencyDirs.keySet()) {
                 if (!appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
-                    String pojoAppPath = ((HashSet<String>) appPathsToDependencyDirs.get(appPath)).iterator().next();
-                    allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(new ViaComponents(pojoAppPath, iaLanguage));
+                    if (((HashSet<String>) appPathsToDependencyDirs.get(appPath)).iterator().next() != null) {
+                        String pojoAppPath = appPath;
+                        allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(new ViaComponents(pojoAppPath, iaLanguage));
+                    }
                 }
             }
         } else if (dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies(allFiles)) {
@@ -292,8 +294,7 @@ public class FileSystemScanner {
                 excludes = new String[allExcludes.size()];
                 excludes = allExcludes.toArray(excludes);
                 dependencyResolutionService = null;
-            }
-
+        }
 
         String[] excludesExtended = excludeFileSystemAgent(excludes);
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
@@ -379,9 +380,14 @@ public class FileSystemScanner {
            }}
         }
         logger.info("Finished Analyzing Files");
-
         systemStats = MemoryUsageHelper.getMemoryUsage();
         logger.debug(systemStats.toString());
+        // add dependencies to project in case of pojo project
+        if(enableImpactAnalysis && iaLanguage != null) {
+            AgentProjectInfo agentProjectInfo = allProjectsToViaComponents.keySet().iterator().next();
+            allProjectsToViaComponents.get(agentProjectInfo).getFirst().getDependencies().addAll(
+                    agentProjectInfo.getDependencies());
+        }
         return allProjectsToViaComponents;
     }
 
