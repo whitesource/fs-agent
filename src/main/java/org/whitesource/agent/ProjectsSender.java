@@ -163,7 +163,6 @@ public class ProjectsSender {
             Method getAnalysisMethod
                     = vulnerabilitiesAnalysisClass.getMethod("getAnalysis", String.class, int.class);
             Object vulnerabilitiesAnalysis = null;
-
             for (AgentProjectInfo project : projectsDetails.getProjectToViaComponents().keySet()) {
                 // check language for scan according to user file
                 LinkedList<ViaComponents> viaComponentsList = projectsDetails.getProjectToViaComponents().get(project);
