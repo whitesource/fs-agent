@@ -160,7 +160,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         String error = "";
         if (goPkgLock.isFile()){
             if (goCli.runCmd(rootDirectory,goCli.getGoCommandParams(GoCli.GO_ENSURE, GoDependencyManager.DEP)) == false) {
-                logger.error("Can't run 'dep ensure' command, output might be outdated.  Run the 'dep ensure' command manually.");
+                logger.warn("Can't run 'dep ensure' command, output might be outdated.  Run the 'dep ensure' command manually.");
             }
             dependencyInfos.addAll(parseGopckLock(goPkgLock));
         } else if (collectDependenciesAtRuntime) {
