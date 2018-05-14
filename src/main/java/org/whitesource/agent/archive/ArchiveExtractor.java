@@ -436,7 +436,6 @@ public class ArchiveExtractor {
             XZUnArchiver XZUnArchiver = new XZUnArchiver();
             XZUnArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
             XZUnArchiver.setSourceFile(new File(archiveFile.getPath()));
-
             File destFile = new File(archiveFile.getParent() + filename);
             XZUnArchiver.setDestFile(destFile);
             XZUnArchiver.extract();
