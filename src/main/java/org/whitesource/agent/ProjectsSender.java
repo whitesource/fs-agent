@@ -177,7 +177,7 @@ public class ProjectsSender {
                             int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
                             appPath = appPath.substring(0, lastIndex);
                         }
-
+                        // run vulnerabilitiesAnalysis
                         if (vulnerabilitiesAnalysis != null) {
                             AgentProjectInfo projectToServer = new AgentProjectInfo();
                             projectToServer.setDependencies(viaComponents.getDependencies());
@@ -208,7 +208,6 @@ public class ProjectsSender {
             logger.error("Failed to run VIA impact analysis, couldn't find class {}", e.getMessage());
         }
     }
-
 
     private void checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
         int numberOfDependencies = projects.stream().map(x -> x.getDependencies()).mapToInt(x -> x.size()).sum();
