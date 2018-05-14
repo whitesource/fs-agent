@@ -187,8 +187,8 @@ public class ProjectsSender {
                             projectToServer.setProjectSetupStatus(project.getProjectSetupStatus());
                             projectToServer.setParentCoordinates(project.getParentCoordinates());
                             Class<?> fsaAgentServerClass = Class.forName("whitesource.analysis.server.FSAgentServer");
-                            Object server = fsaAgentServerClass.getConstructor(AgentProjectInfo.class, WhitesourceService.class, String.class).newInstance(
-                                    projectToServer, service, requestConfig.getApiToken());
+                            Object server = fsaAgentServerClass.getConstructor(AgentProjectInfo.class, WhitesourceService.class, String.class, String.class).newInstance(
+                                    projectToServer, service, requestConfig.getApiToken(), requestConfig.getUserKey());
                             logger.info("Starting analysis for: {}", appPath);
                             Class<?> serverClass = Class.forName("whitesource.analysis.server.Server");
                             Method runAnalysis = vulnerabilitiesAnalysisClass.getDeclaredMethod("runAnalysis", serverClass, String.class, Collection.class, Boolean.class);
