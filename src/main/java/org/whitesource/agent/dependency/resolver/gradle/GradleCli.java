@@ -3,22 +3,21 @@ package org.whitesource.agent.dependency.resolver.gradle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
+import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.CommandLineProcess;
 
 import java.io.IOException;
 import java.util.List;
 
-class GradleCli {
+class GradleCli extends Cli {
     private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.gradle.GradleCli.class);
 
-    private final String CMD = "cmd";
-    private final String C_CHAR_WINDOWS = "/c";
     protected static final String GRADLE_PARAMS_TREE = "dependencies";
     protected static final String GRADLE_ASSEMBLE = "assemble";
     private final String GRADLE_COMMAND = "gradle";
     private final String GRADLE_COMMAND_W = "gradlew";
 
-    protected List<String> runCmd(String rootDirectory, String[] params){
+    public List<String> runCmd(String rootDirectory, String[] params){
         try {
             // run gradle dependencies to get dependency tree
             CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, params);
@@ -47,11 +46,7 @@ class GradleCli {
     }
 
     protected String[] getGradleCommandParams(MvnCommand command){
-        if (DependencyCollector.isWindows()) {
-            return new String[] {CMD, C_CHAR_WINDOWS, GRADLE_COMMAND, command.name()};
-        } else {
-            return new String[] {GRADLE_COMMAND, command.name()};
-        }
+        return super.getCommandParams(GRADLE_COMMAND,command.name());
     }
 }
 

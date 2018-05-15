@@ -84,6 +84,8 @@ public class DependencyResolutionService {
 
         final boolean goResolveDependencies = config.isGoResolveDependencies();
 
+        final boolean rubyResolveDependencies = config.isRubyResolveDependencies();
+
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
@@ -117,6 +119,10 @@ public class DependencyResolutionService {
 
         if (goResolveDependencies){
             dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), config.isDependenciesOnly()));
+        }
+
+        if (rubyResolveDependencies){
+
         }
     }
 
@@ -165,6 +171,7 @@ public class DependencyResolutionService {
 
         topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
+                logger.info("topFolder = " + topFolder);
                 ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
                 resolutionResults.add(result);
             });
