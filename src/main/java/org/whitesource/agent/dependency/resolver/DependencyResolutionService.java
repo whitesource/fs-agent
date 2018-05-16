@@ -27,6 +27,7 @@ import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
 import org.whitesource.agent.dependency.resolver.paket.PaketDependencyResolver;
 import org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver;
+import org.whitesource.agent.dependency.resolver.ruby.RubyDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
@@ -122,7 +123,7 @@ public class DependencyResolutionService {
         }
 
         if (rubyResolveDependencies){
-
+            dependencyResolvers.add(new RubyDependencyResolver());
         }
     }
 

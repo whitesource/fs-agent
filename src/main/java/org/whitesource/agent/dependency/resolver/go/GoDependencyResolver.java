@@ -133,9 +133,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         if (error != null){
             logger.error(error);
         }
-        //TEMP
-        //if (collectDependenciesAtRuntime)
-        //    removeTempFiles(rootDirectory, creationTime);
+
+        if (collectDependenciesAtRuntime)
+            removeTempFiles(rootDirectory, creationTime);
         return dependencyInfos;
     }
 
@@ -163,12 +163,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         File goPkgLock = new File(rootDirectory + fileSeparator + GOPKG_LOCK);
         String error = "";
         if (goPkgLock.isFile()){
-            if (cli.runCmd(rootDirectory, cli.getCommandParams(GO_ENSURE, GoDependencyManager.DEP.getType())) == null) {
+            if (cli.runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.DEP.getType(), GO_ENSURE)) == null) {
                 logger.warn("Can't run 'dep ensure' command, output might be outdated.  Run the 'dep ensure' command manually.");
             }
             dependencyInfos.addAll(parseGopckLock(goPkgLock));
         } else if (collectDependenciesAtRuntime) {
-            if (cli.runCmd(rootDirectory, cli.getCommandParams(GO_INIT, GoDependencyManager.DEP.getType()))!= null) {
+            if (cli.runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.DEP.getType(), GO_INIT))!= null) {
                 dependencyInfos.addAll(parseGopckLock(goPkgLock));
             } else {
                 error = "Can't run 'dep status' command.  Make sure 'dep is installed and run the 'dep status' command manually.";
@@ -272,11 +272,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'godep'");
-        logger.info("fileSeparator = " + fileSeparator);
-        logger.info("rootDirectory = " + rootDirectory);
-        File goDepJson = new File(rootDirectory + fileSeparator + "GoDeps" + fileSeparator +  GODEPS_JSON);
-        logger.info("path = " + goDepJson.getPath());
-        if (goDepJson.isFile() || (collectDependenciesAtRuntime && cli.runCmd(rootDirectory, cli.getCommandParams(GO_SAVE, GoDependencyManager.GO_DEP.getType())) != null)){
+        File goDepJson = new File(rootDirectory + fileSeparator + "Godeps" + fileSeparator +  GODEPS_JSON);
+        if (goDepJson.isFile() || (collectDependenciesAtRuntime && cli.runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GO_DEP.getType(), GO_SAVE)) != null)){
             dependencyInfos.addAll(parseGoDeps(goDepJson));
         } else {
             throw new Exception("Can't find " + GODEPS_JSON + " file.  Please make sure 'godep' is installed and run 'godep save' command");
@@ -284,7 +281,6 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     }
 
     private List<DependencyInfo> parseGoDeps(File goDeps) throws IOException {
-        logger.debug("parsing godep file {}, found = {}", goDeps.getPath(),goDeps.isFile());
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
         JsonParser parser = new JsonParser();
         FileReader fileReader = null;
@@ -336,7 +332,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'vndr'");
         File vndrConf = new File(rootDirectory + fileSeparator + VNDR_CONF);
-        if (vndrConf.isFile() || (collectDependenciesAtRuntime && cli.runCmd(rootDirectory, cli.getCommandParams(GO_INIT, GoDependencyManager.VNDR.getType())) != null)) {
+        if (vndrConf.isFile() || (collectDependenciesAtRuntime && cli.runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.VNDR.getType(), GO_INIT)) != null)) {
             dependencyInfos.addAll(parseVendorConf(vndrConf));
         } else {
             throw new Exception("Can't find " + VNDR_CONF + " file.  Please make sure 'vndr' is installed and run 'vndr init' command");
