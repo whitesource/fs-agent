@@ -291,7 +291,7 @@ public class FSAConfiguration {
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
-                dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
+                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies);
     }
 
