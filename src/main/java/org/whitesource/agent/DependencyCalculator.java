@@ -43,7 +43,6 @@ public class DependencyCalculator {
                     }
                     allDependencies.add(originalDependencyInfo);
                 }
-
                 if (showProgressBar) {
                     displayProgress(index, totalFiles);
                 }

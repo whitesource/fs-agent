@@ -177,7 +177,7 @@ public class ProjectsSender {
                             int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
                             appPath = appPath.substring(0, lastIndex);
                         }
-
+                        // run vulnerabilitiesAnalysis
                         if (vulnerabilitiesAnalysis != null) {
                             AgentProjectInfo projectToServer = new AgentProjectInfo();
                             projectToServer.setDependencies(viaComponents.getDependencies());
@@ -187,8 +187,8 @@ public class ProjectsSender {
                             projectToServer.setProjectSetupStatus(project.getProjectSetupStatus());
                             projectToServer.setParentCoordinates(project.getParentCoordinates());
                             Class<?> fsaAgentServerClass = Class.forName("whitesource.analysis.server.FSAgentServer");
-                            Object server = fsaAgentServerClass.getConstructor(AgentProjectInfo.class, WhitesourceService.class, String.class).newInstance(
-                                    projectToServer, service, requestConfig.getApiToken());
+                            Object server = fsaAgentServerClass.getConstructor(AgentProjectInfo.class, WhitesourceService.class, String.class, String.class).newInstance(
+                                    projectToServer, service, requestConfig.getApiToken(), requestConfig.getUserKey());
                             logger.info("Starting analysis for: {}", appPath);
                             Class<?> serverClass = Class.forName("whitesource.analysis.server.Server");
                             Method runAnalysis = vulnerabilitiesAnalysisClass.getDeclaredMethod("runAnalysis", serverClass, String.class, Collection.class, Boolean.class);
@@ -208,7 +208,6 @@ public class ProjectsSender {
             logger.error("Failed to run VIA impact analysis, couldn't find class {}", e.getMessage());
         }
     }
-
 
     private void checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
         int numberOfDependencies = projects.stream().map(x -> x.getDependencies()).mapToInt(x -> x.size()).sum();

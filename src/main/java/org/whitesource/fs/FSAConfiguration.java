@@ -162,6 +162,11 @@ public class FSAConfiguration {
         scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);
         scanDockerImages = getBooleanProperty(config,SCAN_DOCKER_IMAGES,false);
 
+        // validate scanned folder
+        if (dependencyDirs.isEmpty()) {
+            dependencyDirs.add(".");
+        }
+
         // validate config
         String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
         String projectNameFinal = !StringUtils.isBlank(projectName) ? projectName : config.getProperty(PROJECT_NAME_PROPERTY_KEY);
@@ -259,7 +264,7 @@ public class FSAConfiguration {
 
         boolean dependenciesOnly            = FSAConfiguration.getBooleanProperty(config, DEPENDENCIES_ONLY, false);
 
-        String whitesourceConfiguration     = config.getProperty(PROJECT_CONFIGURATION_PATH);
+        String whiteSourceConfiguration     = config.getProperty(PROJECT_CONFIGURATION_PATH);
 
         boolean pythonResolveDependencies           = FSAConfiguration.getBooleanProperty(config, PYTHON_RESOLVE_DEPENDENCIES, true);
         String pipPath                              = config.getProperty(PYTHON_PIP_PATH, PIP);
