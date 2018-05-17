@@ -30,7 +30,7 @@ public class ConfigurationValidation {
     private static final int MAX_EXTRACTION_DEPTH = 7;
 
     public List<String> getConfigurationErrors(boolean projectPerFolder, String configProjectToken, String configProjectName, String configApiToken, String configFilePath,
-                                               int archiveDepth, String[] includes) {
+                                               int archiveDepth, String[] includes, String[] projectPerFolderIncludes) {
         List<String> errors = new ArrayList<>();
 
         if (StringUtils.isBlank(configApiToken)) {
@@ -54,6 +54,10 @@ public class ConfigurationValidation {
         }
         if (includes.length < 1 || StringUtils.isBlank(includes[0])) {
             errors.add("Error: includes parameter must have at list one scanning pattern");
+        }
+
+        if (projectPerFolder && projectPerFolderIncludes == null) {
+            errors.add("projectPerFolderIncludes parameter is empty, specify folders to include or mark as comment to scan all folders");
         }
 
         return errors;

@@ -74,11 +74,10 @@ public class FileSystemAgent {
         if (projectPerSubFolder) {
             this.dependencyDirs = new LinkedList<>();
             for (String directory : dependencyDirs) {
-
                 File file = new File(directory);
                 if (file.isDirectory()) {
-                    List<Path> directories = new FilesUtils().getSubDirectories(directory,this.config.getAgent().getIncludes(),config.getAgent().getExcludes(),
-                            config.getAgent().isFollowSymlinks(),config.getAgent().getGlobCaseSensitive());
+                    List<Path> directories = new FilesUtils().getSubDirectories(directory, config.getAgent().getProjectPerFolderIncludes(),
+                            config.getAgent().getProjectPerFolderExcludes(), config.getAgent().isFollowSymlinks(), config.getAgent().getGlobCaseSensitive());
                     directories.forEach(subDir -> this.dependencyDirs.add(subDir.toString()));
                 } else if (file.isFile()) {
                     this.dependencyDirs.add(directory);
