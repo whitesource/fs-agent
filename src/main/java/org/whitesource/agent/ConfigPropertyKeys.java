@@ -104,6 +104,8 @@ public final class ConfigPropertyKeys {
     public static final String MAVEN_AGGREGATE_MODULES = "maven.aggregateModules";
     public static final String DEPENDENCIES_ONLY = "dependenciesOnly";
     public static final String PROJECT_PER_SUBFOLDER = "projectPerFolder";
+    public static final String PROJECT_PER_FOLDER_INCLUDES = "projectPerFolderIncludes";
+    public static final String PROJECT_PER_FOLDER_EXCLUDES = "projectPerFolderExcludes";
     public static final String UPDATE_TYPE = "updateType";
     public static final String PROJECT_CONFIGURATION_PATH = "configFilePath";
     public static final String SCAN_PACKAGE_MANAGER = "scanPackageManager";
@@ -127,6 +129,8 @@ public final class ConfigPropertyKeys {
     public static final String GO_RESOLVE_DEPENDENCIES = "go.resolveDependencies";
     public static final String GO_DEPENDENCY_MANAGER = "go.dependencyManager";
     public static final String GO_COLLECT_DEPENDENCIES_AT_RUNTIME = "go.collectDependenciesAtRuntime";
+
+    public static final String RUBY_RESOLVE_DEPENDENCIES = "ruby.resolveDependencies";
 
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 }

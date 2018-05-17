@@ -4,7 +4,7 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>18.4.2-SNAPSHOT</version>
+    <version>18.5.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>White Source File System Agent</name>
@@ -13,7 +13,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <agent.api.version>2.6.8</agent.api.version>
+        <agent.api.version>2.6.9</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
         <skipTests>true</skipTests>
     </properties>
@@ -144,14 +144,8 @@
         <dependency>
             <groupId>org.whitesource.analysis</groupId>
             <artifactId>whitesource-analysis-via</artifactId>
-            <version>0.0.21</version>
+            <version>0.0.22</version>
          </dependency>
-
-        <dependency>
-            <groupId>guru.nidi</groupId>
-            <artifactId>graphviz-java</artifactId>
-            <version>0.2.3</version>
-        </dependency>
 
         <!-- LZMA -->
         <dependency>

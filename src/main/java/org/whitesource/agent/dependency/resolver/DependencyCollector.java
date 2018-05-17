@@ -27,6 +27,8 @@ public abstract class DependencyCollector {
 
     private static final String OS_NAME = "os.name";
     private static final String WINDOWS = "win";
+    public static final String CMD = "cmd";
+    public static final String C_CHAR_WINDOWS = "/c";
 
     protected abstract Collection<AgentProjectInfo> collectDependencies(String folder);
 

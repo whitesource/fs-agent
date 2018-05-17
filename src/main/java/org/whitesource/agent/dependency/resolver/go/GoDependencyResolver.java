@@ -11,6 +11,7 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
+import org.whitesource.agent.utils.Cli;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -32,23 +33,25 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final String REVISION        = "revision = ";
     private static final String PACKAGES        = "packages = ";
     private static final String BRACKET         = "]";
-    private static final String ASTRIX          = "*";
     private static final String DOT =           ".";
 
     private static final String GOPKG_LOCK      = "Gopkg.lock";
     private static final String GODEPS_JSON     = "Godeps.json";
     private static final String VNDR_CONF       = "vendor.conf";
     private static final String GO_EXTENTION    = ".go";
+    private static final String GO_ENSURE       = "ensure";
+    private static final String GO_INIT         = "init";
+    private static final String GO_SAVE         = "save";
     private static final List<String> GO_SCRIPT_EXTENSION = Arrays.asList(".lock", ".json", GO_EXTENTION);
 
-    private GoCli goCli;
+    private Cli cli;
     private GoDependencyManager goDependencyManager;
     private boolean collectDependenciesAtRuntime;
     private boolean isDependenciesOnly;
 
     public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean isDependenciesOnly){
         super();
-        this.goCli = new GoCli();
+        this.cli = new Cli();
         this.goDependencyManager = goDependencyManager;
         this.collectDependenciesAtRuntime = collectDependenciesAtRuntime;
         this.isDependenciesOnly = isDependenciesOnly;
@@ -64,7 +67,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
         if (!collectDependenciesAtRuntime && goDependencyManager != null && isDependenciesOnly){
-            excludes.add(GLOB_PATTERN + ASTRIX + GO_EXTENTION);
+            excludes.add(PATTERN + GO_EXTENTION);
         }
         return excludes;
     }
@@ -82,16 +85,16 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected String getBomPattern() {
         if (collectDependenciesAtRuntime || goDependencyManager == null) {
-            return GLOB_PATTERN + ASTRIX + GO_EXTENTION;
+            return PATTERN + GO_EXTENTION;
         }
         if (goDependencyManager != null) {
             switch (goDependencyManager) {
                 case DEP:
-                    return GLOB_PATTERN + ASTRIX + GOPKG_LOCK;
+                    return PATTERN + GOPKG_LOCK;
                 case GO_DEP:
-                    return GLOB_PATTERN + ASTRIX + GODEPS_JSON;
+                    return PATTERN + GODEPS_JSON;
                 case VNDR:
-                    return GLOB_PATTERN + ASTRIX + VNDR_CONF;
+                    return PATTERN + VNDR_CONF;
             }
         }
         return "";
@@ -130,6 +133,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         if (error != null){
             logger.error(error);
         }
+
         if (collectDependenciesAtRuntime)
             removeTempFiles(rootDirectory, creationTime);
         return dependencyInfos;
@@ -159,12 +163,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         File goPkgLock = new File(rootDirectory + fileSeparator + GOPKG_LOCK);
         String error = "";
         if (goPkgLock.isFile()){
-            if (goCli.runCmd(rootDirectory,goCli.getGoCommandParams(GoCli.GO_ENSURE, GoDependencyManager.DEP)) == false) {
-                logger.error("Can't run 'dep ensure' command, output might be outdated.  Run the 'dep ensure' command manually.");
+            if (cli.runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.DEP.getType(), GO_ENSURE)) == null) {
+                logger.warn("Can't run 'dep ensure' command, output might be outdated.  Run the 'dep ensure' command manually.");
             }
             dependencyInfos.addAll(parseGopckLock(goPkgLock));
         } else if (collectDependenciesAtRuntime) {
-            if (goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_INIT, GoDependencyManager.DEP))) {
+            if (cli.runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.DEP.getType(), GO_INIT))!= null) {
                 dependencyInfos.addAll(parseGopckLock(goPkgLock));
             } else {
                 error = "Can't run 'dep status' command.  Make sure 'dep is installed and run the 'dep status' command manually.";
@@ -268,8 +272,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'godep'");
-        File goDepJson = new File(rootDirectory + fileSeparator + "GoDeps" + fileSeparator +  GODEPS_JSON);
-        if (goDepJson.isFile() || (collectDependenciesAtRuntime && goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_SAVE, GoDependencyManager.GO_DEP)))){
+        File goDepJson = new File(rootDirectory + fileSeparator + "Godeps" + fileSeparator +  GODEPS_JSON);
+        if (goDepJson.isFile() || (collectDependenciesAtRuntime && cli.runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GO_DEP.getType(), GO_SAVE)) != null)){
             dependencyInfos.addAll(parseGoDeps(goDepJson));
         } else {
             throw new Exception("Can't find " + GODEPS_JSON + " file.  Please make sure 'godep' is installed and run 'godep save' command");
@@ -328,7 +332,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'vndr'");
         File vndrConf = new File(rootDirectory + fileSeparator + VNDR_CONF);
-        if (vndrConf.isFile() || (collectDependenciesAtRuntime && goCli.runCmd(rootDirectory, goCli.getGoCommandParams(GoCli.GO_INIT, GoDependencyManager.VNDR)))) {
+        if (vndrConf.isFile() || (collectDependenciesAtRuntime && cli.runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.VNDR.getType(), GO_INIT)) != null)) {
             dependencyInfos.addAll(parseVendorConf(vndrConf));
         } else {
             throw new Exception("Can't find " + VNDR_CONF + " file.  Please make sure 'vndr' is installed and run 'vndr init' command");

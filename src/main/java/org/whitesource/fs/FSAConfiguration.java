@@ -49,6 +49,7 @@ public class FSAConfiguration {
     public static final String DEFAULT_KEY = "defaultKey";
     public static final String APP_PATH = "-appPath";
     public static final String D_PARAMETER = "-d";
+    public static final String EMPTY_STRING = "";
 
     /* --- Static members --- */
 
@@ -162,6 +163,11 @@ public class FSAConfiguration {
         scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);
         scanDockerImages = getBooleanProperty(config,SCAN_DOCKER_IMAGES,false);
 
+        // validate scanned folder
+        if (dependencyDirs.isEmpty()) {
+            dependencyDirs.add(".");
+        }
+
         // validate config
         String projectToken = config.getProperty(PROJECT_TOKEN_PROPERTY_KEY);
         String projectNameFinal = !StringUtils.isBlank(projectName) ? projectName : config.getProperty(PROJECT_NAME_PROPERTY_KEY);
@@ -170,6 +176,7 @@ public class FSAConfiguration {
         String userKey = config.getProperty(USER_KEY_PROPERTY_KEY);
         int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(config);
         String[] includes = FSAConfiguration.getIncludes(config);
+        String[] projectPerFolderIncludes = FSAConfiguration.getProjectPerFolderIncludes(config);
 
         String[] argsForAppPathAndDirs = args;
         if (StringUtils.isNotEmpty(config.getProperty(X_PATHS))) {
@@ -215,7 +222,7 @@ public class FSAConfiguration {
         }
 
         // todo: check possibility to get the errors only in the end
-        errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal, apiToken, configFilePath, archiveExtractionDepth, includes));
+        errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal, apiToken, configFilePath, archiveExtractionDepth, includes, projectPerFolderIncludes));
 
         logLevel = config.getProperty(LOG_LEVEL_KEY, INFO);
 
@@ -259,7 +266,7 @@ public class FSAConfiguration {
 
         boolean dependenciesOnly            = FSAConfiguration.getBooleanProperty(config, DEPENDENCIES_ONLY, false);
 
-        String whitesourceConfiguration     = config.getProperty(PROJECT_CONFIGURATION_PATH);
+        String whiteSourceConfiguration     = config.getProperty(PROJECT_CONFIGURATION_PATH);
 
         boolean pythonResolveDependencies           = FSAConfiguration.getBooleanProperty(config, PYTHON_RESOLVE_DEPENDENCIES, true);
         String pipPath                              = config.getProperty(PYTHON_PIP_PATH, PIP);
@@ -277,15 +284,17 @@ public class FSAConfiguration {
         String paketPath                    = config.getProperty(PAKET_EXE_PATH, null);
 
         boolean goResolveDependencies           = FSAConfiguration.getBooleanProperty(config, GO_RESOLVE_DEPENDENCIES, true);
-        String goDependencyManager              = config.getProperty(GO_DEPENDENCY_MANAGER, EMPTY_STRING);
+        String goDependencyManager              = config.getProperty(GO_DEPENDENCY_MANAGER, FileSystemAgent.EMPTY_STRING);
         boolean goCollectDependenciesAtRuntime  = FSAConfiguration.getBooleanProperty(config, GO_COLLECT_DEPENDENCIES_AT_RUNTIME, false);
+
+        boolean rubyResolveDependencies         = FSAConfiguration.getBooleanProperty(config, RUBY_RESOLVE_DEPENDENCIES, true);
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
-                dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
-                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime);
+                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
+                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken,String userKey, String projectName, String projectToken) {
@@ -344,12 +353,14 @@ public class FSAConfiguration {
 
     private AgentConfiguration getAgent(Properties config) {
         String[] includes = FSAConfiguration.getIncludes(config);
-        String[] excludes = config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String[] excludes = config.getProperty(EXCLUDES_PATTERN_PROPERTY_KEY, FileSystemAgent.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         String[] dockerIncludes = FSAConfiguration.getDockerIncludes(config);
-        String[] dockerExcludes = config.getProperty(DOCKER_EXCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String[] dockerExcludes = config.getProperty(DOCKER_EXCLUDES_PATTERN_PROPERTY_KEY, FileSystemAgent.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String[] projectPerFolderIncludes = getProjectPerFolderIncludes(config);
+        String[] projectPerFolderExcludes = getProjectPerFolderExcludes(config);
         int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(config);
-        String[] archiveIncludes = config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        String[] archiveExcludes = config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String[] archiveIncludes = config.getProperty(ARCHIVE_INCLUDES_PATTERN_KEY, FileSystemAgent.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String[] archiveExcludes = config.getProperty(ARCHIVE_EXCLUDES_PATTERN_KEY, FileSystemAgent.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         boolean archiveFastUnpack = FSAConfiguration.getBooleanProperty(config, ARCHIVE_FAST_UNPACK_KEY, false);
         boolean archiveFollowSymbolicLinks = FSAConfiguration.getBooleanProperty(config, FOLLOW_SYMBOLIC_LINKS, true);
         boolean dockerScan = FSAConfiguration.getBooleanProperty(config, SCAN_DOCKER_IMAGES, false);
@@ -364,7 +375,8 @@ public class FSAConfiguration {
 
         return new AgentConfiguration(includes, excludes, dockerIncludes, dockerExcludes,
                 archiveExtractionDepth, archiveIncludes, archiveExcludes, archiveFastUnpack, archiveFollowSymbolicLinks,
-                partialSha1Match, calculateHints, calculateMd5, showProgress, globalCaseSensitive.getKey(), dockerScan, excludesCopyrights,globalCaseSensitive.getValue());
+                partialSha1Match, calculateHints, calculateMd5, showProgress, globalCaseSensitive.getKey(), dockerScan, excludesCopyrights, projectPerFolderIncludes,
+                projectPerFolderExcludes, globalCaseSensitive.getValue());
     }
 
     private Collection<String> getExcludeCopyrights(String excludedCopyrightsValue) {
@@ -589,17 +601,38 @@ public class FSAConfiguration {
     }
 
     public static String[] getIncludes(Properties configProps) {
-        String includesString = configProps.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "");
+        String includesString = configProps.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING);
         if (StringUtils.isNotBlank(includesString)) {
-            return configProps.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, "").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+            return configProps.getProperty(INCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        }
+        return new String[0];
+    }
+
+    public static String[] getProjectPerFolderIncludes(Properties configProps) {
+        String projectPerFolderIncludesString = configProps.getProperty(PROJECT_PER_FOLDER_INCLUDES, null);
+        if (StringUtils.isNotBlank(projectPerFolderIncludesString)) {
+            return configProps.getProperty(PROJECT_PER_FOLDER_INCLUDES, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        }
+        if (EMPTY_STRING.equals(projectPerFolderIncludesString)) {
+            return null;
+        }
+        String[] result = new String[1];
+        result[0] = "*";
+        return result;
+    }
+
+    public static String[] getProjectPerFolderExcludes(Properties configProps) {
+        String projectPerFolderExcludesString = configProps.getProperty(PROJECT_PER_FOLDER_EXCLUDES, EMPTY_STRING);
+        if (StringUtils.isNotBlank(projectPerFolderExcludesString)) {
+            return configProps.getProperty(PROJECT_PER_FOLDER_EXCLUDES, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         }
         return new String[0];
     }
 
     public static String[] getDockerIncludes(Properties configProps) {
-        String includesString = configProps.getProperty(DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, "");
+        String includesString = configProps.getProperty(DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING);
         if (StringUtils.isNotBlank(includesString)) {
-            return configProps.getProperty(DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, "").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+            return configProps.getProperty(DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         }
         return new String[0];
     }
@@ -667,6 +700,6 @@ public class FSAConfiguration {
     public void validate() {
         getErrors().clear();
         errors.addAll(configurationValidation.getConfigurationErrors(getRequest().isProjectPerSubFolder(), getRequest().getProjectToken(),
-                getRequest().getProjectName(), getRequest().getApiToken(), configFilePath, getAgent().getArchiveExtractionDepth(), getAgent().getIncludes()));
+                getRequest().getProjectName(), getRequest().getApiToken(), configFilePath, getAgent().getArchiveExtractionDepth(), getAgent().getIncludes(), getAgent().getProjectPerFolderIncludes()));
     }
 }
