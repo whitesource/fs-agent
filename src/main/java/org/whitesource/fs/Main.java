@@ -44,7 +44,7 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     public static final long MAX_TIMEOUT = 1000 * 60 * 60;
     public static final String FALSE = "false";
-    public static final String EMPPTY_STRING = "";
+    public static final String EMPTY_STRING = "";
 
     /* --- Main --- */
 
@@ -135,7 +135,7 @@ public class Main {
         }
 
         if (!result.getStatusCode().equals(StatusCode.SUCCESS)) {
-            return new ProjectsDetails(result.getProjects(), result.getStatusCode(), EMPPTY_STRING);
+            return new ProjectsDetails(result.getProjects(), result.getStatusCode(), EMPTY_STRING);
         }
 
         if (shouldSend) {
@@ -144,7 +144,7 @@ public class Main {
             logger.debug("Process finished with exit code {} ({})", processExitCode.getKey(), processExitCode.getValue());
             return new ProjectsDetails(new ArrayList<>(), processExitCode.getValue(), processExitCode.getKey());
         } else {
-            return new ProjectsDetails(result.getProjects(), result.getStatusCode(), EMPPTY_STRING);
+            return new ProjectsDetails(result.getProjects(), result.getStatusCode(), EMPTY_STRING);
         }
     }
 

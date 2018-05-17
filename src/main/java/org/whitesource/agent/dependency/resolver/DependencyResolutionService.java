@@ -27,6 +27,7 @@ import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
 import org.whitesource.agent.dependency.resolver.paket.PaketDependencyResolver;
 import org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver;
+import org.whitesource.agent.dependency.resolver.ruby.RubyDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
@@ -84,6 +85,8 @@ public class DependencyResolutionService {
 
         final boolean goResolveDependencies = config.isGoResolveDependencies();
 
+        final boolean rubyResolveDependencies = config.isRubyResolveDependencies();
+
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
@@ -117,6 +120,10 @@ public class DependencyResolutionService {
 
         if (goResolveDependencies){
             dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), config.isDependenciesOnly()));
+        }
+
+        if (rubyResolveDependencies){
+            dependencyResolvers.add(new RubyDependencyResolver());
         }
     }
 
@@ -165,6 +172,7 @@ public class DependencyResolutionService {
 
         topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
+                logger.info("topFolder = " + topFolder);
                 ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
                 resolutionResults.add(result);
             });

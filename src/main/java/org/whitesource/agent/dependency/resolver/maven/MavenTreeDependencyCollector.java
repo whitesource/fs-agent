@@ -59,8 +59,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String M2 = ".m2";
     private static final String REPOSITORY = "repository";
     private static final String ALL = "All";
-    private static final String CMD = "cmd";
-    private static final String C_Char_WINDOWS = "/c";
     private static final String EMPTY_STRING = "";
     private static final String POM = "pom";
     public static final String TEST_JAR = "test-jar";
@@ -193,7 +191,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
     private String[] getLsCommandParams() {
         if (isWindows()) {
-            return new String[] {CMD, C_Char_WINDOWS, MVN_COMMAND, MVN_PARAMS_TREE};
+            return new String[] {CMD, C_CHAR_WINDOWS, MVN_COMMAND, MVN_PARAMS_TREE};
         } else {
             return new String[] {MVN_COMMAND, MVN_PARAMS_TREE};
         }
@@ -208,7 +206,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         }
         String[] params = null;
         if (isWindows()) {
-            params = new String[]{CMD, C_Char_WINDOWS, MVN_COMMAND, MVN_PARAMS_M2PATH_PATH, MVN_PARAMS_M2PATH_LOCAL};
+            params = new String[]{CMD, C_CHAR_WINDOWS, MVN_COMMAND, MVN_PARAMS_M2PATH_PATH, MVN_PARAMS_M2PATH_LOCAL};
         } else {
             params = new String[]{MVN_COMMAND, MVN_PARAMS_M2PATH_PATH, MVN_PARAMS_M2PATH_LOCAL};
         }
