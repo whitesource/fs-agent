@@ -177,7 +177,6 @@ public class ProjectsSender {
                             int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
                             appPath = appPath.substring(0, lastIndex);
                         }
-                        // run vulnerabilitiesAnalysis
                         if (vulnerabilitiesAnalysis != null) {
                             AgentProjectInfo projectToServer = new AgentProjectInfo();
                             projectToServer.setDependencies(viaComponents.getDependencies());
