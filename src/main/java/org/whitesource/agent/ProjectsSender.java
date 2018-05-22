@@ -272,8 +272,8 @@ public class ProjectsSender {
 
     private String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
-        UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(),
-                UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
+        UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
+                requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
         String resultInfo = logResult(updateResult);
 
         // remove line separators
