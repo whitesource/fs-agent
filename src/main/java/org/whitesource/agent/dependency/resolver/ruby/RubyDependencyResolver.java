@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     private static final String GEM_FILE_LOCK = "Gemfile.lock";
+    private static final String GEM_FILE_LOCK_ORIG = "Gemfile.lock.orig";
     private static final List<String> RUBY_SCRIPT_EXTENSION = Arrays.asList(".rb");
     private static final String BUNDLE         = "bundle";
     private static final String INSTALL        = "install";
@@ -80,22 +81,28 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     private List<DependencyInfo> collectDependencies() {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
         File gemFileLock = new File(rootDirectory + fileSeparator + GEM_FILE_LOCK);
-        if ((runBundleInstall && runBundleInstall(gemFileLock)) || gemFileLock.isFile()) {
-            parseLines(gemFileLock, dependencyInfos);
+        File gemFileLockOrig = new File(rootDirectory + fileSeparator + GEM_FILE_LOCK_ORIG);
+
+        if (runBundleInstall) {
+            runBundleInstall(gemFileLock, gemFileLockOrig);
         }
-        if (runBundleInstall && overwriteGemFile){
+        if (gemFileLock.isFile()){
+            parseLines(gemFileLock, dependencyInfos);
+        } else {
+            logger.error("Can't scan Gemlock.file - not found");
+        }
+        if (gemFileLockOrig.isFile()){
             removeTempFile(gemFileLock);
         }
         return dependencyInfos;
     }
 
-    private boolean runBundleInstall(File gemFileLock) {
-        File origGemFileLock = new File(gemFileLock.getParent() + fileSeparator + "Gemfile_orig.lock");
+    private boolean runBundleInstall(File gemFileLock, File origGemFileLock) {
         if (overwriteGemFile && gemFileLock.isFile()){
             gemFileLock.renameTo(origGemFileLock);
         }
         boolean bundleInstallSuccess = cli.runCmd(rootDirectory, cli.getCommandParams(BUNDLE, INSTALL)) != null && gemFileLock.isFile();
-        if (!bundleInstallSuccess){
+        if (!bundleInstallSuccess && overwriteGemFile){
             origGemFileLock.renameTo(gemFileLock);
         }
         return bundleInstallSuccess;
