@@ -8,15 +8,13 @@ import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 
 import java.nio.file.Paths;
 
-import static org.junit.Assert.*;
-
 public class RubyDependencyResolverTest {
 
     RubyDependencyResolver rubyDependencyResolver;
 
     @Before
     public void setUp() throws Exception {
-        rubyDependencyResolver = new RubyDependencyResolver();
+        rubyDependencyResolver = new RubyDependencyResolver(true, true, true);
     }
 
     @Test

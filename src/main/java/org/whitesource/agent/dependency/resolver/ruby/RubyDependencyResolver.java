@@ -1,5 +1,6 @@
 package org.whitesource.agent.dependency.resolver.ruby;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -7,7 +8,6 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.hash.ChecksumUtils;
-import org.whitesource.agent.utils.Cli;
 
 import java.io.*;
 import java.util.*;
@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     private static final String GEM_FILE_LOCK = "Gemfile.lock";
+    private static final String GEM_FILE_LOCK_ORIG = "Gemfile.lock.orig";
     private static final List<String> RUBY_SCRIPT_EXTENSION = Arrays.asList(".rb");
     private static final String BUNDLE         = "bundle";
     private static final String INSTALL        = "install";
@@ -30,15 +31,23 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     private final Logger logger = LoggerFactory.getLogger(RubyDependencyResolver.class);
 
     private RubyCli cli;
+    private boolean runBundleInstall;
+    private boolean overwriteGemFile;
+    private boolean installMissingGems;
+    String rootDirectory;
 
-    public RubyDependencyResolver(){
+    public RubyDependencyResolver(boolean runBundleInstall, boolean overwriteGemFile, boolean installMissingGems){
         super();
         cli = new RubyCli();
+        this.runBundleInstall = runBundleInstall;
+        this.overwriteGemFile = overwriteGemFile;
+        this.installMissingGems = installMissingGems;
     }
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
-        List<DependencyInfo> dependencies = collectDependencies(topLevelFolder);
+        rootDirectory = topLevelFolder;
+        List<DependencyInfo> dependencies = collectDependencies();
         return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
     }
 
@@ -69,16 +78,51 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         return null;
     }
 
-    private List<DependencyInfo> collectDependencies(String rootDirectory) {
+    private List<DependencyInfo> collectDependencies() {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
         File gemFileLock = new File(rootDirectory + fileSeparator + GEM_FILE_LOCK);
-        if (gemFileLock.isFile() || cli.runCmd(rootDirectory, cli.getCommandParams(BUNDLE, INSTALL)) != null) {
-            parseLines(gemFileLock, dependencyInfos, rootDirectory);
+        File gemFileLockOrig = new File(rootDirectory + fileSeparator + GEM_FILE_LOCK_ORIG);
+
+        if (runBundleInstall) {
+            runBundleInstall(gemFileLock, gemFileLockOrig);
+        }
+        if (gemFileLock.isFile()){
+            parseGemFileLock(gemFileLock, dependencyInfos);
+        } else {
+            logger.error("Can't scan Gemlock.file - not found");
+        }
+        if (gemFileLockOrig.isFile()){
+            removeTempFile(gemFileLock, gemFileLockOrig);
         }
         return dependencyInfos;
     }
 
-    private void parseLines(File gemLockFile, List<DependencyInfo> dependencyInfos, String rootDirectory){
+    private boolean runBundleInstall(File gemFileLock, File origGemFileLock) {
+        if (!overwriteGemFile && gemFileLock.isFile()){
+            // when not overwriting the original Gemfile.lock (and it exists) - renaming it
+            gemFileLock.renameTo(origGemFileLock);
+        }
+        boolean bundleInstallSuccess = cli.runCmd(rootDirectory, cli.getCommandParams(BUNDLE, INSTALL)) != null && gemFileLock.isFile();
+        if (!bundleInstallSuccess && !overwriteGemFile){
+            // when running the 'bundle install' command failed and the original file was renamed - restore its name
+            origGemFileLock.renameTo(gemFileLock);
+        }
+        return bundleInstallSuccess;
+    }
+
+    private void removeTempFile(File gemFileLock, File origGemFileLock){
+        // when the original Gemfile.lock was renamed - remove the temp file and restore the original file its name
+        if (origGemFileLock.isFile()){
+            try {
+                FileUtils.forceDelete(gemFileLock);
+                origGemFileLock.renameTo(gemFileLock);
+            } catch (IOException e) {
+                logger.warn("can't remove {}: {}", gemFileLock.getPath(), e.getMessage());
+            }
+        }
+    }
+
+    private void parseGemFileLock(File gemLockFile, List<DependencyInfo> dependencyInfos){
         /*
         * Gemfile.lock's (relevant) content structure:
          GEM
@@ -94,7 +138,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         * */
         String pathToGems = null;
         try {
-            pathToGems = findPathToGems(rootDirectory);
+            pathToGems = findPathToGems();
             if (pathToGems == null){
                 logger.warn("Can't find path to gems' cache folder");
                 return;
@@ -135,7 +179,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                 try {
                                     String sha1 = getSha1(name, version, pathToGems);
                                     if (sha1 == null){
-                                        logger.warn("Can't find SHA1 for {}-{}", name, version);
+                                        logger.warn("Can't find gem file for {}-{}", name, version);
                                         continue;
                                     }
                                     dependencyInfo = new DependencyInfo(sha1);
@@ -147,7 +191,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                     dependencyInfo.setFilename(pathToGems + fileSeparator + name + "-" + version + "." + GEM);
                                     dependencyInfos.add(dependencyInfo);
                                 } catch (IOException e){
-                                    logger.warn("Can't find SHA1 for {}-{}", name, version);
+                                    logger.warn("Can't find gem file for {}-{}", name, version);
                                 } finally {
                                     indented = false;
                                     previousIndex = index;
@@ -167,11 +211,18 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         } catch (IOException e) {
             logger.warn("Could not parse Gemfile.lock {}", e.getMessage());
             logger.debug("stacktrace {}", e.getStackTrace());
+        } finally {
+            try {
+                fileReader.close();
+            } catch (IOException e) {
+                logger.warn("Can't close Gemfile.lock {}", e.getMessage());
+                logger.debug("stacktrace {}", e.getStackTrace());
+            }
         }
     }
 
     // Ruby's cache is inside the installation folder.  path can be found by running command 'gem environment gemdir'
-    private String findPathToGems(String rootDirectory) throws FileNotFoundException {
+    private String findPathToGems() throws FileNotFoundException {
         String[] commandParams = cli.getCommandParams(GEM, ENVIRONMENT);
         List<String> lines = cli.runCmd(rootDirectory, commandParams);
         String path = null;

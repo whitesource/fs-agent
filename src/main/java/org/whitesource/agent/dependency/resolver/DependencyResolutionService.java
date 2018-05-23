@@ -85,7 +85,10 @@ public class DependencyResolutionService {
 
         final boolean goResolveDependencies = config.isGoResolveDependencies();
 
-        final boolean rubyResolveDependencies = config.isRubyResolveDependencies();
+        final boolean rubyResolveDependencies   = config.isRubyResolveDependencies();
+        final boolean rubyRunBundleInstall      = config.isRubyRunBundleInstall();
+        final boolean rubyOverwriteGemFile      = config.isRubyOverwriteGemFile();
+        final boolean rubyInstallMissingGems    = config.isRubyInstallMissingGems();
 
         dependenciesOnly = config.isDependenciesOnly();
 
@@ -123,7 +126,7 @@ public class DependencyResolutionService {
         }
 
         if (rubyResolveDependencies){
-            dependencyResolvers.add(new RubyDependencyResolver());
+            dependencyResolvers.add(new RubyDependencyResolver(rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems));
         }
     }
 

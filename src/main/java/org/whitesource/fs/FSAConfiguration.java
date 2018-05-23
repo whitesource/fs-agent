@@ -286,14 +286,17 @@ public class FSAConfiguration {
         String goDependencyManager              = config.getProperty(GO_DEPENDENCY_MANAGER, FileSystemAgent.EMPTY_STRING);
         boolean goCollectDependenciesAtRuntime  = FSAConfiguration.getBooleanProperty(config, GO_COLLECT_DEPENDENCIES_AT_RUNTIME, false);
 
-        boolean rubyResolveDependencies         = FSAConfiguration.getBooleanProperty(config, RUBY_RESOLVE_DEPENDENCIES, true);
+        boolean rubyResolveDependencies     = FSAConfiguration.getBooleanProperty(config, RUBY_RESOLVE_DEPENDENCIES, true);
+        boolean rubyRunBundleInstall        = FSAConfiguration.getBooleanProperty(config, RUBY_RUN_BUNDLE_INSTALL, false);
+        boolean rubyOverwriteGemFile        = FSAConfiguration.getBooleanProperty(config, RUBY_OVERWRITE_GEM_FILE, false);
+        boolean rubyInstallMissingGems      = FSAConfiguration.getBooleanProperty(config, RUBY_INSTALL_MISSING_GEMS, false);
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
-                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies);
+                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken,String userKey, String projectName, String projectToken) {
