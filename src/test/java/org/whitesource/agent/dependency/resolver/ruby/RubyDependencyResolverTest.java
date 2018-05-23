@@ -21,6 +21,6 @@ public class RubyDependencyResolverTest {
     public void resolveDependencies() {
         String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\ruby\\");
         ResolutionResult resolutionResult = rubyDependencyResolver.resolveDependencies(folderPath, folderPath, null);
-        Assert.assertTrue(resolutionResult.getResolvedProjects().keySet().iterator().next().getDependencies().size() == 71);
+        Assert.assertTrue(resolutionResult.getResolvedProjects().keySet().iterator().next().getDependencies().size() == 5);
     }
 }
