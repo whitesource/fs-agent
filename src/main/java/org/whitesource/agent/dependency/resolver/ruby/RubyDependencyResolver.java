@@ -13,6 +13,8 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RubyDependencyResolver extends AbstractDependencyResolver {
 
@@ -27,6 +29,8 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     protected static final String SPECS = "specs:";
     protected static final String CACHE = "cache";
     protected static final String SPACE = " ";
+    protected static final String V = "-v";
+    protected static final String ERROR = "ERROR";
 
     private final Logger logger = LoggerFactory.getLogger(RubyDependencyResolver.class);
 
@@ -240,7 +244,41 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         File file = new File(pathToGems + fileSeparator + name + "-" + version + "." + GEM);
         if (file.isFile()){
             sha1 = ChecksumUtils.calculateSHA1(file);
+        } else {
+            file = installMissingGem(name,version, file);
+            if (file != null) {
+                sha1 = ChecksumUtils.calculateSHA1(file);
+            }
         }
         return sha1;
+    }
+
+    private File installMissingGem(String name, String version, File file){
+        if (installMissingGems) {
+            String param = INSTALL.concat(" " + name + " " + V + " " + version);
+            String[] commandParams = cli.getCommandParams(GEM, param);
+            List<String> lines = cli.runCmd(rootDirectory, commandParams);
+            if (file.isFile()) {
+                return file;
+            }
+            if (lines != null) {
+                List<String> errors = lines.stream().filter(line -> line.startsWith(ERROR)).collect(Collectors.toList());
+                if (errors.size() > 0) {
+                    return null;
+                }
+                /* there are some cases where a gem is installed successfully, but with a slightly different name, e.g.
+                    'pg -v 0.21.0' becomes 'pg-0.21.0-x64-mingw32'
+                   for those cases, this piece of code extracts the updated version and return the downloaded file
+                 */
+                List<String> installed = lines.stream().filter(line -> line.startsWith("Successfully installed") && line.contains(name)).collect(Collectors.toList());
+                String gem = installed.get(0).split(" ")[2];
+                version = gem.substring(gem.indexOf("-") + 1);
+                File newFile = new File(file.getParent() + fileSeparator + name + "-" + version + "." + GEM);
+                if (newFile.isFile()){
+                    return newFile;
+                }
+            }
+        }
+        return null;
     }
 }
