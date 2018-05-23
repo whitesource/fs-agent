@@ -36,7 +36,6 @@ import java.util.*;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 import static org.whitesource.agent.client.ClientConstants.SERVICE_URL_KEYWORD;
-import static org.whitesource.fs.FileSystemAgent.EMPTY_STRING;
 import static org.whitesource.fs.FileSystemAgent.EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX;
 
 /**
