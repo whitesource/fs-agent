@@ -87,29 +87,31 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
             runBundleInstall(gemFileLock, gemFileLockOrig);
         }
         if (gemFileLock.isFile()){
-            parseLines(gemFileLock, dependencyInfos);
+            parseGemFileLock(gemFileLock, dependencyInfos);
         } else {
             logger.error("Can't scan Gemlock.file - not found");
         }
         if (gemFileLockOrig.isFile()){
-            removeTempFile(gemFileLock);
+            removeTempFile(gemFileLock, gemFileLockOrig);
         }
         return dependencyInfos;
     }
 
     private boolean runBundleInstall(File gemFileLock, File origGemFileLock) {
-        if (overwriteGemFile && gemFileLock.isFile()){
+        if (!overwriteGemFile && gemFileLock.isFile()){
+            // when not overwriting the original Gemfile.lock (and it exists) - renaming it
             gemFileLock.renameTo(origGemFileLock);
         }
         boolean bundleInstallSuccess = cli.runCmd(rootDirectory, cli.getCommandParams(BUNDLE, INSTALL)) != null && gemFileLock.isFile();
-        if (!bundleInstallSuccess && overwriteGemFile){
+        if (!bundleInstallSuccess && !overwriteGemFile){
+            // when running the 'bundle install' command failed and the original file was renamed - restore its name
             origGemFileLock.renameTo(gemFileLock);
         }
         return bundleInstallSuccess;
     }
 
-    private void removeTempFile(File gemFileLock){
-        File origGemFileLock = new File(gemFileLock.getParent() + fileSeparator + "Gemfile_orig.lock");
+    private void removeTempFile(File gemFileLock, File origGemFileLock){
+        // when the original Gemfile.lock was renamed - remove the temp file and restore the original file its name
         if (origGemFileLock.isFile()){
             try {
                 FileUtils.forceDelete(gemFileLock);
@@ -120,7 +122,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         }
     }
 
-    private void parseLines(File gemLockFile, List<DependencyInfo> dependencyInfos){
+    private void parseGemFileLock(File gemLockFile, List<DependencyInfo> dependencyInfos){
         /*
         * Gemfile.lock's (relevant) content structure:
          GEM
@@ -177,7 +179,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                 try {
                                     String sha1 = getSha1(name, version, pathToGems);
                                     if (sha1 == null){
-                                        logger.warn("Can't find SHA1 for {}-{}", name, version);
+                                        logger.warn("Can't find gem file for {}-{}", name, version);
                                         continue;
                                     }
                                     dependencyInfo = new DependencyInfo(sha1);
@@ -189,7 +191,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                     dependencyInfo.setFilename(pathToGems + fileSeparator + name + "-" + version + "." + GEM);
                                     dependencyInfos.add(dependencyInfo);
                                 } catch (IOException e){
-                                    logger.warn("Can't find SHA1 for {}-{}", name, version);
+                                    logger.warn("Can't find gem file for {}-{}", name, version);
                                 } finally {
                                     indented = false;
                                     previousIndex = index;
