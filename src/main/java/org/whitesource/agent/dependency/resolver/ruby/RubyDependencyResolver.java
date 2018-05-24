@@ -14,12 +14,11 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     private static final String GEM_FILE_LOCK = "Gemfile.lock";
-    private static final String GEM_FILE_LOCK_ORIG = "Gemfile.lock.orig";
+    private static final String ORIG = ".orig";
     private static final List<String> RUBY_SCRIPT_EXTENSION = Arrays.asList(".rb");
     private static final String BUNDLE         = "bundle";
     private static final String INSTALL        = "install";
@@ -85,7 +84,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     private List<DependencyInfo> collectDependencies() {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
         File gemFileLock = new File(rootDirectory + fileSeparator + GEM_FILE_LOCK);
-        File gemFileLockOrig = new File(rootDirectory + fileSeparator + GEM_FILE_LOCK_ORIG);
+        File gemFileLockOrig = new File(rootDirectory + fileSeparator + GEM_FILE_LOCK + ORIG);
 
         if (runBundleInstall) {
             runBundleInstall(gemFileLock, gemFileLockOrig);
@@ -93,7 +92,8 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         if (gemFileLock.isFile()){
             parseGemFileLock(gemFileLock, dependencyInfos);
         } else {
-            logger.error("Can't scan Gemlock.file - not found");
+            // actually we should never reach here - if Gemlock.file isn't found the RubyDependencyResolver won't run
+            logger.warn("Can't scan Gemlock.file - not found");
         }
         if (gemFileLockOrig.isFile()){
             removeTempFile(gemFileLock, gemFileLockOrig);
@@ -103,7 +103,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     private boolean runBundleInstall(File gemFileLock, File origGemFileLock) {
         if (!overwriteGemFile && gemFileLock.isFile()){
-            // when not overwriting the original Gemfile.lock (and it exists) - renaming it
+            // rename the original Gemfile.lock (if it exists)
             gemFileLock.renameTo(origGemFileLock);
         }
         boolean bundleInstallSuccess = cli.runCmd(rootDirectory, cli.getCommandParams(BUNDLE, INSTALL)) != null && gemFileLock.isFile();
@@ -181,7 +181,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                 String name = split[0];
                                 String version = split[1].substring(1, split[1].length()-1);
                                 try {
-                                    String sha1 = getSha1(name, version, pathToGems);
+                                    String sha1 = getRubyDependenciesSha1(name, version, pathToGems);
                                     if (sha1 == null){
                                         logger.warn("Can't find gem file for {}-{}", name, version);
                                         continue;
@@ -239,7 +239,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         return path;
     }
 
-    private String getSha1(String name, String version, String pathToGems) throws IOException {
+    private String getRubyDependenciesSha1(String name, String version, String pathToGems) throws IOException {
         String sha1 = null;
         File file = new File(pathToGems + fileSeparator + name + "-" + version + "." + GEM);
         if (file.isFile()){
@@ -270,12 +270,16 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                     'pg -v 0.21.0' becomes 'pg-0.21.0-x64-mingw32'
                    for those cases, this piece of code extracts the updated version and return the downloaded file
                  */
-                List<String> installed = lines.stream().filter(line -> line.startsWith("Successfully installed") && line.contains(name)).collect(Collectors.toList());
-                String gem = installed.get(0).split(" ")[2];
-                version = gem.substring(gem.indexOf("-") + 1);
-                File newFile = new File(file.getParent() + fileSeparator + name + "-" + version + "." + GEM);
-                if (newFile.isFile()){
-                    return newFile;
+                try {
+                    List<String> installed = lines.stream().filter(line -> line.startsWith("Successfully installed") && line.contains(name)).collect(Collectors.toList());
+                    String gem = installed.get(0).split(" ")[2];
+                    File newFile = new File(file.getParent() + fileSeparator + gem + "." + GEM);
+                    if (newFile.isFile()) {
+                        return newFile;
+                    }
+                } catch (IndexOutOfBoundsException e){
+                    logger.warn("failed installing gem file for {}-{}", name, version);
+                    logger.debug("stacktrace {}", e.getStackTrace());
                 }
             }
         }
