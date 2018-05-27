@@ -30,14 +30,13 @@ public class ConfigurationValidation {
     private static final int MAX_EXTRACTION_DEPTH = 7;
 
     public List<String> getConfigurationErrors(boolean projectPerFolder, String configProjectToken, String configProjectName, String configApiToken, String configFilePath,
-                                               int archiveDepth, String[] includes) {
+                                               int archiveDepth, String[] includes, String[] projectPerFolderIncludes) {
         List<String> errors = new ArrayList<>();
 
         if (StringUtils.isBlank(configApiToken)) {
             String error = "Could not retrieve " + ORG_TOKEN_PROPERTY_KEY + " property from " + configFilePath;
             errors.add(error);
         }
-
         boolean noProjectToken = StringUtils.isBlank(configProjectToken);
         boolean noProjectName = StringUtils.isBlank(configProjectName);
 
@@ -48,14 +47,15 @@ public class ConfigurationValidation {
             String error = "Please choose just one of either " + PROJECT_NAME_PROPERTY_KEY + " or " + PROJECT_TOKEN_PROPERTY_KEY + " (and not both)";
             errors.add(error);
         }
-
         if (archiveDepth < 0 || archiveDepth > MAX_EXTRACTION_DEPTH) {
             errors.add("Error: archiveExtractionDepth value should be greater than 0 and less than " + MAX_EXTRACTION_DEPTH);
         }
         if (includes.length < 1 || StringUtils.isBlank(includes[0])) {
             errors.add("Error: includes parameter must have at list one scanning pattern");
         }
-
+        if (projectPerFolder && projectPerFolderIncludes == null) {
+            errors.add("projectPerFolderIncludes parameter is empty, specify folders to include or mark as comment to scan all folders");
+        }
         return errors;
     }
 }

@@ -1,5 +1,7 @@
 package org.whitesource.agent.utils;
 
+import com.sun.jna.Native;
+import com.sun.jna.platform.win32.Kernel32;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -13,6 +15,9 @@ import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
+
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.OS_NAME;
+import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.WINDOWS;
 
 /**
  * @author raz.nitzan
@@ -30,6 +35,7 @@ public class CommandLineProcess {
     /* --- Statics Members --- */
     private static final long DEFAULT_TIMEOUT_READLINE_SECONDS = 300;
     private static final long DEFAULT_TIMEOUT_PROCESS_MINUTES = 15;
+    private static final String WINDOWS_SEPARATOR = "\\";
     private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.utils.CommandLineProcess.class);
 
     public CommandLineProcess(String rootDirectory, String[] args) {
@@ -46,6 +52,10 @@ public class CommandLineProcess {
     private List<String> executeProcess(boolean includeOutput, boolean includeErrorLines) throws IOException {
         List<String> linesOutput = new LinkedList<>();
         ProcessBuilder pb = new ProcessBuilder(args);
+        String osName = System.getProperty(OS_NAME);
+        if (osName.startsWith(WINDOWS)) {
+            rootDirectory = getShortPath(rootDirectory);
+        }
         pb.directory(new File(rootDirectory));
         // redirect the error output to avoid output of npm ls by operating system
         String redirectErrorOutput = DependencyCollector.isWindows() ? "nul" : "/dev/null";
@@ -81,6 +91,35 @@ public class CommandLineProcess {
             this.errorInProcess = true;
         }
         return linesOutput;
+    }
+
+    //get windows short path
+    private String getShortPath(String rootPath) {
+        File file = new File(rootPath);
+        String lastPathAfterSeparator = null;
+        String shortPath = getWindowsShortPath(file.getAbsolutePath());
+        if (StringUtils.isNotEmpty(shortPath)) {
+            return getWindowsShortPath(file.getAbsolutePath());
+        } else {
+            while (StringUtils.isEmpty(getWindowsShortPath(file.getAbsolutePath()))) {
+                String filePath = file.getAbsolutePath();
+                if (StringUtils.isNotEmpty(lastPathAfterSeparator)) {
+                    lastPathAfterSeparator = file.getAbsolutePath().substring(filePath.lastIndexOf(WINDOWS_SEPARATOR), filePath.length()) + lastPathAfterSeparator;
+                } else {
+                    lastPathAfterSeparator = file.getAbsolutePath().substring(filePath.lastIndexOf(WINDOWS_SEPARATOR), filePath.length());
+                }
+                file = file.getParentFile();
+            }
+            return getWindowsShortPath(file.getAbsolutePath()) + lastPathAfterSeparator;
+        }
+    }
+
+    private String getWindowsShortPath(String path) {
+        char[] result = new char[256];
+
+        //Call CKernel32 interface to execute GetShortPathNameA method
+        Kernel32.INSTANCE.GetShortPathName(path, result, result.length);
+        return Native.toString(result);
     }
 
     private boolean readBlock(InputStreamReader inputStreamReader, BufferedReader reader, ExecutorService executorService, List<String> lines, boolean includeErrorLines) {

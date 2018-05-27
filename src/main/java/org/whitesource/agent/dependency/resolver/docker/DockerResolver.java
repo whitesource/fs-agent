@@ -256,8 +256,7 @@ public class DockerResolver {
                 List<DependencyInfo> dependencyInfos = new FileSystemScanner(config.getResolver(), config.getAgent(), false).createProjects(
                         Arrays.asList(extractPath), appPathsToDependencyDirs, false, config.getAgent().getIncludes(), config.getAgent().getExcludes(),
                         config.getAgent().getGlobCaseSensitive(), config.getAgent().getArchiveExtractionDepth(), FileExtensions.ARCHIVE_INCLUDES,
-                        FileExtensions.ARCHIVE_EXCLUDES, false, config.getAgent().isFollowSymlinks(),
-                        new ArrayList<>(), PARTIAL_SHA1_MATCH);
+                        FileExtensions.ARCHIVE_EXCLUDES, false, config.getAgent().isFollowSymlinks(), new ArrayList<>(), PARTIAL_SHA1_MATCH);
 
                 // modify file paths relative to the container
                 for (DependencyInfo dependencyInfo : dependencyInfos) {

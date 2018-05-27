@@ -330,29 +330,34 @@ public class ArchiveExtractor {
     private Pair<String,String> getUnpackedResult(Pair<String,String> dataToUnpack) {
         boolean foundArchive = false;
         String innerDir = dataToUnpack.getValue();
-        String lowerCaseFileName = dataToUnpack.getKey().toLowerCase();
+        String fileKey = dataToUnpack.getKey();
+        String lowerCaseFileName = fileKey.toLowerCase();
 
         if (lowerCaseFileName.matches(ZIP_EXTENSION_PATTERN)) {
-            foundArchive = unZip(innerDir, dataToUnpack.getKey());
+            foundArchive = unZip(innerDir, fileKey);
         } else if (lowerCaseFileName.matches(GEM_EXTENSION_PATTERN)) {
-            foundArchive = unTar(lowerCaseFileName, innerDir, dataToUnpack.getKey());
+            foundArchive = unTar(lowerCaseFileName, innerDir, fileKey);
             innerDir = innerDir + File.separator + RUBY_DATA_FILE;
             foundArchive = unTar(RUBY_DATA_FILE, innerDir + this.randomString, innerDir);
             innerDir = innerDir + this.randomString;
         } else if (lowerCaseFileName.matches(TAR_EXTENSION_PATTERN)) {
-            foundArchive = unTar(lowerCaseFileName, innerDir, dataToUnpack.getKey());
+            foundArchive = unTar(lowerCaseFileName, innerDir, fileKey);
 //                        innerDir = innerDir.replaceAll(TAR_SUFFIX, BLANK);
         } else if (lowerCaseFileName.matches(RPM_EXTENSION_PATTERN)) {
-            foundArchive = handleRpmFile(innerDir, dataToUnpack.getKey());
+            foundArchive = handleRpmFile(innerDir, fileKey);
         } else if (lowerCaseFileName.matches(RAR_EXTENSION_PATTERN)) {
             File destDir = new File(innerDir);
             if (!destDir.exists()) {
                 destDir.mkdirs();
             }
-            ExtractArchive.extractArchive(dataToUnpack.getKey(), innerDir);
+            try {
+                ExtractArchive.extractArchive(fileKey, innerDir);
+            } catch (Exception e) {
+                logger.warn("Error extracting file {}: {}", fileKey, e.getMessage());
+            }
             foundArchive = true;
         } else {
-            logger.warn("Error: {} is unsupported archive type", dataToUnpack.getKey());
+            logger.warn("Error: {} is unsupported archive type", fileKey);
         }
         if (foundArchive) {
             Pair resultArchive = new Pair(lowerCaseFileName, innerDir);
@@ -431,7 +436,6 @@ public class ArchiveExtractor {
             XZUnArchiver XZUnArchiver = new XZUnArchiver();
             XZUnArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
             XZUnArchiver.setSourceFile(new File(archiveFile.getPath()));
-
             File destFile = new File(archiveFile.getParent() + filename);
             XZUnArchiver.setDestFile(destFile);
             XZUnArchiver.extract();

@@ -41,6 +41,8 @@ public class AgentConfiguration {
     private final boolean showProgressBar;
     private final boolean globCaseSensitive;
     private final Collection<String> excludedCopyrights;
+    private final String[] projectPerFolderIncludes;
+    private final String[] projectPerFolderExcludes;
     private final String error;
 
     @JsonProperty(ERROR)
@@ -65,6 +67,8 @@ public class AgentConfiguration {
                               @JsonProperty(CASE_SENSITIVE_GLOB_PROPERTY_KEY) boolean globCaseSensitive,
                               @JsonProperty(SCAN_DOCKER_IMAGES) boolean dockerScan,
                               @JsonProperty(EXCLUDED_COPYRIGHT_KEY) Collection<String> excludedCopyrights,
+                              @JsonProperty(PROJECT_PER_FOLDER_INCLUDES) String[] projectPerFolderIncludes,
+                              @JsonProperty(PROJECT_PER_FOLDER_EXCLUDES) String[] projectPerFolderExcludes,
                               @JsonProperty(ERROR) String error) {
         this.includes = includes == null ? new String[0] : includes;
         this.excludes = excludes == null ? new String[0] : excludes;
@@ -83,6 +87,8 @@ public class AgentConfiguration {
         this.globCaseSensitive = globCaseSensitive;
         this.error = error;
         this.excludedCopyrights = excludedCopyrights;
+        this.projectPerFolderIncludes = projectPerFolderIncludes;
+        this.projectPerFolderExcludes = projectPerFolderExcludes;
     }
 
     @JsonProperty(SHOW_PROGRESS_BAR)
@@ -163,5 +169,15 @@ public class AgentConfiguration {
     @JsonProperty(SCAN_DOCKER_IMAGES)
     public boolean isDockerScan() {
         return dockerScan;
+    }
+
+    @JsonProperty(PROJECT_PER_FOLDER_INCLUDES)
+    public String[] getProjectPerFolderIncludes() {
+        return projectPerFolderIncludes;
+    }
+
+    @JsonProperty(PROJECT_PER_FOLDER_EXCLUDES)
+    public String[] getProjectPerFolderExcludes() {
+        return projectPerFolderExcludes;
     }
 }
