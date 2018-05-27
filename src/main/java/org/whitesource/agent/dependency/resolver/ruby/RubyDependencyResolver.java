@@ -163,6 +163,11 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
             Integer previousIndex = 0;
             boolean indented = false;
             DependencyInfo dependencyInfo = null;
+            ArrayList<DependencyInfo> parentsList = new ArrayList<>();
+            HashMap<DependencyInfo, DependencyInfo> childrenList = new HashMap<>();
+            ArrayList<DependencyInfo> partialDependencies = new ArrayList<>();
+            DependencyInfo parentDependency = null;
+            whileLoop:
             while ((currLine = bufferedReader.readLine()) != null) {
                 if (insideGem && insideSpecs){
                     if (currLine.isEmpty()) {
@@ -172,11 +177,33 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                         if (matcher.find()){
                             int index = matcher.start();
                             if ((index > previousIndex && previousIndex > 0) || (indented && index == previousIndex)){
-                                // ignoring indented lines
+                                // inside indentation - a child dependency
                                 indented = true;
                                 previousIndex = index;
-                                continue;
+                                int spaceIndex = currLine.indexOf(" ", index);
+                                String name = currLine.substring(index, spaceIndex > -1 ? spaceIndex : currLine.length());
+                                // looking for the dependency in the parents' list
+                                dependencyInfo = parentsList.stream().filter(d -> d.getGroupId().equals(name)).findFirst().orElse(null);
+                                if (dependencyInfo == null) {
+                                    dependencyInfo = new DependencyInfo();
+                                    dependencyInfo.setGroupId(name);
+                                    if (partialDependencies.contains(dependencyInfo) == false) {
+                                        partialDependencies.add(dependencyInfo);
+                                    }
+                                }
+                                // using loop with `equal` and not `contains` since the contains would fail when the key of a hash map is modified after its creation (as in this case)
+                                // if this dependency is already found in the children's list - continue
+                                for (DependencyInfo d : childrenList.keySet()){
+                                    if (d.equals(dependencyInfo)){
+                                        continue whileLoop;
+                                    }
+                                }
+                                childrenList.put(dependencyInfo, parentDependency);
+                                // the 'addChild' requires agent.api.version 2.7.1-SNAPSHOT
+                                // adding this dependency as a child to its parent
+                                parentDependency.addChild(dependencyInfo);
                             } else {
+                                // inside a parent dependency
                                 String[] split = currLine.trim().split(SPACE);
                                 String name = split[0];
                                 String version = split[1].substring(1, split[1].length()-1);
@@ -186,14 +213,22 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                         logger.warn("Can't find gem file for {}-{}", name, version);
                                         continue;
                                     }
-                                    dependencyInfo = new DependencyInfo(sha1);
+                                    // looking for this dependency in the children's list (in case its already a child of some other dependency)
+                                    dependencyInfo = childrenList.keySet().stream().filter(d -> d.getGroupId().equals(name)).findFirst().orElse(null);
+                                    if (dependencyInfo == null) {
+                                        dependencyInfo = new DependencyInfo(sha1);
+                                        dependencyInfo.setGroupId(name);
+                                    } else {
+                                        dependencyInfo.setSha1(sha1);
+                                    }
+                                    partialDependencies.remove(dependencyInfo);
                                     dependencyInfo.setArtifactId(name + "-" + version + "." + GEM);
-                                    dependencyInfo.setGroupId(name);
                                     dependencyInfo.setVersion(version);
                                     dependencyInfo.setDependencyType(DependencyType.RUBY);
                                     dependencyInfo.setSystemPath(gemLockFile.getPath());
                                     dependencyInfo.setFilename(pathToGems + fileSeparator + name + "-" + version + "." + GEM);
-                                    dependencyInfos.add(dependencyInfo);
+                                    parentsList.add(dependencyInfo);
+                                    parentDependency = dependencyInfo;
                                 } catch (IOException e){
                                     logger.warn("Can't find gem file for {}-{}", name, version);
                                 } finally {
@@ -207,6 +242,26 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                     insideGem = true;
                 } else if (insideGem && currLine.contains(SPECS)){
                     insideSpecs = true;
+                }
+            }
+            // partial dependencies are those who appear in the Gemfile.lock only as child dependencies, thus without valid version.
+            // in such case, remove that dependency from its parent
+            for (DependencyInfo d : partialDependencies){
+                // the 'removeChild' requires agent.api.version 2.7.1-SNAPSHOT
+                childrenList.get(d).removeChild(d);
+            }
+            // creating the dependencies list by using only the parent dependencies, i.e. - those that aren't found in the children's list
+            // using loop with `equal` and not `contains` since the contains would fail when the key of a hash map is modified after its creation (as in this case)
+            for (DependencyInfo d : parentsList){
+                boolean found = false;
+                for (DependencyInfo d1 : childrenList.keySet()){
+                    if (d.equals(d1)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found){
+                    dependencyInfos.add(d);
                 }
             }
         } catch (FileNotFoundException e){
@@ -271,6 +326,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                    for those cases, this piece of code extracts the updated version and return the downloaded file
                  */
                 try {
+                    // TODO - use 'findFirst' instead of collect
                     List<String> installed = lines.stream().filter(line -> line.startsWith("Successfully installed") && line.contains(name)).collect(Collectors.toList());
                     String gem = installed.get(0).split(" ")[2];
                     File newFile = new File(file.getParent() + fileSeparator + gem + "." + GEM);
