@@ -111,8 +111,8 @@ public class FileSystemScanner {
                                                String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
                                                Collection<String> excludedCopyrights, boolean partialSha1Match) {
-        return createProjects(scannerBaseDirs, convertListDirsToMap(scannerBaseDirs), scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth, archiveIncludes, archiveExcludes,
-                archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match);
+        return createProjects(scannerBaseDirs, convertListDirsToMap(scannerBaseDirs), scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
+                archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match);
     }
 
     public Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, boolean hasScmConnector) {
