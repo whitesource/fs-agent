@@ -39,7 +39,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     private boolean runBundleInstall;
     private boolean overwriteGemFile;
     private boolean installMissingGems;
-    String rootDirectory;
+    private String rootDirectory;
 
     public RubyDependencyResolver(boolean runBundleInstall, boolean overwriteGemFile, boolean installMissingGems){
         super();
@@ -165,9 +165,9 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
             Integer previousIndex = 0;
             boolean indented = false;
             DependencyInfo dependencyInfo = null;
-            ArrayList<DependencyInfo> parentsList = new ArrayList<>();
+            List<DependencyInfo> parentsList = new LinkedList<>();
             HashMap<DependencyInfo, DependencyInfo> childrenList = new HashMap<>();
-            ArrayList<DependencyInfo> partialDependencies = new ArrayList<>();
+            List<DependencyInfo> partialDependencies = new LinkedList<>();
             DependencyInfo parentDependency = null;
             whileLoop:
             while ((currLine = bufferedReader.readLine()) != null) {
@@ -201,9 +201,8 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                     }
                                 }
                                 childrenList.put(dependencyInfo, parentDependency);
-                                // the 'addChild' requires agent.api.version 2.7.1-SNAPSHOT
                                 // adding this dependency as a child to its parent
-                                parentDependency.addChild(dependencyInfo);
+                                parentDependency.getChildren().add(dependencyInfo);
                             } else {
                                 // inside a parent dependency
                                 String[] split = currLine.trim().split(SPACE);
@@ -224,11 +223,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                         dependencyInfo.setSha1(sha1);
                                     }
                                     partialDependencies.remove(dependencyInfo);
-                                    dependencyInfo.setArtifactId(name + HYPHEN + version + "." + GEM);
-                                    dependencyInfo.setVersion(version);
-                                    dependencyInfo.setDependencyType(DependencyType.RUBY);
-                                    dependencyInfo.setSystemPath(gemLockFile.getPath());
-                                    dependencyInfo.setFilename(pathToGems + fileSeparator + name + HYPHEN + version + "." + GEM);
+                                    setDependencyInfoProperties(dependencyInfo, name, version,gemLockFile, pathToGems);
                                     parentsList.add(dependencyInfo);
                                     parentDependency = dependencyInfo;
                                 } catch (IOException e){
@@ -249,8 +244,20 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
             // partial dependencies are those who appear in the Gemfile.lock only as child dependencies, thus without valid version.
             // in such case, remove that dependency from its parent
             for (DependencyInfo d : partialDependencies){
-                // the 'removeChild' requires agent.api.version 2.7.1-SNAPSHOT
-                childrenList.get(d).removeChild(d);
+                String version = findGemVersion(d.getGroupId(), pathToGems);
+                if (version == null) {
+                    logger.warn("Can't find version for {}-{}", d.getGroupId());
+                    childrenList.get(d).getChildren().remove(d);
+                } else {
+                    String sha1 = getRubyDependenciesSha1(d.getGroupId(), version, pathToGems);
+                    if (sha1 == null){
+                        logger.warn("Can't find gem file for {}-{}", d.getGroupId(), version);
+                        childrenList.get(d).getChildren().remove(d);
+                    } else {
+                        d.setSha1(sha1);
+                        setDependencyInfoProperties(d, d.getGroupId(), version, gemLockFile, pathToGems);
+                    }
+                }
             }
             // creating the dependencies list by using only the parent dependencies, i.e. - those that aren't found in the children's list
             // using loop with `equal` and not `contains` since the contains would fail when the key of a hash map is modified after its creation (as in this case)
@@ -280,6 +287,14 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                 logger.debug("stacktrace {}", e.getStackTrace());
             }
         }
+    }
+
+    private void setDependencyInfoProperties(DependencyInfo dependencyInfo, String name, String version, File gemLockFile, String pathToGems){
+        dependencyInfo.setArtifactId(name + HYPHEN + version + "." + GEM);
+        dependencyInfo.setVersion(version);
+        dependencyInfo.setDependencyType(DependencyType.RUBY);
+        dependencyInfo.setSystemPath(gemLockFile.getPath());
+        dependencyInfo.setFilename(pathToGems + fileSeparator + name + HYPHEN + version + "." + GEM);
     }
 
     // Ruby's cache is inside the installation folder.  path can be found by running command 'gem environment gemdir'
@@ -312,8 +327,8 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     private File installMissingGem(String name, String version, File file){
         if (installMissingGems) {
-            if (version.toLowerCase().contains(MINGW)){
-                version = version.substring(0,version.indexOf(HYPHEN));
+            if (version.toLowerCase().contains(MINGW)) {
+                version = version.substring(0, version.indexOf(HYPHEN));
             }
             String param = INSTALL.concat(" " + name + " " + V + " " + version);
             String[] commandParams = cli.getCommandParams(GEM, param);
@@ -344,5 +359,32 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
             }
         }
         return null;
+    }
+
+    // there are cases where a dependency appears in the Gemfile.lock only as a child.
+    // in such cases, look for the relevant gem file in the cache with the highest version
+    private String findGemVersion(String gemName, String pathToGems){
+        String version = null;
+        File gemsFolder = new File(pathToGems);
+        File[] files = gemsFolder.listFiles(new GemFileNameFilter(gemName));
+        if (files.length > 0) {
+            Arrays.sort(files, Collections.reverseOrder());
+            String fileName = files[0].getName();
+            version = fileName.substring(gemName.length()+1,fileName.lastIndexOf("."));
+        }
+        return version;
+    }
+}
+
+class GemFileNameFilter implements FilenameFilter{
+
+    private String fileName;
+
+    public GemFileNameFilter(String name){
+        fileName = name;
+    }
+    @Override
+    public boolean accept(File dir, String name) {
+        return name.toLowerCase().startsWith(fileName) && name.endsWith(".gem");
     }
 }
