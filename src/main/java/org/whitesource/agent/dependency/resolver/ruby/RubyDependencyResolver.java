@@ -30,6 +30,8 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     protected static final String SPACE = " ";
     protected static final String V = "-v";
     protected static final String ERROR = "ERROR";
+    protected static final String HYPHEN = "-";
+    protected static final String MINGW = "mingw";
 
     private final Logger logger = LoggerFactory.getLogger(RubyDependencyResolver.class);
 
@@ -211,7 +213,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                     String sha1 = getRubyDependenciesSha1(name, version, pathToGems);
                                     if (sha1 == null){
                                         logger.warn("Can't find gem file for {}-{}", name, version);
-                                        continue;
+                                        continue whileLoop;
                                     }
                                     // looking for this dependency in the children's list (in case its already a child of some other dependency)
                                     dependencyInfo = childrenList.keySet().stream().filter(d -> d.getGroupId().equals(name)).findFirst().orElse(null);
@@ -222,11 +224,11 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                         dependencyInfo.setSha1(sha1);
                                     }
                                     partialDependencies.remove(dependencyInfo);
-                                    dependencyInfo.setArtifactId(name + "-" + version + "." + GEM);
+                                    dependencyInfo.setArtifactId(name + HYPHEN + version + "." + GEM);
                                     dependencyInfo.setVersion(version);
                                     dependencyInfo.setDependencyType(DependencyType.RUBY);
                                     dependencyInfo.setSystemPath(gemLockFile.getPath());
-                                    dependencyInfo.setFilename(pathToGems + fileSeparator + name + "-" + version + "." + GEM);
+                                    dependencyInfo.setFilename(pathToGems + fileSeparator + name + HYPHEN + version + "." + GEM);
                                     parentsList.add(dependencyInfo);
                                     parentDependency = dependencyInfo;
                                 } catch (IOException e){
@@ -296,7 +298,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     private String getRubyDependenciesSha1(String name, String version, String pathToGems) throws IOException {
         String sha1 = null;
-        File file = new File(pathToGems + fileSeparator + name + "-" + version + "." + GEM);
+        File file = new File(pathToGems + fileSeparator + name + HYPHEN + version + "." + GEM);
         if (file.isFile()){
             sha1 = ChecksumUtils.calculateSHA1(file);
         } else {
@@ -310,6 +312,9 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     private File installMissingGem(String name, String version, File file){
         if (installMissingGems) {
+            if (version.toLowerCase().contains(MINGW)){
+                version = version.substring(0,version.indexOf(HYPHEN));
+            }
             String param = INSTALL.concat(" " + name + " " + V + " " + version);
             String[] commandParams = cli.getCommandParams(GEM, param);
             List<String> lines = cli.runCmd(rootDirectory, commandParams);
@@ -326,9 +331,8 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                    for those cases, this piece of code extracts the updated version and return the downloaded file
                  */
                 try {
-                    // TODO - use 'findFirst' instead of collect
-                    List<String> installed = lines.stream().filter(line -> line.startsWith("Successfully installed") && line.contains(name)).collect(Collectors.toList());
-                    String gem = installed.get(0).split(" ")[2];
+                    String installed = lines.stream().filter(line -> line.startsWith("Successfully installed") && line.contains(name)).findFirst().orElse("");
+                    String gem = installed.split(" ")[2];
                     File newFile = new File(file.getParent() + fileSeparator + gem + "." + GEM);
                     if (newFile.isFile()) {
                         return newFile;
