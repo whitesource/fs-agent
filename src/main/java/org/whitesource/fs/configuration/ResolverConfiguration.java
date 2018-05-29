@@ -51,6 +51,7 @@ public class ResolverConfiguration {
             @JsonProperty(PYTHON_PATH) String pythonPath,
             @JsonProperty(PYTHON_IS_WSS_PLUGIN_INSTALLED) boolean pythonIsWssPluginInstalled,
             @JsonProperty(PYTHON_UNINSTALL_WSS_PLUGIN) boolean pythonUninstallWssPlugin,
+            @JsonProperty(PYTHON_IGNORE_PIP_INSTALL_ERRORS) boolean pythonIgnorePipInstallErrors,
 
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
@@ -91,6 +92,7 @@ public class ResolverConfiguration {
         this.pythonPath = pythonPath;
         this.pythonIsWssPluginInstalled = pythonIsWssPluginInstalled;
         this.pythonUninstallWssPlugin = pythonUninstallWssPlugin;
+        this.pythonIgnorePipInstallErrors = pythonIgnorePipInstallErrors;
 
         this.dependenciesOnly = dependenciesOnly;
         this.whitesourceConfiguration = whitesourceConfiguration;
@@ -134,6 +136,7 @@ public class ResolverConfiguration {
     private boolean     pythonResolveDependencies;
     private String      pipPath;
     private String      pythonPath;
+    private boolean     pythonIgnorePipInstallErrors;
 
     private boolean     gradleResolveDependencies;
     private boolean     gradleRunAssembleCommand;
@@ -248,6 +251,11 @@ public class ResolverConfiguration {
     @JsonProperty(PYTHON_PATH)
     public String getPythonPath() {
         return pythonPath;
+    }
+
+    @JsonProperty(PYTHON_IGNORE_PIP_INSTALL_ERRORS)
+    public boolean isPythonIgnorePipInstallErrors() {
+        return pythonIgnorePipInstallErrors;
     }
 
     @JsonProperty(PYTHON_IS_WSS_PLUGIN_INSTALLED)
