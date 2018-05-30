@@ -3,6 +3,7 @@ package org.whitesource.fs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -16,15 +17,10 @@ import java.util.*;
  * Created by anna.rozin
  */
 public class ComponentScan {
-    public static final String DIRECTORY = "d";
 
     /* --- Static members --- */
 
     private final Logger logger = LoggerFactory.getLogger(ComponentScan.class);
-    public static final String DIRECTORY_NOT_SET = "Directory parameter 'd' is not set" + StatusCode.ERROR;
-    public static final String EMPTY_PROJECT_TOKEN = "";
-    public static final String FOLDER_DELIMITER = ",";
-    public static final String DOT = ".";
 
     /* --- Members --- */
 
@@ -40,8 +36,8 @@ public class ComponentScan {
 
     public String scan() {
         logger.info("Starting Analysis - component scan has started");
-        String directory = config.getProperty(DIRECTORY);
-        String[] directories = directory.split(FOLDER_DELIMITER);
+        String directory = config.getProperty(Constants.DIRECTORY);
+        String[] directories = directory.split(Constants.COMMA);
         ArrayList<String> scannerBaseDirs = new ArrayList<>(Arrays.asList(directories));
         if (!scannerBaseDirs.isEmpty()) {
             logger.info("Getting properties");
@@ -59,7 +55,7 @@ public class ComponentScan {
             boolean followSymlinks = config.getProperty(ConfigPropertyKeys.CASE_SENSITIVE_GLOB_PROPERTY_KEY) != null ?
                     Boolean.valueOf(config.getProperty(ConfigPropertyKeys.CASE_SENSITIVE_GLOB_PROPERTY_KEY)) : false;
             Collection<String> excludedCopyrights = fsaConfiguration.getAgent().getExcludedCopyrights();
-            excludedCopyrights.remove("");
+            excludedCopyrights.remove(Constants.EMPTY_STRING);
             //todo hasScmConnectors[0] in future - no need for cx
             // Resolving dependencies
             logger.info("Resolving dependencies");
@@ -75,7 +71,7 @@ public class ComponentScan {
                     fsaConfiguration.getAgent().isCalculateMd5()).keySet();
             logger.info("Finished dependency resolution");
             for (AgentProjectInfo project : projects) {
-                project.setProjectToken(EMPTY_PROJECT_TOKEN);
+                project.setProjectToken(Constants.WHITESPACE);
                 if (acceptExtensionsList != null && acceptExtensionsList.length > 0) {
                     project.setDependencies(getDependenciesFromExtensionsListOnly(project.getDependencies(), acceptExtensionsList));
                 }
@@ -84,7 +80,7 @@ public class ComponentScan {
             String jsonString = new ConfigurationSerializer().getAsString(projects, true);
             return jsonString;
         } else {
-            return "";// new ConfigurationSerializer<>().getAsString(new Collection<AgentProjectInfo>);
+            return Constants.EMPTY_STRING;// new ConfigurationSerializer<>().getAsString(new Collection<AgentProjectInfo>);
         }
     }
 
@@ -92,7 +88,7 @@ public class ComponentScan {
         LinkedList<DependencyInfo> filteredDependencies = new LinkedList<>();
         for (DependencyInfo dependency : dependencies) {
             for (String extension : acceptExtensionsList) {
-                if (dependency.getDependencyType() != null || dependency.getArtifactId().endsWith(DOT + extension) || checkFileName(dependency, extension)) {
+                if (dependency.getDependencyType() != null || dependency.getArtifactId().endsWith(Constants.DOT + extension) || checkFileName(dependency, extension)) {
                     filteredDependencies.add(dependency);
                     dependency.setChildren(getDependenciesFromExtensionsListOnly(dependency.getChildren(), acceptExtensionsList));
                     break;
@@ -105,7 +101,7 @@ public class ComponentScan {
     private boolean checkFileName(DependencyInfo dependency, String extension) {
         boolean fileNameEndsWithExtension = false;
         if (dependency.getFilename() != null) {
-            fileNameEndsWithExtension = dependency.getFilename().endsWith(DOT + extension);
+            fileNameEndsWithExtension = dependency.getFilename().endsWith(Constants.DOT + extension);
         }
         return fileNameEndsWithExtension;
     }

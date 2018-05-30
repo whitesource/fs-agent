@@ -19,8 +19,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.ViaComponents;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
+import org.whitesource.agent.ViaComponents;
 import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
@@ -52,12 +53,9 @@ public class FileSystemAgent {
     /* --- Static members --- */
 
     private Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
-    public static final String EXCLUDED_COPYRIGHTS_SEPARATOR_REGEX = ",";
     private static final String NPM_COMMAND = NpmLsJsonDependencyCollector.isWindows() ? "npm.cmd" : "npm";
-    private static final String NPM_INSTALL_COMMAND = "install";
     private static final String PACKAGE_LOCK = "package-lock.json";
     private static final String PACKAGE_JSON = "package.json";
-    public static final String EMPTY_STRING = "";
 
     /* --- Members --- */
 
@@ -98,7 +96,7 @@ public class FileSystemAgent {
             if (this.config.getSender().isEnableImpactAnalysis()) {
                 logger.warn("Could not executing VIA impact analysis with the 'projectPerFolder' flag");
             }
-            projects = new ProjectsDetails(new ArrayList<>(), StatusCode.SUCCESS, "");
+            projects = new ProjectsDetails(new ArrayList<>(), StatusCode.SUCCESS, Constants.EMPTY_STRING);
             for (String directory : dependencyDirs) {
                 Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
                 Set<String> setDirs = new HashSet<>();
@@ -199,15 +197,15 @@ public class FileSystemAgent {
         // Use FSA a as a package manger extractor for Debian/RPM/Arch Linux/Alpine
         if (config.isScanProjectManager()) {
             projects = new PackageManagerExtractor().createProjects();
-            projectsDetails = new ProjectsDetails(projects, success[0], EMPTY_STRING);
+            projectsDetails = new ProjectsDetails(projects, success[0], Constants.EMPTY_STRING);
         } else if (config.isScanDockerImages()) {
             projects = new DockerResolver(config).resolveDockerImages();
-            projectsDetails = new ProjectsDetails(projects, success[0], EMPTY_STRING);
+            projectsDetails = new ProjectsDetails(projects, success[0], Constants.EMPTY_STRING);
         } else {
             ViaLanguage viaLanguage = getIaLanguage(config.getRequest().getIaLanguage());
             projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis(), viaLanguage)
                     .createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnectors[0]);
-            projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], EMPTY_STRING);
+            projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], Constants.EMPTY_STRING);
         }
         // delete all temp scm files
         scmPaths.forEach(directory -> {
@@ -245,7 +243,7 @@ public class FileSystemAgent {
             if (packageLock.exists()) {
                 packageLock.delete();
             }
-            CommandLineProcess npmInstall = new CommandLineProcess(pathToCloneRepoFiles, new String[]{NPM_COMMAND, NPM_INSTALL_COMMAND});
+            CommandLineProcess npmInstall = new CommandLineProcess(pathToCloneRepoFiles, new String[]{NPM_COMMAND, Constants.INSTALL});
             logger.info("Found package.json file, executing 'npm install' on {}", scmConnector.getUrl());
             try {
                 npmInstall.executeProcessWithoutOutput();

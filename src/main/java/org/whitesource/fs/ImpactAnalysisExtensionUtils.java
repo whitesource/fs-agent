@@ -33,7 +33,6 @@ public class ImpactAnalysisExtensionUtils {
     public static final String GLOB_PATTERN_PREFIX = "**/*.";
 
     public static final List<String> JAVA_EXTENSIONS = Arrays.asList("jar");
-//    public static final List<String> JAVA_EXTENSIONS = Arrays.asList("jar" "war");
     public static final List<String> JAVA_SCRIPT_EXTENSIONS = Arrays.asList("package.json");
 
     public static final String JAVA_EXTENSIONS_PATTERN;

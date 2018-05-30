@@ -23,13 +23,7 @@ public class DockerTest {
 
     public static final String WHITE_SOURCE_DOCKER = "WhiteSource-Docker";
     private static final String TEMP_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + WHITE_SOURCE_DOCKER;
-    private static final String ARCHIVE_EXTRACTOR_TEMP_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + "WhiteSource-ArchiveExtractor";
-    private static final String TAR_SUFFIX = ".tar";
     private static final int ARCHIVE_EXTRACTION_DEPTH = 2;
-    private static final boolean PARTIAL_SHA1_MATCH = false;
-    private static final String WINDOWS_PATH_SEPARATOR = "\\";
-    private static final String UNIX_PATH_SEPARATOR = "/";
-    private static final String NEW_LINE = "\\r?\\n";
     private static final String REPOSITORY = "REPOSITORY";
     private static final String SPACES_REGEX = "\\s+";
 

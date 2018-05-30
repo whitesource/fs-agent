@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver.bower;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.BomFile;
@@ -35,10 +36,8 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
     /* --- Static Members --- */
 
     private static final String BOWER_JSON = "bower.json";
-
     public static final String WS_BOWER_FILE2 = "**/*" + "ws_bower.json";
     public static final String WS_BOWER_FILE1 = "**/*" + "ws-log-response-bower.json";
-    private static final String JAVA_SCRIPT_EXTENSION = ".js";
 
     /* --- Members --- */
 
@@ -96,7 +95,7 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
 
     @Override
     protected Collection<String> getSourceFileExtensions() {
-        return Arrays.asList(JAVA_SCRIPT_EXTENSION);
+        return Arrays.asList(Constants.JS_EXTENSION);
     }
 
     @Override

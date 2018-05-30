@@ -17,6 +17,7 @@ package org.whitesource.agent.dependency.resolver.nuget;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
@@ -38,7 +39,6 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     private final Logger logger = LoggerFactory.getLogger(NugetDependencyResolver.class);
     public static final String CONFIG = ".config";
     public static final String CSPROJ = ".csproj";
-    public static final String PATTERN = "**/*";
 
     /* --- Members --- */
 
@@ -53,9 +53,9 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
         this.whitesourceConfiguration = whitesourceConfiguration;
         this.nugetConfigFileType = nugetConfigFileType;
         if (this.nugetConfigFileType == NugetConfigFileType.CONFIG_FILE_TYPE) {
-            bomPattern = PATTERN + CONFIG;
+            bomPattern = Constants.PATTERN + CONFIG;
         } else {
-            bomPattern = PATTERN + CSPROJ;
+            bomPattern = Constants.PATTERN + CSPROJ;
         }
     }
 

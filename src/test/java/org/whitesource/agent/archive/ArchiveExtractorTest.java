@@ -3,6 +3,7 @@ package org.whitesource.agent.archive;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.Pair;
@@ -30,11 +31,11 @@ public class ArchiveExtractorTest {
         int archiveExtractionDepth = 5;
 
         ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, fileExcludes);
-        String scannerFile = Paths.get("", "C:\\Issues\\bigJar\\wss-server-1.1.0-SNAPSHOT.war").toString();
+        String scannerFile = Paths.get(Constants.EMPTY_STRING, "C:\\Issues\\bigJar\\wss-server-1.1.0-SNAPSHOT.war").toString();
         String unzipFolderFilter = archiveExtractor.extractArchives(scannerFile, archiveExtractionDepth, new ArrayList<>());
 
         archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, new String[0]);
-        scannerFile = Paths.get("", "C:\\Issues\\bigJar\\wss-server-1.1.0-SNAPSHOT.war").toString();
+        scannerFile = Paths.get(Constants.EMPTY_STRING, "C:\\Issues\\bigJar\\wss-server-1.1.0-SNAPSHOT.war").toString();
         String unzipFolderAll = archiveExtractor.extractArchives(scannerFile, archiveExtractionDepth, new ArrayList<>());
 
         FilesScanner fs = new FilesScanner();

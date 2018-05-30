@@ -18,6 +18,7 @@ package org.whitesource.agent.dependency.resolver.python;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -42,13 +43,11 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     /* --- Static members --- */
 
     private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver.class);
-    private static final String PATTERN = "**/*";
     private static final String PYTHON_BOM = "requirements.txt";
     private static final String WHITESOURCE_TEMP_FOLDER = "Whitesource_python_resolver";
 
     private static final String WS_SETUP_PY = "ws_setup.py";
     private static final String WS_CONFIG = "ws_config.py";
-    private static final String INSTALL = "install";
     private static final String WHITESOURCE_UPDATE_COMMAND = "whitesource_update";
     private static final String CONFIG_FLAG = "-p";
     private static final String WS_PYTHON_PACKAGE_NAME = "ws-python-package-name";
@@ -61,7 +60,6 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     private static final String TRUE = "True";
     private static final String WS_PYTHON_PACKAGE_VERSION = "9.9.9.9";
     private static final String PY_EXT = ".py";
-    private static final String SPACE = " ";
     private final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
 
     private final String[] pythonConfig = new String[]{
@@ -98,7 +96,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     private final String WS_PYTHON_PACKAGE_NAME_UNINSTALL_COMMAND;
 
-    private final Collection<String> excludes = Arrays.asList("**/*" + PY_EXT);
+    private final Collection<String> excludes = Arrays.asList(Constants.PATTERN + PY_EXT);
     private final String pythonPath;
     private final String pipPath;
     private final boolean isPythonIsWssPluginInstalled;
@@ -108,7 +106,8 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         super();
         this.pythonPath = pythonPath;
         this.pipPath = pipPath;
-        WS_PYTHON_PACKAGE_NAME_UNINSTALL_COMMAND = pipPath + SPACE + UNINSTALL + SPACE + YES + SPACE + WS_PYTHON_PACKAGE_NAME;
+        WS_PYTHON_PACKAGE_NAME_UNINSTALL_COMMAND = pipPath + Constants.WHITESPACE + UNINSTALL + Constants.WHITESPACE +
+                YES + Constants.WHITESPACE + WS_PYTHON_PACKAGE_NAME;
         this.isPythonIsWssPluginInstalled = isPythonIsWssPluginInstalled;
         this.uninstallPythonPlugin = uninstallPythonPlugin;
     }
@@ -141,10 +140,10 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
             // FSA will run "pip install wss_plugin"
             if (!isPythonIsWssPluginInstalled) {
-                output = processCommand(tempDir, new String[]{pipPath, INSTALL, WSS_PLUGIN}, false);
+                output = processCommand(tempDir, new String[]{pipPath, Constants.INSTALL, WSS_PLUGIN}, false);
             }
             // FSA will run "python setup.py install"
-            output = processCommand(tempDir, new String[]{pythonPath, WS_SETUP_PY, INSTALL}, true);
+            output = processCommand(tempDir, new String[]{pythonPath, WS_SETUP_PY, Constants.INSTALL}, true);
             // FSA will run "python setup.py whitesource_update -p "custom_config.py"
             output = processCommand(tempDir, new String[]{pythonPath, WS_SETUP_PY, WHITESOURCE_UPDATE_COMMAND, CONFIG_FLAG, WS_CONFIG, OFFLINE_FLAG, TRUE}, false);
 
@@ -179,8 +178,8 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             }
         } catch (IOException e) {
             logger.warn("Failed to get python dependencies : " + e.getMessage());
-            logger.debug("Error while running ", String.join(" ", args));
-            logger.debug("Error while running ", String.join(" ", output));
+            logger.debug("Error while running ", String.join(Constants.WHITESPACE, args));
+            logger.debug("Error while running ", String.join(Constants.WHITESPACE, output));
         }
 
         return new ResolutionResult(resolvedProjects, getExcludes(), DependencyType.PYTHON, topLevelFolder);
@@ -191,8 +190,8 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             CommandLineProcess commandLineProcess = new CommandLineProcess(tempDir, args);
             List<String> lines = commandLineProcess.executeProcess();
             if (commandLineProcess.isErrorInProcess()) {
-                logger.debug("Fail to run '" + String.join(" ", args) + "' in '" + tempDir + "'.\n");
-                if (!String.join(" ", args).equals(WS_PYTHON_PACKAGE_NAME_UNINSTALL_COMMAND)) {
+                logger.debug("Fail to run '" + String.join(Constants.WHITESPACE, args) + "' in '" + tempDir + "'.\n");
+                if (!String.join(Constants.WHITESPACE, args).equals(WS_PYTHON_PACKAGE_NAME_UNINSTALL_COMMAND)) {
                     StringBuilder result = new StringBuilder();
                     if (logger.isDebugEnabled()) {
                         lines = commandLineProcess.executeProcessWithErrorOutput();
@@ -208,7 +207,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
                         }
                     }
                     if (!setupInstall) {
-                        logger.debug("Fail to run '" + String.join(" ", args) + "' in '" + tempDir + ". " + "The error output is: {}", result);
+                        logger.debug("Fail to run '" + String.join(Constants.WHITESPACE, args) + "' in '" + tempDir + ". " + "The error output is: {}", result);
                     }
                 }
             }
@@ -254,7 +253,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public String getBomPattern() {
-        return PATTERN + PYTHON_BOM;
+        return Constants.PATTERN + PYTHON_BOM;
     }
 
     @Override

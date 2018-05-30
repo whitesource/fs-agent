@@ -37,6 +37,7 @@ import org.redline_rpm.header.Format;
 import org.redline_rpm.header.Header;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.Pair;
 
@@ -86,20 +87,15 @@ public class ArchiveExtractor {
     public static final String XZ_SUFFIX = ".xz";
     public static final String LZMA = "lzma";
     public static final String CPIO = ".cpio";
-    public static final String RAR = ".rar";
+    public static final String TGZ_SUFFIX = ".tgz";
 
     public static final String TAR_GZ_SUFFIX = TAR_SUFFIX + GZ_SUFFIX;
     public static final String TAR_BZ2_SUFFIX = TAR_SUFFIX + BZ_SUFFIX;
-    public static final String TGZ_SUFFIX = ".tgz";
-    public static final String UNIX_FILE_SEPARATOR = "/";
-    public static final String WINDOWS_FILE_SEPARATOR = "\\";
 
     public static final String UN_ARCHIVER_LOGGER = "unArchiverLogger";
-    public static final String GLOB_PATTERN_PREFIX = "**/*.";
+    public static final String GLOB_PATTERN_PREFIX = Constants.PATTERN + Constants.DOT;
     public static final String PATTERN_PREFIX = ".*\\.";
-    public static final String OR = "|";
     public static final String XZ_UN_ARCHIVER_FILE_NAME = "compressedFile.tar";
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
 
     static {
         ZIP_EXTENSION_PATTERN = initializePattern(ZIP_EXTENSIONS);
@@ -114,9 +110,9 @@ public class ArchiveExtractor {
         for (String archiveExtension : archiveExtensions) {
             sb.append(PATTERN_PREFIX);
             sb.append(archiveExtension);
-            sb.append(OR);
+            sb.append(Constants.PIPE);
         }
-        return sb.toString().substring(0, sb.toString().lastIndexOf(OR));
+        return sb.toString().substring(0, sb.toString().lastIndexOf(Constants.PIPE));
     }
 
     /* --- Private members --- */
@@ -546,15 +542,14 @@ public class ArchiveExtractor {
 
     // parse name without directories
     private String getFileName(String name) {
-        if (name.contains(UNIX_FILE_SEPARATOR)) {
-            name = name.substring(name.lastIndexOf(UNIX_FILE_SEPARATOR) + 1, name.length());
-        } else if (name.contains(WINDOWS_FILE_SEPARATOR)) {
-            name = name.substring(name.lastIndexOf(WINDOWS_FILE_SEPARATOR) + 1, name.length());
+        //check if the environment is linux or windows
+        if (name.contains(Constants.FORWARD_SLASH)) {
+            name = name.substring(name.lastIndexOf(Constants.FORWARD_SLASH) + 1, name.length());
+        } else if (name.contains(Constants.BACK_SLASH)) {
+            name = name.substring(name.lastIndexOf(Constants.BACK_SLASH) + 1, name.length());
         }
         return name;
     }
-
-    /* --- Nested Class --- */
 
 
 }

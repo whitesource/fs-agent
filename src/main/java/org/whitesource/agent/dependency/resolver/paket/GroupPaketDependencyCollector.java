@@ -1,5 +1,7 @@
 package org.whitesource.agent.dependency.resolver.paket;
 
+import org.whitesource.agent.Constants;
+
 import java.util.List;
 
 /**
@@ -31,11 +33,11 @@ public class GroupPaketDependencyCollector extends AbstractPaketDependencyCollec
 
     @Override
     protected String beginGroupLine() {
-        return GROUP + SPACE + this.groupName;
+        return GROUP + Constants.WHITESPACE + this.groupName;
     }
 
     @Override
     protected String getFolderPathOfDependency(String dependencyName) {
-        return getPackagesFolder() + FORWARD_SLASH + this.groupName + FORWARD_SLASH + dependencyName;
+        return getPackagesFolder() + Constants.FORWARD_SLASH + this.groupName + Constants.FORWARD_SLASH + dependencyName;
     }
 }

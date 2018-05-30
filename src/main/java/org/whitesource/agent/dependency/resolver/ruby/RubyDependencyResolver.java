@@ -3,6 +3,7 @@ package org.whitesource.agent.dependency.resolver.ruby;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
@@ -21,16 +22,13 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     private static final String ORIG = ".orig";
     private static final List<String> RUBY_SCRIPT_EXTENSION = Arrays.asList(".rb");
     private static final String BUNDLE         = "bundle";
-    private static final String INSTALL        = "install";
     private static final String GEM            = "gem";
     private static final String ENVIRONMENT    = "environment gemdir";
     protected static final String REGEX = "\\S";
     protected static final String SPECS = "specs:";
     protected static final String CACHE = "cache";
-    protected static final String SPACE = " ";
     protected static final String V = "-v";
     protected static final String ERROR = "ERROR";
-    protected static final String HYPHEN = "-";
     protected static final String MINGW = "mingw";
 
     private final Logger logger = LoggerFactory.getLogger(RubyDependencyResolver.class);
@@ -59,7 +57,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
-        excludes.add(PATTERN + RUBY_SCRIPT_EXTENSION);
+        excludes.add(Constants.PATTERN + RUBY_SCRIPT_EXTENSION);
         return excludes;
     }
 
@@ -75,7 +73,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String getBomPattern() {
-        return PATTERN + GEM_FILE_LOCK;
+        return Constants.PATTERN + GEM_FILE_LOCK;
     }
 
     @Override
@@ -108,7 +106,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
             // rename the original Gemfile.lock (if it exists)
             gemFileLock.renameTo(origGemFileLock);
         }
-        boolean bundleInstallSuccess = cli.runCmd(rootDirectory, cli.getCommandParams(BUNDLE, INSTALL)) != null && gemFileLock.isFile();
+        boolean bundleInstallSuccess = cli.runCmd(rootDirectory, cli.getCommandParams(BUNDLE, Constants.INSTALL)) != null && gemFileLock.isFile();
         if (!bundleInstallSuccess && !overwriteGemFile){
             // when running the 'bundle install' command failed and the original file was renamed - restore its name
             origGemFileLock.renameTo(gemFileLock);
@@ -182,7 +180,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                 // inside indentation - a child dependency
                                 indented = true;
                                 previousIndex = index;
-                                int spaceIndex = currLine.indexOf(" ", index);
+                                int spaceIndex = currLine.indexOf(Constants.WHITESPACE, index);
                                 String name = currLine.substring(index, spaceIndex > -1 ? spaceIndex : currLine.length());
                                 // looking for the dependency in the parents' list
                                 dependencyInfo = parentsList.stream().filter(d -> d.getGroupId().equals(name)).findFirst().orElse(null);
@@ -205,7 +203,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                 parentDependency.getChildren().add(dependencyInfo);
                             } else {
                                 // inside a parent dependency
-                                String[] split = currLine.trim().split(SPACE);
+                                String[] split = currLine.trim().split(Constants.WHITESPACE);
                                 String name = split[0];
                                 String version = split[1].substring(1, split[1].length()-1);
                                 try {
@@ -290,11 +288,11 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     }
 
     private void setDependencyInfoProperties(DependencyInfo dependencyInfo, String name, String version, File gemLockFile, String pathToGems){
-        dependencyInfo.setArtifactId(name + HYPHEN + version + "." + GEM);
+        dependencyInfo.setArtifactId(name + Constants.DASH + version + "." + GEM);
         dependencyInfo.setVersion(version);
         dependencyInfo.setDependencyType(DependencyType.RUBY);
         dependencyInfo.setSystemPath(gemLockFile.getPath());
-        dependencyInfo.setFilename(pathToGems + fileSeparator + name + HYPHEN + version + "." + GEM);
+        dependencyInfo.setFilename(pathToGems + fileSeparator + name + Constants.DASH + version + "." + GEM);
     }
 
     // Ruby's cache is inside the installation folder.  path can be found by running command 'gem environment gemdir'
@@ -313,7 +311,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     private String getRubyDependenciesSha1(String name, String version, String pathToGems) throws IOException {
         String sha1 = null;
-        File file = new File(pathToGems + fileSeparator + name + HYPHEN + version + "." + GEM);
+        File file = new File(pathToGems + fileSeparator + name + Constants.DASH + version + Constants.DOT + GEM);
         if (file.isFile()){
             sha1 = ChecksumUtils.calculateSHA1(file);
         } else {
@@ -328,9 +326,9 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     private File installMissingGem(String name, String version, File file){
         if (installMissingGems) {
             if (version.toLowerCase().contains(MINGW)) {
-                version = version.substring(0, version.indexOf(HYPHEN));
+                version = version.substring(0, version.indexOf(Constants.DASH));
             }
-            String param = INSTALL.concat(" " + name + " " + V + " " + version);
+            String param = Constants.INSTALL.concat(Constants.WHITESPACE + name + Constants.WHITESPACE + V + Constants.WHITESPACE + version);
             String[] commandParams = cli.getCommandParams(GEM, param);
             List<String> lines = cli.runCmd(rootDirectory, commandParams);
             if (file.isFile()) {
@@ -346,8 +344,8 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                    for those cases, this piece of code extracts the updated version and return the downloaded file
                  */
                 try {
-                    String installed = lines.stream().filter(line -> line.startsWith("Successfully installed") && line.contains(name)).findFirst().orElse("");
-                    String gem = installed.split(" ")[2];
+                    String installed = lines.stream().filter(line -> line.startsWith("Successfully installed") && line.contains(name)).findFirst().orElse(Constants.EMPTY_STRING);
+                    String gem = installed.split(Constants.WHITESPACE)[2];
                     File newFile = new File(file.getParent() + fileSeparator + gem + "." + GEM);
                     if (newFile.isFile()) {
                         return newFile;

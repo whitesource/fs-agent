@@ -19,6 +19,7 @@ import fr.dutra.tools.maven.deptree.core.Node;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -43,14 +44,10 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
     /* --- Statics Members --- */
 
-    protected static final String DOT = ".";
-    protected static final String DASH = "-";
-
     private static final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector.class);
 
     private static final String MVN_PARAMS_M2PATH_PATH = "help:evaluate";
     private static final String MVN_PARAMS_M2PATH_LOCAL = "-Dexpression=settings.localRepository";
-
     private static final String MVN_PARAMS_TREE = "dependency:tree";
     private static final String MVN_COMMAND = "mvn";
     private static final String SCOPE_TEST = "test";
@@ -59,7 +56,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String M2 = ".m2";
     private static final String REPOSITORY = "repository";
     private static final String ALL = "All";
-    private static final String EMPTY_STRING = "";
     private static final String POM = "pom";
     public static final String TEST_JAR = "test-jar";
     public static final String JAR = "jar";
@@ -94,7 +90,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
         if (StringUtils.isBlank(M2Path)){
-            this.M2Path = getMavenM2Path(DOT);
+            this.M2Path = getMavenM2Path(Constants.DOT);
         }
 
         Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
@@ -149,8 +145,8 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         try {
             return ChecksumUtils.calculateSHA1(new File(filePath));
         } catch (IOException e) {
-            logger.warn("Failed getting " + filePath + ". File will not be send to WhiteSource server.");
-            return EMPTY_STRING;
+            logger.warn("Failed getting " + filePath + ". File will not be sent to WhiteSource server.");
+            return Constants.EMPTY_STRING;
         }
     }
 
@@ -162,16 +158,16 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
         String shortName;
         if (StringUtils.isBlank(node.getClassifier())) {
-            shortName = dependency.getArtifactId() + DASH + dependency.getVersion() + DOT + node.getPackaging();
+            shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DOT + node.getPackaging();
         } else {
             String nodePackaging = node.getPackaging();
             if (nodePackaging.equals(TEST_JAR)){
                 nodePackaging = JAR;
             }
-            shortName = dependency.getArtifactId() + DASH + dependency.getVersion() + DASH + node.getClassifier() + DOT + nodePackaging;
+            shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DASH + node.getClassifier() + Constants.DOT + nodePackaging;
         }
 
-        String filePath = Paths.get(M2Path, dependency.getGroupId().replace(DOT, File.separator), dependency.getArtifactId(), dependency.getVersion(), shortName).toString();
+        String filePath = Paths.get(M2Path, dependency.getGroupId().replace(Constants.DOT, File.separator), dependency.getArtifactId(), dependency.getVersion(), shortName).toString();
         if (!paths.containsKey(filePath)) {
             paths.put(filePath, new ArrayList<>());
         }
@@ -191,7 +187,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
     private String[] getLsCommandParams() {
         if (isWindows()) {
-            return new String[] {CMD, C_CHAR_WINDOWS, MVN_COMMAND, MVN_PARAMS_TREE};
+            return new String[] {Constants.CMD, C_CHAR_WINDOWS, MVN_COMMAND, MVN_PARAMS_TREE};
         } else {
             return new String[] {MVN_COMMAND, MVN_PARAMS_TREE};
         }
@@ -206,7 +202,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         }
         String[] params = null;
         if (isWindows()) {
-            params = new String[]{CMD, C_CHAR_WINDOWS, MVN_COMMAND, MVN_PARAMS_M2PATH_PATH, MVN_PARAMS_M2PATH_LOCAL};
+            params = new String[]{Constants.CMD, C_CHAR_WINDOWS, MVN_COMMAND, MVN_PARAMS_M2PATH_PATH, MVN_PARAMS_M2PATH_LOCAL};
         } else {
             params = new String[]{MVN_COMMAND, MVN_PARAMS_M2PATH_PATH, MVN_PARAMS_M2PATH_LOCAL};
         }
@@ -218,7 +214,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 if (pathLine.isPresent()) {
                     return pathLine.get();
                 } else {
-                    logger.warn("could not get m2 path : {} out: {}", rootDirectory, lines.stream().reduce("", String::concat));
+                    logger.warn("could not get m2 path : {} out: {}", rootDirectory, lines.stream().reduce(Constants.EMPTY_STRING, String::concat));
                     showMavenTreeError = true;
                     return null;
                 }

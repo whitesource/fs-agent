@@ -23,6 +23,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.fs.FSAConfiguration;
 
 import java.io.File;
@@ -32,10 +33,10 @@ import java.util.Map;
 import java.util.Properties;
 
 public class ConfigurationSerializer <T> {
+
     /* --- Static members --- */
 
     private final Logger logger = LoggerFactory.getLogger(ConfigurationSerializer.class);
-    public static final String DELIMITER_SPACE = " ";
 
     /* --- Members --- */
 
@@ -106,7 +107,7 @@ public class ConfigurationSerializer <T> {
                     fillProperties((Map<String, Object>) entry.getValue(), properties);
                 } else {
                     if (entry.getValue() instanceof ArrayList) {
-                        properties.put(entry.getKey(), String.join(DELIMITER_SPACE, (ArrayList) entry.getValue()));
+                        properties.put(entry.getKey(), String.join(Constants.WHITESPACE, (ArrayList) entry.getValue()));
                     } else {
                         properties.put(entry.getKey(), entry.getValue().toString());
                     }
@@ -123,7 +124,6 @@ public class ConfigurationSerializer <T> {
                 T config = jsonMapper.readValue(json, typeParameterClass);
                 return config;
             }
-
         } catch (IOException e) {
             e.printStackTrace();
             return null;

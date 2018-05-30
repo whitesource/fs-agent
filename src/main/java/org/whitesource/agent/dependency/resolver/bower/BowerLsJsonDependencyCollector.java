@@ -18,6 +18,7 @@ package org.whitesource.agent.dependency.resolver.bower;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
@@ -36,14 +37,8 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
 
     private final Logger logger = LoggerFactory.getLogger(BowerLsJsonDependencyCollector.class);
     private static final String BOWER_COMMAND = NpmLsJsonDependencyCollector.isWindows() ? "bower.cmd" : "bower";
-    private static final String VERSION = "version";
     private static final String PKG_META = "pkgMeta";
-    private static final String RESOLUTION = "_resolution";
     private static final String TYPE = "type";
-    private static final String TAG = "tag";
-    private static final String NAME = "name";
-    private static final String MISSING = "missing";
-    private static final String DEPENDENCIES = "dependencies";
 
     /* --- Constructors --- */
 
@@ -55,7 +50,7 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
 
     @Override
     protected String[] getInstallParams() {
-        return new String[]{BOWER_COMMAND, INSTALL_COMMAND};
+        return new String[]{BOWER_COMMAND, Constants.INSTALL};
     }
 
     @Override
@@ -65,26 +60,26 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
 
     @Override
     protected DependencyInfo getDependency(String dependencyAlias, JSONObject jsonObject) {
-        String version = "";
-        String name = "";
+        String version = Constants.EMPTY_STRING;
+        String name = Constants.EMPTY_STRING;
         boolean unmetDependency = false;
 
-        if (jsonObject.has(MISSING) && jsonObject.getBoolean(MISSING)) {
+        if (jsonObject.has(Constants.MISSING) && jsonObject.getBoolean(Constants.MISSING)) {
             unmetDependencyLog(dependencyAlias);
             return null;
         }
         if (jsonObject.has(PKG_META)) {
             JSONObject metaData = jsonObject.getJSONObject(PKG_META);
-            if (metaData.has(RESOLUTION)) {
-                JSONObject resolution = metaData.getJSONObject(RESOLUTION);
+            if (metaData.has(Constants.RESOLUTION)) {
+                JSONObject resolution = metaData.getJSONObject(Constants.RESOLUTION);
                 String resolutionType = resolution.getString(TYPE);
-                if (metaData.has(NAME)) {
-                    name = metaData.getString(NAME);
+                if (metaData.has(Constants.NAME)) {
+                    name = metaData.getString(Constants.NAME);
                 } else {
                     unmetDependency = true;
                 }
-                if (resolutionType.equals(TAG) || resolutionType.equals(VERSION)) {
-                    version = metaData.getString(VERSION);
+                if (resolutionType.equals(Constants.TAG) || resolutionType.equals(Constants.VERSION)) {
+                    version = metaData.getString(Constants.VERSION);
                 } else {
                     logger.warn("We were not able to allocate the bower version for '{}' in you bower.json file." +
                             "At the moment we only support tag, so please modify your bower.json " +
@@ -113,8 +108,8 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
 
     @Override
     protected void getDependencies(JSONObject jsonObject, String rootDirectory, Collection<DependencyInfo> dependencies) {
-        if (jsonObject.has(DEPENDENCIES)) {
-            JSONObject dependenciesJsonObject = jsonObject.getJSONObject(DEPENDENCIES);
+        if (jsonObject.has(Constants.DEPENDENCIES)) {
+            JSONObject dependenciesJsonObject = jsonObject.getJSONObject(Constants.DEPENDENCIES);
             if (dependenciesJsonObject != null) {
                 for (String dependencyAlias : dependenciesJsonObject.keySet()) {
                     JSONObject dependencyJsonObject = dependenciesJsonObject.getJSONObject(dependencyAlias);
