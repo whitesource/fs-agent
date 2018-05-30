@@ -268,6 +268,7 @@ public class FSAConfiguration {
         String pythonPath                           = config.getProperty(PYTHON_PATH, PYTHON);
         boolean pythonIsWssPluginInstalled          = FSAConfiguration.getBooleanProperty(config, PYTHON_IS_WSS_PLUGIN_INSTALLED, false);
         boolean pythonUninstallWssPluginInstalled   = FSAConfiguration.getBooleanProperty(config, PYTHON_UNINSTALL_WSS_PLUGIN, false);
+        boolean pythonIgnorePipInstallErrors        = FSAConfiguration.getBooleanProperty(config, PYTHON_IGNORE_PIP_INSTALL_ERRORS, false);
 
         boolean gradleResolveDependencies   = FSAConfiguration.getBooleanProperty(config, GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand    = FSAConfiguration.getBooleanProperty(config, GRADLE_RUN_ASSEMBLE_COMMAND, true);
@@ -287,13 +288,12 @@ public class FSAConfiguration {
         boolean rubyOverwriteGemFile        = FSAConfiguration.getBooleanProperty(config, RUBY_OVERWRITE_GEM_FILE, false);
         boolean rubyInstallMissingGems      = FSAConfiguration.getBooleanProperty(config, RUBY_INSTALL_MISSING_GEMS, false);
 
-        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles,
-                npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, bowerResolveDependencies, bowerRunPreStep,
-                nugetResolveDependencies, nugetRestoreDependencies, mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
-                pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
-                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies,
-                paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath, goResolveDependencies, goDependencyManager,
-                goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems);
+        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
+                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
+                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
+                pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled, pythonIgnorePipInstallErrors,
+                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
+                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken,String userKey, String projectName, String projectToken) {

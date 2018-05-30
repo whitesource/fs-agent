@@ -393,7 +393,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
     }
 
-        /* --- Nested classes --- */
+    /* --- Nested classes --- */
 
     class EnrichDependency implements Callable<Void> {
 

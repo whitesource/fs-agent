@@ -109,7 +109,7 @@ public class DependencyResolutionService {
             separateProjects = !mavenAggregateModules;
         }
         if (pythonResolveDependencies) {
-            dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(), config.isPythonIsWssPluginInstalled(), config.getPythonUninstallWssPlugin()));
+            dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(), config.isPythonIgnorePipInstallErrors()));
         }
 
         if (gradleResolveDependencies) {
