@@ -19,6 +19,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -81,7 +82,6 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     private static final String COMMA = "-";
     private static final String TAR_GZ = ".tar.gz";
     private static final String EMPTY_STRING = "";
-    private static final String DOT = ".";
     private static final String COMMENT_SIGN_PYTHON = "#";
     private static final int NUM_THREADS = 8;
 
@@ -116,7 +116,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles) {
         Map<AgentProjectInfo, Path> resolvedProjects = new HashMap<>();
         setTopLevelFolder(topLevelFolder);
-        String requirementsTxtPath = Paths.get(topLevelFolder + FORWARD_SLASH + PYTHON_BOM).toAbsolutePath().toString();
+        String requirementsTxtPath = Paths.get(topLevelFolder + Constants.FORWARD_SLASH + PYTHON_BOM).toAbsolutePath().toString();
         boolean folderWasCreated = createTmpFolder();
 
         // FSA will run 'pip download -r requirements.txt -d TEMP_FOLDER_PATH'
@@ -202,7 +202,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         int currentCounter = this.counterFolders.incrementAndGet();
         String message = "Failed to download the transitive dependencies of '";
         try {
-            if (processCommand(new String[]{pipPath, DOWNLOAD, packageName, D_PARAMETER, tempDir + FORWARD_SLASH + currentCounter}, false)) {
+            if (processCommand(new String[]{pipPath, DOWNLOAD, packageName, D_PARAMETER, tempDir + Constants.FORWARD_SLASH + currentCounter}, false)) {
                 logger.warn(message + packageName + "'");
             }
         } catch (IOException e) {
@@ -307,7 +307,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public String getBomPattern() {
-        return PATTERN + PYTHON_BOM;
+        return Constants.PATTERN + PYTHON_BOM;
     }
 
     @Override
