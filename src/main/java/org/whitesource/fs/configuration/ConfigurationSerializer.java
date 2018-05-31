@@ -64,7 +64,7 @@ public class ConfigurationSerializer <T> {
             }
             return true;
         } catch (IOException e) {
-            logger.error("error saving configuration ", e);
+            logger.error("error saving configuration ", e.getStackTrace());
             return false;
         }
     }
@@ -74,7 +74,7 @@ public class ConfigurationSerializer <T> {
             yamlMapperWithoutNulls.writeValue(new File(fileOutput), object);
             return true;
         } catch (IOException e) {
-            logger.error("error saving configuration ", e);
+            logger.error("error saving configuration ", e.getStackTrace());
             return false;
         }
     }
@@ -87,7 +87,7 @@ public class ConfigurationSerializer <T> {
                 return jsonMapperWithoutNulls.writeValueAsString(object);
             }
         } catch (IOException e) {
-            logger.error("error getting configuration ", e);
+            logger.error("error getting configuration ", e.getStackTrace());
             return null;
         }
     }
