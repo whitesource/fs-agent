@@ -371,7 +371,8 @@ public class ArchiveExtractor {
             // Get the list of file headers from the zip file before unpacking
             List fileHeaderList = zipFile.getFileHeaders();
 
-            List<PathMatcher> matchers = Arrays.stream(filesExcludes).map(fileExclude -> FileSystems.getDefault().getPathMatcher(GLOB_PREFIX + fileExclude)).collect(Collectors.toList());
+            List<PathMatcher> matchers = Arrays.stream(filesExcludes).map(fileExclude ->
+                    FileSystems.getDefault().getPathMatcher(GLOB_PREFIX + fileExclude)).collect(Collectors.toList());
             // Loop through the file headers and extract only files that are not matched by fileExcludes patterns
             for (int i = 0; i < fileHeaderList.size(); i++) {
                 FileHeader fileHeader = (FileHeader) fileHeaderList.get(i);
@@ -410,7 +411,7 @@ public class ArchiveExtractor {
             } else if (fileName.endsWith(TAR_BZ2_SUFFIX)) {
                 unArchiver = new TarBZip2UnArchiver();
             } else if (fileName.endsWith(XZ_SUFFIX)) {
-                String destFileUrl = destDir.getCanonicalPath() + "\\" + XZ_UN_ARCHIVER_FILE_NAME;
+                String destFileUrl = destDir.getCanonicalPath() + Constants.BACK_SLASH + XZ_UN_ARCHIVER_FILE_NAME;
                 File destFile = new File(destFileUrl);
                 unXz(destFile,XZ_UN_ARCHIVER_FILE_NAME);
                 archiveFile = destFileUrl;
