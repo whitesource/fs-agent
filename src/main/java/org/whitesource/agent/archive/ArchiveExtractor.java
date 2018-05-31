@@ -313,9 +313,9 @@ public class ArchiveExtractor {
                 Pair<String,String> dataToUnpack = h.get();
                 results.put(dataToUnpack.getKey(), dataToUnpack.getValue());
             } catch (InterruptedException e) {
-                logger.warn("Error: {}", e);
+                logger.warn("Error: {}", e.getMessage());
             } catch (ExecutionException e) {
-                logger.warn("Error: {}", e);
+                logger.warn("Error: {}", e.getMessage());
             }
         }
 

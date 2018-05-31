@@ -61,9 +61,6 @@ public class DependencyInfoFactory {
     private static final String DEFINE = "define";
     private static final String TODO_PATTERN = "todo:.*|todo .*";
     private static final String CODE_LINE_SUFFIX = ".*:|.*;|.*\\{|.*}|.*\\[|.*]|.*>";
-    private static final char OPEN_BRACKET = '(';
-    private static final char CLOSE_BRACKET = ')';
-
 
     private static final Map<String, String> commentStartEndMap;
 
@@ -365,7 +362,7 @@ public class DependencyInfoFactory {
         int index = cleanLine.indexOf(COPYRIGHT_SYMBOL);
         for (int i = index + 1; i < cleanLine.length(); i++) {
             char c = cleanLine.charAt(i);
-            if (c == OPEN_BRACKET || c == CLOSE_BRACKET || c == Constants.WHITESPACE_CHAR) {
+            if (c == Constants.OPEN_BRACKET || c == Constants.CLOSE_BRACKET || c == Constants.WHITESPACE_CHAR) {
                 continue;
             } else if (MATH_SYMBOLS.contains(c)) {
                 mathExpression = true;
@@ -379,7 +376,7 @@ public class DependencyInfoFactory {
         if (mathExpression) {
             for (int i = index - 1; i >= 0; i--) {
                 char c = cleanLine.charAt(i);
-                if (c == OPEN_BRACKET || c == CLOSE_BRACKET || c == Constants.WHITESPACE_CHAR) {
+                if (c == Constants.OPEN_BRACKET || c == Constants.CLOSE_BRACKET || c == Constants.WHITESPACE_CHAR) {
                     continue;
                 } else if (MATH_SYMBOLS.contains(c)) {
                     mathExpression = true;
