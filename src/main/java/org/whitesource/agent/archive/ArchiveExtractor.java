@@ -17,6 +17,7 @@ package org.whitesource.agent.archive;
 
 import com.github.junrar.testutil.ExtractArchive;
 import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveInputStream;
@@ -343,20 +344,7 @@ public class ArchiveExtractor {
         } else if (lowerCaseFileName.matches(RPM_EXTENSION_PATTERN)) {
             foundArchive = handleRpmFile(innerDir, fileKey);
         } else if (lowerCaseFileName.matches(RAR_EXTENSION_PATTERN)) {
-            File destDir = new File(innerDir);
-            if (!destDir.exists()) {
-                destDir.mkdirs();
-            }
-            try {
-                ExtractArchive.extractArchive(fileKey, innerDir);
-            } catch (Exception e) {
-                logger.warn("Error extracting file {}: {}", fileKey, e.getMessage());
-                if (e.getMessage().contains(NULL_HEADER)) {
-                    logger.info("Retrying extraction  {}", fileKey);
-                    foundArchive = unZip(innerDir, fileKey);
-                }
-            }
-            foundArchive = true;
+            foundArchive = extractRarFile(innerDir, fileKey);
         } else {
             logger.warn("Error: {} is unsupported archive type", fileKey);
         }
@@ -365,6 +353,31 @@ public class ArchiveExtractor {
             return resultArchive;
         } else
             return null;
+    }
+
+    private boolean extractRarFile(String innerDir, String fileKey) {
+        boolean foundArchive;
+        File destDir = new File(innerDir);
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+        try {
+            ExtractArchive.extractArchive(fileKey, innerDir);
+            foundArchive = true;
+        } catch (Exception e) {
+            logger.warn("Error extracting file {}: {}", fileKey, e.getMessage());
+            try {
+                //if the header is missing try to extract the rar file with zip extension - WSE-450
+                if (e.getMessage().contains(NULL_HEADER) && new ZipFile(fileKey) instanceof ZipFile) {
+                    logger.info("Retrying extraction  {}", fileKey);
+                    foundArchive = unZip(innerDir, fileKey);
+                }
+            } catch (ZipException e1) {
+                logger.warn("Error extracting file {}: {}", fileKey, e.getMessage());
+                foundArchive = false;
+            }
+        }
+        return true;
     }
 
     // Open and extract data from zip pattern files
