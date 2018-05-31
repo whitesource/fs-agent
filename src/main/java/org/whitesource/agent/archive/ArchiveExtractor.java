@@ -65,6 +65,7 @@ public class ArchiveExtractor {
     public static final String DEPTH = "_depth_";
     public static final String DEPTH_REGEX = DEPTH + "[0-9]";
     public static final String GLOB_PREFIX = "glob:";
+    public static final String NULL_HEADER = "mainheader is null";
 
     private final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
     private final String WHITESOURCE_TEMP_FOLDER = "WhiteSource-ArchiveExtractor";
@@ -350,6 +351,10 @@ public class ArchiveExtractor {
                 ExtractArchive.extractArchive(fileKey, innerDir);
             } catch (Exception e) {
                 logger.warn("Error extracting file {}: {}", fileKey, e.getMessage());
+                if (e.getMessage().contains(NULL_HEADER)) {
+                    logger.info("Retrying extraction  {}", fileKey);
+                    foundArchive = unZip(innerDir, fileKey);
+                }
             }
             foundArchive = true;
         } else {
