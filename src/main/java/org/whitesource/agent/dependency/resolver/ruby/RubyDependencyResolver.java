@@ -16,18 +16,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.whitesource.agent.dependency.resolver.ruby.RubyDependencyResolver.GEM;
+
 public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     private static final String GEM_FILE_LOCK = "Gemfile.lock";
     private static final String ORIG = ".orig";
     private static final List<String> RUBY_SCRIPT_EXTENSION = Arrays.asList(".rb");
     private static final String BUNDLE         = "bundle";
-    private static final String GEM            = "gem";
     private static final String ENVIRONMENT    = "environment gemdir";
+    protected static final String GEM          = "gem";
     protected static final String REGEX = "\\S";
     protected static final String SPECS = "specs:";
     protected static final String CACHE = "cache";
-    protected static final String V = "-v";
+    protected static final String V     = "-v";
     protected static final String ERROR = "ERROR";
     protected static final String MINGW = "mingw";
 
@@ -178,6 +180,9 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                             int index = matcher.start();
                             if ((index > previousIndex && previousIndex > 0) || (indented && index == previousIndex)){
                                 // inside indentation - a child dependency
+                                if (parentDependency == null){
+                                    continue whileLoop;
+                                }
                                 indented = true;
                                 previousIndex = index;
                                 int spaceIndex = currLine.indexOf(Constants.WHITESPACE, index);
@@ -274,7 +279,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         } catch (FileNotFoundException e){
             logger.warn("Could not Gemfile.lock {}", e.getMessage());
             logger.debug("stacktrace {}", e.getStackTrace());
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.warn("Could not parse Gemfile.lock {}", e.getMessage());
             logger.debug("stacktrace {}", e.getStackTrace());
         } finally {
@@ -288,11 +293,11 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     }
 
     private void setDependencyInfoProperties(DependencyInfo dependencyInfo, String name, String version, File gemLockFile, String pathToGems){
-        dependencyInfo.setArtifactId(name + Constants.DASH + version + "." + GEM);
+        dependencyInfo.setArtifactId(name + Constants.DASH + version + Constants.DOT + GEM);
         dependencyInfo.setVersion(version);
         dependencyInfo.setDependencyType(DependencyType.RUBY);
         dependencyInfo.setSystemPath(gemLockFile.getPath());
-        dependencyInfo.setFilename(pathToGems + fileSeparator + name + Constants.DASH + version + "." + GEM);
+        dependencyInfo.setFilename(pathToGems + fileSeparator + name + Constants.DASH + version + Constants.DOT + GEM);
     }
 
     // Ruby's cache is inside the installation folder.  path can be found by running command 'gem environment gemdir'
@@ -346,7 +351,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                 try {
                     String installed = lines.stream().filter(line -> line.startsWith("Successfully installed") && line.contains(name)).findFirst().orElse(Constants.EMPTY_STRING);
                     String gem = installed.split(Constants.WHITESPACE)[2];
-                    File newFile = new File(file.getParent() + fileSeparator + gem + "." + GEM);
+                    File newFile = new File(file.getParent() + fileSeparator + gem + Constants.DOT + GEM);
                     if (newFile.isFile()) {
                         return newFile;
                     }
@@ -368,7 +373,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         if (files.length > 0) {
             Arrays.sort(files, Collections.reverseOrder());
             String fileName = files[0].getName();
-            version = fileName.substring(gemName.length()+1,fileName.lastIndexOf("."));
+            version = fileName.substring(gemName.length()+1,fileName.lastIndexOf(Constants.DOT));
         }
         return version;
     }
@@ -383,6 +388,6 @@ class GemFileNameFilter implements FilenameFilter{
     }
     @Override
     public boolean accept(File dir, String name) {
-        return name.toLowerCase().startsWith(fileName) && name.endsWith(".gem");
+        return name.toLowerCase().startsWith(fileName) && name.endsWith(Constants.DOT + GEM);
     }
 }
