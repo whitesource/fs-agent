@@ -18,6 +18,7 @@ package org.whitesource.agent.dependency.resolver.npm;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.BomParser;
 
@@ -36,11 +37,7 @@ public class NpmBomParser extends BomParser {
     /* --- Static members --- */
 
     private static String OPTIONAL_DEPENDENCIES = "optionalDependencies";
-    private static String DEV_DEPENDENCIES = "devDependencies";
-    private static String NAME = "name";
-    private static String VERSION = "version";
     private static String SHA1 = "_shasum";
-    private static String DEPENDENCIES = "dependencies";
     private static String NPM_PACKAGE_FORMAT = "{0}-{1}.tgz";
     private static String RESOLVED = "_resolved";
 
@@ -49,11 +46,11 @@ public class NpmBomParser extends BomParser {
     /* --- Protected methods --- */
 
     protected String getVersion(JSONObject json, String fileName) {
-        if (json.has(VERSION)) {
-            return json.getString(VERSION);
+        if (json.has(Constants.VERSION)) {
+            return json.getString(Constants.VERSION);
         }
         logger.debug("version not found in file {}", fileName);
-        return "";
+        return Constants.EMPTY_STRING;
     }
 
     /* --- Static methods --- */
@@ -67,12 +64,12 @@ public class NpmBomParser extends BomParser {
     @Override
     protected BomFile parseBomFile(String jsonText, String localFileName) {
         JSONObject json = new JSONObject(jsonText);
-        String name = json.getString(NAME);
+        String name = json.getString(Constants.NAME);
         String version = getVersion(json, localFileName);
-        Map dependencies = getDependenciesFromJson(json, DEPENDENCIES);
+        Map dependencies = getDependenciesFromJson(json, Constants.DEPENDENCIES);
         Map optionalDependencies = getDependenciesFromJson(json, OPTIONAL_DEPENDENCIES);
         String fileName = getFilename(name, version);
-        String sha1 = "";
+        String sha1 = Constants.EMPTY_STRING;
         String resolved = null;
         if(json.has(RESOLVED)) {
             resolved = json.getString(RESOLVED);

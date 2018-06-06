@@ -6,6 +6,7 @@ import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.archiver.ArchiverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
@@ -40,32 +41,24 @@ public class DockerResolver {
     private static final String O_PARAMETER = "-o";
     private static final String REPOSITORY = "REPOSITORY";
     private static final String SPACES_REGEX = "\\s+";
-    private static final String SPACE = " ";
     private static final String DOCKER_NAME_FORMAT_STRING = "{0} {1} ({2})";
     private static final MessageFormat DOCKER_NAME_FORMAT = new MessageFormat(DOCKER_NAME_FORMAT_STRING);
     private static final String DOCKER_IMAGES = "docker images";
     private static final boolean PARTIAL_SHA1_MATCH = false;
-    private static final String UNIX_PATH_SEPARATOR = "/";
     private static final String DEBIAN_PATTERN = "**/*eipp.log.xz";
     private static final String ARCH_LINUX_PATTERN = "**/*desc";
     private static final String ALPINE_PATTERN = "**/*installed";
     private static final String DEBIAN_PATTERN_AVAILABLE = "**/*available";
     private static final String RPM_PATTERN = "**var\\lib\\yum\\yumdb/**";
-    private static final String[] scanIncludes = {DEBIAN_PATTERN, ARCH_LINUX_PATTERN, ALPINE_PATTERN,RPM_PATTERN,DEBIAN_PATTERN_AVAILABLE};
+    private static final String[] scanIncludes = {DEBIAN_PATTERN, ARCH_LINUX_PATTERN, ALPINE_PATTERN, RPM_PATTERN, DEBIAN_PATTERN_AVAILABLE};
     private static final String[] scanExcludes = {};
-    public static final String WINDOWS_SEPARATOR = "\\";
-    public static final String LINUX_SEPARATOR = "/";
     private static final String ARCH_LINUX_DESC_FOLDERS = "var\\lib\\pacman\\local";
     private static final String RPM_YUM_DB_FOLDER_DEFAULT_PATH = "var\\lib\\yum\\yumdb";
     private static final String DEBIAN_LIST_PACKAGES_FILE = "\\eipp.log.xz";
     private static final String ALPINE_LIST_PACKAGES_FILE = "\\installed";
     private static final String DEBIAN_LIST_PACKAGES_FILE_AVAILABLE = "\\available";
-    public static final String OS_NAME = "os.name";
-    public static final String WINDOWS = "Windows";
     public static final String YUMDB = "yumdb";
     public static final String PACKAGE_LOG_TXT = "packageLog.txt";
-    public static final String UNDER_SCORE = "_";
-
 
     /* --- Members --- */
 
@@ -122,7 +115,6 @@ public class DockerResolver {
                 process.destroy();
             }
         }
-
         return projects;
     }
 
@@ -137,7 +129,7 @@ public class DockerResolver {
         Collection<String> imageIncludesList = Arrays.asList(dockerImageIncludes);
         Collection<String> imageExcludesList = Arrays.asList(dockerImageExcludes);
         for (DockerImage dockerImage : dockerImages) {
-            String dockerImageString = dockerImage.getRepository() + SPACE + dockerImage.getTag() + SPACE + dockerImage.getId();
+            String dockerImageString = dockerImage.getRepository() + Constants.WHITESPACE + dockerImage.getTag() + Constants.WHITESPACE + dockerImage.getId();
             // add images to scan according to dockerIncludes pattern
             for (String imageInclude : imageIncludesList) {
                 if (StringUtils.isNotBlank(imageInclude)) {
@@ -168,7 +160,7 @@ public class DockerResolver {
     private void saveDockerImages(Collection<DockerImage> dockerImages, Collection<AgentProjectInfo> projects) throws IOException {
         Process process = null;
         logger.info("Saving {} docker images", dockerImages.size());
-        String osName = System.getProperty(OS_NAME);
+        String osName = System.getProperty(Constants.OS_NAME);
         for (DockerImage dockerImage : dockerImages) {
             logger.debug("Saving image {} {}", dockerImage.getRepository(), dockerImage.getTag());
             // create agent project info
@@ -184,8 +176,8 @@ public class DockerResolver {
             containerTarArchiveExtractDir.mkdirs();
             try {
                 //Save image as tar file
-                process = Runtime.getRuntime().exec(DOCKER_SAVE_IMAGE_COMMAND + SPACE + dockerImage.getId() +
-                        SPACE + O_PARAMETER + SPACE + containerTarFile.getPath());
+                process = Runtime.getRuntime().exec(DOCKER_SAVE_IMAGE_COMMAND + Constants.WHITESPACE + dockerImage.getId() +
+                        Constants.WHITESPACE  + O_PARAMETER + Constants.WHITESPACE + containerTarFile.getPath());
                 process.waitFor();
 
                 // extract tar archive
@@ -198,13 +190,13 @@ public class DockerResolver {
                 String[] fileNames = filesScanner.getDirectoryContent(containerTarArchiveExtractDir.getPath(), scanIncludes, scanExcludes, true, false);
 
                 // check the operating system to build the full path correctly
-                if (osName.startsWith(WINDOWS)) {
+                if (osName.startsWith(Constants.WINDOWS)) {
                     for (int i = 0; i < fileNames.length; i++) {
-                        fileNames[i] = containerTarArchiveExtractDir.getPath() + WINDOWS_SEPARATOR + fileNames[i];
+                        fileNames[i] = containerTarArchiveExtractDir.getPath() + Constants.WINDOWS_SEPARATOR + fileNames[i];
                     }
                 } else {
                     for (int i = 0; i < fileNames.length; i++) {
-                        fileNames[i] = containerTarArchiveExtractDir.getPath() + LINUX_SEPARATOR + fileNames[i];
+                        fileNames[i] = containerTarArchiveExtractDir.getPath() + Constants.UNIX_PATH_SEPARATOR + fileNames[i];
                     }
                 }
 
@@ -263,10 +255,10 @@ public class DockerResolver {
                     String systemPath = dependencyInfo.getSystemPath();
                     if (StringUtils.isNotBlank(systemPath)) {
                         String containerRelativePath = systemPath;
-                        containerRelativePath.replace(WINDOWS_SEPARATOR, UNIX_PATH_SEPARATOR);
+                        containerRelativePath.replace(Constants.WINDOWS_SEPARATOR, Constants.UNIX_PATH_SEPARATOR);
                         containerRelativePath = containerRelativePath.substring(containerRelativePath.indexOf(WHITE_SOURCE_DOCKER +
-                                WINDOWS_SEPARATOR) + WHITE_SOURCE_DOCKER.length() + 1);
-                        containerRelativePath = containerRelativePath.substring(containerRelativePath.indexOf(WINDOWS_SEPARATOR) + 1);
+                                Constants.WINDOWS_SEPARATOR) + WHITE_SOURCE_DOCKER.length() + 1);
+                        containerRelativePath = containerRelativePath.substring(containerRelativePath.indexOf(Constants.WINDOWS_SEPARATOR) + 1);
                         dependencyInfo.setSystemPath(containerRelativePath);
                     }
                 }
@@ -283,7 +275,6 @@ public class DockerResolver {
                 process.destroy();
                 deleteDockerArchiveFiles(containerTarFile, containerTarExtractDir, containerTarArchiveExtractDir);
             }
-
         }
     }
 
@@ -306,16 +297,14 @@ public class DockerResolver {
 
     private File getPackagesLogFile(File file,String osName,ArchiveExtractor archiveExtractor) throws IOException {
 
-       if(osName.startsWith(WINDOWS)){
-           archiveExtractor.unXz(file, WINDOWS_SEPARATOR+PACKAGE_LOG_TXT);
-           return new File(file.getParent()+WINDOWS_SEPARATOR+PACKAGE_LOG_TXT);
+       if(osName.startsWith(Constants.WINDOWS)){
+           archiveExtractor.unXz(file, Constants.WINDOWS_SEPARATOR + PACKAGE_LOG_TXT);
+           return new File(file.getParent() + Constants.WINDOWS_SEPARATOR+PACKAGE_LOG_TXT);
        }
        else {
-           archiveExtractor.unXz(file, LINUX_SEPARATOR+PACKAGE_LOG_TXT);
-           return new File(file.getParent()+LINUX_SEPARATOR+PACKAGE_LOG_TXT);
+           archiveExtractor.unXz(file, Constants.UNIX_PATH_SEPARATOR + PACKAGE_LOG_TXT);
+           return new File(file.getParent() + Constants.UNIX_PATH_SEPARATOR + PACKAGE_LOG_TXT);
        }
-
-
     }
 
     private int parseProjectInfo(AgentProjectInfo projectInfo, AbstractParser parser, File file) {
@@ -327,7 +316,6 @@ public class DockerResolver {
             return packageManagerPackages.size();
         }
         return 0;
-
     }
 
     private void deleteDockerArchiveFiles(File containerTarFile, File containerTarExtractDir, File containerTarArchiveExtractDir) throws IOException {

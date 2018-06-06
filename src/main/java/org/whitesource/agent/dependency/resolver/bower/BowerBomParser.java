@@ -18,6 +18,7 @@ package org.whitesource.agent.dependency.resolver.bower;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.npm.NpmBomParser;
 
 import java.text.MessageFormat;
@@ -33,7 +34,6 @@ public class BowerBomParser extends NpmBomParser {
     /* --- Static members --- */
 
     public static final String RESOLUTION = "_resolution";
-    public static final String TAG = "tag";
     public static final String BOWER_PACKAGE_FILENAME_FORMAT = "{0}-{1}";
     private final Logger logger = LoggerFactory.getLogger(NpmBomParser.class);
 
@@ -41,14 +41,14 @@ public class BowerBomParser extends NpmBomParser {
 
     @Override
     protected String getVersion(JSONObject json, String fileName) {
-        String version = "";
+        String version = Constants.EMPTY_STRING;
         if (json.has(RESOLUTION)) {
             JSONObject jObj = json.getJSONObject(RESOLUTION);
-            if (jObj.has(TAG)) {
-                return jObj.getString(TAG);
+            if (jObj.has(Constants.TAG)) {
+                return jObj.getString(Constants.TAG);
             }
             logger.debug("version not found in file {}", fileName);
-            return "";
+            return Constants.EMPTY_STRING;
         }
         return version;
     }

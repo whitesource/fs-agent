@@ -2,7 +2,7 @@ package org.whitesource.agent.dependency.resolver.gradle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.dependency.resolver.DependencyCollector;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.CommandLineProcess;
 
@@ -12,7 +12,6 @@ import java.util.List;
 class GradleCli extends Cli {
     private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.gradle.GradleCli.class);
 
-    protected static final String GRADLE_PARAMS_TREE = "dependencies";
     protected static final String GRADLE_ASSEMBLE = "assemble";
     private final String GRADLE_COMMAND = "gradle";
     private final String GRADLE_COMMAND_W = "gradlew";
@@ -51,10 +50,8 @@ class GradleCli extends Cli {
 }
 
     enum MvnCommand {
-        DEPENDENCIES(GradleCli.GRADLE_PARAMS_TREE),
+        DEPENDENCIES(Constants.DEPENDENCIES),
         ASSEMBLE(GradleCli.GRADLE_ASSEMBLE);
-
         MvnCommand(String value){
-
         }
     }

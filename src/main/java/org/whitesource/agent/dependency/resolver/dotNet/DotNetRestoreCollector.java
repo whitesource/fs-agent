@@ -2,6 +2,7 @@ package org.whitesource.agent.dependency.resolver.dotNet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
@@ -31,10 +32,8 @@ public class DotNetRestoreCollector extends DependencyCollector {
     public static final String RESTORE = "restore";
     public static final String PACKAGES = "--packages";
     public static final String DOT_NET_RESTORE_WS = "DotNetRestoreWS";
-    public static final String EMPTY_STRING = "";
     public static final String NUPKG = ".nupkg";
-    public static final String BACK_SLASH = isWindows() ? "\\" : "/";
-    public static final String DOT = ".";
+    public static final String BACK_SLASH = isWindows() ? Constants.BACK_SLASH : Constants.FORWARD_SLASH;
     private static String[] includes = {"**/*" + NUPKG};
     private static String[] excludes = {};
 
@@ -53,7 +52,8 @@ public class DotNetRestoreCollector extends DependencyCollector {
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
         List<DependencyInfo> dependencies = new LinkedList<>();
-        Map<File, Collection<String>> folderMapToFiles = new FilesUtils().fillFilesMap(this.pathsToScan, this.includes, this.excludes, true, false);
+        Map<File, Collection<String>> folderMapToFiles = new FilesUtils().fillFilesMap(this.pathsToScan, this.includes,
+                this.excludes,true, false);
         for (File file : folderMapToFiles.keySet()) {
             for (String shortPath : folderMapToFiles.get(file)) {
                 String nugetFilePath = file.getAbsolutePath() + BACK_SLASH + shortPath;
@@ -77,7 +77,7 @@ public class DotNetRestoreCollector extends DependencyCollector {
             String pathToDownloadPackages = DOTNET_RESTORE_TMP_DIRECTORY + BACK_SLASH + getNameOfFolderPackages(csprojFile) + this.serialNumber;
             this.serialNumber++;
             String[] command = getInstallParams(pathToDownloadPackages, csprojFile);
-            String commandString = String.join(" ", command);
+            String commandString = String.join(Constants.WHITESPACE, command);
             logger.debug("Running command : '{}'", commandString);
             CommandLineProcess dotNetRestore = new CommandLineProcess(folder, command);
             try {
@@ -119,7 +119,7 @@ public class DotNetRestoreCollector extends DependencyCollector {
             return ChecksumUtils.calculateSHA1(new File(filePath));
         } catch (IOException e) {
             logger.info("Failed getting " + filePath + ". File will not be send to WhiteSource server.");
-            return EMPTY_STRING;
+            return Constants.EMPTY_STRING;
         }
     }
 
@@ -129,7 +129,7 @@ public class DotNetRestoreCollector extends DependencyCollector {
         String name = getPackageName(shortPath);
 //        dependency.setGroupId(name);
 //        dependency.setArtifactId(name);
-        dependency.setArtifactId(name + DOT + getVersion(shortPath) + NUPKG);
+        dependency.setArtifactId(name + Constants.DOT + getVersion(shortPath) + NUPKG);
 //        dependency.setVersion(getVersion(shortPath));
 //        dependency.setDependencyType(DependencyType.NUGET);
         String sha1 = getSha1(nugetFilePath);

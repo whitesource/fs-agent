@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
@@ -25,22 +26,17 @@ import java.util.stream.Collectors;
 public class GradleLinesParser extends MavenTreeDependencyCollector {
 
     /* --- Static members --- */
+
+    private final Logger logger = LoggerFactory.getLogger(GradleLinesParser.class);
     private static final String TMP_JAVA_FILE = "tmp.java";
-    private static final String SRC = "src";
     private static final String MAIN = "main";
     private static final String JAVA = "java";
     private static final String JAVA_EXTENSION = ".java";
     private static final String AAR_EXTENTION = ".aar";
-    private final Logger logger = LoggerFactory.getLogger(GradleLinesParser.class);
     private static final String PLUS = "+---";
     private static final String SLASH = "\\---";
-    private static final String SPACE = " ";
-    private static final String PIPE = "|";
     private static final String USER_HOME = "user.home";
-    private static final String COLON = ":";
     private static final int INDENTETION_SPACE = 5;
-    private static final String EMPTY_STRING = "";
-    private static final String FILE_SEPARATOR = "file.separator";
     private static final String JAR_EXTENSION = ".jar";
     private static final String ASTERIX = "(*)";
 
@@ -62,8 +58,8 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         super(null);
         this.runAssembleCommand = runAssembleCommand;
         gradleCli = new GradleCli();
-        fileSeparator = System.getProperty(FILE_SEPARATOR);
-        srcDirPath = fileSeparator + SRC;
+        fileSeparator = System.getProperty(Constants.FILE_SEPARATOR);
+        srcDirPath = fileSeparator + Constants.SRC;
         mainDirPath = srcDirPath + fileSeparator + MAIN;
         javaDirPath = mainDirPath + fileSeparator+ JAVA;
     }
@@ -77,7 +73,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         }
         this.rootDirectory = rootDirectory;
         List<String> projectsLines = lines.stream()
-                .filter(line->(line.contains(PLUS) || line.contains(SLASH) || line.contains(PIPE)) && !line.contains(ASTERIX))
+                .filter(line->(line.contains(PLUS) || line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))
                 .collect(Collectors.toList());
 
         logger.info("Start parsing gradle dependencies");
@@ -87,26 +83,26 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         int prevLineIndentation = 0;
         boolean duplicateDependency = false;
         for (String line : projectsLines){
-            if (line.indexOf(COLON) == -1){
+            if (line.indexOf(Constants.COLON) == -1){
                 continue;
             }
-            String[] strings = line.split(COLON);
+            String[] strings = line.split(Constants.COLON);
             String groupId = strings[0];
-            int lastSpace = groupId.lastIndexOf(SPACE);
+            int lastSpace = groupId.lastIndexOf(Constants.WHITESPACE);
             groupId = groupId.substring(lastSpace + 1);
             String artifactId = strings[1];
             String version = strings[2];
-            if (version.contains(SPACE)){
+            if (version.contains(Constants.WHITESPACE)){
                 if (version.contains("->")){
-                    version = version.split(SPACE)[version.split(SPACE).length-1];
+                    version = version.split(Constants.WHITESPACE)[version.split(Constants.WHITESPACE).length-1];
                 } else {
-                    version = version.split(SPACE)[0];
+                    version = version.split(Constants.WHITESPACE)[0];
                 }
             }
             // Create dependencyInfo & calculate SHA1
             DependencyInfo currentDependency = new DependencyInfo(groupId, artifactId, version);
             DependencyFile dependencyFile = getDependencySha1(currentDependency);
-            if (dependencyFile == null || dependencyFile.getSha1().equals(EMPTY_STRING) || sha1s.contains(dependencyFile.getSha1()))
+            if (dependencyFile == null || dependencyFile.getSha1().equals(Constants.EMPTY_STRING) || sha1s.contains(dependencyFile.getSha1()))
                 continue;
             sha1s.add(dependencyFile.getSha1());
             currentDependency.setSha1(dependencyFile.getSha1());
@@ -118,7 +114,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 continue;
             }
             // In case the dependency is transitive/child dependency
-            if (line.startsWith(SPACE) || line.startsWith(PIPE)){
+            if (line.startsWith(Constants.WHITESPACE) || line.startsWith(Constants.PIPE)){
                 if (duplicateDependency || parentDependencies.isEmpty())
                     continue;
                 //if (!parentDependencies.isEmpty()) {
@@ -169,13 +165,14 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         if (dependencyFile == null){
             // if dependency not found in .gradle cache - looking for it in .m2 cache
             dependencyFile = getSha1FromM2(dependencyInfo);
-            if (dependencyFile == null || dependencyFile.getSha1().equals(EMPTY_STRING)){
+            if (dependencyFile == null || dependencyFile.getSha1().equals(Constants.EMPTY_STRING)){
                 // if dependency not found in .m2 cache - running 'gradel assemble' command which should download the dependency to .grade cache
                 // making sure the download attempt is performed only once, otherwise there might be an infinite loop
                 if (!dependenciesDownloadAttemptPerformed && downloadDependencies()){
                     dependencyFile = getDependencySha1(dependencyInfo);
                 } else {
-                    logger.error("Couldn't find sha1 for " + dependencyInfo.getGroupId() + "." + dependencyInfo.getArtifactId() + "." + dependencyInfo.getVersion());
+                    logger.error("Couldn't find sha1 for " + dependencyInfo.getGroupId() + Constants.DOT +
+                            dependencyInfo.getArtifactId() + Constants.DOT + dependencyInfo.getVersion());
                 }
             }
         }
@@ -213,7 +210,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             }
         }
         if (dependencyFile == null){
-            logger.debug("Couldn't find sha1 for " + groupId + "." + artifactId + "." + version + " inside .gradle cache." );
+            logger.debug("Couldn't find sha1 for " + groupId + Constants.DOT + artifactId + Constants.DOT + version + " inside .gradle cache." );
         }
         return dependencyFile;
     }
@@ -225,20 +222,21 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         logger.debug("looking for " + groupId + "." + artifactId + "." + version + " in .m2 cache");
         DependencyFile dependencyFile = null;
         if (StringUtils.isBlank(M2Path)){
-            this.M2Path = getMavenM2Path(DOT);
+            this.M2Path = getMavenM2Path(Constants.DOT);
         }
 
-        String pathToDependency = M2Path.concat(fileSeparator + String.join(fileSeparator,groupId.split("\\.")) + fileSeparator + artifactId + fileSeparator + version
-                + fileSeparator + artifactId + DASH + version + JAR_EXTENSION);
+        String pathToDependency = M2Path.concat(fileSeparator + String.join(fileSeparator,groupId.split("\\.")) +
+                fileSeparator + artifactId + fileSeparator + version
+                + fileSeparator + artifactId + Constants.DASH + version + JAR_EXTENSION);
         File file = new File(pathToDependency);
         if (file.isFile()) {
             String sha1 = getSha1(pathToDependency);
             dependencyFile = new DependencyFile(sha1,file);
-            if (sha1.equals(EMPTY_STRING)) {
-                logger.debug("Couldn't calculate sha1 for " + groupId + "." + artifactId + "." + version + ".  ");
+            if (sha1.equals(Constants.EMPTY_STRING)) {
+                logger.debug("Couldn't calculate sha1 for " + groupId + Constants.DOT + artifactId + Constants.DOT + version + ".  ");
             }
         } else {
-            logger.debug("Couldn't find sha1 for " + groupId + "." + artifactId + "." + version + " inside .m2 cache." );
+            logger.debug("Couldn't find sha1 for " + groupId + Constants.DOT + artifactId + Constants.DOT + version + " inside .m2 cache." );
         }
         return dependencyFile;
     }

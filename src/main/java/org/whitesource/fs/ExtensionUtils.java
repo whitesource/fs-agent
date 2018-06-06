@@ -16,6 +16,8 @@
 package org.whitesource.fs;
 
 
+import org.whitesource.agent.Constants;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,10 +30,6 @@ import java.util.List;
 public class ExtensionUtils {
 
     /* --- Static members --- */
-
-    public static final String REGEX_PATTERN_PREFIX = ".*\\.";
-    public static final String REGEX_OR = "|";
-    public static final String GLOB_PATTERN_PREFIX = "**/*.";
 
     public static final List<String> SOURCE_EXTENSIONS = Arrays.asList(
             "c", "cc", "cp", "cpp", "cxx", "c\\+\\+", "h", "hh", "hpp", "hxx", "h\\+\\+", "m", "mm",  "pch", // C and C++
@@ -62,7 +60,6 @@ public class ExtensionUtils {
         SOURCE_FILE_PATTERN = initializeRegexPattern(SOURCE_EXTENSIONS);
         BINARY_FILE_PATTERN = initializeRegexPattern(BINARY_EXTENSIONS);
         ARCHIVE_FILE_PATTERN = initializeRegexPattern(ARCHIVE_EXTENSIONS);
-
         List<String> allExtensions = new ArrayList<>();
         allExtensions.addAll(SOURCE_EXTENSIONS);
         allExtensions.addAll(BINARY_EXTENSIONS);
@@ -73,18 +70,17 @@ public class ExtensionUtils {
     private static String initializeRegexPattern(List<String> extensions) {
         StringBuilder sb = new StringBuilder();
         for (String extension : extensions) {
-            sb.append(REGEX_PATTERN_PREFIX);
+            sb.append(Constants.REGEX_PATTERN_PREFIX);
             sb.append(extension);
-            sb.append(REGEX_OR);
+            sb.append(Constants.PIPE);
         }
-
-        return sb.toString().substring(0, sb.toString().lastIndexOf(REGEX_OR));
+        return sb.toString().substring(0, sb.toString().lastIndexOf(Constants.PIPE));
     }
 
     private static String[] initializeGlobPattern(List<String> extensions) {
         String[] globPatterns = new String[extensions.size()];
         for (int i = 0; i < extensions.size(); i++) {
-            globPatterns[i] = GLOB_PATTERN_PREFIX + extensions.get(i);
+            globPatterns[i] = Constants.GLOB_PATTERN_PREFIX + extensions.get(i);
         }
         return globPatterns;
     }

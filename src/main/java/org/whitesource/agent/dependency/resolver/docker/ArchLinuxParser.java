@@ -1,14 +1,15 @@
 package org.whitesource.agent.dependency.resolver.docker;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 
 import java.io.*;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.LinkedList;
-
-import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.*;
 
 
 /**
@@ -17,6 +18,7 @@ import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.*;
 public class ArchLinuxParser extends AbstractParser {
 
     /* --- Static members --- */
+    private final Logger logger = LoggerFactory.getLogger(ArchLinuxParser.class);
 
     private static final String PACKAGE = "%NAME%";
     private static final String VERSION = "%VERSION%";
@@ -60,9 +62,9 @@ public class ArchLinuxParser extends AbstractParser {
                         }
                         dependencyInfos.add(createDependencyInfo(packageInfo));
                     } catch (FileNotFoundException e) {
-                        e.printStackTrace();
+                        logger.error("Error getting package data", e.getMessage());
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        logger.error("Error getting package data", e.getMessage());
                     } finally {
                         closeStream(br, fr);
                     }
@@ -81,8 +83,8 @@ public class ArchLinuxParser extends AbstractParser {
     public File findFile(String[] files, String pathToPackageManagerFolder,String operatingSystem) {
         int max = 0;
         File archLinuxPackageManagerFile = null;
-        if (!operatingSystem.startsWith(WINDOWS)){
-            pathToPackageManagerFolder = pathToPackageManagerFolder.replace(WINDOWS_SEPARATOR,LINUX_SEPARATOR);
+        if (!operatingSystem.startsWith(Constants.WINDOWS)){
+            pathToPackageManagerFolder = pathToPackageManagerFolder.replace(Constants.WINDOWS_SEPARATOR, Constants.UNIX_PATH_SEPARATOR);
         }
         for (String filepath : files) {
             if (filepath.contains(pathToPackageManagerFolder) && filepath.endsWith(DESC)) {

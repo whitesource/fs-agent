@@ -31,7 +31,7 @@ public class SingleFileScanner extends DirectoryScanner {
      * in the scan.
      *
      * @param file for scanning
-     * @return weather the file shpuld be included or not
+     * @return weather the file should be included or not
      */
     public boolean isIncluded(File file) {
         return isIncluded(file.getAbsolutePath());

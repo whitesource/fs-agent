@@ -2,6 +2,7 @@ package org.whitesource.agent.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 
 import java.io.IOException;
@@ -26,7 +27,7 @@ public class Cli {
 
     public String[] getCommandParams(String command, String param){
         if (DependencyCollector.isWindows()) {
-            return new String[] {DependencyCollector.CMD, DependencyCollector.C_CHAR_WINDOWS, command, param};
+            return new String[] {Constants.CMD, DependencyCollector.C_CHAR_WINDOWS, command, param};
         } else {
             return new String[] {command, param};
         }

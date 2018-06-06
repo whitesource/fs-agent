@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 package org.whitesource.fs.configuration;
+
 import org.apache.commons.lang.StringUtils;
+
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
@@ -25,6 +26,7 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
  * Author: eugen.horovitz
  */
 public class ConfigurationValidation {
+
     /* --- Static members --- */
 
     private static final int MAX_EXTRACTION_DEPTH = 7;

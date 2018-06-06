@@ -6,6 +6,7 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 
 import java.io.BufferedReader;
@@ -16,15 +17,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.OS_NAME;
-import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.WINDOWS;
-
 /**
  * @author raz.nitzan
  */
 public class CommandLineProcess {
 
     /* --- Members --- */
+
     private String rootDirectory;
     private String[] args;
     private long timeoutReadLineSeconds;
@@ -52,8 +51,8 @@ public class CommandLineProcess {
     private List<String> executeProcess(boolean includeOutput, boolean includeErrorLines) throws IOException {
         List<String> linesOutput = new LinkedList<>();
         ProcessBuilder pb = new ProcessBuilder(args);
-        String osName = System.getProperty(OS_NAME);
-        if (osName.startsWith(WINDOWS)) {
+        String osName = System.getProperty(Constants.OS_NAME);
+        if (osName.startsWith(Constants.WINDOWS)) {
             rootDirectory = getShortPath(rootDirectory);
         }
         pb.directory(new File(rootDirectory));
@@ -66,7 +65,7 @@ public class CommandLineProcess {
             pb.redirectOutput(new File(redirectErrorOutput));
         }
         if (!includeErrorLines) {
-            logger.debug("start execute command '{}' in '{}'", String.join(" ", args), rootDirectory);
+            logger.debug("start execute command '{}' in '{}'", String.join(Constants.WHITESPACE, args), rootDirectory);
         }
         this.processStart = pb.start();
         if (includeOutput) {
@@ -130,7 +129,7 @@ public class CommandLineProcess {
                 logger.debug("trying to read lines using '{}'", args);
             }
             int lineIndex = 1;
-            String line = "";
+            String line = Constants.EMPTY_STRING;
             while (continueReadingLines && line != null) {
                 Future<String> future = executorService.submit(new CommandLineProcess.ReadLineTask(reader));
                 try {

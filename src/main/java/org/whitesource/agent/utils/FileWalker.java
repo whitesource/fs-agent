@@ -17,6 +17,7 @@ package org.whitesource.agent.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,10 +50,10 @@ public class FileWalker implements Iterator<Path> {
         Thread thread = new Thread(() -> {
 
             final PathMatcher pathMatcherIncludes = FileSystems.getDefault().getPathMatcher(
-                    "glob:{" + String.join(",", includes) + "}");
+                    "glob:{" + String.join(Constants.COMMA, includes) + "}");
 
             final PathMatcher pathMatcherExcludes = FileSystems.getDefault().getPathMatcher(
-                    "glob:{" + String.join(",", excludes) + "}");
+                    "glob:{" + String.join(Constants.COMMA, excludes) + "}");
 
             try {
                 Files.walkFileTree(Paths.get(scannerBaseDir), new FileVisitor<Path>() {
@@ -146,7 +147,7 @@ public class FileWalker implements Iterator<Path> {
                 "glob:{" + String.join(",", includes) + "}");
 
         final PathMatcher pathMatcherExcludes = FileSystems.getDefault().getPathMatcher(
-                "glob:{" + String.join(",", excludes) + "}");
+                "glob:{" + String.join(Constants.COMMA, excludes) + "}");
 
         try {
             Path pathToScan = Paths.get(scannerBaseDir);
@@ -156,7 +157,7 @@ public class FileWalker implements Iterator<Path> {
                 public FileVisitResult visitFile(Path path,
                                                  BasicFileAttributes attrs) throws IOException {
                     if (pathMatcherIncludes.matches(path) && !pathMatcherExcludes.matches(path)) {
-                        files.add(path.toString().replace(pathToScan.toString() + File.separator, ""));
+                        files.add(path.toString().replace(pathToScan.toString() + File.separator, Constants.EMPTY_STRING));
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -184,7 +185,7 @@ public class FileWalker implements Iterator<Path> {
         List<String> files = new ArrayList<>();
         while (i.hasNext()) {
             Path p = i.next();
-            String s = p.toString().replace(scannerBaseDir, "");
+            String s = p.toString().replace(scannerBaseDir, Constants.EMPTY_STRING);
             files.add(s);
         }
         return files;

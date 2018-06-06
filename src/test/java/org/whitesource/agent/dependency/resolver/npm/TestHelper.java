@@ -2,6 +2,7 @@ package org.whitesource.agent.dependency.resolver.npm;
 
 import org.junit.Assert;
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
@@ -43,7 +44,6 @@ public class TestHelper {
         // arrange
         File file = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
         final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
-
         Path tmpPath = Paths.get(JAVA_TEMP_DIR, file.getName());
         try {
             Files.copy(file.toPath(), tmpPath, StandardCopyOption.REPLACE_EXISTING);
@@ -76,7 +76,7 @@ public class TestHelper {
     private static void insertProperty(String filename, String propertyName, String propertyValue) {
         try (BufferedWriter output = new BufferedWriter(new FileWriter(filename, true))){
             output.append(System.lineSeparator());
-            output.append(propertyName+"="+propertyValue);
+            output.append(propertyName + Constants.EQUALS + propertyValue);
             output.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -143,13 +143,13 @@ public class TestHelper {
 
     public static String getShortNameByTgz(DependencyInfo dep) {
         String result = dep.getArtifactId()
-                .replace(dep.getVersion(), "")
-                .replace("|", "")
-                .replace(" ", "")
-                .replace("+", "")
-                .replace("-", "")
-                .replace(".tgz", "")
-                + "@" + dep.getVersion().replace("-", "");
+                .replace(dep.getVersion(),  Constants.EMPTY_STRING)
+                .replace(Constants.PIPE,  Constants.EMPTY_STRING)
+                .replace(Constants.WHITESPACE, Constants.EMPTY_STRING)
+                .replace("+",  Constants.EMPTY_STRING)
+                .replace(Constants.DASH,  Constants.EMPTY_STRING)
+                .replace(".tgz",  Constants.EMPTY_STRING)
+                + "@" + dep.getVersion().replace(Constants.DASH, Constants.EMPTY_STRING);
 
         return result;
     }
@@ -167,16 +167,15 @@ public class TestHelper {
         }
 
         //override if needed
-        p.setProperty(ConfigPropertyKeys.FORCE_CHECK_ALL_DEPENDENCIES, "false");
-        p.setProperty(ConfigPropertyKeys.CHECK_POLICIES_PROPERTY_KEY, "false");
+        p.setProperty(ConfigPropertyKeys.FORCE_CHECK_ALL_DEPENDENCIES,  Constants.FALSE);
+        p.setProperty(ConfigPropertyKeys.CHECK_POLICIES_PROPERTY_KEY,  Constants.FALSE);
         p.setProperty(ConfigPropertyKeys.PROJECT_VERSION_PROPERTY_KEY, "0");
-        p.setProperty(ConfigPropertyKeys.FOLLOW_SYMBOLIC_LINKS, "true");
-        p.setProperty(ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, "false");
+        p.setProperty(ConfigPropertyKeys.FOLLOW_SYMBOLIC_LINKS, Constants.TRUE);
+        p.setProperty(ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, Constants.FALSE);
         p.setProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, "NPM Test Pro hierarchy");
         p.setProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY, "**/*sources.jar **/*javadoc.jar");
-        p.setProperty(ConfigPropertyKeys.CASE_SENSITIVE_GLOB_PROPERTY_KEY, "false");
-//        p.setProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY, "**/*.m **/*.mm  **/*.js **/*.php");
-        p.setProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, "true");
+        p.setProperty(ConfigPropertyKeys.CASE_SENSITIVE_GLOB_PROPERTY_KEY,  Constants.FALSE);
+        p.setProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, Constants.TRUE);
         p.setProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, "testNpm");
         return p;
     }
@@ -189,6 +188,6 @@ public class TestHelper {
     }
 
     public static String getOsRelativePath(String relativeFilePath) {
-        return relativeFilePath.replace("\\", String.valueOf(File.separatorChar).replace("/", String.valueOf(File.separatorChar)));
+        return relativeFilePath.replace("\\", String.valueOf(File.separatorChar).replace(Constants.FORWARD_SLASH, String.valueOf(File.separatorChar)));
     }
 }

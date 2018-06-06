@@ -23,6 +23,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 
 import java.io.*;
@@ -38,7 +39,6 @@ public class OfflineReader {
 
     private final Logger logger = LoggerFactory.getLogger(OfflineReader.class);
     private static final String UTF_8 = "UTF-8";
-    private static final String EMPTY_STRING = "";
 
     public Collection<UpdateInventoryRequest> getAgentProjectsFromRequests(List<String> offlineRequestFiles){//, FSAConfiguration fsaConfiguration) {
         Collection<UpdateInventoryRequest> projects = new LinkedList<>();
@@ -94,13 +94,13 @@ public class OfflineReader {
 
     private static String decompress(File file) throws IOException {
         if (file == null || !file.exists()) {
-            return EMPTY_STRING;
+            return Constants.EMPTY_STRING;
         }
 
         byte[] bytes = Base64.getDecoder().decode(IOUtils.toByteArray(new FileInputStream(file)));
         GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(bytes));
         BufferedReader bf = new BufferedReader(new InputStreamReader(gzipInputStream, UTF_8));
-        StringBuilder outStr = new StringBuilder(EMPTY_STRING);
+        StringBuilder outStr = new StringBuilder(Constants.EMPTY_STRING);
         String line;
         while ((line = bf.readLine()) != null) {
             outStr.append(line);
