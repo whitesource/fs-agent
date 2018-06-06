@@ -136,7 +136,7 @@ public class FSAConfiguration {
 
             scannedFolders = config.getProperty(SCANNED_FOLDERS);
             if (scannedFolders != null) {
-                String[] libsList = scannedFolders.split(",");
+                String[] libsList = scannedFolders.split(Constants.COMMA);
                 // Trim all elements in libsList
                 Arrays.stream(libsList).map(String::trim).toArray(unused -> libsList);
                 dependencyDirs = Arrays.asList(libsList);
@@ -175,7 +175,7 @@ public class FSAConfiguration {
 
         // validate scanned folder
         if (dependencyDirs.isEmpty()) {
-            dependencyDirs.add(".");
+            dependencyDirs.add(Constants.DOT);
         }
 
         // validate config
