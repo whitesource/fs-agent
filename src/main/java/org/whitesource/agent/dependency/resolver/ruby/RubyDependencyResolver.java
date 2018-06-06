@@ -190,10 +190,13 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                 // looking for the dependency in the parents' list
                                 dependencyInfo = parentsList.stream().filter(d -> d.getGroupId().equals(name)).findFirst().orElse(null);
                                 if (dependencyInfo == null) {
-                                    dependencyInfo = new DependencyInfo();
-                                    dependencyInfo.setGroupId(name);
-                                    if (partialDependencies.contains(dependencyInfo) == false) {
-                                        partialDependencies.add(dependencyInfo);
+                                    dependencyInfo = childrenList.stream().filter(d -> d.getGroupId().equals(name)).findFirst().orElse(null);
+                                    if (dependencyInfo == null) {
+                                        dependencyInfo = new DependencyInfo();
+                                        dependencyInfo.setGroupId(name);
+                                        if (partialDependencies.contains(dependencyInfo) == false) {
+                                            partialDependencies.add(dependencyInfo);
+                                        }
                                     }
                                 }
                                 // adding this dependency as a child to its parent
