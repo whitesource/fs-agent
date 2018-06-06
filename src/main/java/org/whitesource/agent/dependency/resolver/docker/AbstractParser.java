@@ -1,5 +1,6 @@
 package org.whitesource.agent.dependency.resolver.docker;
 
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 
 import java.io.BufferedReader;
@@ -7,8 +8,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collection;
-
-import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.*;
 
 /**
  * @author chen.luigi
@@ -41,8 +40,8 @@ public abstract class AbstractParser {
     public abstract File findFile(String[] files, String filename, String operatingSystem);
 
     public static void findFolder(File dir, String folderName, Collection<String> folder, String operatingSystem) {
-        if (!operatingSystem.startsWith(WINDOWS)){
-            folderName = folderName.replace(WINDOWS_SEPARATOR, LINUX_SEPARATOR);
+        if (!operatingSystem.startsWith(Constants.WINDOWS)){
+            folderName = folderName.replace(Constants.FORWARD_SLASH, Constants.BACK_SLASH);
         }
         if (dir.isDirectory()) {
             File[] files = dir.listFiles();

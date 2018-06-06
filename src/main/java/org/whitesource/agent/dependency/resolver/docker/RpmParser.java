@@ -3,6 +3,7 @@ package org.whitesource.agent.dependency.resolver.docker;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 
 import java.io.BufferedReader;
@@ -22,8 +23,6 @@ public class RpmParser extends AbstractParser {
     /* --- Static members --- */
 
     private static final Logger logger = LoggerFactory.getLogger(RpmParser.class);
-    private static final String DASH = "-";
-    private static final String DOT = ".";
     private static final String RPM_PACKAGE_PATTERN = "{0}.rpm";
 
     /* --- Overridden methods --- */
@@ -41,11 +40,11 @@ public class RpmParser extends AbstractParser {
                     // parse the package name from package directory
                     // get the start index of package name
                     // package Directory Name for
-                    int firstHyphenIndex = packageDirectory.getName().indexOf(DASH);
+                    int firstHyphenIndex = packageDirectory.getName().indexOf(Constants.DASH);
                     String packageInfoString = packageDirectory.getName().substring(firstHyphenIndex + 1, packageDirectory.getName().length());
                     // change rpm pattern name to application pattern
-                    int lastIndexOfHyphen = packageInfoString.lastIndexOf(DASH);
-                    packageInfoString = packageInfoString.substring(0, lastIndexOfHyphen) + DOT + packageInfoString.substring(lastIndexOfHyphen + 1);
+                    int lastIndexOfHyphen = packageInfoString.lastIndexOf(Constants.DASH);
+                    packageInfoString = packageInfoString.substring(0, lastIndexOfHyphen) + Constants.DOT + packageInfoString.substring(lastIndexOfHyphen + 1);
                     // create dependencyInfo object
                     DependencyInfo dependencyInfo = null;
                     String packVersion = getPackageVersion(packageInfoString);
@@ -69,9 +68,9 @@ public class RpmParser extends AbstractParser {
     private String getPackageVersion(String packageInfoString) {
         // packageInfoString for example - audit-libs-2.7.6-3.el7-x86_64
         try {
-            String firstDotString = packageInfoString.substring(0, packageInfoString.indexOf(DOT));
-            int lastIndexOfHyphen = firstDotString.lastIndexOf(DASH);
-            int lastIndexOfDot = packageInfoString.lastIndexOf(DOT);
+            String firstDotString = packageInfoString.substring(0, packageInfoString.indexOf(Constants.DOT));
+            int lastIndexOfHyphen = firstDotString.lastIndexOf(Constants.DASH);
+            int lastIndexOfDot = packageInfoString.lastIndexOf(Constants.DOT);
             String packVersion = packageInfoString.substring(lastIndexOfHyphen + 1, lastIndexOfDot);
             if (StringUtils.isNotBlank(packVersion)) {
                 return packVersion;
@@ -89,8 +88,8 @@ public class RpmParser extends AbstractParser {
 
     // find yumdb folder from collection
     public File checkFolders(Collection<String> yumDbFolders,String yumDbFolderPath,String osName) {
-        if (!osName.startsWith(WINDOWS)){
-            yumDbFolderPath = yumDbFolderPath.replace(WINDOWS_SEPARATOR,LINUX_SEPARATOR);
+        if (!osName.startsWith(Constants.WINDOWS)){
+            yumDbFolderPath = yumDbFolderPath.replace(Constants.WINDOWS_SEPARATOR, Constants.UNIX_PATH_SEPARATOR);
         }
         if(!yumDbFolders.isEmpty()){
             for (String folderPath:yumDbFolders) {

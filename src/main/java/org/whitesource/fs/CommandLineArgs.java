@@ -17,6 +17,7 @@ package org.whitesource.fs;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.CommaParameterSplitter;
+import org.whitesource.agent.Constants;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -41,7 +42,7 @@ public class CommandLineArgs {
     List<String> dependencyDirs = new LinkedList<>(); // TODO this may be a bad default, consider printing usage instead
 
     @Parameter(names = "-f", description = "File list path")
-    String fileListPath = "";
+    String fileListPath = Constants.EMPTY_STRING;
 
     @Parameter(names = "-apiKey", description = "Organization api key")
     String apiKey = null;
@@ -77,10 +78,10 @@ public class CommandLineArgs {
     List<String> requestFiles = new LinkedList<>();
 
     @Parameter(names = "-projectPerFolder", description = "Creates a project for each subfolder, the subfolder's name is used as the project name")
-    String projectPerFolder = "";
+    String projectPerFolder = Constants.EMPTY_STRING;
 
     @Parameter(names = "-updateType", description = "Specify if the project dependencies should be removed before adding the new ones")
-    String updateType = "";
+    String updateType = Constants.EMPTY_STRING;
 
     @Parameter(names = "-scm.repositoriesFile", description = "Specify the csv file from which scm repositories should be loaded")
     String repositoriesFile = null;
@@ -92,7 +93,7 @@ public class CommandLineArgs {
     String web = "false";
 
     @Parameter(names = "-whiteSourceFolderPath", description = "WhiteSource folder path for offlineRequest/checkPolicies")
-    String whiteSourceFolder = "";
+    String whiteSourceFolder = Constants.EMPTY_STRING;
 
     @Parameter(names = "-appPath", description = "Impact Analysis application path")
     List<String> appPath = new LinkedList<>();

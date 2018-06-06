@@ -24,7 +24,7 @@ public class ComponentScanTest {
         props.put("includes", "**/*.cs");
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
         String resolverFolder = Paths.get(config.getParent(), "resolver/nuget").toString();
-        props.put("d", resolverFolder);
+        props.put(Constants.DIRECTORY, resolverFolder);
         ComponentScan componentScan = new ComponentScan(props);
 
         // Act

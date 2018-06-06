@@ -130,7 +130,8 @@ public class FilesScanner {
                     try {
                         shouldRemove = otherFolderPath.toFile().getCanonicalPath().startsWith(folderPath.toFile().getCanonicalPath());
                     } catch (Exception e) {
-                        logger.debug("could not get file path " + otherFolderPath + folderPath, e);
+                        logger.debug("could not get file path " + otherFolderPath + folderPath, e.getStackTrace());
+                        logger.warn("could not get file path " + otherFolderPath + folderPath, e.getMessage());
                     }
                     logger.debug(String.join(";", otherFolder.getKey(), folder, Boolean.toString(shouldRemove)));
                     if (shouldRemove) {

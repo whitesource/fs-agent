@@ -3,6 +3,7 @@ package org.whitesource.agent.dependency.resolver.paket;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -28,18 +29,12 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
     private static final String EXE = ".exe";
     private static final String NUPKG = ".nupkg";
     private static final String CS = ".cs";
-    private static final String JS = ".js";
     private static final String GROUP = "group";
     private static final String NUGET = "nuget";
-    private static final String SPACE = " ";
     private static final String MAIN = "Main";
     private static final String PAKET_EXE = "paket.exe";
     private static final String PAKET = "paket";
     private final String PAKET_LOCK = "paket.lock";
-    private static final String FORWARD_SLASH = "/";
-    private static final String PATTERN = "**/*";
-    private static final String EXCLUDE_TOP_FOLDER = "packages";
-    private static final String INSTALL_COMMAND = "install";
 
     /* --- Members --- */
 
@@ -68,7 +63,7 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
         Collection<DependencyInfo> dependencies = new ArrayList<>();
         List<String> excludes = new LinkedList<>();
         if (paketRunPreStep) {
-            File paket = new File(topLevelFolder + FORWARD_SLASH + PAKET_EXE);
+            File paket = new File(topLevelFolder + Constants.FORWARD_SLASH + PAKET_EXE);
             if (StringUtils.isNotEmpty(this.paketPath)) {
                 paket = new File(this.paketPath);
             } else if (!paket.exists()) {
@@ -77,7 +72,7 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
             installSuccess = !executePreparationStep(topLevelFolder, paket);
         }
         if (installSuccess) {
-            String paketLockPath = topLevelFolder + FORWARD_SLASH + PAKET_LOCK;
+            String paketLockPath = topLevelFolder + Constants.FORWARD_SLASH + PAKET_LOCK;
             File paketLockFile = new File(paketLockPath);
             if (paketLockFile.exists()) {
                 logger.debug("Found paket.lock file: {}", paketLockPath);
@@ -101,11 +96,11 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
                 // ignore all the nupkg files in order to not scan them again
                 if (!dependencies.isEmpty()) {
                     if (this.paketIgnoreFiles) {
-                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(PATTERN + NUPKG, PATTERN + DLL, PATTERN + EXE,
-                                PATTERN + CS, PATTERN + JS), null));
+                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(Constants.PATTERN + NUPKG, Constants.PATTERN + DLL, Constants.PATTERN + EXE,
+                                Constants.PATTERN + CS, Constants.PATTERN + Constants.JS_EXTENSION), null));
                     } else {
-                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(PATTERN + NUPKG, PATTERN + DLL, PATTERN + EXE,
-                                PATTERN + CS, PATTERN + JS), EXCLUDE_TOP_FOLDER));
+                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(Constants.PATTERN + NUPKG, Constants.PATTERN + DLL, Constants.PATTERN + EXE,
+                                Constants.PATTERN + CS, Constants.PATTERN + Constants.JS_EXTENSION), Constants.PACKAGES));
                     }
                 }
             } else {
@@ -125,7 +120,7 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
         } else {
             command = getInstallParams(paket.getAbsolutePath());
         }
-        String commandString = String.join(" ", command);
+        String commandString = String.join(Constants.WHITESPACE, command);
         logger.debug("Running install command : " + commandString);
         CommandLineProcess npmInstall = new CommandLineProcess(folder, command);
         try {
@@ -138,7 +133,7 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
     }
 
     private String[] getInstallParams(String firstParameter) {
-        return new String[]{firstParameter, INSTALL_COMMAND};
+        return new String[]{firstParameter, Constants.INSTALL};
     }
 
     @Override
@@ -158,7 +153,7 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String getBomPattern() {
-        return PATTERN + PAKET_DEPENDENCIES;
+        return Constants.PATTERN + PAKET_DEPENDENCIES;
     }
 
     @Override
@@ -180,7 +175,7 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
                 if (processedLine.startsWith(NUGET)) {
                     // nuget dependency example: nuget xunit >= 1.1.1
                     String nugetDependencyName = line.substring(NUGET.length() + 1).trim();
-                    int indexOfSpace = nugetDependencyName.indexOf(SPACE);
+                    int indexOfSpace = nugetDependencyName.indexOf(Constants.WHITESPACE);
                     if (indexOfSpace < 0) {
                         indexOfSpace = nugetDependencyName.length();
                     }

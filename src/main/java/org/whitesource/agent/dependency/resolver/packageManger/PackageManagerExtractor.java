@@ -4,6 +4,7 @@ import com.aragost.javahg.log.Logger;
 import com.aragost.javahg.log.LoggerFactory;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang.StringUtils;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 
@@ -34,12 +35,10 @@ public class PackageManagerExtractor {
     private static final String ARCH_LINUX_PACKAGE_PATTERN = "{0}-{1}-{2}.pkg.tar.xz";
     private static final List<String> SYSTEM_ARCHITECTURES = Arrays.asList("x86_64", "i686", "any");
     private static final String ARCH_LINUX_PACKAGE_SPLIT_PATTERN = " ";
-    private static final String WHITE_SPACE = " ";
     private static final String NEW_LINE = "\\r?\\n";
-    private static final String COLON = ":";
     private static final String NON_ASCII_CHARS = "[^\\x20-\\x7e]";
-    private static final String EMPTY_STRING = "";
     private static final String ARCH_LINUX_ARCHITECTURE_COMMAND = "uname -m";
+
     /* --- Constructors --- */
 
     public PackageManagerExtractor() {
@@ -116,10 +115,10 @@ public class PackageManagerExtractor {
         String linesStr = new String(bytes);
         String[] lines = linesStr.split(NEW_LINE);
         for (String line : lines) {
-            line = line.replaceAll(NON_ASCII_CHARS, EMPTY_STRING);
+            line = line.replaceAll(NON_ASCII_CHARS, Constants.EMPTY_STRING);
             if (line.startsWith(DEBIAN_INSTALLED_PACKAGE_PREFIX)) {
                 List<String> args = new ArrayList<>();
-                for (String s : line.split(WHITE_SPACE)) {
+                for (String s : line.split(Constants.WHITESPACE)) {
                     if (StringUtils.isNotBlank(s) && !s.equals(DEBIAN_INSTALLED_PACKAGE_PREFIX)) {
                         args.add(s);
                     }
@@ -127,13 +126,13 @@ public class PackageManagerExtractor {
                 if (args.size() >= 3) {
                     // names may contain the arch (i.e. package_name:amd64) - remove it
                     String name = args.get(DEBIAN_PACKAGE_NAME_INDEX);
-                    if (name.contains(COLON)) {
-                        name = name.substring(0, name.indexOf(COLON));
+                    if (name.contains(Constants.COLON)) {
+                        name = name.substring(0, name.indexOf(Constants.COLON));
                     }
                     // versions may contain a
                     String version = args.get(DEBIAN_PACKAGE_VERSION_INDEX);
-                    if (version.contains(COLON)) {
-                        version = version.substring(version.indexOf(COLON) + 1);
+                    if (version.contains(Constants.COLON)) {
+                        version = version.substring(version.indexOf(Constants.COLON) + 1);
                     }
                     String arch = args.get(DEBIAN_PACKAGE_ARCH_INDEX);
                     packages.add(new DependencyInfo(
@@ -161,11 +160,12 @@ public class PackageManagerExtractor {
         String arch = getSystemArchitecture();
         if (StringUtils.isNotBlank(arch)) {
             for (String line : lines) {
-                line = line.replaceAll(NON_ASCII_CHARS, EMPTY_STRING);
+                line = line.replaceAll(NON_ASCII_CHARS, Constants.EMPTY_STRING);
                 String[] split = line.split(ARCH_LINUX_PACKAGE_SPLIT_PATTERN);
                 logger.info(split[0]);
                 if (split.length == 2) {
-                    packages.add(new DependencyInfo(null, MessageFormat.format(ARCH_LINUX_PACKAGE_PATTERN, split[0], split[1], arch), null));
+                    packages.add(new DependencyInfo(null, MessageFormat.format(ARCH_LINUX_PACKAGE_PATTERN,
+                            split[0], split[1], arch), null));
 
                 }
             }
@@ -177,7 +177,7 @@ public class PackageManagerExtractor {
         String linesStr = new String(bytes);
         String[] lines = linesStr.split(NEW_LINE);
         for (String line : lines) {
-            line = line.replaceAll(NON_ASCII_CHARS, EMPTY_STRING);
+            line = line.replaceAll(NON_ASCII_CHARS, Constants.EMPTY_STRING);
             if (line.contains(ALPINE_PACKAGE_SPLIT_PATTERN)) {
                 String[] split = line.split(ALPINE_PACKAGE_SPLIT_PATTERN);
                 if (split.length > 0) {
@@ -191,7 +191,7 @@ public class PackageManagerExtractor {
     /* --- Private  methods --- */
 
     private String getSystemArchitecture() {
-        String arch = EMPTY_STRING;
+        String arch = Constants.EMPTY_STRING;
         String outputStr = null;
         BufferedReader bufferedReader = null;
         Process process = null;
@@ -207,7 +207,7 @@ public class PackageManagerExtractor {
         } catch (IOException e) {
             logger.warn("Error processing arch linux command {}, error : {}", LinuxPkgManagerCommand.ARCH_LINUX, e.getMessage());
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.warn("Error InterruptedException {}, error : {}", LinuxPkgManagerCommand.ARCH_LINUX, e.getMessage());
         }
         return arch;
     }

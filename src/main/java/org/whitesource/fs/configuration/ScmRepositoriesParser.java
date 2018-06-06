@@ -20,6 +20,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -39,7 +40,6 @@ public class ScmRepositoriesParser {
     private final Logger logger = LoggerFactory.getLogger(ScmRepositoriesParser.class);
     public static final String URL = "url";
     public static final String BRANCH = "branch";
-    public static final String TAG = "tag";
     public static final String SCM_REPOSITORIES = "scmRepositories";
 
     /* --- Static methods --- */
@@ -47,7 +47,6 @@ public class ScmRepositoriesParser {
     public Collection<ScmConfiguration> parseRepositoriesFile(String fileName, String scmType, String scmPpk, String scmUser, String scmPassword) {
         try (InputStream is = new FileInputStream(fileName)) {
             String jsonText = IOUtils.toString(is);
-
             JSONObject json = new JSONObject(jsonText);
             JSONArray arr = json.getJSONArray(SCM_REPOSITORIES);
 
@@ -56,9 +55,9 @@ public class ScmRepositoriesParser {
                 JSONObject obj = (JSONObject) scm;
                 String url = obj.getString(URL);
                 String branch = obj.getString(BRANCH);
-                String tag = obj.getString(TAG);
-
-                configurationList.add(new ScmConfiguration(scmType, scmUser, scmPassword, scmPpk, url, branch, tag, null, false ,1));
+                String tag = obj.getString(Constants.TAG);
+                configurationList.add(new ScmConfiguration(scmType, scmUser, scmPassword, scmPpk, url, branch, tag,
+                        null, false ,1));
             });
 
             return configurationList;

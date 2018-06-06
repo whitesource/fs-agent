@@ -31,7 +31,9 @@ public class MemoryUsageHelper {
         long mbRatio = 1024*1024;
         Runtime runTime = Runtime.getRuntime();
 
-        return new SystemStats(runTime.availableProcessors(),runTime.freeMemory()/mbRatio,runTime.maxMemory()/mbRatio,runTime.totalMemory()/mbRatio, (runTime.totalMemory()-runTime.freeMemory())/mbRatio);
+        return new SystemStats(runTime.availableProcessors(),runTime.freeMemory()/mbRatio,
+                runTime.maxMemory()/mbRatio,runTime.totalMemory()/mbRatio,
+                (runTime.totalMemory()-runTime.freeMemory())/mbRatio);
     }
 
     public static class SystemStats {

@@ -15,6 +15,7 @@
  */
 package org.whitesource.agent.dependency.resolver;
 
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 
@@ -25,9 +26,6 @@ import java.util.Collection;
  */
 public abstract class DependencyCollector {
 
-    private static final String OS_NAME = "os.name";
-    private static final String WINDOWS = "win";
-    public static final String CMD = "cmd";
     public static final String C_CHAR_WINDOWS = "/c";
 
     protected abstract Collection<AgentProjectInfo> collectDependencies(String folder);
@@ -35,12 +33,12 @@ public abstract class DependencyCollector {
     protected Collection<AgentProjectInfo> getSingleProjectList(Collection<DependencyInfo> dependencies) {
         Collection<AgentProjectInfo> projects = new ArrayList<>();
         AgentProjectInfo projectInfo = new AgentProjectInfo();
-        dependencies.stream().forEach(dependency -> projectInfo.getDependencies().add(dependency) );
+        dependencies.stream().forEach(dependency -> projectInfo.getDependencies().add(dependency));
         projects.add(projectInfo);
         return projects;
     }
 
     public static boolean isWindows() {
-        return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
+        return System.getProperty(Constants.OS_NAME).toLowerCase().contains(Constants.WIN);
     }
 }

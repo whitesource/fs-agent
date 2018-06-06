@@ -2,8 +2,8 @@ package org.whitesource.agent.dependency.resolver.gradle;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.agent.utils.CommandLineProcess;
@@ -23,11 +23,12 @@ public class GradleLinesParserTest {
 
     @Test
     public void parseLines() throws IOException {
-        String[] params = new String[] {"cmd", "/c", "gradle", "dependencies"};
-        String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\gradle\\sample\\");
+        String[] params = new String[] {Constants.CMD, "/c", "gradle", Constants.DEPENDENCIES};
+        String folderPath = Paths.get(Constants.DOT).toAbsolutePath().normalize().toString() +
+                TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\gradle\\sample\\");
         CommandLineProcess commandLineProcess = new CommandLineProcess(folderPath, params);
         List<String> lines = commandLineProcess.executeProcess();
-        gradleLinesParser.parseLines(lines, "");
+        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
     }
 
     @Test
@@ -44,8 +45,7 @@ public class GradleLinesParserTest {
         lines.add("|    \\--- org.webjars.npm:is-object:[1.0.1,2) -> 1.0.1");
         lines.add("\\--- junit:junit:4.12");
         lines.add("     \\--- org.hamcrest:hamcrest-core:1.3");
-
-        gradleLinesParser.parseLines(lines, "");
+        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
     }
 
     @Test
@@ -78,7 +78,7 @@ public class GradleLinesParserTest {
         lines.add("|         \\--- org.springframework:spring-core:4.1.6.RELEASE");
         lines.add("+--- org.hsqldb:hsqldb:2.3.2");
         lines.add("\\--- javax.servlet:servlet-api:2.5");
-        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, "");
+        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
 
         Assert.assertTrue(dependencyInfos.get(0).getVersion().equals("1.7.12"));
         Assert.assertTrue(dependencyInfos.get(4).getVersion().equals("2.5"));
@@ -139,7 +139,7 @@ public class GradleLinesParserTest {
         lines.add("|    +--- ch.qos.logback:logback-core:1.1.3");
         lines.add("|    \\--- org.slf4j:slf4j-api:1.7.7 -> 1.7.12");
 
-        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, "");
+        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
         Assert.assertTrue(dependencyInfos.get(2).getChildren().iterator().next().getVersion().equals("4.1.6.RELEASE"));
     }
 

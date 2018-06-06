@@ -49,7 +49,6 @@ public class DependencyResolutionService {
     /* --- Static members --- */
 
     private final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
-
     private boolean separateProjects = false;
 
     /* --- Constructors --- */
@@ -85,7 +84,10 @@ public class DependencyResolutionService {
 
         final boolean goResolveDependencies = config.isGoResolveDependencies();
 
-        final boolean rubyResolveDependencies = config.isRubyResolveDependencies();
+        final boolean rubyResolveDependencies   = config.isRubyResolveDependencies();
+        final boolean rubyRunBundleInstall      = config.isRubyRunBundleInstall();
+        final boolean rubyOverwriteGemFile      = config.isRubyOverwriteGemFile();
+        final boolean rubyInstallMissingGems    = config.isRubyInstallMissingGems();
 
         dependenciesOnly = config.isDependenciesOnly();
 
@@ -107,7 +109,7 @@ public class DependencyResolutionService {
             separateProjects = !mavenAggregateModules;
         }
         if (pythonResolveDependencies) {
-            dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(), config.isPythonIsWssPluginInstalled(), config.getPythonUninstallWssPlugin()));
+            dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(), config.isPythonIgnorePipInstallErrors()));
         }
 
         if (gradleResolveDependencies) {
@@ -123,7 +125,7 @@ public class DependencyResolutionService {
         }
 
         if (rubyResolveDependencies){
-            dependencyResolvers.add(new RubyDependencyResolver());
+            dependencyResolvers.add(new RubyDependencyResolver(rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems));
         }
     }
 

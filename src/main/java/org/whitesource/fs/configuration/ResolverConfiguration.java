@@ -51,6 +51,7 @@ public class ResolverConfiguration {
             @JsonProperty(PYTHON_PATH) String pythonPath,
             @JsonProperty(PYTHON_IS_WSS_PLUGIN_INSTALLED) boolean pythonIsWssPluginInstalled,
             @JsonProperty(PYTHON_UNINSTALL_WSS_PLUGIN) boolean pythonUninstallWssPlugin,
+            @JsonProperty(PYTHON_IGNORE_PIP_INSTALL_ERRORS) boolean pythonIgnorePipInstallErrors,
 
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
@@ -67,7 +68,10 @@ public class ResolverConfiguration {
             @JsonProperty(GO_RESOLVE_DEPENDENCIES) boolean goResolveDependencies,
             @JsonProperty(GO_DEPENDENCY_MANAGER) String goDependencyManager,
             @JsonProperty(GO_COLLECT_DEPENDENCIES_AT_RUNTIME) boolean goCollectDependenciesAtRuntime,
-            @JsonProperty(RUBY_RESOLVE_DEPENDENCIES) boolean rubyResolveDependencies) {
+            @JsonProperty(RUBY_RESOLVE_DEPENDENCIES) boolean rubyResolveDependencies,
+            @JsonProperty(RUBY_RUN_BUNDLE_INSTALL) boolean rubyRunBundleInstall,
+            @JsonProperty(RUBY_OVERWRITE_GEM_FILE) boolean rubyOverwriteGemFile,
+            @JsonProperty(RUBY_INSTALL_MISSING_GEMS) boolean rubyInstallMissingGems) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmResolveDependencies = npmResolveDependencies;
         this.npmIncludeDevDependencies = npmIncludeDevDependencies;
@@ -91,6 +95,7 @@ public class ResolverConfiguration {
         this.pythonPath = pythonPath;
         this.pythonIsWssPluginInstalled = pythonIsWssPluginInstalled;
         this.pythonUninstallWssPlugin = pythonUninstallWssPlugin;
+        this.pythonIgnorePipInstallErrors = pythonIgnorePipInstallErrors;
 
         this.dependenciesOnly = dependenciesOnly;
         this.whitesourceConfiguration = whitesourceConfiguration;
@@ -110,7 +115,10 @@ public class ResolverConfiguration {
         }
         this.goCollectDependenciesAtRuntime = goCollectDependenciesAtRuntime;
 
-        this.rubyResolveDependencies = rubyResolveDependencies;
+        this.rubyResolveDependencies    = rubyResolveDependencies;
+        this.rubyRunBundleInstall       = rubyRunBundleInstall;
+        this.rubyOverwriteGemFile       = rubyOverwriteGemFile;
+        this.rubyInstallMissingGems     = rubyInstallMissingGems;
     }
 
     /* --- Members --- */
@@ -134,6 +142,7 @@ public class ResolverConfiguration {
     private boolean     pythonResolveDependencies;
     private String      pipPath;
     private String      pythonPath;
+    private boolean     pythonIgnorePipInstallErrors;
 
     private boolean     gradleResolveDependencies;
     private boolean     gradleRunAssembleCommand;
@@ -152,6 +161,9 @@ public class ResolverConfiguration {
     private boolean     goCollectDependenciesAtRuntime;
 
     private boolean     rubyResolveDependencies;
+    private boolean     rubyRunBundleInstall;
+    private boolean     rubyOverwriteGemFile;
+    private boolean     rubyInstallMissingGems;
 
     /* --- Public getters --- */
 
@@ -250,6 +262,11 @@ public class ResolverConfiguration {
         return pythonPath;
     }
 
+    @JsonProperty(PYTHON_IGNORE_PIP_INSTALL_ERRORS)
+    public boolean isPythonIgnorePipInstallErrors() {
+        return pythonIgnorePipInstallErrors;
+    }
+
     @JsonProperty(PYTHON_IS_WSS_PLUGIN_INSTALLED)
     public boolean isPythonIsWssPluginInstalled() {
         return pythonIsWssPluginInstalled;
@@ -302,6 +319,15 @@ public class ResolverConfiguration {
 
     @JsonProperty(RUBY_RESOLVE_DEPENDENCIES)
     public boolean isRubyResolveDependencies() { return rubyResolveDependencies; }
+
+    @JsonProperty(RUBY_RUN_BUNDLE_INSTALL)
+    public boolean isRubyRunBundleInstall() { return rubyRunBundleInstall; }
+
+    @JsonProperty(RUBY_OVERWRITE_GEM_FILE)
+    public boolean isRubyOverwriteGemFile() {   return rubyOverwriteGemFile;    }
+
+    @JsonProperty(RUBY_INSTALL_MISSING_GEMS)
+    public boolean isRubyInstallMissingGems() { return rubyInstallMissingGems;  }
 
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {
         this.npmResolveDependencies = npmResolveDependencies;

@@ -6,6 +6,7 @@ import fr.dutra.tools.maven.deptree.core.ParseException;
 import fr.dutra.tools.maven.deptree.core.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -28,11 +29,10 @@ public class MavenLinesParser {
     private static final String MAVEN_DEPENDENCY_PLUGIN_TREE = "maven-dependency-plugin:"; // 2.8:tree";
     private static final String INFO = "[INFO] ";
     private static final String UTF_8 = "UTF-8";
-    public static final String EMPTY_STRING = "";
 
     public List<Node> parseLines(List<String> lines) {
         List<List<String>> projectsLines = lines.stream().filter(line->line.contains(INFO))
-                .map(line -> line.replace(INFO, EMPTY_STRING))
+                .map(line -> line.replace(INFO, Constants.EMPTY_STRING))
                 .collect(splitBySeparator(formattedLines -> formattedLines.contains(MAVEN_DEPENDENCY_PLUGIN_TREE)));
 
         logger.info("Start parsing pom files");
