@@ -133,4 +133,6 @@ public final class ConfigPropertyKeys {
     public static final String RUBY_RESOLVE_DEPENDENCIES = "ruby.resolveDependencies";
 
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
+
+    public static final String SCANNED_FOLDERS = "d";
 }

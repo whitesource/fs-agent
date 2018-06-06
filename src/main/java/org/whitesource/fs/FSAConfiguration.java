@@ -55,7 +55,7 @@ public class FSAConfiguration {
     public static Collection<String> ignoredWebProperties = Arrays.asList(
             SCM_REPOSITORIES_FILE, LOG_LEVEL_KEY, FOLLOW_SYMBOLIC_LINKS, SHOW_PROGRESS_BAR, PROJECT_CONFIGURATION_PATH, SCAN_PACKAGE_MANAGER, WHITESOURCE_FOLDER_PATH,
             ENDPOINT_ENABLED, ENDPOINT_PORT, ENDPOINT_CERTIFICATE, ENDPOINT_PASS, ENDPOINT_SSL_ENABLED, OFFLINE_PROPERTY_KEY, OFFLINE_ZIP_PROPERTY_KEY,
-            OFFLINE_PRETTY_JSON_KEY, WHITESOURCE_CONFIGURATION);
+            OFFLINE_PRETTY_JSON_KEY, WHITESOURCE_CONFIGURATION, SCANNED_FOLDERS);
 
     private static final String FALSE = "false";
     private static final String INFO = "info";
@@ -88,12 +88,14 @@ public class FSAConfiguration {
 
     private final List<String> offlineRequestFiles;
     private final String fileListPath;
-    private final List<String> dependencyDirs;
+    private List<String> dependencyDirs;
     private final String configFilePath;
     private final AgentConfiguration agent;
     private final RequestConfiguration request;
     private final boolean scanPackageManager;
     private final boolean scanDockerImages;
+
+    private final String scannedFolders;
 
     private String logLevel;
     private boolean useCommandLineProductName;
@@ -137,6 +139,14 @@ public class FSAConfiguration {
                 }
             }
 
+            scannedFolders = config.getProperty(SCANNED_FOLDERS);
+            if (scannedFolders != null) {
+                String[] libsList = scannedFolders.split(",");
+                // Trim all elements in libsList
+                Arrays.stream(libsList).map(String::trim).toArray(unused -> libsList);
+                dependencyDirs = Arrays.asList(libsList);
+            }
+
             configFilePath = commandLineArgs.configFilePath;
             config.setProperty(PROJECT_CONFIGURATION_PATH, commandLineArgs.configFilePath);
 
@@ -144,7 +154,9 @@ public class FSAConfiguration {
             offlineRequestFiles = updateProperties(config, commandLineArgs);
             projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             fileListPath = commandLineArgs.fileListPath;
-            dependencyDirs = commandLineArgs.dependencyDirs;
+            if (commandLineArgs.dependencyDirs != null && !commandLineArgs.dependencyDirs.isEmpty()) {
+                dependencyDirs = commandLineArgs.dependencyDirs;
+            }
             appPaths = commandLineArgs.appPath;
             if (StringUtils.isNotBlank(commandLineArgs.whiteSourceFolder)) {
                 config.setProperty(WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
@@ -155,12 +167,16 @@ public class FSAConfiguration {
             configFilePath = NONE;
             offlineRequestFiles = new ArrayList<>();
             fileListPath = null;
+            scannedFolders = null;
             dependencyDirs = new ArrayList<>();
             commandLineArgsOverride(null);
         }
 
         scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);
         scanDockerImages = getBooleanProperty(config,SCAN_DOCKER_IMAGES,false);
+
+        if (dependencyDirs == null)
+            dependencyDirs = new ArrayList<>();
 
         // validate scanned folder
         if (dependencyDirs.isEmpty()) {
@@ -504,6 +520,10 @@ public class FSAConfiguration {
 
     public ResolverConfiguration getResolver() {
         return resolver;
+    }
+
+    public String getScannedFolders() {
+        return scannedFolders;
     }
 
     List<String> getErrors() {
