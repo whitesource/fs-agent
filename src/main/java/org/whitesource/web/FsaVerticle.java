@@ -28,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.Main;
@@ -57,7 +58,6 @@ public class FsaVerticle extends AbstractVerticle {
     public static final String WELCOME_MESSAGE = "<h1>File system agent is up and running </h1>";
     public static final String CONFIGURATION = "configuration";
     public static final String KEYSTORE_JKS = "keystore.jks";
-    public static final String SPACE = " ";
     private FSAConfiguration localFsaConfiguration;
 
     @Override
@@ -123,7 +123,7 @@ public class FsaVerticle extends AbstractVerticle {
             if (Files.exists(Paths.get(keystoreName))) {
                 Files.delete(Paths.get(keystoreName));
             }
-            logger.debug("Running: " + String.join(SPACE, params));
+            logger.debug("Running: " + String.join(Constants.WHITESPACE, params));
             commandLineProcess.executeProcess();
             if (commandLineProcess.isErrorInProcess()) {
                 logger.error("Error creating self signed certificate");
@@ -191,7 +191,6 @@ public class FsaVerticle extends AbstractVerticle {
 
     private FSAConfiguration mergeConfigurations(FSAConfiguration baseFsaConfiguration, HashMap<String, Object> parameterMap) {
         Properties properties = ConfigurationSerializer.getAsProperties(parameterMap);
-
         FSAConfiguration.ignoredWebProperties.forEach(property->{
             if (properties.containsKey(property)) {
                 logger.info("Property "+ property +" will be ignored");

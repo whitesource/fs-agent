@@ -1,12 +1,13 @@
 package org.whitesource.agent.dependency.resolver.paket;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.whitesource.agent.hash.ChecksumUtils;
 
 import java.io.BufferedReader;
@@ -28,15 +29,10 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
     private final Logger logger = LoggerFactory.getLogger(AbstractPaketDependencyCollector.class);
     private static final String FOUR_SPACES = "    ";
     private static final String SIX_SPACES = "      ";
-    private static final String DOT = ".";
     private static final String NUPKG = "nupkg";
     private static final String PAKET_LOCK = "paket.lock";
     private static final String NUGET = "NUGET";
-    private static final String PACKAGES = "packages";
     private static final String RIGHT_BRACKET = ")";
-    public static final String SPACE = " ";
-    public static final String EMPTY_STRING = "";
-    public static final String FORWARD_SLASH = "/";
 
     /* --- Members --- */
 
@@ -79,14 +75,14 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
         Collection<DependencyInfo> dependencies = new LinkedList<>();
         boolean dependencyLine = false;
         for (String line : groupLines) {
-            if (!dependencyLine && line.startsWith(FOUR_SPACES + dependency.getGroupId() + SPACE)) {
+            if (!dependencyLine && line.startsWith(FOUR_SPACES + dependency.getGroupId() + Constants.WHITESPACE)) {
                 dependencyLine = true;
                 getDependencyFromLine(dependency, line);
             } else if (dependencyLine) {
                 if (line.startsWith(SIX_SPACES)) {
                     DependencyInfo childDependency = new DependencyInfo();
                     String lineWithoutSpaces = line.substring(SIX_SPACES.length());
-                    childDependency.setGroupId(lineWithoutSpaces.substring(0, lineWithoutSpaces.indexOf(SPACE)));
+                    childDependency.setGroupId(lineWithoutSpaces.substring(0, lineWithoutSpaces.indexOf(Constants.WHITESPACE)));
                     childDependency.setChildren(collectChildrenDependencies(childDependency, groupLines));
                     dependencies.add(childDependency);
                 } else {
@@ -104,7 +100,7 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
         String version = beginOfVersion.substring(0, beginOfVersion.indexOf(RIGHT_BRACKET));
         File dependencyFile = findFileFromPath(dependency.getGroupId(), version);
         String sha1 = getPackageSha1(dependencyFile, dependency.getGroupId(), version);
-        String systemPath = EMPTY_STRING;
+        String systemPath = Constants.EMPTY_STRING;
         if (dependencyFile != null) {
             systemPath = dependencyFile.getAbsolutePath();
         }
@@ -120,7 +116,8 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
         if (folder.exists()) {
             for (File file : folder.listFiles()) {
                 // check if the file exists: 'package-name.package-version' && ends with .nupkg
-                if (file.getName().toLowerCase().startsWith(dependencyNameLowerCase + DOT + dependencyVersionLowerCase) && file.getName().endsWith(DOT + NUPKG)) {
+                if (file.getName().toLowerCase().startsWith(dependencyNameLowerCase + Constants.DOT + dependencyVersionLowerCase)
+                        && file.getName().endsWith(Constants.DOT + NUPKG)) {
                     dependencyFile = file;
                     break;
                 }
@@ -147,7 +144,8 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
 
     private List<String> getGroupDependenciesFromPaketLock() {
         List<String> result = new LinkedList<>();
-        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(this.rootDirectory + FORWARD_SLASH + PAKET_LOCK))) {
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(this.rootDirectory +
+                Constants.FORWARD_SLASH + PAKET_LOCK))) {
             String line;
             boolean rightGroup = false;
             boolean nugetSection = false;
@@ -163,7 +161,7 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
                         continue;
                     }
                     if (nugetSection) {
-                        if (line.startsWith(SPACE)) {
+                        if (line.startsWith(Constants.WHITESPACE)) {
                             result.add(line);
                         } else {
                             break;
@@ -186,11 +184,11 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
     protected abstract String getFolderPathOfDependency(String dependencyName);
 
     protected String getPackagesFolder() {
-        return this.rootDirectory + FORWARD_SLASH + PACKAGES;
+        return this.rootDirectory + Constants.FORWARD_SLASH + Constants.PACKAGES;
     }
 
     protected String getPackageSha1(File calcSha1File, String dependencyName, String dependencyVersion) {
-        String sha1 = EMPTY_STRING;
+        String sha1 = Constants.EMPTY_STRING;
         if (calcSha1File != null) {
             try {
                 sha1 = ChecksumUtils.calculateSHA1(calcSha1File);

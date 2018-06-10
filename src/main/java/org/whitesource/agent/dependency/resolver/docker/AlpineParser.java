@@ -1,14 +1,13 @@
 package org.whitesource.agent.dependency.resolver.docker;
 
 import org.apache.commons.lang.StringUtils;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 
 import java.io.*;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.LinkedList;
-
-import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.*;
 
 /**
  * @author chen.luigi
@@ -21,7 +20,6 @@ public class AlpineParser extends AbstractParser {
     private static final String PACKAGE = "P";
     private static final String VERSION = "V";
     private static final String ARCHITECTURE = "A";
-    private static final String COLON = ":";
     private static final String ALPINE_PACKAGE_PATTERN = "{0}.apk";
 
     /* --- Overridden methods --- */
@@ -40,7 +38,7 @@ public class AlpineParser extends AbstractParser {
             while ((line = br.readLine()) != null) {
                 if (!line.isEmpty()) {
                     if (packageInfo.getPackageName() == null || packageInfo.getVersion() == null || packageInfo.getArchitecture() == null) {
-                        String[] lineSplit = line.split(COLON);
+                        String[] lineSplit = line.split(Constants.COLON);
                         String dependencyParameter = lineSplit[1].trim();
                         switch (lineSplit[0]) {
                             case PACKAGE:
@@ -74,8 +72,8 @@ public class AlpineParser extends AbstractParser {
 
     @Override
     public File findFile(String[] files, String filename,String operatingSystem) {
-        if (!operatingSystem.startsWith(WINDOWS)){
-            filename = filename.replace(WINDOWS_SEPARATOR,LINUX_SEPARATOR);
+        if (!operatingSystem.startsWith(Constants.WINDOWS)){
+            filename = filename.replace(Constants.FORWARD_SLASH, Constants.BACK_SLASH);
         }
         for (String filepath : files) {
             if (filepath.endsWith(filename)) {
@@ -92,7 +90,8 @@ public class AlpineParser extends AbstractParser {
         if (StringUtils.isNotBlank(packageInfo.getPackageName()) && StringUtils.isNotBlank(packageInfo.getVersion()) &&
                 StringUtils.isNotBlank(packageInfo.getArchitecture())) {
             dependencyInfo = new DependencyInfo(
-                    null, MessageFormat.format(ALPINE_PACKAGE_PATTERN, packageInfo.getPackageName()+ "-" +packageInfo.getVersion()), packageInfo.getVersion()+ "-" +
+                    null, MessageFormat.format(ALPINE_PACKAGE_PATTERN, packageInfo.getPackageName()+ Constants.DASH
+                    +packageInfo.getVersion()), packageInfo.getVersion()+ Constants.DASH +
                     packageInfo.getArchitecture());
         }
         if (dependencyInfo != null) {

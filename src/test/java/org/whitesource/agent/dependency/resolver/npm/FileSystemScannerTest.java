@@ -3,6 +3,7 @@ package org.whitesource.agent.dependency.resolver.npm;
 import org.junit.Assert;
 import org.junit.Test;
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.utils.FilesScanner;
 
 import java.io.File;
@@ -23,15 +24,15 @@ public class FileSystemScannerTest {
         Properties p = TestHelper.getPropertiesFromFile();
         String[] filesJSBegin = f.getDirectoryContent(
                 FOLDER_TO_TEST,
-                p.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY).split(" "),
-                p.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY).split(" "),
+                p.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY).split(Constants.WHITESPACE),
+                p.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY).split(Constants.WHITESPACE),
                 false,
                 false);
 
         String[] filesPackageJson = f.getDirectoryContent(
                 FOLDER_TO_TEST,
                 new String[]{"**/*package.json"},
-                p.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY).split(" "),
+                p.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY).split(Constants.WHITESPACE),
                 false,
                 false);
 
@@ -44,7 +45,7 @@ public class FileSystemScannerTest {
         FilesScanner fs = new FilesScanner();
         String[] filesJSEnd = fs.getDirectoryContent(
                 FOLDER_TO_TEST,
-                p.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY).split(" "),
+                p.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY).split(Constants.WHITESPACE),
                 stockArr,
                 false,
                 false);

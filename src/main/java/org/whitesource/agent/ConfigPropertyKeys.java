@@ -139,4 +139,6 @@ public final class ConfigPropertyKeys {
     public static final String RUBY_INSTALL_MISSING_GEMS    = "ruby.installMissingGems";
 
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
+
+    public static final String SCANNED_FOLDERS = "d";
 }

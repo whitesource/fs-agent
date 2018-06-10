@@ -43,12 +43,11 @@ public class DependencyInfoFactory {
 
     private final Logger logger = LoggerFactory.getLogger(DependencyInfoFactory.class);
 
-    private static final String COPYRIGHT_PATTERN = ".*copyright.*|.*\\(c\\).*";
-
     private static final String COPYRIGHT = "copyright";
     private static final String COPYRIGHT_SYMBOL = "(c)";
     private static final String COPYRIGHT_ASCII_SYMBOL = "©";
-    private static final List<String> COPYRIGHT_TEXTS = Arrays.asList("copyright (c)", "copyright(c)", "(c) copyright", "(c)copyright", COPYRIGHT, COPYRIGHT_SYMBOL, COPYRIGHT_ASCII_SYMBOL);
+    private static final List<String> COPYRIGHT_TEXTS = Arrays.asList("copyright (c)", "copyright(c)", "(c) copyright",
+            "(c)copyright", COPYRIGHT, COPYRIGHT_SYMBOL, COPYRIGHT_ASCII_SYMBOL);
     private static final String ALL_RIGHTS_RESERVED = "all rights reserved";
 
     private static final String COPYRIGHT_ALPHA_CHAR_REGEX = ".*[a-zA-Z]+.*";
@@ -57,18 +56,11 @@ public class DependencyInfoFactory {
     private static final String JAVA_SCRIPT_REGEX = ".*\\.js";
 
     private static final List<Character> MATH_SYMBOLS = Arrays.asList('+', '-', '=', '<', '>', '*', '/', '%', '^');
-    private static final char QUESTION_MARK = '?';
     private static final int MAX_VALID_CHAR_VALUE = 127;
     private static final int MAX_INVALID_CHARS = 2;
     private static final String DEFINE = "define";
     private static final String TODO_PATTERN = "todo:.*|todo .*";
     private static final String CODE_LINE_SUFFIX = ".*:|.*;|.*\\{|.*}|.*\\[|.*]|.*>";
-    private static final char OPEN_BRACKET = '(';
-    private static final char CLOSE_BRACKET = ')';
-    private static final char WHITESPACE_CHAR = ' ';
-
-    private static final String WHITESPACE = " ";
-    private static final String EMPTY_STRING = "";
 
     private static final Map<String, String> commentStartEndMap;
 
@@ -189,7 +181,7 @@ public class DependencyInfoFactory {
                                 if (endIndex >= commentLength) {
                                     line = line.substring(commentLength, endIndex);
                                 } else {
-                                    line = EMPTY_STRING;
+                                    line = Constants.EMPTY_STRING;
                                 }
                             } else {
                                 commentBlock = true;
@@ -214,7 +206,7 @@ public class DependencyInfoFactory {
 
                 // check for one-line comments
                 String lowerCaseLine = line.toLowerCase();
-                if ((commentBlock || line.startsWith("//") || line.startsWith("#"))
+                if ((commentBlock || line.startsWith("//") || line.startsWith(Constants.POUND))
                         && (lowerCaseLine.contains(COPYRIGHT) || lowerCaseLine.contains(COPYRIGHT_SYMBOL) || lowerCaseLine.contains(COPYRIGHT_ASCII_SYMBOL))) {
                     // ignore lines that contain (c) and math signs (+, <, etc.) near it
                     // and ignore lines that contain © and have other invalid ascii symbols
@@ -257,9 +249,8 @@ public class DependencyInfoFactory {
                                 // if still in comment block, read next line
                                 if (commentBlock) {
                                     String nextLine = cleanLine(iterator.next());
-                                    sb.append(WHITESPACE);
+                                    sb.append(Constants.WHITESPACE);
                                     sb.append(nextLine);
-
                                     continuedToNextLine = true;
                                     line = nextLine;
                                 }
@@ -276,7 +267,7 @@ public class DependencyInfoFactory {
                         if (endIndex == copyright.length()) {
                             copyright = copyright.substring(0, startIndex).trim();
                         } else {
-                            copyright = copyright.substring(0, startIndex).trim() + " " + copyright.substring(endIndex).trim();
+                            copyright = copyright.substring(0, startIndex).trim() + Constants.WHITESPACE + copyright.substring(endIndex).trim();
                         }
                     }
                     copyrights.add(new CopyrightInfo(copyright, lineIndex));
@@ -371,7 +362,7 @@ public class DependencyInfoFactory {
         int index = cleanLine.indexOf(COPYRIGHT_SYMBOL);
         for (int i = index + 1; i < cleanLine.length(); i++) {
             char c = cleanLine.charAt(i);
-            if (c == OPEN_BRACKET || c == CLOSE_BRACKET || c == WHITESPACE_CHAR) {
+            if (c == Constants.OPEN_BRACKET || c == Constants.CLOSE_BRACKET || c == Constants.WHITESPACE_CHAR) {
                 continue;
             } else if (MATH_SYMBOLS.contains(c)) {
                 mathExpression = true;
@@ -385,7 +376,7 @@ public class DependencyInfoFactory {
         if (mathExpression) {
             for (int i = index - 1; i >= 0; i--) {
                 char c = cleanLine.charAt(i);
-                if (c == OPEN_BRACKET || c == CLOSE_BRACKET || c == WHITESPACE_CHAR) {
+                if (c == Constants.OPEN_BRACKET || c == Constants.CLOSE_BRACKET || c == Constants.WHITESPACE_CHAR) {
                     continue;
                 } else if (MATH_SYMBOLS.contains(c)) {
                     mathExpression = true;
@@ -403,7 +394,7 @@ public class DependencyInfoFactory {
         int invalidChars = 0;
         for (int i = 0; i < cleanLine.length(); i++) {
             char c = cleanLine.charAt(i);
-            if (c > MAX_VALID_CHAR_VALUE || c == QUESTION_MARK) {
+            if (c > MAX_VALID_CHAR_VALUE || c == Constants.QUESTION_MARK) {
                 invalidChars++;
             }
             if (invalidChars == MAX_INVALID_CHARS) {
@@ -414,10 +405,10 @@ public class DependencyInfoFactory {
     }
 
     private String cleanLine(String line) {
-        return line.replace("/**", EMPTY_STRING).replace("/*", EMPTY_STRING)
-                .replace("*", EMPTY_STRING).replace("#", EMPTY_STRING)
-                .replace("/", EMPTY_STRING).replace("\\t", EMPTY_STRING)
-                .replace("\\n", EMPTY_STRING).trim();
+        return line.replace("/**", Constants.EMPTY_STRING).replace("/*", Constants.EMPTY_STRING)
+                .replace("*", Constants.EMPTY_STRING).replace(Constants.POUND, Constants.EMPTY_STRING)
+                .replace(Constants.FORWARD_SLASH, Constants.EMPTY_STRING).replace("\\t", Constants.EMPTY_STRING)
+                .replace("\\n", Constants.EMPTY_STRING).trim();
     }
 
     private void deleteFile(File file) {

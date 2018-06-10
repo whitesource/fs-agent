@@ -11,12 +11,12 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
-import org.whitesource.fs.configuration.EndPointConfiguration;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -72,8 +72,8 @@ public class FsaVerticleTest {
 
         Properties properties = new Properties();
         properties.setProperty(ConfigPropertyKeys.SCM_TYPE_PROPERTY_KEY, "git");
-        properties.setProperty(ConfigPropertyKeys.SCM_USER_PROPERTY_KEY, "");
-        properties.setProperty(ConfigPropertyKeys.SCM_PASS_PROPERTY_KEY, "");
+        properties.setProperty(ConfigPropertyKeys.SCM_USER_PROPERTY_KEY, Constants.EMPTY_STRING);
+        properties.setProperty(ConfigPropertyKeys.SCM_PASS_PROPERTY_KEY, Constants.EMPTY_STRING);
         properties.setProperty(ConfigPropertyKeys.SCM_URL_PROPERTY_KEY, GIT_SAMPLE);
 
         // just to validate
@@ -128,7 +128,7 @@ public class FsaVerticleTest {
 
         prop.stringPropertyNames().forEach(p -> {
             sb.append(p);
-            sb.append("=");
+            sb.append(Constants.EQUALS);
             sb.append(prop.getProperty(p));
             sb.append(System.lineSeparator());
         });

@@ -18,6 +18,7 @@ package org.whitesource.agent.dependency.resolver;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 
 import java.util.Map;
 
@@ -101,7 +102,7 @@ public class BomFile {
     }
 
     public static String getUniqueDependencyName(String name, String version) {
-        return name + SCOPED_PACKAGE + version.replace("v", "");
+        return name + SCOPED_PACKAGE + version.replace("v", Constants.EMPTY_STRING);
     }
 
     public String getUniqueDependencyName() {
@@ -136,7 +137,7 @@ public class BomFile {
             registryPackageUrl = registryPackageUrl.substring(0, lastSlashIndex) + DUMMY_PARAMETER_SCOPE_PACKAGE + registryPackageUrl.substring(lastSlashIndex + 1);
             this.scopedPackage = true;
         } else {
-            String urlName = "/" + this.name + "/";
+            String urlName = Constants.FORWARD_SLASH + this.name + Constants.FORWARD_SLASH;
             registryPackageUrl = this.resolved.substring(0, this.resolved.indexOf(urlName) + urlName.length());
             registryPackageUrl = registryPackageUrl + this.version;
             if (registryPackageUrl.startsWith(HTTPS)) {
@@ -154,6 +155,6 @@ public class BomFile {
 
     @Override
     public String toString() {
-        return String.join(".", getGroupId(), getName(), getVersion());
+        return String.join(Constants.DOT, getGroupId(), getName(), getVersion());
     }
 }

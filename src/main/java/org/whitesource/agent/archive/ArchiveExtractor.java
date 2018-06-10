@@ -17,6 +17,7 @@ package org.whitesource.agent.archive;
 
 import com.github.junrar.testutil.ExtractArchive;
 import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
 import org.apache.commons.compress.archivers.cpio.CpioArchiveInputStream;
@@ -37,6 +38,7 @@ import org.redline_rpm.header.Format;
 import org.redline_rpm.header.Header;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.Pair;
 
@@ -64,6 +66,7 @@ public class ArchiveExtractor {
     public static final String DEPTH = "_depth_";
     public static final String DEPTH_REGEX = DEPTH + "[0-9]";
     public static final String GLOB_PREFIX = "glob:";
+    public static final String NULL_HEADER = "mainheader is null";
 
     private final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
     private final String WHITESOURCE_TEMP_FOLDER = "WhiteSource-ArchiveExtractor";
@@ -86,20 +89,15 @@ public class ArchiveExtractor {
     public static final String XZ_SUFFIX = ".xz";
     public static final String LZMA = "lzma";
     public static final String CPIO = ".cpio";
-    public static final String RAR = ".rar";
+    public static final String TGZ_SUFFIX = ".tgz";
 
     public static final String TAR_GZ_SUFFIX = TAR_SUFFIX + GZ_SUFFIX;
     public static final String TAR_BZ2_SUFFIX = TAR_SUFFIX + BZ_SUFFIX;
-    public static final String TGZ_SUFFIX = ".tgz";
-    public static final String UNIX_FILE_SEPARATOR = "/";
-    public static final String WINDOWS_FILE_SEPARATOR = "\\";
 
     public static final String UN_ARCHIVER_LOGGER = "unArchiverLogger";
-    public static final String GLOB_PATTERN_PREFIX = "**/*.";
+    public static final String GLOB_PATTERN_PREFIX = Constants.PATTERN + Constants.DOT;
     public static final String PATTERN_PREFIX = ".*\\.";
-    public static final String OR = "|";
     public static final String XZ_UN_ARCHIVER_FILE_NAME = "compressedFile.tar";
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
 
     static {
         ZIP_EXTENSION_PATTERN = initializePattern(ZIP_EXTENSIONS);
@@ -114,9 +112,9 @@ public class ArchiveExtractor {
         for (String archiveExtension : archiveExtensions) {
             sb.append(PATTERN_PREFIX);
             sb.append(archiveExtension);
-            sb.append(OR);
+            sb.append(Constants.PIPE);
         }
-        return sb.toString().substring(0, sb.toString().lastIndexOf(OR));
+        return sb.toString().substring(0, sb.toString().lastIndexOf(Constants.PIPE));
     }
 
     /* --- Private members --- */
@@ -317,9 +315,9 @@ public class ArchiveExtractor {
                 Pair<String,String> dataToUnpack = h.get();
                 results.put(dataToUnpack.getKey(), dataToUnpack.getValue());
             } catch (InterruptedException e) {
-                logger.warn("Error: {}", e);
+                logger.warn("Error: {}", e.getMessage());
             } catch (ExecutionException e) {
-                logger.warn("Error: {}", e);
+                logger.warn("Error: {}", e.getMessage());
             }
         }
 
@@ -346,16 +344,7 @@ public class ArchiveExtractor {
         } else if (lowerCaseFileName.matches(RPM_EXTENSION_PATTERN)) {
             foundArchive = handleRpmFile(innerDir, fileKey);
         } else if (lowerCaseFileName.matches(RAR_EXTENSION_PATTERN)) {
-            File destDir = new File(innerDir);
-            if (!destDir.exists()) {
-                destDir.mkdirs();
-            }
-            try {
-                ExtractArchive.extractArchive(fileKey, innerDir);
-            } catch (Exception e) {
-                logger.warn("Error extracting file {}: {}", fileKey, e.getMessage());
-            }
-            foundArchive = true;
+            foundArchive = extractRarFile(innerDir, fileKey);
         } else {
             logger.warn("Error: {} is unsupported archive type", fileKey);
         }
@@ -364,6 +353,31 @@ public class ArchiveExtractor {
             return resultArchive;
         } else
             return null;
+    }
+
+    private boolean extractRarFile(String innerDir, String fileKey) {
+        boolean foundArchive;
+        File destDir = new File(innerDir);
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+        try {
+            ExtractArchive.extractArchive(fileKey, innerDir);
+            foundArchive = true;
+        } catch (Exception e) {
+            logger.warn("Error extracting file {}: {}", fileKey, e.getMessage());
+            try {
+                //if the header is missing try to extract the rar file with zip extension - WSE-450
+                if (e.getMessage().contains(NULL_HEADER) && new ZipFile(fileKey) instanceof ZipFile) {
+                    logger.info("Retrying extraction  {}", fileKey);
+                    foundArchive = unZip(innerDir, fileKey);
+                }
+            } catch (ZipException e1) {
+                logger.warn("Error extracting file {}: {}", fileKey, e.getMessage());
+                foundArchive = false;
+            }
+        }
+        return true;
     }
 
     // Open and extract data from zip pattern files
@@ -375,7 +389,8 @@ public class ArchiveExtractor {
             // Get the list of file headers from the zip file before unpacking
             List fileHeaderList = zipFile.getFileHeaders();
 
-            List<PathMatcher> matchers = Arrays.stream(filesExcludes).map(fileExclude -> FileSystems.getDefault().getPathMatcher(GLOB_PREFIX + fileExclude)).collect(Collectors.toList());
+            List<PathMatcher> matchers = Arrays.stream(filesExcludes).map(fileExclude ->
+                    FileSystems.getDefault().getPathMatcher(GLOB_PREFIX + fileExclude)).collect(Collectors.toList());
             // Loop through the file headers and extract only files that are not matched by fileExcludes patterns
             for (int i = 0; i < fileHeaderList.size(); i++) {
                 FileHeader fileHeader = (FileHeader) fileHeaderList.get(i);
@@ -414,7 +429,7 @@ public class ArchiveExtractor {
             } else if (fileName.endsWith(TAR_BZ2_SUFFIX)) {
                 unArchiver = new TarBZip2UnArchiver();
             } else if (fileName.endsWith(XZ_SUFFIX)) {
-                String destFileUrl = destDir.getCanonicalPath() + "\\" + XZ_UN_ARCHIVER_FILE_NAME;
+                String destFileUrl = destDir.getCanonicalPath() + Constants.BACK_SLASH + XZ_UN_ARCHIVER_FILE_NAME;
                 File destFile = new File(destFileUrl);
                 unXz(destFile,XZ_UN_ARCHIVER_FILE_NAME);
                 archiveFile = destFileUrl;
@@ -546,15 +561,14 @@ public class ArchiveExtractor {
 
     // parse name without directories
     private String getFileName(String name) {
-        if (name.contains(UNIX_FILE_SEPARATOR)) {
-            name = name.substring(name.lastIndexOf(UNIX_FILE_SEPARATOR) + 1, name.length());
-        } else if (name.contains(WINDOWS_FILE_SEPARATOR)) {
-            name = name.substring(name.lastIndexOf(WINDOWS_FILE_SEPARATOR) + 1, name.length());
+        //check if the environment is linux or windows
+        if (name.contains(Constants.FORWARD_SLASH)) {
+            name = name.substring(name.lastIndexOf(Constants.FORWARD_SLASH) + 1, name.length());
+        } else if (name.contains(Constants.BACK_SLASH)) {
+            name = name.substring(name.lastIndexOf(Constants.BACK_SLASH) + 1, name.length());
         }
         return name;
     }
-
-    /* --- Nested Class --- */
 
 
 }

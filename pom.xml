@@ -144,8 +144,10 @@
         <dependency>
             <groupId>org.whitesource.analysis</groupId>
             <artifactId>whitesource-analysis-via</artifactId>
-            <version>0.0.22</version>
+            <version>0.0.31</version>
          </dependency>
+
+        <!-- end VIA -->
 
         <!-- LZMA -->
         <dependency>

@@ -29,7 +29,6 @@ public class PythonDependencyResolverTest {
         ResolutionResult projectsDetails = pythonDependencyResolver.resolveDependencies(setupPyFile.getParentFile().getParent(), setupPyFile.getParent(), Stream.of(setupPyFile.toString()).collect(Collectors.toSet()));
 
         Assert.assertNotNull(projectsDetails);
-
         Assert.assertTrue(projectsDetails.getResolvedProjects().size() == 1);
 
         Collection<DependencyInfo> dependecies = projectsDetails.getResolvedProjects().keySet().stream().findFirst().get().getDependencies();

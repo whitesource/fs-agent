@@ -3,6 +3,7 @@ package org.whitesource.agent.dependency.resolver.ruby;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
@@ -15,22 +16,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.whitesource.agent.dependency.resolver.ruby.RubyDependencyResolver.GEM;
+
 public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     private static final String GEM_FILE_LOCK = "Gemfile.lock";
     private static final String ORIG = ".orig";
     private static final List<String> RUBY_SCRIPT_EXTENSION = Arrays.asList(".rb");
     private static final String BUNDLE         = "bundle";
-    private static final String INSTALL        = "install";
-    private static final String GEM            = "gem";
     private static final String ENVIRONMENT    = "environment gemdir";
+    protected static final String GEM          = "gem";
     protected static final String REGEX = "\\S";
     protected static final String SPECS = "specs:";
     protected static final String CACHE = "cache";
-    protected static final String SPACE = " ";
-    protected static final String V = "-v";
+    protected static final String V     = "-v";
     protected static final String ERROR = "ERROR";
-    protected static final String HYPHEN = "-";
     protected static final String MINGW = "mingw";
 
     private final Logger logger = LoggerFactory.getLogger(RubyDependencyResolver.class);
@@ -59,7 +59,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
-        excludes.add(PATTERN + RUBY_SCRIPT_EXTENSION);
+        excludes.add(Constants.PATTERN + RUBY_SCRIPT_EXTENSION);
         return excludes;
     }
 
@@ -75,7 +75,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String getBomPattern() {
-        return PATTERN + GEM_FILE_LOCK;
+        return Constants.PATTERN + GEM_FILE_LOCK;
     }
 
     @Override
@@ -108,7 +108,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
             // rename the original Gemfile.lock (if it exists)
             gemFileLock.renameTo(origGemFileLock);
         }
-        boolean bundleInstallSuccess = cli.runCmd(rootDirectory, cli.getCommandParams(BUNDLE, INSTALL)) != null && gemFileLock.isFile();
+        boolean bundleInstallSuccess = cli.runCmd(rootDirectory, cli.getCommandParams(BUNDLE, Constants.INSTALL)) != null && gemFileLock.isFile();
         if (!bundleInstallSuccess && !overwriteGemFile){
             // when running the 'bundle install' command failed and the original file was renamed - restore its name
             origGemFileLock.renameTo(gemFileLock);
@@ -166,7 +166,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
             boolean indented = false;
             DependencyInfo dependencyInfo = null;
             List<DependencyInfo> parentsList = new LinkedList<>();
-            HashMap<DependencyInfo, DependencyInfo> childrenList = new HashMap<>();
+            List<DependencyInfo> childrenList = new LinkedList<>();
             List<DependencyInfo> partialDependencies = new LinkedList<>();
             DependencyInfo parentDependency = null;
             whileLoop:
@@ -180,32 +180,38 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                             int index = matcher.start();
                             if ((index > previousIndex && previousIndex > 0) || (indented && index == previousIndex)){
                                 // inside indentation - a child dependency
+                                if (parentDependency == null){
+                                    continue whileLoop;
+                                }
                                 indented = true;
                                 previousIndex = index;
-                                int spaceIndex = currLine.indexOf(" ", index);
+                                int spaceIndex = currLine.indexOf(Constants.WHITESPACE, index);
                                 String name = currLine.substring(index, spaceIndex > -1 ? spaceIndex : currLine.length());
                                 // looking for the dependency in the parents' list
                                 dependencyInfo = parentsList.stream().filter(d -> d.getGroupId().equals(name)).findFirst().orElse(null);
                                 if (dependencyInfo == null) {
-                                    dependencyInfo = new DependencyInfo();
-                                    dependencyInfo.setGroupId(name);
-                                    if (partialDependencies.contains(dependencyInfo) == false) {
-                                        partialDependencies.add(dependencyInfo);
+                                    dependencyInfo = childrenList.stream().filter(d -> d.getGroupId().equals(name)).findFirst().orElse(null);
+                                    if (dependencyInfo == null) {
+                                        dependencyInfo = new DependencyInfo();
+                                        dependencyInfo.setGroupId(name);
+                                        if (partialDependencies.contains(dependencyInfo) == false) {
+                                            partialDependencies.add(dependencyInfo);
+                                        }
                                     }
                                 }
+                                // adding this dependency as a child to its parent
+                                parentDependency.getChildren().add(dependencyInfo);
                                 // using loop with `equal` and not `contains` since the contains would fail when the key of a hash map is modified after its creation (as in this case)
                                 // if this dependency is already found in the children's list - continue
-                                for (DependencyInfo d : childrenList.keySet()){
+                                for (DependencyInfo d : childrenList){
                                     if (d.equals(dependencyInfo)){
                                         continue whileLoop;
                                     }
                                 }
-                                childrenList.put(dependencyInfo, parentDependency);
-                                // adding this dependency as a child to its parent
-                                parentDependency.getChildren().add(dependencyInfo);
+                                childrenList.add(dependencyInfo);
                             } else {
                                 // inside a parent dependency
-                                String[] split = currLine.trim().split(SPACE);
+                                String[] split = currLine.trim().split(Constants.WHITESPACE);
                                 String name = split[0];
                                 String version = split[1].substring(1, split[1].length()-1);
                                 try {
@@ -215,7 +221,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                         continue whileLoop;
                                     }
                                     // looking for this dependency in the children's list (in case its already a child of some other dependency)
-                                    dependencyInfo = childrenList.keySet().stream().filter(d -> d.getGroupId().equals(name)).findFirst().orElse(null);
+                                    dependencyInfo = childrenList.stream().filter(d -> d.getGroupId().equals(name)).findFirst().orElse(null);
                                     if (dependencyInfo == null) {
                                         dependencyInfo = new DependencyInfo(sha1);
                                         dependencyInfo.setGroupId(name);
@@ -241,42 +247,43 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                     insideSpecs = true;
                 }
             }
-            // partial dependencies are those who appear in the Gemfile.lock only as child dependencies, thus without valid version.
-            // in such case, remove that dependency from its parent
-            for (DependencyInfo d : partialDependencies){
-                String version = findGemVersion(d.getGroupId(), pathToGems);
-                if (version == null) {
-                    logger.warn("Can't find version for {}-{}", d.getGroupId());
-                    childrenList.get(d).getChildren().remove(d);
-                } else {
-                    String sha1 = getRubyDependenciesSha1(d.getGroupId(), version, pathToGems);
-                    if (sha1 == null){
-                        logger.warn("Can't find gem file for {}-{}", d.getGroupId(), version);
-                        childrenList.get(d).getChildren().remove(d);
-                    } else {
-                        d.setSha1(sha1);
-                        setDependencyInfoProperties(d, d.getGroupId(), version, gemLockFile, pathToGems);
-                    }
-                }
-            }
             // creating the dependencies list by using only the parent dependencies, i.e. - those that aren't found in the children's list
             // using loop with `equal` and not `contains` since the contains would fail when the key of a hash map is modified after its creation (as in this case)
-            for (DependencyInfo d : parentsList){
-                boolean found = false;
-                for (DependencyInfo d1 : childrenList.keySet()){
-                    if (d.equals(d1)) {
-                        found = true;
+            for (DependencyInfo parent : parentsList){
+                boolean foundChild = false;
+                for (DependencyInfo child : childrenList){
+                    if (parent.equals(child)) {
+                        foundChild = true;
                         break;
                     }
                 }
-                if (!found){
-                    dependencyInfos.add(d);
+                if (!foundChild){
+                    dependencyInfos.add(parent);
+                }
+            }
+
+            // partial dependencies are those who appear in the Gemfile.lock only as child dependencies, thus without valid version.
+            // in such case, remove that dependency from its parent
+            for (DependencyInfo partialDependency : partialDependencies){
+                String version = findGemVersion(partialDependency.getGroupId(), pathToGems);
+                if (version == null) {
+                    logger.warn("Can't find version for {}-{}", partialDependency.getGroupId());
+                    removeChildren(dependencyInfos, partialDependency);
+                } else {
+                    String sha1 = getRubyDependenciesSha1(partialDependency.getGroupId(), version, pathToGems);
+                    if (sha1 == null){
+                        logger.warn("Can't find gem file for {}-{}", partialDependency.getGroupId(), version);
+                        removeChildren(dependencyInfos, partialDependency);
+                    } else {
+                        partialDependency.setSha1(sha1);
+                        setDependencyInfoProperties(partialDependency, partialDependency.getGroupId(), version, gemLockFile, pathToGems);
+                    }
                 }
             }
         } catch (FileNotFoundException e){
             logger.warn("Could not Gemfile.lock {}", e.getMessage());
             logger.debug("stacktrace {}", e.getStackTrace());
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.warn("Could not parse Gemfile.lock {}", e.getMessage());
             logger.debug("stacktrace {}", e.getStackTrace());
         } finally {
@@ -289,12 +296,24 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         }
     }
 
+    private void removeChildren(Collection<DependencyInfo> dependencyInfos, DependencyInfo child){
+        Iterator<DependencyInfo> iterator = dependencyInfos.iterator();
+        while (iterator.hasNext()){
+            DependencyInfo dependencyInfo = iterator.next();
+            if (dependencyInfo.getChildren().size() > 0){
+                removeChildren(dependencyInfo.getChildren(), child);
+            } else if (dependencyInfo.equals(child)){
+                iterator.remove();
+            }
+        }
+    }
+
     private void setDependencyInfoProperties(DependencyInfo dependencyInfo, String name, String version, File gemLockFile, String pathToGems){
-        dependencyInfo.setArtifactId(name + HYPHEN + version + "." + GEM);
+        dependencyInfo.setArtifactId(name + Constants.DASH + version + Constants.DOT + GEM);
         dependencyInfo.setVersion(version);
         dependencyInfo.setDependencyType(DependencyType.RUBY);
         dependencyInfo.setSystemPath(gemLockFile.getPath());
-        dependencyInfo.setFilename(pathToGems + fileSeparator + name + HYPHEN + version + "." + GEM);
+        dependencyInfo.setFilename(pathToGems + fileSeparator + name + Constants.DASH + version + Constants.DOT + GEM);
     }
 
     // Ruby's cache is inside the installation folder.  path can be found by running command 'gem environment gemdir'
@@ -313,7 +332,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     private String getRubyDependenciesSha1(String name, String version, String pathToGems) throws IOException {
         String sha1 = null;
-        File file = new File(pathToGems + fileSeparator + name + HYPHEN + version + "." + GEM);
+        File file = new File(pathToGems + fileSeparator + name + Constants.DASH + version + Constants.DOT + GEM);
         if (file.isFile()){
             sha1 = ChecksumUtils.calculateSHA1(file);
         } else {
@@ -327,10 +346,11 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     private File installMissingGem(String name, String version, File file){
         if (installMissingGems) {
+            logger.info("installing gem file for {}-{}", name, version);
             if (version.toLowerCase().contains(MINGW)) {
-                version = version.substring(0, version.indexOf(HYPHEN));
+                version = version.substring(0, version.indexOf(Constants.DASH));
             }
-            String param = INSTALL.concat(" " + name + " " + V + " " + version);
+            String param = Constants.INSTALL.concat(Constants.WHITESPACE + name + Constants.WHITESPACE + V + Constants.WHITESPACE + version);
             String[] commandParams = cli.getCommandParams(GEM, param);
             List<String> lines = cli.runCmd(rootDirectory, commandParams);
             if (file.isFile()) {
@@ -346,9 +366,9 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                    for those cases, this piece of code extracts the updated version and return the downloaded file
                  */
                 try {
-                    String installed = lines.stream().filter(line -> line.startsWith("Successfully installed") && line.contains(name)).findFirst().orElse("");
-                    String gem = installed.split(" ")[2];
-                    File newFile = new File(file.getParent() + fileSeparator + gem + "." + GEM);
+                    String installed = lines.stream().filter(line -> line.startsWith("Successfully installed") && line.contains(name)).findFirst().orElse(Constants.EMPTY_STRING);
+                    String gem = installed.split(Constants.WHITESPACE)[2];
+                    File newFile = new File(file.getParent() + fileSeparator + gem + Constants.DOT + GEM);
                     if (newFile.isFile()) {
                         return newFile;
                     }
@@ -370,7 +390,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         if (files.length > 0) {
             Arrays.sort(files, Collections.reverseOrder());
             String fileName = files[0].getName();
-            version = fileName.substring(gemName.length()+1,fileName.lastIndexOf("."));
+            version = fileName.substring(gemName.length()+1,fileName.lastIndexOf(Constants.DOT));
         }
         return version;
     }
@@ -385,6 +405,6 @@ class GemFileNameFilter implements FilenameFilter{
     }
     @Override
     public boolean accept(File dir, String name) {
-        return name.toLowerCase().startsWith(fileName) && name.endsWith(".gem");
+        return name.toLowerCase().startsWith(fileName) && name.endsWith(Constants.DOT + GEM);
     }
 }

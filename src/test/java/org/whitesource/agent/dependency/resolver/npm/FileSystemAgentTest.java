@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -31,9 +32,6 @@ import java.util.stream.Stream;
  * @author eugen.horovitz
  */
 public class FileSystemAgentTest {
-
-    private static final String OS_NAME = "os.name";
-    private static final String WINDOWS = "win";
 
     /* --- Tests --- */
 
@@ -172,7 +170,7 @@ public class FileSystemAgentTest {
     }
 
     public static boolean isWindows() {
-        return System.getProperty(OS_NAME).toLowerCase().contains(WINDOWS);
+        return System.getProperty(Constants.OS_NAME).toLowerCase().contains(Constants.WIN);
     }
 
     private Collection<DependencyInfo> readNpmPluginFile(File dir, String fileLog) {
@@ -198,15 +196,15 @@ public class FileSystemAgentTest {
     }
 
     private void addDependencies(Collection<DependencyInfo> dependenciesInfo, JSONObject jsonObj) {
-        JSONArray arr = jsonObj.getJSONArray("dependencies");
+        JSONArray arr = jsonObj.getJSONArray(Constants.DEPENDENCIES);
         arr.forEach(childDependency -> {
             JSONObject obj = (JSONObject) childDependency;
             DependencyInfo d = new DependencyInfo();
             String artifact = obj.getString("artifactId");
-            String version = obj.getString("version");
+            String version = obj.getString(Constants.VERSION);
             String groupId = obj.getString("groupId");
-            if (obj.has("dependencies")) {
-                JSONObject child = obj.getJSONObject("dependencies");
+            if (obj.has(Constants.DEPENDENCIES)) {
+                JSONObject child = obj.getJSONObject(Constants.DEPENDENCIES);
                 addDependencies(dependenciesInfo, child);
             }
 

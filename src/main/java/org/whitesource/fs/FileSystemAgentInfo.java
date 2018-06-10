@@ -18,6 +18,7 @@ package org.whitesource.fs;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.contracts.PluginInfo;
 
 import java.io.IOException;
@@ -30,7 +31,6 @@ public class FileSystemAgentInfo implements PluginInfo {
 
     private final Logger logger = LoggerFactory.getLogger(FileSystemAgentInfo.class);
     private static final String AGENT_TYPE = "fs-agent";
-    private static final String VERSION = "version";
     private static final String AGENTS_VERSION = "agentsVersion";
 
     /* --- Members --- */
@@ -57,7 +57,7 @@ public class FileSystemAgentInfo implements PluginInfo {
 
     @Override
     public String getPluginVersion() {
-        return getResource(VERSION);
+        return getResource(Constants.VERSION);
     }
 
     private String getResource(String propertyName) {
@@ -65,7 +65,7 @@ public class FileSystemAgentInfo implements PluginInfo {
         if (StringUtils.isNotBlank(val)) {
             return val;
         }
-        return "";
+        return Constants.EMPTY_STRING;
     }
 
     /* --- Private members --- */

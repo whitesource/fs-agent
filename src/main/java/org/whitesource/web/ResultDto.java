@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.whitesource.web;
+
 public class ResultDto<T,V> {
 
     private T result;

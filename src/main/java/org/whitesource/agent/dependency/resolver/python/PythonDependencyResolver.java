@@ -15,6 +15,11 @@
  */
 package org.whitesource.agent.dependency.resolver.python;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -97,7 +102,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public String getBomPattern() {
-        return PATTERN + PYTHON_BOM;
+        return Constants.PATTERN + PYTHON_BOM;
     }
 
     @Override
@@ -115,3 +120,4 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         return pipPath;
     }
 }
+

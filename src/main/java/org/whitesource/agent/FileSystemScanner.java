@@ -327,7 +327,8 @@ public class FileSystemScanner {
                 scannerBaseDirs.stream().forEach(directory -> {
                     List<Path> subDirectories;
                     // check all folders
-                    String[] includesAll = {AbstractDependencyResolver.PATTERN};
+
+                    String[] includesAll = {Constants.PATTERN};
                     subDirectories = new FilesUtils().getSubDirectories(directory, includesAll, null, followSymlinks, globCaseSensitive);
                     subDirectories.forEach(subFolder -> {
                         if (filesDependencies.size() > 0) {
@@ -361,7 +362,7 @@ public class FileSystemScanner {
                 } else {
                     for (String key : archiveToBaseDirMap.keySet()) {
                         if (systemPath.contains(key) && archiveExtraction) {
-                            String newSystemPath = systemPath.replace(key, archiveToBaseDirMap.get(key)).replaceAll(ArchiveExtractor.DEPTH_REGEX, "");
+                            String newSystemPath = systemPath.replace(key, archiveToBaseDirMap.get(key)).replaceAll(ArchiveExtractor.DEPTH_REGEX, Constants.EMPTY_STRING);
                             logger.debug("Original system path: {}, new system path: {}, key: {}", systemPath, newSystemPath, key);
                             dependencyInfo.setSystemPath(newSystemPath);
                             break;

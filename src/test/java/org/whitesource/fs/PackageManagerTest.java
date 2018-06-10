@@ -5,6 +5,7 @@ import com.aragost.javahg.log.LoggerFactory;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.packageManger.LinuxPkgManagerCommand;
@@ -22,10 +23,7 @@ public class PackageManagerTest {
 
     private final Logger logger = LoggerFactory.getLogger(PackageManagerExtractor.class);
 
-    private static final String WHITE_SPACE = " ";
-    private static final String COLON = ":";
     private static final String NON_ASCII_CHARS = "[^\\x20-\\x7e]";
-    private static final String EMPTY_STRING = "";
 
 
     private static final String DEBIAN_INSTALLED_PACKAGE_PREFIX = "ii";
@@ -33,10 +31,6 @@ public class PackageManagerTest {
     private static final int DEBIAN_PACKAGE_VERSION_INDEX = 1;
     private static final int DEBIAN_PACKAGE_ARCH_INDEX = 2;
     private static final String DEBIAN_PACKAGE_PATTERN = "{0}_{1}_{2}.deb";
-    public static final String DPKG_L = "dpkg -l";
-    public static final String RPM_QA = "rpm -qa";
-    public static final String APK_VV_INFO = "apk -vv info";
-    public static final String PACMAN_Q = "pacman -Q";
     private static final String NEW_LINE = "\\r?\\n";
     private static final String RPM_PACKAGE_PATTERN = "{0}.rpm";
 
@@ -92,10 +86,10 @@ public class PackageManagerTest {
             String linesStr = new String(bytes);
             String[] lines = linesStr.split(NEW_LINE);
             for (String line : lines) {
-                line = line.replaceAll(NON_ASCII_CHARS, EMPTY_STRING);
+                line = line.replaceAll(NON_ASCII_CHARS, Constants.EMPTY_STRING);
                 if (line.startsWith(DEBIAN_INSTALLED_PACKAGE_PREFIX)) {
                     List<String> args = new ArrayList<>();
-                    for (String s : line.split(WHITE_SPACE)) {
+                    for (String s : line.split(Constants.WHITESPACE)) {
                         if (StringUtils.isNotBlank(s) && !s.equals(DEBIAN_INSTALLED_PACKAGE_PREFIX)) {
                             args.add(s);
                         }
@@ -103,13 +97,13 @@ public class PackageManagerTest {
                     if (args.size() >= 3) {
                         // names may contain the arch (i.e. package_name:amd64) - remove it
                         String name = args.get(DEBIAN_PACKAGE_NAME_INDEX);
-                        if (name.contains(COLON)) {
-                            name = name.substring(0, name.indexOf(COLON));
+                        if (name.contains(Constants.COLON)) {
+                            name = name.substring(0, name.indexOf(Constants.COLON));
                         }
                         // versions may contain a
                         String version = args.get(DEBIAN_PACKAGE_VERSION_INDEX);
-                        if (version.contains(COLON)) {
-                            version = version.substring(version.indexOf(COLON) + 1);
+                        if (version.contains(Constants.COLON)) {
+                            version = version.substring(version.indexOf(Constants.COLON) + 1);
                         }
                         String arch = args.get(DEBIAN_PACKAGE_ARCH_INDEX);
                         packages.add(new DependencyInfo(
