@@ -15,10 +15,6 @@
  */
 package org.whitesource.agent.dependency.resolver.python;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -44,7 +40,6 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Static members --- */
 
-    private static final String PATTERN = "**/*";
     private static final String PYTHON_BOM = "requirements.txt";
     private static final String PY_EXT = ".py";
 
@@ -73,7 +68,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             if (tempDirVirtualEnv != null && tempDirPackages != null) {
                 pythonDependencyCollector = new PythonDependencyCollector(this.pythonPath, this.pipPath, this.installVirutalenv, this.resolveHierarchyTree, this.ignorePipInstallErrors,
                         requirementsTxtPath, tempDirPackages, tempDirVirtualEnv);
-                String currentTopLevelFolder = requirementsTxtPath.substring(0, requirementsTxtPath.replaceAll("\\\\", FORWARD_SLASH).lastIndexOf(FORWARD_SLASH));
+                String currentTopLevelFolder = requirementsTxtPath.substring(0, requirementsTxtPath.replaceAll("\\\\", Constants.FORWARD_SLASH).lastIndexOf(Constants.FORWARD_SLASH));
                 Collection<AgentProjectInfo> projects = pythonDependencyCollector.collectDependencies(currentTopLevelFolder);
                 dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
                 // delete tmp folders
