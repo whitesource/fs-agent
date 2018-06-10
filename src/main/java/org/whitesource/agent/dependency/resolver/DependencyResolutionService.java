@@ -109,7 +109,8 @@ public class DependencyResolutionService {
             separateProjects = !mavenAggregateModules;
         }
         if (pythonResolveDependencies) {
-            dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(), config.isPythonIgnorePipInstallErrors()));
+            dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(),
+                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree()));
         }
 
         if (gradleResolveDependencies) {
@@ -173,6 +174,9 @@ public class DependencyResolutionService {
 
 
         topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
+            if (!resolvedFolder.getTopFoldersFound().isEmpty()) {
+                logger.info("Trying to resolve " + dependencyResolver.getDependencyType().toString() + " dependencies");
+            }
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
                 logger.info("topFolder = " + topFolder);
                 ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);

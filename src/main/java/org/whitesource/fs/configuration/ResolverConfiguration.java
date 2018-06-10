@@ -52,6 +52,8 @@ public class ResolverConfiguration {
             @JsonProperty(PYTHON_IS_WSS_PLUGIN_INSTALLED) boolean pythonIsWssPluginInstalled,
             @JsonProperty(PYTHON_UNINSTALL_WSS_PLUGIN) boolean pythonUninstallWssPlugin,
             @JsonProperty(PYTHON_IGNORE_PIP_INSTALL_ERRORS) boolean pythonIgnorePipInstallErrors,
+            @JsonProperty(PYTHON_INSTALL_VIRTUALENV) boolean pythonInstallVirtualenv,
+            @JsonProperty(PYTHON_RESOLVE_HIERARCHY_TREE) boolean pythonResolveHierarchyTree,
 
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
@@ -96,6 +98,8 @@ public class ResolverConfiguration {
         this.pythonIsWssPluginInstalled = pythonIsWssPluginInstalled;
         this.pythonUninstallWssPlugin = pythonUninstallWssPlugin;
         this.pythonIgnorePipInstallErrors = pythonIgnorePipInstallErrors;
+        this.pythonInstallVirtualenv = pythonInstallVirtualenv;
+        this.pythonResolveHierarchyTree = pythonResolveHierarchyTree;
 
         this.dependenciesOnly = dependenciesOnly;
         this.whitesourceConfiguration = whitesourceConfiguration;
@@ -143,6 +147,8 @@ public class ResolverConfiguration {
     private String      pipPath;
     private String      pythonPath;
     private boolean     pythonIgnorePipInstallErrors;
+    private boolean     pythonInstallVirtualenv;
+    private boolean     pythonResolveHierarchyTree;
 
     private boolean     gradleResolveDependencies;
     private boolean     gradleRunAssembleCommand;
@@ -275,6 +281,16 @@ public class ResolverConfiguration {
     @JsonProperty(PYTHON_UNINSTALL_WSS_PLUGIN)
     public boolean getPythonUninstallWssPlugin() {
         return pythonUninstallWssPlugin;
+    }
+
+    @JsonProperty(PYTHON_INSTALL_VIRTUALENV)
+    public boolean isPythonInstallVirtualenv() {
+        return pythonInstallVirtualenv;
+    }
+
+    @JsonProperty(PYTHON_RESOLVE_HIERARCHY_TREE)
+    public boolean isPythonResolveHierarchyTree() {
+        return pythonResolveHierarchyTree;
     }
 
     @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES)
