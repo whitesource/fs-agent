@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,6 +36,31 @@ public class FilesUtils {
     /* --- Static members --- */
 
     private final Logger logger = LoggerFactory.getLogger(FilesUtils.class);
+    private final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
+    private static final String WHITESOURCE_PYTHON_TEMP_FOLDER = "Whitesource_python_resolver";
+
+    public String createTmpFolder(boolean addCharToEndOfUrl) {
+        String result = getTempDirPackages(addCharToEndOfUrl);
+        try {
+            FileUtils.forceMkdir(new File(result));
+        } catch (IOException e) {
+            logger.warn("Failed to create temp folder : " + e.getMessage());
+            result = null;
+        }
+        return result;
+    }
+
+    private String getTempDirPackages(boolean addCharToEndOfUrl) {
+        String creationDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+        String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + WHITESOURCE_PYTHON_TEMP_FOLDER + File.separator + creationDate :
+                JAVA_TEMP_DIR + File.separator + WHITESOURCE_PYTHON_TEMP_FOLDER + File.separator + creationDate;
+
+        if (addCharToEndOfUrl) {
+            tempFolder = tempFolder + "1";
+        }
+
+        return tempFolder;
+    }
 
     public List<Path> getSubDirectories(String directory, String[] includes, String[] excludesExtended, boolean followSymlinks, boolean globCaseSensitive) {
         String[] files;
