@@ -264,6 +264,7 @@ public class FSAConfiguration {
         long npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
         boolean npmIgnoreNpmLsErrors        = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_NPM_LS_ERRORS, false);
         String npmAccessToken               = config.getProperty(NPM_ACCESS_TOKEN);
+        boolean npmYarnProject              = FSAConfiguration.getBooleanProperty(config, NPM_YARN_PROJECT, false);
 
         boolean bowerResolveDependencies    = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
         boolean bowerRunPreStep             = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
@@ -304,7 +305,7 @@ public class FSAConfiguration {
         boolean rubyOverwriteGemFile        = FSAConfiguration.getBooleanProperty(config, RUBY_OVERWRITE_GEM_FILE, false);
         boolean rubyInstallMissingGems      = FSAConfiguration.getBooleanProperty(config, RUBY_INSTALL_MISSING_GEMS, false);
 
-        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
+        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled, pythonIgnorePipInstallErrors,

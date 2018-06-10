@@ -87,6 +87,7 @@ public final class ConfigPropertyKeys {
     public static final String NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS   = "npm.timeoutDependenciesCollectorInSeconds";
     public static final String NPM_ACCESS_TOKEN                             = "npm.accessToken";
     public static final String NPM_IGNORE_NPM_LS_ERRORS                     = "npm.ignoreNpmLsErrors";
+    public static final String NPM_YARN_PROJECT                             = "npm.yarnProject";
 
     public static final String BOWER_RESOLVE_DEPENDENCIES   = "bower.resolveDependencies";
     public static final String BOWER_RUN_PRE_STEP           = "bower.runPreStep";

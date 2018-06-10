@@ -35,6 +35,7 @@ public class ResolverConfiguration {
             @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS) long npmTimeoutDependenciesCollector,
             @JsonProperty(NPM_ACCESS_TOKEN) String npmAccessToken,
             @JsonProperty(NPM_IGNORE_NPM_LS_ERRORS) boolean npmIgnoreNpmLsErrors,
+            @JsonProperty(NPM_YARN_PROJECT) boolean npmYarnProject,
 
             @JsonProperty(BOWER_RESOLVE_DEPENDENCIES) boolean bowerResolveDependencies,
             @JsonProperty(BOWER_RUN_PRE_STEP) boolean bowerRunPreStep,
@@ -79,6 +80,7 @@ public class ResolverConfiguration {
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
         this.npmAccessToken = npmAccessToken;
         this.npmIgnoreNpmLsErrors = npmIgnoreNpmLsErrors;
+        this.npmYarnProject = npmYarnProject;
 
         this.bowerResolveDependencies = bowerResolveDependencies;
         this.bowerRunPreStep = bowerRunPreStep;
@@ -129,7 +131,8 @@ public class ResolverConfiguration {
     private boolean     npmIgnoreJavaScriptFiles;
     private String      npmAccessToken;
     private long        npmTimeoutDependenciesCollector;
-    private boolean     npmIgnoreNpmLsErrors; 
+    private boolean     npmIgnoreNpmLsErrors;
+    private boolean     npmYarnProject;
     private boolean     bowerResolveDependencies;
     private boolean     bowerRunPreStep;
     private boolean     nugetResolveDependencies;
@@ -201,6 +204,9 @@ public class ResolverConfiguration {
     public boolean getNpmIgnoreNpmLsErrors() {
         return npmIgnoreNpmLsErrors;
     }
+
+    @JsonProperty(NPM_YARN_PROJECT)
+    public boolean getNpmYarnProject()  {   return npmYarnProject;  }
 
     @JsonProperty(BOWER_RESOLVE_DEPENDENCIES)
     public boolean isBowerResolveDependencies() {

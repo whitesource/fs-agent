@@ -61,6 +61,7 @@ public class DependencyResolutionService {
         final long npmTimeoutDependenciesCollector = config.getNpmTimeoutDependenciesCollector();
         final boolean npmIgnoreNpmLsErrors = config.getNpmIgnoreNpmLsErrors();
         final String npmAccessToken = config.getNpmAccessToken();
+        final boolean npmYarnProject = config.getNpmYarnProject();
 
         final boolean bowerResolveDependencies = config.isBowerResolveDependencies();
         final boolean bowerRunPreStep = config.isBowerRunPreStep();
@@ -94,7 +95,7 @@ public class DependencyResolutionService {
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmAccessToken, npmIgnoreNpmLsErrors, npmAccessToken));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmIgnoreNpmLsErrors, npmAccessToken, npmYarnProject));
         }
         if (bowerResolveDependencies) {
             dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep));
