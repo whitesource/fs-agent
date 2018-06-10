@@ -98,6 +98,8 @@ public final class ConfigPropertyKeys {
     public static final String PYTHON_IS_WSS_PLUGIN_INSTALLED   = "python.isWssPluginInstalled";
     public static final String PYTHON_UNINSTALL_WSS_PLUGIN      = "python.uninstallWssPlugin";
     public static final String PYTHON_IGNORE_PIP_INSTALL_ERRORS = "python.ignorePipInstallErrors";
+    public static final String PYTHON_INSTALL_VIRTUALENV = "python.installVirtualenv";
+    public static final String PYTHON_RESOLVE_HIERARCHY_TREE = "python.resolveHierarchyTree";
 
     public static final String NUGET_RESOLVE_DEPENDENCIES   = "nuget.resolveDependencies";
     public static final String NUGET_RESTORE_DEPENDENCIES   = "nuget.restoreDependencies";
