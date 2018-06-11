@@ -20,6 +20,7 @@ import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyType;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -38,7 +39,7 @@ public abstract class AbstractDependencyResolver {
 
     /* --- Abstract methods --- */
 
-    protected abstract ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles);
+    protected abstract ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) throws FileNotFoundException;
 
     protected abstract Collection<String> getExcludes();
 
