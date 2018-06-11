@@ -59,6 +59,7 @@ public final class Constants {
     public static final String GLOB_PATTERN_PREFIX = "**/*.";
     public static final String EQUALS = "=";
     public static final String POUND = "#";
+    public static final String QUOTATION_MARK = "\"";
 
     public static final char QUESTION_MARK = '?';
     public static final char WHITESPACE_CHAR = ' ';

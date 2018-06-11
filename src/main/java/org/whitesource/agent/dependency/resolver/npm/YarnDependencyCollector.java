@@ -1,27 +1,21 @@
 package org.whitesource.agent.dependency.resolver.npm;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
-import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.utils.CommandLineProcess;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
     private final Logger logger = LoggerFactory.getLogger(YarnDependencyCollector.class);
     private static final String YARN_COMMAND = isWindows() ? "yarn.cmd" : "yarn";
     private String fileSeparator = System.getProperty(Constants.FILE_SEPARATOR);
+    private static final String YARN_LOCK = "yarn.lock";
 
 
     public YarnDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector, boolean ignoreNpmLsErrors) {
@@ -30,7 +24,7 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
 
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String folder) {
-        File yarnLock = new File(folder + fileSeparator + "yarn.lock");
+        File yarnLock = new File(folder + fileSeparator + YARN_LOCK);
         boolean yarnLockFound = yarnLock.isFile();
         if (!yarnLockFound){
             try {
@@ -80,35 +74,35 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
             boolean insideDependencies = false;
             DependencyInfo dependencyInfo = null;
             while ((currLine = bufferedReader.readLine()) != null){
-                if (currLine.isEmpty() || currLine.startsWith("#") || currLine.trim().isEmpty()){
+                if (currLine.isEmpty() || currLine.startsWith(Constants.POUND) || currLine.trim().isEmpty()){
                     insideDependencies = false;
                     continue;
                 }
                 if (currLine.startsWith(Constants.WHITESPACE)) {
                    if (currLine.trim().startsWith(Constants.VERSION)){
-                       String version = currLine.substring(currLine.indexOf("\"") + 1, currLine.lastIndexOf("\""));
+                       String version = currLine.substring(currLine.indexOf(Constants.QUESTION_MARK) + 1, currLine.lastIndexOf(Constants.QUESTION_MARK));
                        dependencyInfo.setVersion(version);
                        dependencyInfo.setArtifactId(dependencyInfo.getGroupId() + Constants.DASH + version + ".tgz");
                    } else if (currLine.trim().startsWith("resolved")){
-                       String sha1 = currLine.substring(currLine.indexOf(Constants.POUND) + 1, currLine.lastIndexOf("\""));
+                       String sha1 = currLine.substring(currLine.indexOf(Constants.POUND) + 1, currLine.lastIndexOf(Constants.QUESTION_MARK));
                        dependencyInfo.setSha1(sha1);
                    } else if (currLine.trim().startsWith(Constants.DEPENDENCIES) || currLine.trim().startsWith("optionalDependencies")) {
                        insideDependencies = true;
                    } else if (insideDependencies){
-                        String name = currLine.trim().replaceFirst(Constants.WHITESPACE, "@");
-                        name = name.replaceAll("\"", Constants.EMPTY_STRING);
-                        childrenMap.put(name, dependencyInfo);
-                    }
+                       String name = currLine.trim().replaceFirst(Constants.WHITESPACE, "@");
+                       name = name.replaceAll(Constants.QUOTATION_MARK, Constants.EMPTY_STRING);
+                       childrenMap.put(name, dependencyInfo);
+                   }
                 } else {
                     String[] split = currLine.split(Constants.COMMA + Constants.WHITESPACE);
                     for (int i = 0; i < split.length; i++){
                         String name = split[i].substring(0, split[i].length() - (split[i].endsWith(Constants.COLON) ? 1 : 0));
-                        name = name.replaceAll("\"",Constants.EMPTY_STRING);
-                        String groupId = name.split("@")[0];
+                        name = name.replaceAll(Constants.QUOTATION_MARK,Constants.EMPTY_STRING);
+                        String groupId = name.split("@")[name.startsWith("@") ? 1 : 0];
                         if (i==0) {
                             dependencyInfo = new DependencyInfo();
                             dependencyInfo.setGroupId(groupId);
-                            // TODO - add YARN depdendency type
+                            // TODO - add YARN dependency type
                             dependencyInfo.setDependencyType(DependencyType.NPM);
                             String pathToPackageJson = yarnLock.getParent() + fileSeparator + "node_modules" + fileSeparator + groupId + fileSeparator + "package.json";
                             dependencyInfo.setSystemPath(pathToPackageJson);
@@ -128,6 +122,9 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
                     dependencyInfos.add(parentsMap.get(parent));
                 }
             }
+            for (DependencyInfo parent : dependencyInfos){
+                removeCircularDependencies(parent, new ArrayList<>());
+            }
         } catch (FileNotFoundException e){
             e.printStackTrace();
         } catch (IOException e) {
@@ -142,5 +139,19 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
             }
         }
         return dependencyInfos;
+    }
+
+    private void removeCircularDependencies(DependencyInfo dependencyInfo, List<DependencyInfo> ancestors){
+        Iterator<DependencyInfo> iterator = dependencyInfo.getChildren().iterator();
+        while (iterator.hasNext()){
+            DependencyInfo child = iterator.next();
+            if (ancestors.contains(child)){
+                dependencyInfo.getChildren().remove(child);
+            } else {
+                ancestors.add(child);
+                removeCircularDependencies(child, ancestors);
+                ancestors.remove(child);
+            }
+        }
     }
 }

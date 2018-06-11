@@ -58,7 +58,6 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private final Logger logger = LoggerFactory.getLogger(NpmDependencyResolver.class);
 
     private static final String PACKAGE_JSON = "package.json";
-    private static final String YARN_LOCK = "yarn.lock";
     private static final String TYPE_SCRIPT_EXTENSION = ".ts";
     private static final String TSX_EXTENSION = ".tsx";
     private static final String JS_PATTERN = "**/*.js";
@@ -85,7 +84,6 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private final FilesScanner filesScanner;
     private final String npmAccessToken;
     private final boolean npmYarnProject;
-    private int index = 0;
 
     /* --- Constructor --- */
 
@@ -372,7 +370,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         } else {
             logger.debug("Dependency {} could not be retrieved. 'package.json' could not be found", dependency.getArtifactId());
         }
-        logger.debug(index++ + " handle the children dependencies in the file: {}", dependency.getFilename());
+        logger.debug("handle the children dependencies in the file: {}", dependency.getFilename());
         dependency.getChildren().forEach(childDependency -> handleLSDependencyRecursivelyImpl(childDependency, resultFiles, threadsCollection, npmAccessToken));
     }
 
