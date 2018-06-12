@@ -11,6 +11,7 @@ import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
+import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.php.phpModel.PhpModel;
 import org.whitesource.agent.dependency.resolver.php.phpModel.PhpPackage;
@@ -44,7 +45,6 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
 
     private final Logger logger = LoggerFactory.getLogger(PhpDependencyResolver.class);
 
-    private boolean resolveDependencies;
     private boolean phpPreStep;
     private boolean includeDevDependencies;
 
@@ -67,14 +67,10 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
 
         // run pre step according to phpPreStep flag
         if (phpPreStep) {
-            //File composerLock = new File(topLevelFolder + FORWARD_SLASH + COMPOSER_LOCK);
-            if (!composerLock.exists()) {
-                installSuccess = !executePreStepCommand(topLevelFolder);
-            }
+            installSuccess = !executePreStepCommand(topLevelFolder);
         } else {
             if (!composerLock.exists()) {
-                logger.info("Didn't found {} in {} please make sure you have lock file in your scan path", COMPOSER_LOCK, topLevelFolder);
-                logger.info("To generate {} please set {} to true", COMPOSER_LOCK, PHP_RUN_PRE_STEP);
+                logger.warn("Could not find {} file in {}. Please execute {} {} first.", COMPOSER_JSON, projectFolder, COMPOSER, INSTALL);
             }
         }
         if (installSuccess && composerLock.exists()) {
@@ -234,10 +230,10 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
     // execute pre step command (composer install)
     private boolean executePreStepCommand(String topLevelFolder) {
         String[] command;
-        if (includeDevDependencies) {
-            command = new String[]{COMPOSER_BAT, INSTALL};
+        if (DependencyCollector.isWindows()) {
+            command = getCommand(COMPOSER_BAT);
         } else {
-            command = new String[]{COMPOSER_BAT, INSTALL, PHP_INCLUDE_NO_DEV};
+            command = getCommand(COMPOSER);
         }
         String commandString = String.join(Constants.WHITESPACE, command);
         File file = new File(topLevelFolder + FORWARD_SLASH + COMPOSER_JSON);
@@ -253,5 +249,15 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
             return true;
         }
         return composerInstall.isErrorInProcess();
+    }
+
+    private String[] getCommand(String firstCommand) {
+        String[] command;
+        if (includeDevDependencies) {
+            command = new String[]{firstCommand, INSTALL};
+        } else {
+            command = new String[]{firstCommand, INSTALL, PHP_INCLUDE_NO_DEV};
+        }
+        return command;
     }
 }
