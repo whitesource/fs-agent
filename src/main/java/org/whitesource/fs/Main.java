@@ -61,7 +61,7 @@ public class Main {
         // read configuration senderConfig
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
         boolean isStandalone = commandLineArgs.web.equals(Constants.FALSE);
-
+        logger.info(fsaConfiguration.toString());
         if (isStandalone) {
             try {
                 if (fsaConfiguration.getErrors() == null || fsaConfiguration.getErrors().size() > 0) {
@@ -76,6 +76,7 @@ public class Main {
                 logger.warn("Process encountered an error: {}" + e.getMessage(), e);
                 processExitCode = StatusCode.ERROR;
             }
+            logger.info("Process finished with exit code {} ({})", processExitCode.name(), processExitCode.getValue());
             System.exit(processExitCode.getValue());
         } else {
             //this is a work around

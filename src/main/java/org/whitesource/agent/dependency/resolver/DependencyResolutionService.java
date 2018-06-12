@@ -26,11 +26,13 @@ import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
 import org.whitesource.agent.dependency.resolver.paket.PaketDependencyResolver;
+import org.whitesource.agent.dependency.resolver.php.PhpDependencyResolver;
 import org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ruby.RubyDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
+import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
@@ -89,6 +91,10 @@ public class DependencyResolutionService {
         final boolean rubyOverwriteGemFile      = config.isRubyOverwriteGemFile();
         final boolean rubyInstallMissingGems    = config.isRubyInstallMissingGems();
 
+        final boolean phpResolveDependencies    = config.isPhpResolveDependencies();
+        final boolean phpRunPreStep             = config.isPhpRunPreStep();
+        final boolean phpIncludeDevDependencies = config.isPhpIncludeDevDependenices();
+
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
@@ -127,6 +133,10 @@ public class DependencyResolutionService {
 
         if (rubyResolveDependencies){
             dependencyResolvers.add(new RubyDependencyResolver(rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems));
+        }
+
+        if(phpResolveDependencies){
+            dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies));
         }
     }
 
@@ -179,7 +189,12 @@ public class DependencyResolutionService {
             }
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
                 logger.info("topFolder = " + topFolder);
-                ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
+                ResolutionResult result = null;
+                try {
+                    result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
+                } catch (FileNotFoundException e) {
+                    logger.error(e.getMessage());
+                }
                 resolutionResults.add(result);
             });
         });

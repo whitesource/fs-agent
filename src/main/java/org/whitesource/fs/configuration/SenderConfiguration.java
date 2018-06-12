@@ -140,4 +140,14 @@ public class SenderConfiguration {
     public boolean isIgnoreCertificateCheck() {
         return ignoreCertificateCheck;
     }
+
+    @Override
+    public String toString() {
+        return  ", checkPolicies=" + checkPolicies + '\n' +
+                ", serviceUrl='" + serviceUrl + "'\n" +
+                ", forceCheckAllDependencies=" + forceCheckAllDependencies + '\n' +
+                ", forceUpdate=" + forceUpdate + '\n' +
+                ", updateTypeValue='" + updateTypeValue + "'";
+//                ", enableImpactAnalysis=" + enableImpactAnalysis;
+    }
 }
