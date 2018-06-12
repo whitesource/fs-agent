@@ -49,7 +49,7 @@ public class FSAConfiguration {
     public static Collection<String> ignoredWebProperties = Arrays.asList(
             SCM_REPOSITORIES_FILE, LOG_LEVEL_KEY, FOLLOW_SYMBOLIC_LINKS, SHOW_PROGRESS_BAR, PROJECT_CONFIGURATION_PATH, SCAN_PACKAGE_MANAGER, WHITESOURCE_FOLDER_PATH,
             ENDPOINT_ENABLED, ENDPOINT_PORT, ENDPOINT_CERTIFICATE, ENDPOINT_PASS, ENDPOINT_SSL_ENABLED, OFFLINE_PROPERTY_KEY, OFFLINE_ZIP_PROPERTY_KEY,
-            OFFLINE_PRETTY_JSON_KEY, WHITESOURCE_CONFIGURATION);
+            OFFLINE_PRETTY_JSON_KEY, WHITESOURCE_CONFIGURATION, SCANNED_FOLDERS);
 
     public static final int VIA_DEFAULT_ANALYSIS_LEVEL = 1;
     public static final String DEFAULT_KEY = "defaultKey";
@@ -83,12 +83,14 @@ public class FSAConfiguration {
 
     private final List<String> offlineRequestFiles;
     private final String fileListPath;
-    private final List<String> dependencyDirs;
+    private List<String> dependencyDirs;
     private final String configFilePath;
     private final AgentConfiguration agent;
     private final RequestConfiguration request;
     private final boolean scanPackageManager;
     private final boolean scanDockerImages;
+
+    private final String scannedFolders;
 
     private String logLevel;
     private boolean useCommandLineProductName;
@@ -132,6 +134,14 @@ public class FSAConfiguration {
                 }
             }
 
+            scannedFolders = config.getProperty(SCANNED_FOLDERS);
+            if (scannedFolders != null) {
+                String[] libsList = scannedFolders.split(Constants.COMMA);
+                // Trim all elements in libsList
+                Arrays.stream(libsList).map(String::trim).toArray(unused -> libsList);
+                dependencyDirs = Arrays.asList(libsList);
+            }
+
             configFilePath = commandLineArgs.configFilePath;
             config.setProperty(PROJECT_CONFIGURATION_PATH, commandLineArgs.configFilePath);
 
@@ -139,7 +149,9 @@ public class FSAConfiguration {
             offlineRequestFiles = updateProperties(config, commandLineArgs);
             projectName = config.getProperty(PROJECT_NAME_PROPERTY_KEY);
             fileListPath = commandLineArgs.fileListPath;
-            dependencyDirs = commandLineArgs.dependencyDirs;
+            if (commandLineArgs.dependencyDirs != null && !commandLineArgs.dependencyDirs.isEmpty()) {
+                dependencyDirs = commandLineArgs.dependencyDirs;
+            }
             appPaths = commandLineArgs.appPath;
             if (StringUtils.isNotBlank(commandLineArgs.whiteSourceFolder)) {
                 config.setProperty(WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
@@ -150,6 +162,7 @@ public class FSAConfiguration {
             configFilePath = NONE;
             offlineRequestFiles = new ArrayList<>();
             fileListPath = null;
+            scannedFolders = null;
             dependencyDirs = new ArrayList<>();
             commandLineArgsOverride(null);
         }
@@ -157,9 +170,12 @@ public class FSAConfiguration {
         scanPackageManager = getBooleanProperty(config, SCAN_PACKAGE_MANAGER, false);
         scanDockerImages = getBooleanProperty(config,SCAN_DOCKER_IMAGES,false);
 
+        if (dependencyDirs == null)
+            dependencyDirs = new ArrayList<>();
+
         // validate scanned folder
         if (dependencyDirs.isEmpty()) {
-            dependencyDirs.add(".");
+            dependencyDirs.add(Constants.DOT);
         }
 
         // validate config
@@ -269,6 +285,8 @@ public class FSAConfiguration {
         boolean pythonIsWssPluginInstalled          = FSAConfiguration.getBooleanProperty(config, PYTHON_IS_WSS_PLUGIN_INSTALLED, false);
         boolean pythonUninstallWssPluginInstalled   = FSAConfiguration.getBooleanProperty(config, PYTHON_UNINSTALL_WSS_PLUGIN, false);
         boolean pythonIgnorePipInstallErrors        = FSAConfiguration.getBooleanProperty(config, PYTHON_IGNORE_PIP_INSTALL_ERRORS, false);
+        boolean pythonInstallVirtualenv             = FSAConfiguration.getBooleanProperty(config, PYTHON_INSTALL_VIRTUALENV, false);
+        boolean pythonResolveHierarchyTree          = FSAConfiguration.getBooleanProperty(config, PYTHON_RESOLVE_HIERARCHY_TREE, true);
 
         boolean gradleResolveDependencies   = FSAConfiguration.getBooleanProperty(config, GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand    = FSAConfiguration.getBooleanProperty(config, GRADLE_RUN_ASSEMBLE_COMMAND, true);
@@ -295,7 +313,7 @@ public class FSAConfiguration {
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
-                pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled, pythonIgnorePipInstallErrors,
+                pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled, pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree,
                 dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems, phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies);
     }
@@ -508,6 +526,10 @@ public class FSAConfiguration {
 
     public ResolverConfiguration getResolver() {
         return resolver;
+    }
+
+    public String getScannedFolders() {
+        return scannedFolders;
     }
 
     List<String> getErrors() {

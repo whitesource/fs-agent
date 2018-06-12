@@ -76,6 +76,7 @@ public class Main {
                 logger.warn("Process encountered an error: {}" + e.getMessage(), e);
                 processExitCode = StatusCode.ERROR;
             }
+            logger.info("Process finished with exit code {} ({})", processExitCode.name(), processExitCode.getValue());
             System.exit(processExitCode.getValue());
         } else {
             //this is a work around
