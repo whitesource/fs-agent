@@ -145,4 +145,18 @@ public class RequestConfiguration {
         }
         return getProductToken();
     }
+
+    @Override
+    public String toString() {
+        return  ", projectVersion='" + projectVersion + '\n' +
+                ", projectToken='" + projectToken + '\n' +
+                ", projectPerSubFolder=" + projectPerSubFolder + '\n' +
+                ", apiToken='" + "*******" + '\n' +
+                ", userKey='" + "*******" + '\n' +
+                ", requesterEmail='" + requesterEmail + '\n' +
+                ", productToken='" + productToken + '\n' +
+                ", productName='" + productName + '\n' +
+                ", productVersion='" + productVersion + '\n' +
+                ", projectName='" + projectName;
+    }
 }

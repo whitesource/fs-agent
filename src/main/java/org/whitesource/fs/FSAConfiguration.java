@@ -60,6 +60,18 @@ public class FSAConfiguration {
     private static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
 
+    @Override
+    public String toString() {
+        return "FSA Configuration {\n" +
+                sender.toString() + '\n' +
+                resolver.toString() + '\n' +
+                ", dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
+                request.toString() + '\n' +
+                ", scanPackageManager=" + scanPackageManager + '\n' +
+                ", scanDockerImages=" + scanDockerImages + '\n' +
+                '}';
+    }
+
     public static final String WHITE_SOURCE_DEFAULT_FOLDER_PATH = ".";
     public static final String PIP = "pip";
     public static final String PYTHON = "python";

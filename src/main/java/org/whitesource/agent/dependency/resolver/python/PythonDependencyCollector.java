@@ -13,10 +13,7 @@ import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.FilesUtils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -75,6 +72,7 @@ public class PythonDependencyCollector extends DependencyCollector {
     private static final String COMMENT_SIGN_PYTHON = "#";
     private static final int NUM_THREADS = 8;
     private static final String FORWARD_SLASH = "/";
+    private static final String SCRIPT_SH = "/script.sh";
 
     /* --- Constructors --- */
 
@@ -191,8 +189,16 @@ public class PythonDependencyCollector extends DependencyCollector {
             // Create the virtual environment
             failed = processCommand(new String[]{pythonPath, M, VIRTUALENV, this.tempDirVirtualenv + ENV}, true);
             if (!failed) {
-                // Install the dependencies in the virtual environment and get the full tree of dependencies in a file
-                failed = processCommand(getFullCmdInstallation(requirementsTxtPath), true);
+                if (isWindows()) {
+                    failed = processCommand(getFullCmdInstallation(requirementsTxtPath), true);
+                } else {
+                    String scriptPath = createScript(requirementsTxtPath);
+                    if (scriptPath != null) {
+                        failed = processCommand(new String[] {scriptPath}, true);
+                    } else {
+                        failed = true;
+                    }
+                }
             }
         } catch (IOException e) {
             logger.warn("Cannot install requirements.txt in the virtual environment.");
@@ -265,20 +271,10 @@ public class PythonDependencyCollector extends DependencyCollector {
 
     private String[] getFullCmdInstallation(String requirementsTxtPath) {
         // TODO add comment
-        String[] result;
         String[] forWindows = new String[]{this.tempDirVirtualenv + SCRIPTS_ACTIVATE, AND, pipPath, INSTALL, R_PARAMETER,
                 requirementsTxtPath, F, this.tempDirPackages, AND, pipPath, INSTALL, PIPDEPTREE, AND, PIPDEPTREE,
                 JSON_TREE, ">", this.tempDirVirtualenv + HIERARCHY_TREE_TXT};
-        if(!isWindows()) {
-            forWindows[0] = this.tempDirVirtualenv + BIN_ACTIVATE;
-            String[] forLinux = new String[forWindows.length + 1];
-            forLinux[0] = SOURCE;
-            System.arraycopy(forWindows, 0, forLinux, 1, forWindows.length);
-            result = forLinux;
-        } else {
-            result = forWindows;
-        }
-        return result;
+        return forWindows;
     }
 
     private boolean processCommand(String[] args, boolean withOutput) throws IOException {
@@ -338,6 +334,35 @@ public class PythonDependencyCollector extends DependencyCollector {
         } catch (IOException e) {
             logger.warn("Cannot read the requirements.txt file");
         }
+    }
+
+    private String createScript(String requirementsTxtPath) {
+        FilesUtils filesUtils = new FilesUtils();
+        String path = filesUtils.createTmpFolder(false);
+        String pathOfScript = null;
+        if (path != null) {
+            pathOfScript = path + SCRIPT_SH;
+            try {
+                File file = new File(pathOfScript);
+                FileOutputStream fos = new FileOutputStream(file);
+                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fos));
+                bufferedWriter.write("#!/bin/bash");
+                bufferedWriter.newLine();
+                bufferedWriter.write(SOURCE + " " + this.tempDirVirtualenv + BIN_ACTIVATE);
+                bufferedWriter.newLine();
+                bufferedWriter.write(pipPath + " " + INSTALL + " " + R_PARAMETER + " " + requirementsTxtPath + " " + F + " " + this.tempDirPackages);
+                bufferedWriter.newLine();
+                bufferedWriter.write(pipPath + " " + INSTALL + " " + PIPDEPTREE);
+                bufferedWriter.newLine();
+                bufferedWriter.write(PIPDEPTREE + " " + JSON_TREE + " " + ">" + " " + this.tempDirVirtualenv + HIERARCHY_TREE_TXT);
+                bufferedWriter.close();
+                fos.close();
+                file.setExecutable(true);
+            } catch (IOException e) {
+                return null;
+            }
+        }
+        return pathOfScript;
     }
 
     /* --- Nested classes --- */
