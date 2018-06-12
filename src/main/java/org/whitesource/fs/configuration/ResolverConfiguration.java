@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyManager;
 
+import java.util.Arrays;
+
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class ResolverConfiguration {
@@ -367,5 +369,41 @@ public class ResolverConfiguration {
 
     public void setGradleResolveDependencies(boolean gradleResolveDependencies) {
         this.gradleResolveDependencies = gradleResolveDependencies;
+    }
+
+    @Override
+    public String toString() {
+
+        return  ", dependenciesOnly=" + dependenciesOnly + '\n' +
+                ", npmRunPreStep=" + npmRunPreStep +
+                ", npmResolveDependencies=" + npmResolveDependencies +
+                ", npmIncludeDevDependencies=" + npmIncludeDevDependencies +
+                ", npmIgnoreJavaScriptFiles=" + npmIgnoreJavaScriptFiles +
+                ", npmTimeoutDependenciesCollector=" + npmTimeoutDependenciesCollector  +
+                ", npmIgnoreNpmLsErrors=" + npmIgnoreNpmLsErrors + '\n' +
+                ", bowerResolveDependencies=" + bowerResolveDependencies +
+                ", bowerRunPreStep=" + bowerRunPreStep + '\n' +
+                ", nugetResolveDependencies=" + nugetResolveDependencies +
+                ", nugetRestoreDependencies=" + nugetRestoreDependencies + '\n' +
+                ", mavenResolveDependencies=" + mavenResolveDependencies +
+                ", mavenIgnoredScopes=" + Arrays.toString(mavenIgnoredScopes) +
+                ", mavenAggregateModules=" + mavenAggregateModules + '\n' +
+                ", pythonResolveDependencies=" + pythonResolveDependencies +
+                ", pythonIgnorePipInstallErrors=" + pythonIgnorePipInstallErrors +
+                ", pythonInstallVirtualenv=" + pythonInstallVirtualenv +
+                ", pythonResolveHierarchyTree=" + pythonResolveHierarchyTree + '\n' +
+                ", gradleResolveDependencies=" + gradleResolveDependencies +
+                ", gradleRunAssembleCommand=" + gradleRunAssembleCommand + '\n' +
+                ", paketResolveDependencies=" + paketResolveDependencies +
+                ", paketIgnoredScopes=" + Arrays.toString(paketIgnoredScopes) +
+                ", paketIgnoreFiles=" + paketIgnoreFiles +
+                ", paketRunPreStep=" + paketRunPreStep + '\n' +
+                ", goResolveDependencies=" + goResolveDependencies +
+                ", goDependencyManager=" + goDependencyManager +
+                ", goCollectDependenciesAtRuntime=" + goCollectDependenciesAtRuntime + '\n' +
+                ", rubyResolveDependencies=" + rubyResolveDependencies +
+                ", rubyRunBundleInstall=" + rubyRunBundleInstall +
+                ", rubyOverwriteGemFile=" + rubyOverwriteGemFile +
+                ", rubyInstallMissingGems=" + rubyInstallMissingGems;
     }
 }

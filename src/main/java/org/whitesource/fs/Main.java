@@ -61,7 +61,7 @@ public class Main {
         // read configuration senderConfig
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
         boolean isStandalone = commandLineArgs.web.equals(Constants.FALSE);
-
+        logger.info(fsaConfiguration.toString());
         if (isStandalone) {
             try {
                 if (fsaConfiguration.getErrors() == null || fsaConfiguration.getErrors().size() > 0) {
