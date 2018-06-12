@@ -5,6 +5,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -73,6 +74,7 @@ public class PythonDependencyCollector extends DependencyCollector {
     private static final int NUM_THREADS = 8;
     private static final String FORWARD_SLASH = "/";
     private static final String SCRIPT_SH = "/script.sh";
+    private static final String BIN_BASH = "#!/bin/bash";
 
     /* --- Constructors --- */
 
@@ -270,7 +272,7 @@ public class PythonDependencyCollector extends DependencyCollector {
     }
 
     private String[] getFullCmdInstallation(String requirementsTxtPath) {
-        // TODO add comment
+        // execute all the command with and between them in order to save the virtualenv shell
         String[] forWindows = new String[]{this.tempDirVirtualenv + SCRIPTS_ACTIVATE, AND, pipPath, INSTALL, R_PARAMETER,
                 requirementsTxtPath, F, this.tempDirPackages, AND, pipPath, INSTALL, PIPDEPTREE, AND, PIPDEPTREE,
                 JSON_TREE, ">", this.tempDirVirtualenv + HIERARCHY_TREE_TXT};
@@ -346,15 +348,15 @@ public class PythonDependencyCollector extends DependencyCollector {
                 File file = new File(pathOfScript);
                 FileOutputStream fos = new FileOutputStream(file);
                 BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fos));
-                bufferedWriter.write("#!/bin/bash");
+                bufferedWriter.write(BIN_BASH);
                 bufferedWriter.newLine();
-                bufferedWriter.write(SOURCE + " " + this.tempDirVirtualenv + BIN_ACTIVATE);
+                bufferedWriter.write(SOURCE + Constants.WHITESPACE + this.tempDirVirtualenv + BIN_ACTIVATE);
                 bufferedWriter.newLine();
-                bufferedWriter.write(pipPath + " " + INSTALL + " " + R_PARAMETER + " " + requirementsTxtPath + " " + F + " " + this.tempDirPackages);
+                bufferedWriter.write(pipPath + Constants.WHITESPACE + INSTALL + Constants.WHITESPACE + R_PARAMETER + Constants.WHITESPACE + requirementsTxtPath + Constants.WHITESPACE + F + Constants.WHITESPACE + this.tempDirPackages);
                 bufferedWriter.newLine();
-                bufferedWriter.write(pipPath + " " + INSTALL + " " + PIPDEPTREE);
+                bufferedWriter.write(pipPath + Constants.WHITESPACE + INSTALL + Constants.WHITESPACE + PIPDEPTREE);
                 bufferedWriter.newLine();
-                bufferedWriter.write(PIPDEPTREE + " " + JSON_TREE + " " + ">" + " " + this.tempDirVirtualenv + HIERARCHY_TREE_TXT);
+                bufferedWriter.write(PIPDEPTREE + Constants.WHITESPACE + JSON_TREE + Constants.WHITESPACE + ">" + Constants.WHITESPACE + this.tempDirVirtualenv + HIERARCHY_TREE_TXT);
                 bufferedWriter.close();
                 fos.close();
                 file.setExecutable(true);
