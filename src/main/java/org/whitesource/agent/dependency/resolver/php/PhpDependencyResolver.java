@@ -39,7 +39,6 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
     private static final String REQUIRE = "require";
     private static final String REQUIRE_DEV = "require-dev";
     private static final String PHP = "php";
-    public static final String PHP_RUN_PRE_STEP = "php.runPreStep";
 
     /* --- Private Members --- */
 
