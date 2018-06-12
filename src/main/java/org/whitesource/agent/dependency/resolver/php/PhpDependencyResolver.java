@@ -74,20 +74,28 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
         }
         if (installSuccess && composerLock.exists()) {
             try {
+                Map<String, Object> requireMap = new HashMap<>();
                 InputStream is = new FileInputStream(topLevelFolder + FORWARD_SLASH + COMPOSER_JSON);
                 String jsonText = IOUtils.toString(is);
                 JSONObject json = new JSONObject(jsonText);
-                JSONObject require = json.getJSONObject(REQUIRE);
-                Map<String, Object> requireMap = require.toMap();
+                if (json.has(REQUIRE)) {
+                    JSONObject require = json.getJSONObject(REQUIRE);
+                    requireMap = require.toMap();
+                }
                 if (includeDevDependencies) {
-                    JSONObject requireDev = json.getJSONObject(REQUIRE_DEV);
-                    Map<String, Object> requireDevMap = requireDev.toMap();
-                    requireMap.putAll(requireDevMap);
+                    if (json.has(REQUIRE_DEV)) {
+                        JSONObject requireDev = json.getJSONObject(REQUIRE_DEV);
+                        Map<String, Object> requireDevMap = requireDev.toMap();
+                        requireMap.putAll(requireDevMap);
+                    }
                 }
-                if (requireMap.containsKey(PHP)) {
-                    requireMap.remove(PHP);
+                if (!requireMap.isEmpty()) {
+                    if (requireMap.containsKey(PHP)) {
+                        requireMap.remove(PHP);
+                    }
+                    directDependencies.addAll(requireMap.keySet());
                 }
-                directDependencies.addAll(requireMap.keySet());
+
             } catch (IOException e) {
                 logger.error("Didn't succeed to read {} - {} ", COMPOSER_JSON, e.getMessage());
             }
