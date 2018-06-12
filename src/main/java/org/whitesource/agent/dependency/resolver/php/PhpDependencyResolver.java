@@ -69,7 +69,7 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
             installSuccess = !executePreStepCommand(topLevelFolder);
         } else {
             if (!composerLock.exists()) {
-                logger.warn("Could not find {} file in {}. Please execute {} {} first.", COMPOSER_JSON, projectFolder, COMPOSER, INSTALL);
+                logger.warn("Could not find {} file in {}. Please execute {} {} first.", COMPOSER_LOCK, topLevelFolder, COMPOSER, INSTALL);
             }
         }
         if (installSuccess && composerLock.exists()) {
@@ -252,7 +252,7 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
         try {
             composerInstall.executeProcessWithoutOutput();
         } catch (IOException e) {
-            logger.debug("Could not run " + commandString + " in folder " + topLevelFolder);
+            logger.warn("Could not run {} in folder {} : {}", commandString, topLevelFolder, e.getMessage());
             return true;
         }
         return composerInstall.isErrorInProcess();

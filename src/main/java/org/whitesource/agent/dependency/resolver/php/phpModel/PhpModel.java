@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Objects;
 
 /**
@@ -24,6 +25,8 @@ public class PhpModel implements Serializable {
     /* --- Constructors --- */
 
     public PhpModel() {
+        phpPackages = new LinkedList<>();
+        phpPackagesDev = new LinkedList<>();
     }
 
     public PhpModel(Collection<PhpPackage> phpPackages, Collection<PhpPackage> phpPackagesDev) {
