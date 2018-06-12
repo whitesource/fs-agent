@@ -121,7 +121,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
-        if (runPreStep && !npmYarnProject) {
+        if (runPreStep) {
             getDependencyCollector().executePreparationStep(topLevelFolder);
             String[] excludesArray = new String[getExcludes().size()];
             excludesArray = getExcludes().toArray(excludesArray);

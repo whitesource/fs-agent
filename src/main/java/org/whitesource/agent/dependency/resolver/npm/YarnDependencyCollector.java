@@ -12,6 +12,13 @@ import java.io.*;
 import java.util.*;
 
 public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
+    protected static final String SUCCESS = "success";
+    protected static final String RESOLVED = "resolved";
+    protected static final String TGZ = ".tgz";
+    protected static final String OPTIONAL_DEPENDENCIES = "optionalDependencies";
+    protected static final String AT = "@";
+    protected static final String NODE_MODULES = "node_modules";
+    protected static final String PACKAGE_JSON = "package.json";
     private final Logger logger = LoggerFactory.getLogger(YarnDependencyCollector.class);
     private static final String YARN_COMMAND = isWindows() ? "yarn.cmd" : "yarn";
     private String fileSeparator = System.getProperty(Constants.FILE_SEPARATOR);
@@ -26,38 +33,34 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
     public Collection<AgentProjectInfo> collectDependencies(String folder) {
         File yarnLock = new File(folder + fileSeparator + YARN_LOCK);
         boolean yarnLockFound = yarnLock.isFile();
-        if (!yarnLockFound){
-            try {
-                yarnLockFound = installYarnLock(folder);
-            } catch (IOException e) {
-                npmLsFailureStatus = true;
-                e.printStackTrace();
-            }
-        }
-        List<DependencyInfo> dependencyInfos = null;
+        Collection<DependencyInfo> dependencies = new ArrayList<>();
         if (yarnLockFound){
-            dependencyInfos = parseYarnLock(yarnLock);
-
+            dependencies = parseYarnLock(yarnLock);
         } else {
             npmLsFailureStatus = true;
         }
-        return getSingleProjectList(dependencyInfos);
+        return getSingleProjectList(dependencies);
     }
 
     protected String[] getInstallParams() {
         return new String[]{YARN_COMMAND, Constants.INSTALL};
     }
 
-    private boolean installYarnLock(String folder) throws IOException {
+    public boolean executePreparationStep(String folder) {
         CommandLineProcess yarnInstallCommand = new CommandLineProcess(folder, getInstallParams());
         yarnInstallCommand.setTimeoutReadLineSeconds(this.npmTimeoutDependenciesCollector);
-        List<String> linesOfYarnInstall = yarnInstallCommand.executeProcess();
-        if (yarnInstallCommand.isErrorInProcess()) {
-            for (String line : linesOfYarnInstall) {
-                if (line.startsWith("success")) {
-                    return true;
+        List<String> linesOfYarnInstall;
+        try {
+            linesOfYarnInstall = yarnInstallCommand.executeProcess();
+            if (yarnInstallCommand.isErrorInProcess()) {
+                for (String line : linesOfYarnInstall) {
+                    if (line.startsWith(SUCCESS)) {
+                        return true;
+                    }
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return false;
     }
@@ -78,18 +81,19 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
                     insideDependencies = false;
                     continue;
                 }
+                logger.debug(currLine);
                 if (currLine.startsWith(Constants.WHITESPACE)) {
                    if (currLine.trim().startsWith(Constants.VERSION)){
-                       String version = currLine.substring(currLine.indexOf(Constants.QUESTION_MARK) + 1, currLine.lastIndexOf(Constants.QUESTION_MARK));
+                       String version = currLine.substring(currLine.indexOf(Constants.QUOTATION_MARK) + 1, currLine.lastIndexOf(Constants.QUOTATION_MARK));
                        dependencyInfo.setVersion(version);
-                       dependencyInfo.setArtifactId(dependencyInfo.getGroupId() + Constants.DASH + version + ".tgz");
-                   } else if (currLine.trim().startsWith("resolved")){
-                       String sha1 = currLine.substring(currLine.indexOf(Constants.POUND) + 1, currLine.lastIndexOf(Constants.QUESTION_MARK));
+                       dependencyInfo.setArtifactId(dependencyInfo.getGroupId() + Constants.DASH + version + TGZ);
+                   } else if (currLine.trim().startsWith(RESOLVED)){
+                       String sha1 = currLine.substring(currLine.indexOf(Constants.POUND) + 1, currLine.lastIndexOf(Constants.QUOTATION_MARK));
                        dependencyInfo.setSha1(sha1);
-                   } else if (currLine.trim().startsWith(Constants.DEPENDENCIES) || currLine.trim().startsWith("optionalDependencies")) {
+                   } else if (currLine.trim().startsWith(Constants.DEPENDENCIES) || currLine.trim().startsWith(OPTIONAL_DEPENDENCIES)) {
                        insideDependencies = true;
                    } else if (insideDependencies){
-                       String name = currLine.trim().replaceFirst(Constants.WHITESPACE, "@");
+                       String name = currLine.trim().replaceFirst(Constants.WHITESPACE, AT);
                        name = name.replaceAll(Constants.QUOTATION_MARK, Constants.EMPTY_STRING);
                        childrenMap.put(name, dependencyInfo);
                    }
@@ -98,13 +102,13 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
                     for (int i = 0; i < split.length; i++){
                         String name = split[i].substring(0, split[i].length() - (split[i].endsWith(Constants.COLON) ? 1 : 0));
                         name = name.replaceAll(Constants.QUOTATION_MARK,Constants.EMPTY_STRING);
-                        String groupId = name.split("@")[name.startsWith("@") ? 1 : 0];
+                        String groupId = name.split(AT)[name.startsWith(AT) ? 1 : 0];
                         if (i==0) {
                             dependencyInfo = new DependencyInfo();
                             dependencyInfo.setGroupId(groupId);
                             // TODO - add YARN dependency type
                             dependencyInfo.setDependencyType(DependencyType.NPM);
-                            String pathToPackageJson = yarnLock.getParent() + fileSeparator + "node_modules" + fileSeparator + groupId + fileSeparator + "package.json";
+                            String pathToPackageJson = yarnLock.getParent() + fileSeparator + NODE_MODULES + fileSeparator + groupId + fileSeparator + PACKAGE_JSON;
                             dependencyInfo.setSystemPath(pathToPackageJson);
                             dependencyInfo.setFilename(pathToPackageJson);
                         }
