@@ -138,6 +138,10 @@ public final class ConfigPropertyKeys {
     public static final String RUBY_OVERWRITE_GEM_FILE      = "ruby.overwriteGemFile";
     public static final String RUBY_INSTALL_MISSING_GEMS    = "ruby.installMissingGems";
 
+    public static final String PHP_RESOLVE_DEPENDENCIES     = "php.resolveDependencies";
+    public static final String PHP_RUN_PRE_STEP             = "php.runPreStep";
+    public static final String PHP_INCLUDE_DEV_DEPENDENCIES = "php.includeDevDependencies";
+
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 
     public static final String SCANNED_FOLDERS = "d";
