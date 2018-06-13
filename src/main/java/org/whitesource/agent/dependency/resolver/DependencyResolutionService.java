@@ -94,7 +94,7 @@ public class DependencyResolutionService {
 
         final boolean phpResolveDependencies    = config.isPhpResolveDependencies();
         final boolean phpRunPreStep             = config.isPhpRunPreStep();
-        final boolean phpIncludeDevDependencies = config.isPhpIncludeDevDependenices();
+        final boolean phpIncludeDevDependencies = config.isPhpIncludeDevDependencies();
 
         dependenciesOnly = config.isDependenciesOnly();
 
