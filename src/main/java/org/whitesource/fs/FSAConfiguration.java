@@ -227,7 +227,7 @@ public class FSAConfiguration {
         // validate iaLanguage
         String iaLanguage = config.getProperty(ConfigPropertyKeys.IA_LANGUAGE);
         boolean iaLanguageValid = false;
-        if (iaLanguage != null && !iaLanguage.isEmpty()) {
+        if (iaLanguage != null) {
             for (ViaLanguage viaLanguage : ViaLanguage.values()) {
                 if (iaLanguage.equals(viaLanguage.toString().toLowerCase())) {
                     iaLanguageValid = true;
