@@ -1,0 +1,33 @@
+{
+    "name": "in2it/hello-world",
+    "description": "A simple PHP project to explain the basis of unit testing with PHPUnit",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Michelangelo van Dam",
+            "email": "michelangelo@in2it.be"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^7.1",
+        "symfony/polyfill-mbstring": "^1.8",
+        "psr/log": "^1.0",
+        "psr/http-message": "^1.0",
+        "doctrine/instantiator": "^1.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "In2it\\HelloWorld\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "In2it\\HelloWorld\\Test\\": "tests/"
+        }
+    }
+}
