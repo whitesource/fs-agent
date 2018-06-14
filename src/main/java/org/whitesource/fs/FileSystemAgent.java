@@ -224,7 +224,7 @@ public class FileSystemAgent {
         ViaLanguage[] values = ViaLanguage.values();
         if (iaLanguage != null) {
             for (ViaLanguage value : values) {
-                if (value.toString().equals(iaLanguage.toLowerCase())) {
+                if (value.toString().toLowerCase().equals(iaLanguage.toLowerCase())) {
                     return value;
                 }
             }
