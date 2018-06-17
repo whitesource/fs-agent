@@ -192,7 +192,7 @@ public class DependencyResolutionService {
 
 
         topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
-            if (!resolvedFolder.getTopFoldersFound().isEmpty()) {
+            if (!resolvedFolder.getTopFoldersFound().isEmpty() && dependencyResolver.getDependencyType() != null) {
                 logger.info("Trying to resolve " + dependencyResolver.getDependencyType().toString() + " dependencies");
             }
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {

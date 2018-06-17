@@ -9,11 +9,14 @@ import java.util.List;
 
 @Root(strict=false)
 public class IvyReport {
+
     @Element
     private Info info;
 
     @ElementList
     private List<Module> dependencies;
+
+    /* --- Getters --- */
 
     public List<Module> getDependencies() {
         return dependencies;
@@ -26,11 +29,14 @@ public class IvyReport {
 
 @Root(strict = false)
 class Info {
+
     @Attribute
     private String organisation;
 
     @Attribute
     private String module;
+
+    /* --- Getters --- */
 
     public String getGroupId() {
         return organisation;
@@ -42,6 +48,7 @@ class Info {
 }
 
 class Module {
+
     @Attribute
     private String organisation;
 
@@ -50,6 +57,8 @@ class Module {
 
     @ElementList(inline = true)
     private List<Revision> revisionsList;
+
+    /* --- Getters --- */
 
     public String getGroupId() {
         return organisation;
@@ -66,6 +75,7 @@ class Module {
 
 @Root(strict=false)
 class Revision{
+
     @Attribute
     private String name;
 
@@ -78,11 +88,14 @@ class Revision{
     @ElementList
     private List<Artifact> artifacts;
 
+    /* --- Getters --- */
+
     public String getVersion() {
         return name;
     }
 
-    public boolean getEvicted(){
+    // dependencies with multiple versions, only the latest is used.  the others have property 'position=-1"
+    public boolean isIgnored(){
         return position == -1;
     }
 
@@ -97,6 +110,7 @@ class Revision{
 
 @Root(strict=false)
 class Caller{
+
     @Attribute
     private String organisation;
 
@@ -105,6 +119,8 @@ class Caller{
 
     @Attribute
     private String callerrev;
+
+    /* --- Getters --- */
 
     public String getGroupId() {
         return organisation;
@@ -121,8 +137,11 @@ class Caller{
 
 @Root(strict=false)
 class Artifact{
+
     @Attribute
     private String location;
+
+    /* --- Getters --- */
 
     public String getPathToJar() {
         return location;
