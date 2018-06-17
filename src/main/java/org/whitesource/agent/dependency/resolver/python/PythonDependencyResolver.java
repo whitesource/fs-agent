@@ -42,6 +42,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     private static final String PYTHON_BOM = "requirements.txt";
     private static final String PY_EXT = ".py";
+    private static final String WHITESOURCE_PYTHON_TEMP_FOLDER = "Whitesource_python_resolver";
 
     /* --- Constructors --- */
 
@@ -60,8 +61,8 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         Collection<DependencyInfo> resultDependencies = new LinkedList<>();
         for (String requirementsTxtPath : requirementsFiles) {
             FilesUtils filesUtils = new FilesUtils();
-            String tempDirVirtualEnv = filesUtils.createTmpFolder(true);
-            String tempDirPackages = filesUtils.createTmpFolder(false);
+            String tempDirVirtualEnv = filesUtils.createTmpFolder(true, WHITESOURCE_PYTHON_TEMP_FOLDER);
+            String tempDirPackages = filesUtils.createTmpFolder(false, WHITESOURCE_PYTHON_TEMP_FOLDER);
 
             Collection<DependencyInfo> dependencies = new LinkedList<>();
             PythonDependencyCollector pythonDependencyCollector;
@@ -96,8 +97,8 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    public String getBomPattern() {
-        return Constants.PATTERN + PYTHON_BOM;
+    public String[] getBomPattern() {
+        return new String[]{Constants.PATTERN + PYTHON_BOM};
     }
 
     @Override

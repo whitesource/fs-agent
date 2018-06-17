@@ -129,8 +129,8 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected String getBomPattern() {
-        return Constants.PATTERN + COMPOSER_JSON;
+    protected String[] getBomPattern() {
+        return new String[]{Constants.PATTERN + COMPOSER_JSON};
     }
 
     @Override

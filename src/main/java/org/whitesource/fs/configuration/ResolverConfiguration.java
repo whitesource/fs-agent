@@ -80,7 +80,9 @@ public class ResolverConfiguration {
 
             @JsonProperty(PHP_RESOLVE_DEPENDENCIES) boolean phpResolveDependencies,
             @JsonProperty(PHP_RUN_PRE_STEP) boolean phpRunPreStep,
-            @JsonProperty(PHP_INCLUDE_DEV_DEPENDENCIES) boolean phpIncludeDevDependencies) {
+            @JsonProperty(PHP_INCLUDE_DEV_DEPENDENCIES) boolean phpIncludeDevDependencies,
+
+            @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmResolveDependencies = npmResolveDependencies;
         this.npmIncludeDevDependencies = npmIncludeDevDependencies;
@@ -134,6 +136,8 @@ public class ResolverConfiguration {
         this.phpResolveDependencies = phpResolveDependencies;
         this.phpRunPreStep = phpRunPreStep;
         this.phpIncludeDevDependenices = phpIncludeDevDependencies;
+
+        this.htmlResolveDependencies = htmlResolveDependencies;
     }
 
     /* --- Members --- */
@@ -185,6 +189,8 @@ public class ResolverConfiguration {
     private boolean phpResolveDependencies;
     private boolean phpRunPreStep;
     private boolean phpIncludeDevDependenices;
+
+    private boolean htmlResolveDependencies;
 
     /* --- Public getters --- */
 
@@ -391,6 +397,11 @@ public class ResolverConfiguration {
     @JsonProperty(PHP_INCLUDE_DEV_DEPENDENCIES)
     public boolean isPhpIncludeDevDependenices() {
         return phpIncludeDevDependenices;
+    }
+
+    @JsonProperty(HTML_RESOLVE_DEPENDENCIES)
+    public boolean isHtmlResolveDependencies() {
+        return htmlResolveDependencies;
     }
 
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {

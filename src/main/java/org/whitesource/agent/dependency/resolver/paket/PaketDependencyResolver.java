@@ -152,8 +152,8 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected String getBomPattern() {
-        return Constants.PATTERN + PAKET_DEPENDENCIES;
+    protected String[] getBomPattern() {
+        return new String[]{Constants.PATTERN + PAKET_DEPENDENCIES};
     }
 
     @Override

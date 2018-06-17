@@ -88,8 +88,8 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     }
 
     @Override
-    protected String getBomPattern() {
-        return this.bomPattern;
+    protected String[] getBomPattern() {
+        return new String[]{this.bomPattern};
     }
 
     @Override

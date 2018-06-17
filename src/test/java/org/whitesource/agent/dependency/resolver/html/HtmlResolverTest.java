@@ -24,8 +24,8 @@ public class HtmlResolverTest {
     @Test
     public void parseHtmlFile() throws IOException {
         HtmlDependencyResolver htmlDependencyResolver = new HtmlDependencyResolver();
-        htmlDependencyResolver.resolveDependencies("C:\\Users\\AnnaRozin\\Desktop\\plugins\\fsa\\bootstrap-master\\bootstrap-master",
-                "C:\\Users\\AnnaRozin\\Desktop\\plugins\\fsa\\bootstrap-master\\bootstrap-master", null);
+        htmlDependencyResolver.resolveDependencies("C:\\Users\\RazNitzan\\Desktop\\htmlTest\\bootstrap-master",
+                "C:\\Users\\RazNitzan\\Desktop\\htmlTest\\bootstrap-master", null);
 
     }
 

@@ -60,8 +60,8 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
     }
 
     @Override
-    public String getBomPattern() {
-        return "**/*" + BOWER_JSON;
+    public String[] getBomPattern() {
+        return new String[]{"**/*" + BOWER_JSON};
     }
 
     @Override

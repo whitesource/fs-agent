@@ -322,12 +322,15 @@ public class FSAConfiguration {
         boolean phpRunPreStep               = FSAConfiguration.getBooleanProperty(config,PHP_RUN_PRE_STEP,false);
         boolean phpIncludeDevDependencies   = FSAConfiguration.getBooleanProperty(config,PHP_INCLUDE_DEV_DEPENDENCIES,false);
 
+        boolean htmlResolveDependencies     = FSAConfiguration.getBooleanProperty(config, HTML_RESOLVE_DEPENDENCIES, true);
+
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled, pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree,
                 dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
-                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems, phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies);
+                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems, phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies,
+        htmlResolveDependencies);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken,String userKey, String projectName, String projectToken) {

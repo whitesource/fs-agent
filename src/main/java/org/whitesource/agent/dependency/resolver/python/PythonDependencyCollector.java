@@ -75,6 +75,7 @@ public class PythonDependencyCollector extends DependencyCollector {
     private static final String COMMENT_SIGN_PYTHON = "#";
     private static final int NUM_THREADS = 8;
     private static final String FORWARD_SLASH = "/";
+    private static final String WHITESOURCE_PYTHON_TEMP_FOLDER = "Whitesource_python_resolver";
 
     /* --- Constructors --- */
 
@@ -128,7 +129,7 @@ public class PythonDependencyCollector extends DependencyCollector {
                 if (failed && this.ignorePipInstallErrors) {
                     logger.info("Try to download each dependency in the requirements.txt file one by one. It might take a few minutes.");
                     FilesUtils.deleteDirectory(new File(tempDirPackages));
-                    this.tempDirPackages = new FilesUtils().createTmpFolder(false);
+                    this.tempDirPackages = new FilesUtils().createTmpFolder(false, WHITESOURCE_PYTHON_TEMP_FOLDER);
                     if (this.tempDirPackages != null) {
                         downloadLineByLine(this.requirementsTxtPath);
                         dependencies = collectDependencies(new File(tempDirPackages), this.requirementsTxtPath);

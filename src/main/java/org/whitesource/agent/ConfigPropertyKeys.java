@@ -142,6 +142,8 @@ public final class ConfigPropertyKeys {
     public static final String PHP_RUN_PRE_STEP             = "php.runPreStep";
     public static final String PHP_INCLUDE_DEV_DEPENDENCIES = "php.includeDevDependencies";
 
+    public static final String HTML_RESOLVE_DEPENDENCIES     = "html.resolveDependencies";
+
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 
     public static final String SCANNED_FOLDERS = "d";

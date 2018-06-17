@@ -115,8 +115,8 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    public String getBomPattern() {
-        return Constants.PATTERN + PACKAGE_JSON;
+    public String[] getBomPattern() {
+        return new String[]{Constants.PATTERN + PACKAGE_JSON};
     }
 
     @Override
@@ -126,7 +126,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
             getDependencyCollector().executePreparationStep(topLevelFolder);
             String[] excludesArray = new String[getExcludes().size()];
             excludesArray = getExcludes().toArray(excludesArray);
-            String[] otherBomFiles = filesScanner.getDirectoryContent(topLevelFolder, new String[]{getBomPattern()}, excludesArray, false, false);
+            String[] otherBomFiles = filesScanner.getDirectoryContent(topLevelFolder, getBomPattern(), excludesArray, false, false);
             Arrays.stream(otherBomFiles).forEach(file -> bomFiles.add(Paths.get(topLevelFolder, file).toString()));
         }
 
@@ -190,7 +190,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
-        String bomPattern = getBomPattern();
+        String bomPattern = getBomPattern()[0];
         excludes.add(EXAMPLE + bomPattern);
         excludes.add(EXAMPLES + bomPattern);
         excludes.add(WS_BOWER_FOLDER + bomPattern);
