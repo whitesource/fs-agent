@@ -56,6 +56,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     public static final String PEER_MISSING = "peerMissing";
     private static final String DEDUPED = "deduped";
     private static final String REQUIRED = "required";
+    private static final String IGNORE_SCRIPTS = "--ignore-scripts";
 
     /* --- Members --- */
 
@@ -64,15 +65,17 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     private final Pattern patternOfNameOfPackageFromLine = Pattern.compile(".* (.*)@(\\^)?[0-9]+\\.[0-9]+");
     private final Pattern patternOfNameOfPackageFromLineSecondChance = Pattern.compile(".* (.*)@");
     private boolean showNpmLsError;
-    protected boolean npmLsFailureStatus = false;
-    protected final long npmTimeoutDependenciesCollector;
+    private boolean npmLsFailureStatus = false;
+    private final long npmTimeoutDependenciesCollector;
+    private final boolean ignoreScripts;
 
     /* --- Constructors --- */
 
-    public NpmLsJsonDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector, boolean ignoreNpmLsErrors) {
+    public NpmLsJsonDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector, boolean ignoreNpmLsErrors, boolean ignoreScripts) {
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
         this.includeDevDependencies = includeDevDependencies;
         this.ignoreNpmLsErrors = ignoreNpmLsErrors;
+        this.ignoreScripts = ignoreScripts;
     }
 
     /* --- Public methods --- */
@@ -112,7 +115,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
         return getSingleProjectList(dependencies);
     }
 
-    public boolean executePreparationStep(String folder ) {
+    public boolean executePreparationStep(String folder) {
         String[] command = getInstallParams();
         logger.debug("Running install command : " + command);
         CommandLineProcess npmInstall = new CommandLineProcess(folder, command);
@@ -204,7 +207,11 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     }
 
     protected String[] getInstallParams() {
-        return new String[]{NPM_COMMAND, Constants.INSTALL};
+        if (this.ignoreScripts) {
+            return new String[]{NPM_COMMAND, Constants.INSTALL, IGNORE_SCRIPTS};
+        } else {
+            return new String[]{NPM_COMMAND, Constants.INSTALL};
+        }
     }
 
     protected String[] getLsCommandParams() {

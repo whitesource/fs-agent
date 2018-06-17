@@ -270,6 +270,7 @@ public class FSAConfiguration {
 
         // todo split this in multiple configuration before release fsa as a service
         boolean npmRunPreStep               = FSAConfiguration.getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
+        boolean npmIgnoreScripts            = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_SCRIPTS, false);
         boolean npmResolveDependencies      = FSAConfiguration.getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
         boolean npmIncludeDevDependencies   = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
         boolean npmIgnoreJavaScriptFiles    = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);

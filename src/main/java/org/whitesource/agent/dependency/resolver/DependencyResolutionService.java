@@ -58,6 +58,7 @@ public class DependencyResolutionService {
 
     public DependencyResolutionService(ResolverConfiguration config) {
         final boolean npmRunPreStep = config.isNpmRunPreStep();
+        final boolean npmIgnoreScripts = config.isNpmIgnoreScripts();
         final boolean npmResolveDependencies = config.isNpmResolveDependencies();
         final boolean npmIncludeDevDependencies = config.isNpmIncludeDevDependencies();
         final boolean npmIgnoreJavaScriptFiles = config.isNpmIgnoreJavaScriptFiles();
@@ -88,10 +89,10 @@ public class DependencyResolutionService {
 
         final boolean goResolveDependencies = config.isGoResolveDependencies();
 
-        final boolean rubyResolveDependencies   = config.isRubyResolveDependencies();
-        final boolean rubyRunBundleInstall      = config.isRubyRunBundleInstall();
-        final boolean rubyOverwriteGemFile      = config.isRubyOverwriteGemFile();
-        final boolean rubyInstallMissingGems    = config.isRubyInstallMissingGems();
+        final boolean rubyResolveDependencies = config.isRubyResolveDependencies();
+        final boolean rubyRunBundleInstall = config.isRubyRunBundleInstall();
+        final boolean rubyOverwriteGemFile = config.isRubyOverwriteGemFile();
+        final boolean rubyInstallMissingGems = config.isRubyInstallMissingGems();
 
         final boolean phpResolveDependencies    = config.isPhpResolveDependencies();
         final boolean phpRunPreStep             = config.isPhpRunPreStep();

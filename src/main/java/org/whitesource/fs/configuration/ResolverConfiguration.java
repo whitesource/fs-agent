@@ -31,6 +31,7 @@ public class ResolverConfiguration {
     @JsonCreator
     public ResolverConfiguration(
             @JsonProperty(NPM_RUN_PRE_STEP) boolean npmRunPreStep,
+            @JsonProperty(NPM_IGNORE_SCRIPTS) boolean npmIgnoreScripts,
             @JsonProperty(NPM_RESOLVE_DEPENDENCIES) boolean npmResolveDependencies,
             @JsonProperty(NPM_INCLUDE_DEV_DEPENDENCIES) boolean npmIncludeDevDependencies,
             @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES) boolean npmIgnoreJavaScriptFiles,
@@ -84,6 +85,7 @@ public class ResolverConfiguration {
             @JsonProperty(PHP_INCLUDE_DEV_DEPENDENCIES) boolean phpIncludeDevDependencies,
             @JsonProperty(SBT_RESOLVE_DEPENDENCIES) boolean sbtResolveDependencies) {
         this.npmRunPreStep = npmRunPreStep;
+        this.npmIgnoreScripts = npmIgnoreScripts;
         this.npmResolveDependencies = npmResolveDependencies;
         this.npmIncludeDevDependencies = npmIncludeDevDependencies;
         this.npmIgnoreJavaScriptFiles = npmIgnoreJavaScriptFiles;
@@ -144,6 +146,7 @@ public class ResolverConfiguration {
     /* --- Members --- */
 
     private boolean     npmRunPreStep;
+    private boolean     npmIgnoreScripts;
     private boolean     npmResolveDependencies;
     private boolean     npmIncludeDevDependencies;
     private boolean     npmIgnoreJavaScriptFiles;
@@ -199,6 +202,11 @@ public class ResolverConfiguration {
     @JsonProperty(NPM_RUN_PRE_STEP)
     public boolean isNpmRunPreStep() {
         return npmRunPreStep;
+    }
+
+    @JsonProperty(NPM_IGNORE_SCRIPTS)
+    public boolean isNpmIgnoreScripts() {
+        return npmIgnoreScripts;
     }
 
     @JsonProperty(NPM_RESOLVE_DEPENDENCIES)
@@ -440,6 +448,7 @@ public class ResolverConfiguration {
 
         return  ", dependenciesOnly=" + dependenciesOnly + '\n' +
                 ", npmRunPreStep=" + npmRunPreStep +
+                ", npmIgnoreScripts=" + npmIgnoreScripts +
                 ", npmResolveDependencies=" + npmResolveDependencies +
                 ", npmIncludeDevDependencies=" + npmIncludeDevDependencies +
                 ", npmIgnoreJavaScriptFiles=" + npmIgnoreJavaScriptFiles +

@@ -81,6 +81,7 @@ public final class ConfigPropertyKeys {
     public static final String ACCEPT_EXTENSIONS_LIST = "acceptExtensionsList";
 
     public static final String NPM_RUN_PRE_STEP                             = "npm.runPreStep";
+    public static final String NPM_IGNORE_SCRIPTS                           = "npm.ignoreScripts";
     public static final String NPM_RESOLVE_DEPENDENCIES                     = "npm.resolveDependencies";
     public static final String NPM_INCLUDE_DEV_DEPENDENCIES                 = "npm.includeDevDependencies";
     public static final String NPM_IGNORE_JAVA_SCRIPT_FILES                 = "npm.ignoreJavaScriptFiles";

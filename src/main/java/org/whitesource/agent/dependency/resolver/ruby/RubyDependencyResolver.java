@@ -25,6 +25,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     private static final List<String> RUBY_SCRIPT_EXTENSION = Arrays.asList(".rb");
     private static final String BUNDLE         = "bundle";
     private static final String ENVIRONMENT    = "environment gemdir";
+    private static final char TILDE = '~';
     protected static final String GEM          = "gem";
     protected static final String REGEX = "\\S";
     protected static final String SPECS = "specs:";
@@ -194,6 +195,21 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                     if (dependencyInfo == null) {
                                         dependencyInfo = new DependencyInfo();
                                         dependencyInfo.setGroupId(name);
+                                        int indexOfOpenBracket = currLine.indexOf(Constants.OPEN_BRACKET);
+                                        int indexOfCloseBracket = currLine.indexOf(Constants.CLOSE_BRACKET);
+                                        if (indexOfOpenBracket != -1 && indexOfCloseBracket != -1) {
+                                            String version = currLine.substring(currLine.indexOf(Constants.OPEN_BRACKET) + 1, currLine.indexOf(Constants.CLOSE_BRACKET));
+                                            int indexSeparator = version.indexOf(Constants.COMMA);
+                                            if (indexSeparator != -1) {
+                                                version = version.substring(0, indexSeparator);
+                                            }
+                                            // take only the version number in case of version with tilde. For example: concurrent-ruby (~> 1.0)
+                                            if (version.charAt(0) == TILDE) {
+                                                dependencyInfo.setVersion(version.substring(3));
+                                            } else {
+                                                dependencyInfo.setVersion(version);
+                                            }
+                                        }
                                         if (partialDependencies.contains(dependencyInfo) == false) {
                                             partialDependencies.add(dependencyInfo);
                                         }
@@ -266,18 +282,31 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
             // in such case, remove that dependency from its parent
             for (DependencyInfo partialDependency : partialDependencies){
                 String version = findGemVersion(partialDependency.getGroupId(), pathToGems);
-                if (version == null) {
-                    logger.warn("Can't find version for {}-{}", partialDependency.getGroupId());
-                    removeChildren(dependencyInfos, partialDependency);
+                String versionToCompare = null;
+                if (partialDependency.getVersion() != null) {
+                    char firstChar = partialDependency.getVersion().charAt(0);
+                    if (firstChar == '>' || firstChar == Constants.EQUALS_CHAR) {
+                        versionToCompare = partialDependency.getVersion().substring(3);
+                    }
+                }
+                if (version == null || (versionToCompare != null && versionCompare(versionToCompare, version) > 0)) {
+                    List<String> lines = installGem(partialDependency.getGroupId(), Constants.APOSTROPHE + partialDependency.getVersion() + Constants.APOSTROPHE);
+                    if (lines != null) {
+                        File file = findMaxVersionFile(partialDependency.getGroupId(), pathToGems);
+                        if (file != null) {
+                            String sha1 = ChecksumUtils.calculateSHA1(file);
+                            fillDependency(sha1, partialDependency, getVersionFromFileName(file.getName(), partialDependency.getGroupId()), gemLockFile, pathToGems, dependencyInfos);
+                        } else {
+                            logger.warn("Can't find version for {}-{}", partialDependency.getGroupId());
+                            removeChildren(dependencyInfos, partialDependency);
+                        }
+                    } else {
+                        logger.warn("Can't find version for {}-{}", partialDependency.getGroupId());
+                        removeChildren(dependencyInfos, partialDependency);
+                    }
                 } else {
                     String sha1 = getRubyDependenciesSha1(partialDependency.getGroupId(), version, pathToGems);
-                    if (sha1 == null){
-                        logger.warn("Can't find gem file for {}-{}", partialDependency.getGroupId(), version);
-                        removeChildren(dependencyInfos, partialDependency);
-                    } else {
-                        partialDependency.setSha1(sha1);
-                        setDependencyInfoProperties(partialDependency, partialDependency.getGroupId(), version, gemLockFile, pathToGems);
-                    }
+                    fillDependency(sha1, partialDependency, version, gemLockFile, pathToGems, dependencyInfos);
                 }
             }
         } catch (FileNotFoundException e){
@@ -294,6 +323,40 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                 logger.debug("stacktrace {}", e.getStackTrace());
             }
         }
+    }
+
+    private void fillDependency(String sha1, DependencyInfo partialDependency, String version, File gemLockFile, String pathToGems, List<DependencyInfo> dependencyInfos) {
+        if (sha1 == null){
+            logger.warn("Can't find gem file for {}-{}", partialDependency.getGroupId(), version);
+            removeChildren(dependencyInfos, partialDependency);
+        } else {
+            partialDependency.setSha1(sha1);
+            setDependencyInfoProperties(partialDependency, partialDependency.getGroupId(), version, gemLockFile, pathToGems);
+        }
+    }
+
+    /*
+     * The result is a negative integer if str1 is _numerically_ less than str2.
+     *         The result is a positive integer if str1 is _numerically_ greater than str2.
+     *         The result is zero if the strings are _numerically_ equal.
+     *
+     */
+    public static int versionCompare(String str1, String str2) {
+        String[] vals1 = str1.split("\\.");
+        String[] vals2 = str2.split("\\.");
+        int i = 0;
+        // set index to first non-equal ordinal or length of shortest version string
+        while (i < vals1.length && i < vals2.length && vals1[i].equals(vals2[i])) {
+            i++;
+        }
+        // compare first non-equal ordinal number
+        if (i < vals1.length && i < vals2.length) {
+            int diff = Integer.valueOf(vals1[i]).compareTo(Integer.valueOf(vals2[i]));
+            return Integer.signum(diff);
+        }
+        // the strings are equal or one string is a substring of the other
+        // e.g. "1.2.3" = "1.2.3" or "1.2.3" < "1.2.3.4"
+        return Integer.signum(vals1.length - vals2.length);
     }
 
     private void removeChildren(Collection<DependencyInfo> dependencyInfos, DependencyInfo child){
@@ -350,9 +413,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
             if (version.toLowerCase().contains(MINGW)) {
                 version = version.substring(0, version.indexOf(Constants.DASH));
             }
-            String param = Constants.INSTALL.concat(Constants.WHITESPACE + name + Constants.WHITESPACE + V + Constants.WHITESPACE + version);
-            String[] commandParams = cli.getCommandParams(GEM, param);
-            List<String> lines = cli.runCmd(rootDirectory, commandParams);
+            List<String> lines = installGem(name, version);
             if (file.isFile()) {
                 return file;
             }
@@ -381,18 +442,36 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         return null;
     }
 
+    private List<String> installGem(String name, String version) {
+        String param = Constants.INSTALL.concat(Constants.WHITESPACE + name + Constants.WHITESPACE + V + Constants.WHITESPACE + version);
+        String[] commandParams = cli.getCommandParams(GEM, param);
+        return cli.runCmd(rootDirectory, commandParams);
+    }
+
     // there are cases where a dependency appears in the Gemfile.lock only as a child.
     // in such cases, look for the relevant gem file in the cache with the highest version
     private String findGemVersion(String gemName, String pathToGems){
         String version = null;
+        File maxVersionFile = findMaxVersionFile(gemName, pathToGems);
+        if (maxVersionFile != null) {
+            String fileName = maxVersionFile.getName();
+            version = getVersionFromFileName(fileName, gemName);
+        }
+        return version;
+    }
+
+    private String getVersionFromFileName(String fileName, String gemName) {
+        return fileName.substring(gemName.length()+1,fileName.lastIndexOf(Constants.DOT));
+    }
+
+    private File findMaxVersionFile(String gemName, String pathToGems) {
         File gemsFolder = new File(pathToGems);
         File[] files = gemsFolder.listFiles(new GemFileNameFilter(gemName));
         if (files.length > 0) {
             Arrays.sort(files, Collections.reverseOrder());
-            String fileName = files[0].getName();
-            version = fileName.substring(gemName.length()+1,fileName.lastIndexOf(Constants.DOT));
+            return files[0];
         }
-        return version;
+        return null;
     }
 }
 
