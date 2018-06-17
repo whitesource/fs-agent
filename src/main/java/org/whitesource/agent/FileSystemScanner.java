@@ -187,14 +187,13 @@ public class FileSystemScanner {
         allProjectsToViaComponents.put(mainProject, new LinkedList<>());
 
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
-        logger.info("Included file types: {}", String.join(",", includes));
-        logger.info("Excluded file types: {}", String.join(",", excludes));
+        logger.info("Included file types: {}", String.join(Constants.COMMA, includes));
+        logger.info("Excluded file types: {}", String.join(Constants.COMMA, excludes));
         Map<File, Collection<String>> fileMapBeforeResolve = new FilesUtils().fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
         Set<String> allFiles = fileMapBeforeResolve.entrySet().stream().flatMap(folder -> folder.getValue().stream()).collect(Collectors.toSet());
 
         final int[] totalDependencies = {0};
         boolean isDependenciesOnly = false;
-//        if (enableImpactAnalysis && iaLanguage == null) {
         if(enableImpactAnalysis && iaLanguage != null) {
             for (String appPath : appPathsToDependencyDirs.keySet()) {
                 if (!appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
