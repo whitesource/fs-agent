@@ -326,7 +326,7 @@ public class FSAConfiguration {
 
         boolean sbtResolveDependencies      = FSAConfiguration.getBooleanProperty(config,SBT_RESOLVE_DEPENDENCIES, true);
 
-        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
+        return new ResolverConfiguration(npmRunPreStep, npmIgnoreScripts, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled, pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree,
