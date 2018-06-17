@@ -32,7 +32,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
 
     private final Logger logger = LoggerFactory.getLogger(HtmlDependencyResolver.class);
 
-    private final String[] archiveIncludesPattern = {Constants.PATTERN +Constants.HTML, Constants.PATTERN +Constants.HTM};
+    private final String[] archiveIncludesPattern = {Constants.PATTERN + Constants.HTML, Constants.PATTERN + Constants.HTM};
 
     /* --- Members --- */
 
