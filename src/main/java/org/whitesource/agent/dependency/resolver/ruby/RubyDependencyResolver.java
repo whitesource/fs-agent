@@ -281,7 +281,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                 }
             }
         } catch (FileNotFoundException e){
-            logger.warn("Could not Gemfile.lock {}", e.getMessage());
+            logger.warn("Could not find Gemfile.lock {}", e.getMessage());
             logger.debug("stacktrace {}", e.getStackTrace());
         } catch (Exception e) {
             logger.warn("Could not parse Gemfile.lock {}", e.getMessage());

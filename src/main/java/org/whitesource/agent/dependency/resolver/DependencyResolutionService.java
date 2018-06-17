@@ -29,6 +29,7 @@ import org.whitesource.agent.dependency.resolver.paket.PaketDependencyResolver;
 import org.whitesource.agent.dependency.resolver.php.PhpDependencyResolver;
 import org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ruby.RubyDependencyResolver;
+import org.whitesource.agent.dependency.resolver.sbt.SbtDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
@@ -96,6 +97,8 @@ public class DependencyResolutionService {
         final boolean phpRunPreStep             = config.isPhpRunPreStep();
         final boolean phpIncludeDevDependencies = config.isPhpIncludeDevDependencies();
 
+        final boolean sbtResolveDependencies    = config.isSbtResolveDependencies();
+
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
@@ -138,6 +141,10 @@ public class DependencyResolutionService {
 
         if(phpResolveDependencies){
             dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies));
+        }
+
+        if (sbtResolveDependencies){
+            dependencyResolvers.add(new SbtDependencyResolver());
         }
     }
 

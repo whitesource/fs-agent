@@ -9,11 +9,35 @@ import java.util.List;
 
 @Root(strict=false)
 public class IvyReport {
+    @Element
+    private Info info;
+
     @ElementList
     private List<Module> dependencies;
 
     public List<Module> getDependencies() {
         return dependencies;
+    }
+
+    public Info getInfo() {
+        return info;
+    }
+}
+
+@Root(strict = false)
+class Info {
+    @Attribute
+    private String organisation;
+
+    @Attribute
+    private String module;
+
+    public String getGroupId() {
+        return organisation;
+    }
+
+    public String getArtifactId() {
+        return module;
     }
 }
 
@@ -80,7 +104,7 @@ class Caller{
     private String name;
 
     @Attribute
-    private String rev;
+    private String callerrev;
 
     public String getGroupId() {
         return organisation;
@@ -91,7 +115,7 @@ class Caller{
     }
 
     public String getVersion() {
-        return rev;
+        return callerrev;
     }
 }
 
