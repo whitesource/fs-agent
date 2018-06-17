@@ -65,8 +65,8 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     private final Pattern patternOfNameOfPackageFromLine = Pattern.compile(".* (.*)@(\\^)?[0-9]+\\.[0-9]+");
     private final Pattern patternOfNameOfPackageFromLineSecondChance = Pattern.compile(".* (.*)@");
     private boolean showNpmLsError;
-    private boolean npmLsFailureStatus = false;
-    private final long npmTimeoutDependenciesCollector;
+    protected boolean npmLsFailureStatus = false;
+    protected final long npmTimeoutDependenciesCollector;
     private final boolean ignoreScripts;
 
     /* --- Constructors --- */

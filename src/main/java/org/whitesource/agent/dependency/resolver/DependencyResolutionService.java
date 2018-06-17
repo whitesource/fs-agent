@@ -105,7 +105,7 @@ public class DependencyResolutionService {
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmIgnoreNpmLsErrors, npmAccessToken, npmYarnProject));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmIgnoreNpmLsErrors, npmAccessToken, npmYarnProject, npmIgnoreScripts));
         }
         if (bowerResolveDependencies) {
             dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep));

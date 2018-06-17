@@ -88,9 +88,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     /* --- Constructor --- */
 
     public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector,
-                                 boolean runPreStep, boolean npmIgnoreNpmLsErrors, String npmAccessToken, boolean npmYarnProject) {
+                                 boolean runPreStep, boolean npmIgnoreNpmLsErrors, String npmAccessToken, boolean npmYarnProject, boolean ignoreScripts) {
         super();
-        bomCollector = npmYarnProject ? new YarnDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, ignoreJavaScriptFiles) : new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, npmIgnoreNpmLsErrors);
+        bomCollector = npmYarnProject ? new YarnDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, ignoreJavaScriptFiles, ignoreScripts) : new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, npmIgnoreNpmLsErrors, ignoreScripts);
         bomParser = new NpmBomParser();
         this.ignoreJavaScriptFiles = ignoreJavaScriptFiles;
         this.runPreStep = runPreStep;
@@ -100,7 +100,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     public NpmDependencyResolver(boolean runPreStep, String npmAccessToken) {
-        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, false, npmAccessToken, false);
+        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, false, npmAccessToken, false, false);
     }
 
     /* --- Overridden methods --- */
