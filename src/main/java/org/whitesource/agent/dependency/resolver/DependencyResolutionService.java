@@ -57,6 +57,7 @@ public class DependencyResolutionService {
 
     public DependencyResolutionService(ResolverConfiguration config) {
         final boolean npmRunPreStep = config.isNpmRunPreStep();
+        final boolean npmIgnoreScripts = config.isNpmIgnoreScripts();
         final boolean npmResolveDependencies = config.isNpmResolveDependencies();
         final boolean npmIncludeDevDependencies = config.isNpmIncludeDevDependencies();
         final boolean npmIgnoreJavaScriptFiles = config.isNpmIgnoreJavaScriptFiles();
@@ -86,13 +87,13 @@ public class DependencyResolutionService {
 
         final boolean goResolveDependencies = config.isGoResolveDependencies();
 
-        final boolean rubyResolveDependencies   = config.isRubyResolveDependencies();
-        final boolean rubyRunBundleInstall      = config.isRubyRunBundleInstall();
-        final boolean rubyOverwriteGemFile      = config.isRubyOverwriteGemFile();
-        final boolean rubyInstallMissingGems    = config.isRubyInstallMissingGems();
+        final boolean rubyResolveDependencies = config.isRubyResolveDependencies();
+        final boolean rubyRunBundleInstall = config.isRubyRunBundleInstall();
+        final boolean rubyOverwriteGemFile = config.isRubyOverwriteGemFile();
+        final boolean rubyInstallMissingGems = config.isRubyInstallMissingGems();
 
-        final boolean phpResolveDependencies    = config.isPhpResolveDependencies();
-        final boolean phpRunPreStep             = config.isPhpRunPreStep();
+        final boolean phpResolveDependencies = config.isPhpResolveDependencies();
+        final boolean phpRunPreStep = config.isPhpRunPreStep();
         final boolean phpIncludeDevDependencies = config.isPhpIncludeDevDependenices();
 
         dependenciesOnly = config.isDependenciesOnly();
@@ -100,7 +101,8 @@ public class DependencyResolutionService {
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmAccessToken, npmIgnoreNpmLsErrors, npmAccessToken));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector,
+                    npmRunPreStep, npmAccessToken, npmIgnoreNpmLsErrors, npmAccessToken, npmIgnoreScripts));
         }
         if (bowerResolveDependencies) {
             dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep));

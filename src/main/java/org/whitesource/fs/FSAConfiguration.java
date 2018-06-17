@@ -270,6 +270,7 @@ public class FSAConfiguration {
 
         // todo split this in multiple configuration before release fsa as a service
         boolean npmRunPreStep               = FSAConfiguration.getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
+        boolean npmIgnoreScripts            = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_SCRIPTS, false);
         boolean npmResolveDependencies      = FSAConfiguration.getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
         boolean npmIncludeDevDependencies   = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
         boolean npmIgnoreJavaScriptFiles    = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
@@ -322,7 +323,7 @@ public class FSAConfiguration {
         boolean phpRunPreStep               = FSAConfiguration.getBooleanProperty(config,PHP_RUN_PRE_STEP,false);
         boolean phpIncludeDevDependencies   = FSAConfiguration.getBooleanProperty(config,PHP_INCLUDE_DEV_DEPENDENCIES,false);
 
-        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
+        return new ResolverConfiguration(npmRunPreStep, npmIgnoreScripts, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled, pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree,
