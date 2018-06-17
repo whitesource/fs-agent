@@ -229,7 +229,7 @@ public class FSAConfiguration {
         boolean iaLanguageValid = false;
         if (iaLanguage != null) {
             for (ViaLanguage viaLanguage : ViaLanguage.values()) {
-                if (iaLanguage.equals(viaLanguage.toString())) {
+                if (iaLanguage.toLowerCase().equals(viaLanguage.toString().toLowerCase())) {
                     iaLanguageValid = true;
                 }
             }

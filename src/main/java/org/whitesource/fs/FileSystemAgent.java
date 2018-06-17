@@ -222,9 +222,11 @@ public class FileSystemAgent {
 
     private ViaLanguage getIaLanguage(String iaLanguage) {
         ViaLanguage[] values = ViaLanguage.values();
-        for (ViaLanguage value : values) {
-            if (value.toString().equals(iaLanguage)) {
-                return value;
+        if (iaLanguage != null) {
+            for (ViaLanguage value : values) {
+                if (value.toString().toLowerCase().equals(iaLanguage.toLowerCase())) {
+                    return value;
+                }
             }
         }
         return null;
@@ -234,7 +236,6 @@ public class FileSystemAgent {
                                                              String separatorFiles, String pathToCloneRepoFiles) {
 
         StatusCode success = StatusCode.SUCCESS;
-
         File packageJson = new File(pathToCloneRepoFiles + separatorFiles + PACKAGE_JSON);
         boolean npmInstallFailed = false;
         if (scmNpmInstall && packageJson.exists()) {
