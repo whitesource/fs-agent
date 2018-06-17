@@ -41,6 +41,7 @@ public final class Constants {
     public static final String PACKAGES = "packages";
     public static final String INSTALL = "install";
     public static final String HTML = "html";
+    public static final String HTM = "htm";
     public static final String WINDOWS = "Windows";
     public static final String DOT = ".";
     public static final String DIRECTORY = "d";

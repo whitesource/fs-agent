@@ -116,7 +116,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public String getBomPattern() {
-        return "**/*" + PACKAGE_JSON;
+        return Constants.PATTERN + PACKAGE_JSON;
     }
 
     @Override
@@ -264,7 +264,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
                 HttpHeaders httpHeaders = new HttpHeaders();
                 httpHeaders.set(AUTHORIZATION, BEARER + Constants.WHITESPACE + npmAccessToken);
                 HttpEntity entity = new HttpEntity(httpHeaders);
-                responseFromRegistry = restTemplate.exchange(uriScopeDep, HttpMethod.GET,entity,String.class).getBody();
+                responseFromRegistry = restTemplate.exchange(uriScopeDep, HttpMethod.GET, entity,String.class).getBody();
                 //responseFromRegistry = restTemplate.getForObject(uriScopeDep, String.class);
             } else {
                 responseFromRegistry = restTemplate.getForObject(registryPackageUrl, String.class);

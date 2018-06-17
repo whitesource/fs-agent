@@ -148,10 +148,9 @@ public class ArchiveExtractor {
         String creationDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
         String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + WHITESOURCE_TEMP_FOLDER + File.separator + creationDate :
                 JAVA_TEMP_DIR + File.separator + WHITESOURCE_TEMP_FOLDER + File.separator + creationDate;
-
         String destDirectory = tempFolder + "_" + this.randomString;
-
         int separatorIndex = scannerBaseDir.lastIndexOf(File.separator);
+
         if (separatorIndex != -1) {
             destDirectory = destDirectory + scannerBaseDir.substring(separatorIndex, scannerBaseDir.length());
             try {
@@ -183,7 +182,6 @@ public class ArchiveExtractor {
         this.randomString = String.valueOf(ThreadLocalRandom.current().nextLong(0, LONG_BOUND));
         this.tempFolderNoDepth = getTempFolder(scannerBaseDir);
         logger.debug("Base directory is {}, extraction depth is set to {}", scannerBaseDir, archiveExtractionDepth);
-
         Map<String, Map<String, String>> allFiles = new HashMap<>();
         // Extract again if needed according archiveExtractionDepth parameter
         for (int curLevel = 0; curLevel < archiveExtractionDepth; curLevel++) {
@@ -270,17 +268,15 @@ public class ArchiveExtractor {
         return null;
     }
 
-    private Map<String,String> handleArchiveFiles(String baseFolderToExtract,Pair<String, Collection<String>> fileNames) {
+    private Map<String,String> handleArchiveFiles(String baseFolderToExtract, Pair<String, Collection<String>> fileNames) {
         Map<String,String> founded = new HashMap<>();
         for (String fileName : fileNames.getValue()) {
-
             String archivePath = Paths.get(fileNames.getKey(), fileName).toString();
-            String unpackFolder = Paths.get(baseFolderToExtract,FilenameUtils.removeExtension(fileName)).toString();
-            Pair<String,String> dataToUnpack = new Pair<>( archivePath,unpackFolder);
-
+            String unpackFolder = Paths.get(baseFolderToExtract, FilenameUtils.removeExtension(fileName)).toString();
+            Pair<String,String> dataToUnpack = new Pair<>(archivePath, unpackFolder);
             Pair<String,String> foundArchive = getUnpackedResult(dataToUnpack);
             if (foundArchive!= null) {
-                founded.put(foundArchive.getKey(),foundArchive.getValue());
+                founded.put(foundArchive.getKey(), foundArchive.getValue());
             }
         }
         return founded;
@@ -290,9 +286,8 @@ public class ArchiveExtractor {
         Collection<Pair> dataToUnpack = fileNames.getValue().stream().map(fileName -> {
             String archivePath = Paths.get(fileNames.getKey(), fileName).toString();
             String unpackFolder = Paths.get(baseFolderToExtract,FilenameUtils.removeExtension(fileName)).toString();
-            return new Pair( archivePath,unpackFolder);
+            return new Pair(archivePath,unpackFolder);
         }).collect(Collectors.toList());
-
         return processCollections(dataToUnpack);
     }
 

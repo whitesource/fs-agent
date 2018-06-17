@@ -13,7 +13,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <agent.api.version>2.7.1</agent.api.version>
+        <agent.api.version>2.7.2</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
         <skipTests>true</skipTests>
     </properties>
@@ -223,6 +223,12 @@
             <version>2.9.2</version>
         </dependency>
 
+        <!-- jsoup for html/css parsing -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.11.3</version>
+        </dependency>
 
         <!-- jaxb for nuget dependecy resolver -->
         <!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
