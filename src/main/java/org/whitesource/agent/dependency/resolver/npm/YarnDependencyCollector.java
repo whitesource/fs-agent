@@ -25,8 +25,8 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
     private static final String YARN_LOCK = "yarn.lock";
 
 
-    public YarnDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector, boolean ignoreNpmLsErrors) {
-        super(includeDevDependencies, npmTimeoutDependenciesCollector, ignoreNpmLsErrors);
+    public YarnDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector, boolean ignoreNpmLsErrors, boolean ignoreScripts) {
+        super(includeDevDependencies, npmTimeoutDependenciesCollector, ignoreNpmLsErrors, ignoreScripts);
     }
 
     @Override
