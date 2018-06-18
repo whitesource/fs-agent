@@ -326,16 +326,18 @@ public class FSAConfiguration {
 
         boolean sbtResolveDependencies      = FSAConfiguration.getBooleanProperty(config,SBT_RESOLVE_DEPENDENCIES, true);
 
-        return new ResolverConfiguration(npmRunPreStep, npmIgnoreScripts, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
         boolean htmlResolveDependencies     = FSAConfiguration.getBooleanProperty(config, HTML_RESOLVE_DEPENDENCIES, true);
 
-        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles,
+        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles,
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
-                pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled, pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree,
-                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
-                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems,
+                pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
+                pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree,
+                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies,
+                paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
+                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall,
+                rubyOverwriteGemFile, rubyInstallMissingGems,
                 phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, htmlResolveDependencies);
     }
 

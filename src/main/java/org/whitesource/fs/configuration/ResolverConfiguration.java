@@ -31,8 +31,8 @@ public class ResolverConfiguration {
     @JsonCreator
     public ResolverConfiguration(
             @JsonProperty(NPM_RUN_PRE_STEP) boolean npmRunPreStep,
-            @JsonProperty(NPM_IGNORE_SCRIPTS) boolean npmIgnoreScripts,
             @JsonProperty(NPM_RESOLVE_DEPENDENCIES) boolean npmResolveDependencies,
+            @JsonProperty(NPM_IGNORE_SCRIPTS) boolean npmIgnoreScripts,
             @JsonProperty(NPM_INCLUDE_DEV_DEPENDENCIES) boolean npmIncludeDevDependencies,
             @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES) boolean npmIgnoreJavaScriptFiles,
             @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS) long npmTimeoutDependenciesCollector,
@@ -491,8 +491,10 @@ public class ResolverConfiguration {
                 ", rubyInstallMissingGems=" + rubyInstallMissingGems + '\n' +
                 ", phpResolveDependencies=" + phpResolveDependencies +
                 ", phpRunPreStep=" + phpRunPreStep +
-                ", phpIncludeDevDependenices=" + phpIncludeDevDependenices + '\n' +
-                ", htmlResolveDependencies=" + htmlResolveDependencies;
+                ", phpIncludeDevDependenices=" + phpIncludeDevDependencies + '\n' +
+                ", htmlResolveDependencies=" + htmlResolveDependencies + '\n' +
+                ", sbtResolveDependencies=" + sbtResolveDependencies;
     }
+
 
 }
