@@ -109,12 +109,13 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                     HttpHeaders httpHeaders = new HttpHeaders();
                     HttpEntity entity = new HttpEntity(httpHeaders);
                     String body = restTemplate.exchange(uriScopeDep, HttpMethod.GET, entity, String.class).getBody();
-                    dependencyFileName = tempFolder + File.separator + counterForName + Constants.JS_EXTENSION;
+                    String fileName = scriptUrl.substring(scriptUrl.lastIndexOf(Constants.FORWARD_SLASH) + 1);
+                    dependencyFileName = tempFolder + File.separator + fileName;
                     PrintWriter writer = new PrintWriter(dependencyFileName, Constants.UTF8);
                     writer.println(body);
                     writer.close();
                     DependencyInfoFactory dependencyInfoFactory = new DependencyInfoFactory();
-                    DependencyInfo dependencyInfo = dependencyInfoFactory.createDependencyInfo(tempFolderFile, counterForName + Constants.JS_EXTENSION);
+                    DependencyInfo dependencyInfo = dependencyInfoFactory.createDependencyInfo(tempFolderFile,fileName);
                     if (dependencyInfo != null) {
                         dependencies.add(dependencyInfo);
                         dependencyInfo.setSystemPath(htmlFilePath);
