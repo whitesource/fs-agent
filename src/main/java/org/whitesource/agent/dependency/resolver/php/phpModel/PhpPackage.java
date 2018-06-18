@@ -29,6 +29,7 @@ public class PhpPackage implements Serializable {
     /* --- Constructors --- */
 
     public PhpPackage() {
+        packageRequire = new HashMap<>();
     }
 
     public PhpPackage(String name, String version, PackageSource packageSource, HashMap<String, String> packageRequire) {
