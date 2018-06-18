@@ -182,7 +182,7 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
     // convert phpPackage to dependencyInfo object
     private DependencyInfo createDependencyInfo(PhpPackage phpPackage) {
         String groupId = getGroupIdFromName(phpPackage);
-        String artifactId = getArtifactIdFromName(phpPackage);
+        String artifactId = phpPackage.getName();
         String version = phpPackage.getVersion();
         String commit = phpPackage.getPackageSource().getReference();
         if (StringUtils.isNotBlank(version) || StringUtils.isNotBlank(commit)) {

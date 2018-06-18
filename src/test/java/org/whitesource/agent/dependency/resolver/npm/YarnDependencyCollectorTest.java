@@ -10,16 +10,15 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
-
 public class YarnDependencyCollectorTest {
 
     private YarnDependencyCollector yarnDependencyCollector;
 
     @Before
-    public void setup(){
-        yarnDependencyCollector = new YarnDependencyCollector(true, 10000, true);
+    public void setup() {
+        yarnDependencyCollector = new YarnDependencyCollector(true, 10000, true, true);
     }
+
     @Test
     public void collectDependencies() {
         String folderPath = Paths.get(Constants.DOT).toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\yarn\\");
