@@ -42,7 +42,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     private static final String PYTHON_BOM = "requirements.txt";
     private static final String PY_EXT = ".py";
-    private static final String WHITESOURCE_PYTHON_TEMP_FOLDER = "Whitesource_python_resolver";
+    public static final String WHITESOURCE_PYTHON_TEMP_FOLDER = "Whitesource_python_resolver";
 
     /* --- Constructors --- */
 
