@@ -269,8 +269,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     }
 
     private String getValue(String line){
-        int firstIndex = line.indexOf("\"");
-        int lastIndex = line.lastIndexOf("\"");
+        int firstIndex = line.indexOf(Constants.QUESTION_MARK);
+        int lastIndex = line.lastIndexOf(Constants.QUESTION_MARK);
         String value = line.substring(firstIndex + 1, lastIndex);
         return value;
     }

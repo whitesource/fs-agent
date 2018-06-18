@@ -61,6 +61,8 @@ public final class Constants {
     public static final String GLOB_PATTERN_PREFIX = "**/*.";
     public static final String EQUALS = "=";
     public static final String POUND = "#";
+    public static final String QUOTATION_MARK = "\"";
+    public static final String APOSTROPHE = "'";
     public static final String HTTP = "http";
     public static final String HTTPS = "https";
     public static final String UTF8 = "UTF-8";
@@ -74,6 +76,7 @@ public final class Constants {
     public static final char WHITESPACE_CHAR = ' ';
     public static final char OPEN_BRACKET = '(';
     public static final char CLOSE_BRACKET = ')';
+    public static final char EQUALS_CHAR = '=';
 
     public static final int MAX_NUMBER_OF_DEPENDENCIES = 1000000;
 

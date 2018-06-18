@@ -31,12 +31,14 @@ public class ResolverConfiguration {
     @JsonCreator
     public ResolverConfiguration(
             @JsonProperty(NPM_RUN_PRE_STEP) boolean npmRunPreStep,
+            @JsonProperty(NPM_IGNORE_SCRIPTS) boolean npmIgnoreScripts,
             @JsonProperty(NPM_RESOLVE_DEPENDENCIES) boolean npmResolveDependencies,
             @JsonProperty(NPM_INCLUDE_DEV_DEPENDENCIES) boolean npmIncludeDevDependencies,
             @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES) boolean npmIgnoreJavaScriptFiles,
             @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS) long npmTimeoutDependenciesCollector,
             @JsonProperty(NPM_ACCESS_TOKEN) String npmAccessToken,
             @JsonProperty(NPM_IGNORE_NPM_LS_ERRORS) boolean npmIgnoreNpmLsErrors,
+            @JsonProperty(NPM_YARN_PROJECT) boolean npmYarnProject,
 
             @JsonProperty(BOWER_RESOLVE_DEPENDENCIES) boolean bowerResolveDependencies,
             @JsonProperty(BOWER_RUN_PRE_STEP) boolean bowerRunPreStep,
@@ -81,15 +83,18 @@ public class ResolverConfiguration {
             @JsonProperty(PHP_RESOLVE_DEPENDENCIES) boolean phpResolveDependencies,
             @JsonProperty(PHP_RUN_PRE_STEP) boolean phpRunPreStep,
             @JsonProperty(PHP_INCLUDE_DEV_DEPENDENCIES) boolean phpIncludeDevDependencies,
+            @JsonProperty(SBT_RESOLVE_DEPENDENCIES) boolean sbtResolveDependencies,
 
             @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies) {
         this.npmRunPreStep = npmRunPreStep;
+        this.npmIgnoreScripts = npmIgnoreScripts;
         this.npmResolveDependencies = npmResolveDependencies;
         this.npmIncludeDevDependencies = npmIncludeDevDependencies;
         this.npmIgnoreJavaScriptFiles = npmIgnoreJavaScriptFiles;
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
         this.npmAccessToken = npmAccessToken;
         this.npmIgnoreNpmLsErrors = npmIgnoreNpmLsErrors;
+        this.npmYarnProject = npmYarnProject;
 
         this.bowerResolveDependencies = bowerResolveDependencies;
         this.bowerRunPreStep = bowerRunPreStep;
@@ -135,7 +140,9 @@ public class ResolverConfiguration {
 
         this.phpResolveDependencies = phpResolveDependencies;
         this.phpRunPreStep = phpRunPreStep;
-        this.phpIncludeDevDependenices = phpIncludeDevDependencies;
+        this.phpIncludeDevDependencies = phpIncludeDevDependencies;
+
+        this.sbtResolveDependencies = sbtResolveDependencies;
 
         this.htmlResolveDependencies = htmlResolveDependencies;
     }
@@ -143,12 +150,14 @@ public class ResolverConfiguration {
     /* --- Members --- */
 
     private boolean     npmRunPreStep;
+    private boolean     npmIgnoreScripts;
     private boolean     npmResolveDependencies;
     private boolean     npmIncludeDevDependencies;
     private boolean     npmIgnoreJavaScriptFiles;
     private String      npmAccessToken;
     private long        npmTimeoutDependenciesCollector;
-    private boolean     npmIgnoreNpmLsErrors; 
+    private boolean     npmIgnoreNpmLsErrors;
+    private boolean     npmYarnProject;
     private boolean     bowerResolveDependencies;
     private boolean     bowerRunPreStep;
     private boolean     nugetResolveDependencies;
@@ -188,7 +197,9 @@ public class ResolverConfiguration {
 
     private boolean phpResolveDependencies;
     private boolean phpRunPreStep;
-    private boolean phpIncludeDevDependenices;
+    private boolean phpIncludeDevDependencies;
+
+    private boolean sbtResolveDependencies;
 
     private boolean htmlResolveDependencies;
 
@@ -197,6 +208,11 @@ public class ResolverConfiguration {
     @JsonProperty(NPM_RUN_PRE_STEP)
     public boolean isNpmRunPreStep() {
         return npmRunPreStep;
+    }
+
+    @JsonProperty(NPM_IGNORE_SCRIPTS)
+    public boolean isNpmIgnoreScripts() {
+        return npmIgnoreScripts;
     }
 
     @JsonProperty(NPM_RESOLVE_DEPENDENCIES)
@@ -228,6 +244,9 @@ public class ResolverConfiguration {
     public boolean getNpmIgnoreNpmLsErrors() {
         return npmIgnoreNpmLsErrors;
     }
+
+    @JsonProperty(NPM_YARN_PROJECT)
+    public boolean getNpmYarnProject()  {   return npmYarnProject;  }
 
     @JsonProperty(BOWER_RESOLVE_DEPENDENCIES)
     public boolean isBowerResolveDependencies() {
@@ -395,9 +414,12 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(PHP_INCLUDE_DEV_DEPENDENCIES)
-    public boolean isPhpIncludeDevDependenices() {
-        return phpIncludeDevDependenices;
+    public boolean isPhpIncludeDevDependencies() {
+        return phpIncludeDevDependencies;
     }
+
+    @JsonProperty(SBT_RESOLVE_DEPENDENCIES)
+    public boolean isSbtResolveDependencies() { return sbtResolveDependencies; }
 
     @JsonProperty(HTML_RESOLVE_DEPENDENCIES)
     public boolean isHtmlResolveDependencies() {
@@ -437,6 +459,7 @@ public class ResolverConfiguration {
 
         return  ", dependenciesOnly=" + dependenciesOnly + '\n' +
                 ", npmRunPreStep=" + npmRunPreStep +
+                ", npmIgnoreScripts=" + npmIgnoreScripts +
                 ", npmResolveDependencies=" + npmResolveDependencies +
                 ", npmIncludeDevDependencies=" + npmIncludeDevDependencies +
                 ", npmIgnoreJavaScriptFiles=" + npmIgnoreJavaScriptFiles +

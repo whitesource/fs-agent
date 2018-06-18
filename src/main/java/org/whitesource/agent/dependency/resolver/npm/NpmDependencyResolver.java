@@ -81,26 +81,26 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private final NpmBomParser bomParser;
     private final boolean ignoreJavaScriptFiles;
     private final boolean runPreStep;
-    private final String accessToken;
     private final FilesScanner filesScanner;
     private final String npmAccessToken;
+    private final boolean npmYarnProject;
 
     /* --- Constructor --- */
 
     public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector,
-                                 boolean runPreStep, String accessToken, boolean npmIgnoreNpmLsErrors, String npmAccessToken) {
+                                 boolean runPreStep, boolean npmIgnoreNpmLsErrors, String npmAccessToken, boolean npmYarnProject, boolean ignoreScripts) {
         super();
-        bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, npmIgnoreNpmLsErrors);
+        bomCollector = npmYarnProject ? new YarnDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, ignoreJavaScriptFiles, ignoreScripts) : new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, npmIgnoreNpmLsErrors, ignoreScripts);
         bomParser = new NpmBomParser();
         this.ignoreJavaScriptFiles = ignoreJavaScriptFiles;
         this.runPreStep = runPreStep;
-        this.accessToken = accessToken;
         this.filesScanner = new FilesScanner();
         this.npmAccessToken = npmAccessToken;
+        this.npmYarnProject = npmYarnProject;
     }
 
     public NpmDependencyResolver(boolean runPreStep, String npmAccessToken) {
-        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, null, false, npmAccessToken);
+        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, false, npmAccessToken, false, false);
     }
 
     /* --- Overridden methods --- */
@@ -121,7 +121,6 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
-
         if (runPreStep) {
             getDependencyCollector().executePreparationStep(topLevelFolder);
             String[] excludesArray = new String[getExcludes().size()];

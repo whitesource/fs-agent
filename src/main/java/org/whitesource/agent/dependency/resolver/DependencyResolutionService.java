@@ -30,6 +30,7 @@ import org.whitesource.agent.dependency.resolver.paket.PaketDependencyResolver;
 import org.whitesource.agent.dependency.resolver.php.PhpDependencyResolver;
 import org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ruby.RubyDependencyResolver;
+import org.whitesource.agent.dependency.resolver.sbt.SbtDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
@@ -58,12 +59,14 @@ public class DependencyResolutionService {
 
     public DependencyResolutionService(ResolverConfiguration config) {
         final boolean npmRunPreStep = config.isNpmRunPreStep();
+        final boolean npmIgnoreScripts = config.isNpmIgnoreScripts();
         final boolean npmResolveDependencies = config.isNpmResolveDependencies();
         final boolean npmIncludeDevDependencies = config.isNpmIncludeDevDependencies();
         final boolean npmIgnoreJavaScriptFiles = config.isNpmIgnoreJavaScriptFiles();
         final long npmTimeoutDependenciesCollector = config.getNpmTimeoutDependenciesCollector();
         final boolean npmIgnoreNpmLsErrors = config.getNpmIgnoreNpmLsErrors();
         final String npmAccessToken = config.getNpmAccessToken();
+        final boolean npmYarnProject = config.getNpmYarnProject();
 
         final boolean bowerResolveDependencies = config.isBowerResolveDependencies();
         final boolean bowerRunPreStep = config.isBowerRunPreStep();
@@ -87,14 +90,16 @@ public class DependencyResolutionService {
 
         final boolean goResolveDependencies = config.isGoResolveDependencies();
 
-        final boolean rubyResolveDependencies   = config.isRubyResolveDependencies();
-        final boolean rubyRunBundleInstall      = config.isRubyRunBundleInstall();
-        final boolean rubyOverwriteGemFile      = config.isRubyOverwriteGemFile();
-        final boolean rubyInstallMissingGems    = config.isRubyInstallMissingGems();
+        final boolean rubyResolveDependencies = config.isRubyResolveDependencies();
+        final boolean rubyRunBundleInstall = config.isRubyRunBundleInstall();
+        final boolean rubyOverwriteGemFile = config.isRubyOverwriteGemFile();
+        final boolean rubyInstallMissingGems = config.isRubyInstallMissingGems();
 
         final boolean phpResolveDependencies    = config.isPhpResolveDependencies();
         final boolean phpRunPreStep             = config.isPhpRunPreStep();
-        final boolean phpIncludeDevDependencies = config.isPhpIncludeDevDependenices();
+        final boolean phpIncludeDevDependencies = config.isPhpIncludeDevDependencies();
+
+        final boolean sbtResolveDependencies    = config.isSbtResolveDependencies();
 
         final boolean htmlResolveDependencies = config.isHtmlResolveDependencies();
 
@@ -103,8 +108,7 @@ public class DependencyResolutionService {
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector,
-                    npmRunPreStep, npmAccessToken, npmIgnoreNpmLsErrors, npmAccessToken));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmIgnoreNpmLsErrors, npmAccessToken, npmYarnProject, npmIgnoreScripts));
         }
         if (bowerResolveDependencies) {
             dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep));
@@ -145,6 +149,10 @@ public class DependencyResolutionService {
 
         if (htmlResolveDependencies) {
             dependencyResolvers.add(new HtmlDependencyResolver());
+        }
+
+        if (sbtResolveDependencies){
+            dependencyResolvers.add(new SbtDependencyResolver());
         }
     }
 
