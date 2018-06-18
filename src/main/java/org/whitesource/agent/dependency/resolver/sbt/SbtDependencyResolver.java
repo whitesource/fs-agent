@@ -126,7 +126,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
                                 if (sha1 != null){
                                     DependencyInfo dependencyInfo = new DependencyInfo(groupId, artifactId, version);
                                     dependencyInfo.setSha1(sha1);
-                                    dependencyInfo.setDependencyType(DependencyType.GRADLE);
+                                    //dependencyInfo.setDependencyType(DependencyType.GRADLE);
                                     dependencyInfo.setFilename(jarFile.getName());
                                     dependencyInfo.setSystemPath(jarFile.getPath());
                                     String dependencyName = groupId + Constants.COLON + artifactId + Constants.COLON + version;
