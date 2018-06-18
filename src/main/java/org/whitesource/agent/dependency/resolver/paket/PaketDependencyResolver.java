@@ -25,10 +25,6 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
     /* --- Static members --- */
 
     private static final String PAKET_DEPENDENCIES = "paket.dependencies";
-    private static final String DLL = ".dll";
-    private static final String EXE = ".exe";
-    private static final String NUPKG = ".nupkg";
-    private static final String CS = ".cs";
     private static final String GROUP = "group";
     private static final String NUGET = "nuget";
     private static final String MAIN = "Main";
@@ -96,11 +92,13 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
                 // ignore all the nupkg files in order to not scan them again
                 if (!dependencies.isEmpty()) {
                     if (this.paketIgnoreFiles) {
-                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(Constants.PATTERN + NUPKG, Constants.PATTERN + DLL, Constants.PATTERN + EXE,
-                                Constants.PATTERN + CS, Constants.PATTERN + Constants.JS_EXTENSION), null));
+                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(Constants.PATTERN +
+                                        Constants.NUPKG, Constants.PATTERN + Constants.DLL, Constants.PATTERN + Constants.EXE,
+                                Constants.PATTERN + Constants.CS, Constants.PATTERN + Constants.JS_EXTENSION), null));
                     } else {
-                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(Constants.PATTERN + NUPKG, Constants.PATTERN + DLL, Constants.PATTERN + EXE,
-                                Constants.PATTERN + CS, Constants.PATTERN + Constants.JS_EXTENSION), Constants.PACKAGES));
+                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(Constants.PATTERN +
+                                        Constants.NUPKG, Constants.PATTERN + Constants.DLL, Constants.PATTERN + Constants.EXE,
+                                Constants.PATTERN + Constants.CS, Constants.PATTERN + Constants.JS_EXTENSION), Constants.PACKAGES));
                     }
                 }
             } else {
@@ -109,7 +107,6 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
         } else {
             logger.warn("'paket install' command failed");
         }
-
         return new ResolutionResult(dependencies, excludes, getDependencyType(), topLevelFolder);
     }
 
@@ -143,12 +140,17 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected Collection<String> getSourceFileExtensions() {
-        return new ArrayList<>(Arrays.asList(DLL, EXE, NUPKG, CS));
+        return new ArrayList<>(Arrays.asList(Constants.DLL, Constants.EXE, Constants.NUPKG, Constants.CS));
     }
 
     @Override
     protected DependencyType getDependencyType() {
         return DependencyType.NUGET;
+    }
+
+    @Override
+    protected String getDependencyTypeName() {
+        return DependencyType.NUGET.name();
     }
 
     @Override

@@ -33,7 +33,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     private final String pythonPath;
     private final String pipPath;
-    private final Collection<String> excludes = Arrays.asList("**/*" + PY_EXT);
+    private final Collection<String> excludes = Arrays.asList(Constants.PATTERN + PY_EXT);
     private boolean ignorePipInstallErrors;
     private boolean  installVirutalenv;
     private boolean resolveHierarchyTree;
@@ -94,6 +94,11 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected DependencyType getDependencyType() {
         return DependencyType.PYTHON;
+    }
+
+    @Override
+    protected String getDependencyTypeName() {
+        return DependencyType.PYTHON.name();
     }
 
     @Override

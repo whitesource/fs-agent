@@ -229,6 +229,11 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         return childDependency.getArtifactId().equals(NpmBomParser.getNpmArtifactId(name, version));
     }
 
+    @Override
+    protected String getDependencyTypeName() {
+        return DependencyType.NPM.name();
+    }
+
     protected void enrichDependency(DependencyInfo dependency, BomFile packageJson, String npmAccessToken) {
         String sha1 = packageJson.getSha1();
         String registryPackageUrl = packageJson.getRegistryPackageUrl();

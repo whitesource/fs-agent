@@ -103,7 +103,8 @@ public class DependencyResolutionService {
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmAccessToken, npmIgnoreNpmLsErrors, npmAccessToken));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector,
+                    npmRunPreStep, npmAccessToken, npmIgnoreNpmLsErrors, npmAccessToken));
         }
         if (bowerResolveDependencies) {
             dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep));
@@ -191,8 +192,8 @@ public class DependencyResolutionService {
 
 
         topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
-            if (!resolvedFolder.getTopFoldersFound().isEmpty() && dependencyResolver.getDependencyType() != null) {
-                logger.info("Trying to resolve " + dependencyResolver.getDependencyType().toString() + " dependencies");
+            if (!resolvedFolder.getTopFoldersFound().isEmpty()) {
+                logger.info("Trying to resolve " + dependencyResolver.getDependencyTypeName() + " dependencies");
             }
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
                 logger.info("topFolder = " + topFolder);
@@ -205,7 +206,6 @@ public class DependencyResolutionService {
                 resolutionResults.add(result);
             });
         });
-
         return resolutionResults;
     }
 

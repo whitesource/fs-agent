@@ -63,6 +63,12 @@ public final class Constants {
     public static final String POUND = "#";
     public static final String HTTP = "http";
     public static final String HTTPS = "https";
+    public static final String UTF8 = "UTF-8";
+    public static final String DLL = ".dll";
+    public static final String EXE = ".exe";
+    public static final String NUPKG = ".nupkg";
+    public static final String CS = ".cs";
+
 
     public static final char QUESTION_MARK = '?';
     public static final char WHITESPACE_CHAR = ' ';

@@ -227,7 +227,7 @@ public class ArchiveExtractor {
     /* --- Private methods --- */
 
     private String[] createArchivesArray() {
-        Collection<String> archiveExtensions = new ArrayList<String>();
+        Collection<String> archiveExtensions = new ArrayList<>();
         archiveExtensions.addAll(ZIP_EXTENSIONS);
         archiveExtensions.addAll(GEM_EXTENSIONS);
         archiveExtensions.addAll(TAR_EXTENSIONS);

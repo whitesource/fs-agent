@@ -465,6 +465,11 @@ public class ResolverConfiguration {
                 ", rubyResolveDependencies=" + rubyResolveDependencies +
                 ", rubyRunBundleInstall=" + rubyRunBundleInstall +
                 ", rubyOverwriteGemFile=" + rubyOverwriteGemFile +
-                ", rubyInstallMissingGems=" + rubyInstallMissingGems;
+                ", rubyInstallMissingGems=" + rubyInstallMissingGems + '\n' +
+                ", phpResolveDependencies=" + phpResolveDependencies +
+                ", phpRunPreStep=" + phpRunPreStep +
+                ", phpIncludeDevDependenices=" + phpIncludeDevDependenices + '\n' +
+                ", htmlResolveDependencies=" + htmlResolveDependencies;
     }
+
 }

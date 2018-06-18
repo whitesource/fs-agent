@@ -53,6 +53,11 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
+    protected String getDependencyTypeName() {
+        return DependencyType.GRADLE.name();
+    }
+
+    @Override
     protected String[] getBomPattern() {
         return new String[]{BUILD_GRADLE};
     }

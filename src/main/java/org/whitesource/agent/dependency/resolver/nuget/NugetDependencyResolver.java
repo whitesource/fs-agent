@@ -79,12 +79,17 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     @Override
     protected Collection<String> getSourceFileExtensions() {
-        return new ArrayList<>(Arrays.asList(".dll", ".exe", ".nupkg", ".cs"));
+        return new ArrayList<>(Arrays.asList(Constants.DLL, Constants.EXE, Constants.NUPKG, Constants.CS));
     }
 
     @Override
     protected DependencyType getDependencyType() {
         return DependencyType.NUGET;
+    }
+
+    @Override
+    protected String getDependencyTypeName() {
+        return DependencyType.NUGET.name();
     }
 
     @Override

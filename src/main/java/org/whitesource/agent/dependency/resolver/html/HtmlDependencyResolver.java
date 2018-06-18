@@ -37,11 +37,22 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
 
     private final Logger logger = LoggerFactory.getLogger(HtmlDependencyResolver.class);
 
-    private final String[] archiveIncludesPattern = {Constants.PATTERN + Constants.HTML, Constants.PATTERN + Constants.HTM};
+    public static final List<String> htmlTypeExtensions = Arrays.asList(Constants.HTM, Constants.HTML);
+    private final String[] archiveIncludesPattern = new String[htmlTypeExtensions.size()];
 
+    public static final String WHITESOURCE_HTML_RESOLVER = "whitesource-html-resolver";
+    public static final String URL_PATH = "://";
     private final Pattern patternOfFirstLetter = Pattern.compile("[a-zA-Z].*");
     private final Pattern patternOfLegitSrcUrl = Pattern.compile("<%.*%>");
-    public static final String WHITESOURCE_HTML_RESOLVER = "whitesource-html-resolver";
+
+    /* --- Constructors --- */
+
+    public HtmlDependencyResolver() {
+        int i = 0;
+        for (String extension : htmlTypeExtensions) {
+            this.archiveIncludesPattern[i++] = Constants.PATTERN + extension;
+        }
+    }
 
     /* --- Overridden methods --- */
 
@@ -51,9 +62,9 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
         for (String htmlFile : bomFiles) {
             Document htmlFileDocument;
             try {
-                htmlFileDocument = Jsoup.parse(new File(htmlFile), "UTF-8");
+                htmlFileDocument = Jsoup.parse(new File(htmlFile), Constants.UTF8);
                 Elements script = htmlFileDocument.getElementsByAttribute(Constants.SRC);
-                //create list of links for .js files for each html file
+                // create list of links for .js files for each html file
                 List<String> scriptUrls = new LinkedList<>();
                 for (Element srcLink : script) {
                     String src = srcLink.attr(Constants.SRC);
@@ -89,6 +100,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
         File tempFolderFile = new File(tempFolder);
         int counterForName = 0;
         RestTemplate restTemplate = new RestTemplate();
+        String dependencyFileName = null;
         if (tempFolder != null) {
             for (String scriptUrl : scriptUrls) {
                 URI uriScopeDep;
@@ -97,9 +109,8 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                     HttpHeaders httpHeaders = new HttpHeaders();
                     HttpEntity entity = new HttpEntity(httpHeaders);
                     String body = restTemplate.exchange(uriScopeDep, HttpMethod.GET, entity, String.class).getBody();
-                    String dependencyFileName = tempFolder + File.separator + counterForName + Constants.JS_EXTENSION;
-                    PrintWriter writer;
-                    writer = new PrintWriter(dependencyFileName, "UTF-8");
+                    dependencyFileName = tempFolder + File.separator + counterForName + Constants.JS_EXTENSION;
+                    PrintWriter writer = new PrintWriter(dependencyFileName, Constants.UTF8);
                     writer.println(body);
                     writer.close();
                     DependencyInfoFactory dependencyInfoFactory = new DependencyInfoFactory();
@@ -113,7 +124,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                 } catch (URISyntaxException e) {
                     logger.debug("Failed creating uri of {}", scriptUrl);
                 } catch (IOException e) {
-                    logger.debug("Failed writing to file");
+                    logger.debug("Failed writing to file {}", dependencyFileName);
                 }
                 counterForName++;
             }
@@ -129,7 +140,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
         Matcher matcher = this.patternOfFirstLetter.matcher(scriptUrl);
         matcher.find();
         if (matcher.group(0) != null) {
-            return Constants.HTTP + "://" + matcher.group(0);
+            return Constants.HTTP + URL_PATH + matcher.group(0);
         } else {
             return null;
         }
@@ -142,7 +153,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected Collection<String> getSourceFileExtensions() {
-        return Arrays.asList(Constants.HTML, Constants.HTM);
+        return htmlTypeExtensions;
     }
 
     @Override
@@ -151,9 +162,14 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
+    protected String getDependencyTypeName() {
+        return Constants.HTML;
+    }
+
+    @Override
     protected String[] getBomPattern() {
         return new String[]{Constants.PATTERN + Constants.DOT + Constants.HTML,
-                Constants.PATTERN + Constants.DOT + Constants.HTM} ;
+                Constants.PATTERN + Constants.DOT + Constants.HTM};
     }
 
     @Override

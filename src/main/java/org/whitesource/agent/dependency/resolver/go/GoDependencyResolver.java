@@ -83,6 +83,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
+    protected String getDependencyTypeName() {
+        return DependencyType.GO.name();
+    }
+
+    @Override
     protected String[] getBomPattern() {
         if (collectDependenciesAtRuntime || goDependencyManager == null) {
             return new String[]{Constants.PATTERN + GO_EXTENTION};

@@ -47,6 +47,8 @@ public abstract class AbstractDependencyResolver {
 
     protected abstract DependencyType getDependencyType();
 
+    protected abstract String getDependencyTypeName();
+
     protected abstract String[] getBomPattern();
 
     protected abstract Collection<String> getLanguageExcludes();
