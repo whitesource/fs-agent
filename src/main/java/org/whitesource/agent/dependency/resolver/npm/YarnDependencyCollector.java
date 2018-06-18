@@ -1,5 +1,7 @@
 package org.whitesource.agent.dependency.resolver.npm;
 
+import org.apache.commons.io.IOUtils;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.Constants;
@@ -24,6 +26,8 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
     private String fileSeparator = System.getProperty(Constants.FILE_SEPARATOR);
     private static final String YARN_LOCK = "yarn.lock";
 
+    private Map<String, Object> devDependencies;
+
 
     public YarnDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector, boolean ignoreNpmLsErrors, boolean ignoreScripts) {
         super(includeDevDependencies, npmTimeoutDependenciesCollector, ignoreNpmLsErrors, ignoreScripts);
@@ -31,6 +35,9 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
 
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String folder) {
+        if (!includeDevDependencies){
+            devDependencies = findDevDependencies(folder);
+        }
         File yarnLock = new File(folder + fileSeparator + YARN_LOCK);
         boolean yarnLockFound = yarnLock.isFile();
         Collection<DependencyInfo> dependencies = new ArrayList<>();
@@ -106,28 +113,31 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
                         if (i==0) {
                             dependencyInfo = new DependencyInfo();
                             dependencyInfo.setGroupId(groupId);
-                            // TODO - add YARN dependency type
                             dependencyInfo.setDependencyType(DependencyType.NPM);
                             String pathToPackageJson = yarnLock.getParent() + fileSeparator + NODE_MODULES + fileSeparator + groupId + fileSeparator + PACKAGE_JSON;
                             dependencyInfo.setSystemPath(pathToPackageJson);
                             dependencyInfo.setFilename(pathToPackageJson);
                         }
-                        if (parentsMap.get(name) == null){
+                        // adding the dependency to the parents map, if:  it's not there already and either dev-dependencies should be included or
+                        // they shouldn't but this is not a dev-dependency
+                        if (parentsMap.get(name) == null &&
+                            ((includeDevDependencies ||
+                             (!includeDevDependencies &&
+                              (devDependencies.get(groupId) == null || devDependencies.get(groupId).equals(name.split("@")[1]) == false))))){
                             parentsMap.put(name, dependencyInfo);
                         }
                     }
                 }
             }
             for (String child : childrenMap.keySet()){
-                childrenMap.get(child).getChildren().add(parentsMap.get(child));
+                if (parentsMap.get(child) != null && !isDescendant(parentsMap.get(child),childrenMap.get(child))) {
+                    childrenMap.get(child).getChildren().add(parentsMap.get(child));
+                }
             }
             for (String parent : parentsMap.keySet()){
                 if (childrenMap.get(parent) == null){
                     dependencyInfos.add(parentsMap.get(parent));
                 }
-            }
-            for (DependencyInfo parent : dependencyInfos){
-                removeCircularDependencies(parent, new ArrayList<>());
             }
         } catch (FileNotFoundException e){
             e.printStackTrace();
@@ -145,17 +155,35 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
         return dependencyInfos;
     }
 
-    private void removeCircularDependencies(DependencyInfo dependencyInfo, List<DependencyInfo> ancestors){
-        Iterator<DependencyInfo> iterator = dependencyInfo.getChildren().iterator();
-        while (iterator.hasNext()){
-            DependencyInfo child = iterator.next();
-            if (ancestors.contains(child)){
-                dependencyInfo.getChildren().remove(child);
-            } else {
-                ancestors.add(child);
-                removeCircularDependencies(child, ancestors);
-                ancestors.remove(child);
+    // preventing circular dependencies by making sure the dependency is not a descendant of its own
+    private boolean isDescendant(DependencyInfo ancestor, DependencyInfo descendant){
+        for (DependencyInfo child : ancestor.getChildren()){
+            if (child.equals(descendant)){
+                return true;
+            }
+            if (isDescendant(child, descendant)){
+                return true;
             }
         }
+        return false;
+    }
+
+    private Map<String, Object> findDevDependencies(String folder){
+        Map<String, Object> devDependenciesMap = new HashMap<>();
+        File packageJson = new File(folder + fileSeparator + PACKAGE_JSON);
+        if (packageJson.isFile()) {
+            try {
+                InputStream is = new FileInputStream(packageJson.getPath());
+                String jsonText = IOUtils.toString(is, "UTF-8");
+                JSONObject json = new JSONObject(jsonText);
+                devDependenciesMap = json.getJSONObject("devDependencies").toMap();
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return devDependenciesMap;
     }
 }
