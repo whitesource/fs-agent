@@ -259,7 +259,7 @@ public class FileSystemAgent {
             }
             if (npmInstallFailed) {
                 // In case of error in 'npm install', delete and clone the repository to prevent wrong output
-                success = StatusCode.PREP_STEP_FAILURE;
+                success = StatusCode.PRE_STEP_FAILURE;
                 scmConnector.deleteCloneDirectory();
                 pathToCloneRepoFiles = scmConnector.cloneRepository().getPath();
             }

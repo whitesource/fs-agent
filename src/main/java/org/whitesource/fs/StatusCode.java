@@ -20,7 +20,7 @@ package org.whitesource.fs;
  */
 public enum StatusCode {
 
-    SUCCESS(0), ERROR(-1), POLICY_VIOLATION(-2), CLIENT_FAILURE(-3), CONNECTION_FAILURE(-4), SERVER_FAILURE(-5), PREP_STEP_FAILURE(-6);
+    SUCCESS(0), ERROR(-1), POLICY_VIOLATION(-2), CLIENT_FAILURE(-3), CONNECTION_FAILURE(-4), SERVER_FAILURE(-5), PRE_STEP_FAILURE(-6);
 
     private final int value;
 
