@@ -73,7 +73,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return GO_SCRIPT_EXTENSION;
     }
 

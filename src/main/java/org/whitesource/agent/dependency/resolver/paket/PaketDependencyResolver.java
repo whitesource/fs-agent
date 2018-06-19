@@ -139,7 +139,7 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return new ArrayList<>(Arrays.asList(Constants.DLL, Constants.EXE, Constants.NUPKG, Constants.CS));
     }
 

@@ -43,8 +43,6 @@ public abstract class AbstractDependencyResolver {
 
     protected abstract Collection<String> getExcludes();
 
-    protected abstract Collection<String> getSourceFileExtensions();
-
     protected abstract DependencyType getDependencyType();
 
     protected abstract String getDependencyTypeName();
@@ -56,6 +54,8 @@ public abstract class AbstractDependencyResolver {
     protected boolean printResolvedFolder() {
         return true;
     }
+
+    public abstract Collection<String> getSourceFileExtensions();
 
     /* --- Protected methods --- */
 

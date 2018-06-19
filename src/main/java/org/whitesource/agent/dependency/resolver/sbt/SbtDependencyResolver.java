@@ -198,7 +198,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return SCALA_SCRIPT_EXTENSION;
     }
 

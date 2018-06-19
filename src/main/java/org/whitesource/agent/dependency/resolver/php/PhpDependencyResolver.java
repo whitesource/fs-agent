@@ -127,7 +127,7 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return new ArrayList<>(Arrays.asList(PHP_EXTENSION));
     }
 

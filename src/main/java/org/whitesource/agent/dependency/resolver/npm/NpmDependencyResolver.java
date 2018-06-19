@@ -200,7 +200,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return Arrays.asList(Constants.JS_EXTENSION, TYPE_SCRIPT_EXTENSION, TSX_EXTENSION);
     }
 

@@ -221,6 +221,10 @@ public class DependencyResolutionService {
         return resolutionResults;
     }
 
+    public Collection<AbstractDependencyResolver> getDependencyResolvers() {
+        return dependencyResolvers;
+    }
+
     /* --- Private methods --- */
 
     private void reduceDependencies(Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap) {

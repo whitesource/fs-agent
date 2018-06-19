@@ -38,7 +38,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     private final Logger logger = LoggerFactory.getLogger(HtmlDependencyResolver.class);
 
     public static final List<String> htmlTypeExtensions = Arrays.asList(Constants.HTM, Constants.HTML);
-    private final String[] archiveIncludesPattern = new String[htmlTypeExtensions.size()];
+    public final String[] includesPattern = new String[htmlTypeExtensions.size()];
 
     public static final String WHITESOURCE_HTML_RESOLVER = "whitesource-html-resolver";
     public static final String URL_PATH = "://";
@@ -50,7 +50,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     public HtmlDependencyResolver() {
         int i = 0;
         for (String extension : htmlTypeExtensions) {
-            this.archiveIncludesPattern[i++] = Constants.PATTERN + extension;
+            this.includesPattern[i++] = Constants.PATTERN + Constants.DOT + extension;
         }
     }
 
@@ -152,7 +152,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return htmlTypeExtensions;
     }
 

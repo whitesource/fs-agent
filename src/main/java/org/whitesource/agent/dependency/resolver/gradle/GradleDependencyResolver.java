@@ -43,7 +43,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return GRADLE_SCRIPT_EXTENSION;
     }
 

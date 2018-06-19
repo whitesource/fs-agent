@@ -88,7 +88,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return new ArrayList<>(Arrays.asList(PY_EXT));
     }
 

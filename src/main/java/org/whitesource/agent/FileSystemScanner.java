@@ -30,7 +30,6 @@ import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.MemoryUsageHelper;
 import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.FileSystemAgent;
-import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.AgentConfiguration;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
@@ -189,7 +188,9 @@ public class FileSystemScanner {
         logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
         logger.info("Included file types: {}", String.join(Constants.COMMA, includes));
         logger.info("Excluded file types: {}", String.join(Constants.COMMA, excludes));
-        Map<File, Collection<String>> fileMapBeforeResolve = new FilesUtils().fillFilesMap(pathsToScan, includes, excludes, followSymlinks, globCaseSensitive);
+        String[] resolversIncludesPattern = createResolversIncludesPattern(dependencyResolutionService.getDependencyResolvers());
+
+        Map<File, Collection<String>> fileMapBeforeResolve = new FilesUtils().fillFilesMap(pathsToScan, resolversIncludesPattern, excludes, followSymlinks, globCaseSensitive);
         Set<String> allFiles = fileMapBeforeResolve.entrySet().stream().flatMap(folder -> folder.getValue().stream()).collect(Collectors.toSet());
 
         final int[] totalDependencies = {0};
@@ -389,6 +390,18 @@ public class FileSystemScanner {
                     agentProjectInfo.getDependencies());
         }
         return allProjectsToViaComponents;
+    }
+
+    private String[] createResolversIncludesPattern(Collection<AbstractDependencyResolver> dependencyResolvers) {
+        Collection<String> resultIncludes = new ArrayList<>();
+        for (AbstractDependencyResolver dependencyResolver : dependencyResolvers) {
+            for (String extension : dependencyResolver.getSourceFileExtensions()) {
+                resultIncludes.add(Constants.PATTERN + extension);
+            }
+        }
+        String[] resultArray = new String[resultIncludes.size()];
+        resultIncludes.toArray(resultArray);
+        return resultArray;
     }
 
     /* --- Private methods --- */

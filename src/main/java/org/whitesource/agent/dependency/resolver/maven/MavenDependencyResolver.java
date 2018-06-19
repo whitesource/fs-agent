@@ -107,7 +107,7 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return JAVA_EXTENSIONS;
     }
 

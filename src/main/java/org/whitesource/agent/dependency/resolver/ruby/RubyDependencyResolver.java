@@ -65,7 +65,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return RUBY_SCRIPT_EXTENSION;
     }
 
