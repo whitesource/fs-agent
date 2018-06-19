@@ -204,7 +204,11 @@ public class DependencyResolutionService {
                 logger.info("Trying to resolve " + dependencyResolver.getDependencyTypeName() + " dependencies");
             }
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
-                logger.info("topFolder = " + topFolder);
+                // don't print folder in case of html resolution
+                if (dependencyResolver.printResolvedFolder()) {
+                    logger.info("topFolder = " + topFolder);
+                }
+                logger.debug("topFolder = " + topFolder);
                 ResolutionResult result = null;
                 try {
                     result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);

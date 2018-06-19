@@ -69,7 +69,8 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             if (tempDirVirtualEnv != null && tempDirPackages != null) {
                 pythonDependencyCollector = new PythonDependencyCollector(this.pythonPath, this.pipPath, this.installVirutalenv, this.resolveHierarchyTree, this.ignorePipInstallErrors,
                         requirementsTxtPath, tempDirPackages, tempDirVirtualEnv);
-                String currentTopLevelFolder = requirementsTxtPath.substring(0, requirementsTxtPath.replaceAll("\\\\", Constants.FORWARD_SLASH).lastIndexOf(Constants.FORWARD_SLASH));
+                String currentTopLevelFolder = requirementsTxtPath.substring(0, requirementsTxtPath.replaceAll("\\\\",
+                        Constants.FORWARD_SLASH).lastIndexOf(Constants.FORWARD_SLASH));
                 Collection<AgentProjectInfo> projects = pythonDependencyCollector.collectDependencies(currentTopLevelFolder);
                 dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
                 // delete tmp folders

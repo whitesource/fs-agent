@@ -53,6 +53,10 @@ public abstract class AbstractDependencyResolver {
 
     protected abstract Collection<String> getLanguageExcludes();
 
+    protected boolean printResolvedFolder() {
+        return true;
+    }
+
     /* --- Protected methods --- */
 
     protected List<String> normalizeLocalPath(String parentFolder, String topFolderFound, Collection<String> excludes, String folderToIgnore) {

@@ -62,6 +62,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
         for (String htmlFile : bomFiles) {
             Document htmlFileDocument;
             try {
+                // todo consider collect other tags - not ser only
                 htmlFileDocument = Jsoup.parse(new File(htmlFile), Constants.UTF8);
                 Elements script = htmlFileDocument.getElementsByAttribute(Constants.SRC);
                 // create list of links for .js files for each html file
@@ -98,7 +99,6 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
         List<DependencyInfo> dependencies = new LinkedList<>();
         String tempFolder = new FilesUtils().createTmpFolder(false, WHITESOURCE_HTML_RESOLVER);
         File tempFolderFile = new File(tempFolder);
-        int counterForName = 0;
         RestTemplate restTemplate = new RestTemplate();
         String dependencyFileName = null;
         if (tempFolder != null) {
@@ -127,7 +127,6 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                 } catch (IOException e) {
                     logger.debug("Failed writing to file {}", dependencyFileName);
                 }
-                counterForName++;
             }
             FilesUtils.deleteDirectory(tempFolderFile);
         }
@@ -164,7 +163,12 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String getDependencyTypeName() {
-        return Constants.HTML;
+        return Constants.HTML.toUpperCase();
+    }
+
+    @Override
+    protected boolean printResolvedFolder() {
+        return false;
     }
 
     @Override
