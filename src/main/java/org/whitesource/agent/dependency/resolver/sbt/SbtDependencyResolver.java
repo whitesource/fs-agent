@@ -214,7 +214,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String[] getBomPattern() {
-        return new String[]{SBT};
+        return new String[]{BUILD_SBT};
     }
 
     @Override
