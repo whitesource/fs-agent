@@ -217,18 +217,22 @@ public class FileSystemScanner {
                     Collection<ResolutionResult> resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, excludes);
                     if (resolutionResult.size() == 1 && !appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
                         DependencyType dependencyType = resolutionResult.stream().findFirst().get().getDependencyType();
-                        // validate scanned language and set the
-                        switch (dependencyType) {
-                            case NPM:
-                            case BOWER:
-                                impactAnalysisLanguage = ViaLanguage.JAVA_SCRIPT;
-                                break;
-                            case MAVEN:
-                            case GRADLE:
-                                impactAnalysisLanguage = ViaLanguage.JAVA;
-                                break;
-                            default:
-                                break;
+                        if (dependencyType == null){
+                            break;
+                        } else {
+                            // validate scanned language and set the
+                            switch (dependencyType) {
+                                case NPM:
+                                case BOWER:
+                                    impactAnalysisLanguage = ViaLanguage.JAVA_SCRIPT;
+                                    break;
+                                case MAVEN:
+                                case GRADLE:
+                                    impactAnalysisLanguage = ViaLanguage.JAVA;
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
                     } else if (resolutionResult.size() > 1 && enableImpactAnalysis) {
 //                logger.info("Impact analysis won't run, more than one language detected");
@@ -249,7 +253,7 @@ public class FileSystemScanner {
 
                                 // if it is single project threat it as the main
                                 if (dependencyResolutionService.isSeparateProjects()) {
-                                    if (result.getDependencyType().equals(DependencyType.MAVEN) && result.getResolvedProjects().size() > 1) {
+                                    if (result.getDependencyType() != null && DependencyType.MAVEN.equals(result.getDependencyType()) && result.getResolvedProjects().size() > 1) {
                                         allProjects.put(project.getKey(), project.getValue());
                                         LinkedList<ViaComponents> listToNewProject = new LinkedList<>();
                                         if (impactAnalysisLanguage != null) {
