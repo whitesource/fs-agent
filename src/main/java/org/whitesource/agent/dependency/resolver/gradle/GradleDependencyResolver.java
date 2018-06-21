@@ -69,7 +69,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private List<DependencyInfo> collectDependencies(String rootDirectory) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
-        List<String> lines = gradleCli.runCmd(rootDirectory, gradleCli.getGradleCommandParams(MvnCommand.DEPENDENCIES));
+        List<String> lines = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(MvnCommand.DEPENDENCIES));
         if (lines != null) {
             dependencyInfos.addAll(gradleLinesParser.parseLines(lines, rootDirectory));
         }
