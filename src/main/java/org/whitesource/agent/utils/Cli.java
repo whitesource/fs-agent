@@ -8,10 +8,10 @@ import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import java.io.IOException;
 import java.util.List;
 
-public class Cli {
+public abstract class Cli {
     private final Logger logger = LoggerFactory.getLogger(Cli.class);
 
-    public List<String> runCmd(String rootDirectory, String[] params){
+    public  List<String> runCmd(String rootDirectory, String[] params){
         try {
             CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, params);
             List<String> lines = commandLineProcess.executeProcess();
