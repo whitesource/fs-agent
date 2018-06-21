@@ -23,11 +23,11 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     private static final String SBT = "sbt";
     private static final String SCALA_EXTENSION = Constants.DOT + SCALA;
     private static final List<String> SCALA_SCRIPT_EXTENSION = Arrays.asList(SCALA_EXTENSION, Constants.DOT + SBT);
-    private static final String COMPILE = "\"compile\"";
+    private static final String COMPILE = "compile";
     protected static final String TARGET = "target";
     protected static final String RESOLUTION_CACHE = "resolution-cache";
     protected static final String REPORTS = "reports";
-    protected static final String SUCCESS = "[success]";
+    protected static final String SUCCESS = "success";
 
 
     private final Logger logger = LoggerFactory.getLogger(SbtDependencyResolver.class);
@@ -104,7 +104,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         Cli cli = new Cli();
         List<String> compileOutput = cli.runCmd(folderPath, cli.getCommandParams(SBT, COMPILE));
         if (compileOutput != null){
-            if (compileOutput.get(compileOutput.size()-1).startsWith(SUCCESS)){
+            if (compileOutput.get(compileOutput.size()-1).contains(SUCCESS)){
                 return findXmlReport(folderPath);
             }
         }
