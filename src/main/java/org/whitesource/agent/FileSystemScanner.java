@@ -261,6 +261,14 @@ public class FileSystemScanner {
                                             listToNewProject.add(viaComponents);
                                         }
                                         allProjectsToViaComponents.put(project.getKey(), listToNewProject);
+                                    } else if (result.getDependencyType() == null) {
+                                        project.getKey().setCoordinates(new Coordinates(null, "html-files", null));
+                                        allProjects.put(project.getKey(), project.getValue());
+                                        LinkedList<ViaComponents> listToNewProject = new LinkedList<>();
+                                        if (impactAnalysisLanguage != null) {
+                                            listToNewProject.add(viaComponents);
+                                        }
+                                        allProjectsToViaComponents.put(project.getKey(), listToNewProject);
                                     } else {
                                         currentProject = allProjects.keySet().stream().findFirst().get();
                                         currentProject.getDependencies().addAll(project.getKey().getDependencies());
