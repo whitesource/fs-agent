@@ -43,13 +43,19 @@ public abstract class AbstractDependencyResolver {
 
     protected abstract Collection<String> getExcludes();
 
-    protected abstract Collection<String> getSourceFileExtensions();
-
     protected abstract DependencyType getDependencyType();
 
-    protected abstract String getBomPattern();
+    protected abstract String getDependencyTypeName();
+
+    protected abstract String[] getBomPattern();
 
     protected abstract Collection<String> getLanguageExcludes();
+
+    protected boolean printResolvedFolder() {
+        return true;
+    }
+
+    public abstract Collection<String> getSourceFileExtensions();
 
     /* --- Protected methods --- */
 

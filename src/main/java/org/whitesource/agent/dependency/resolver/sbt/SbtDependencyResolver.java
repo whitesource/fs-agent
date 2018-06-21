@@ -50,7 +50,9 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     }
 
     /* looking for an xml file ending with '-compile.xml', which should be either in 'target/scala-{version number}/resolution-cache/reports'
-     or 'target/scala-{version number}/sbt-{version-number}/resolution-cache/reports'
+     or 'target/scala-{version number}/sbt-{version-number}/resolution-cache/reports'.
+     There are some cases where 2 files inside that folder end with '-compile.xml'.  in such case, the way to find the relevant is if its name
+     contains the scala-version (which is part of the scala folder name), and that's relevant only if the xml file isn't inside 'sbt-{}' folder.
      */
     private File findXmlReport(String folderPath){
         File targetFolder = new File(folderPath + fileSeparator + TARGET);
@@ -58,20 +60,28 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
             File scalaFolder = findFolder(targetFolder, SCALA);
             String pathToReports = fileSeparator + RESOLUTION_CACHE + fileSeparator + REPORTS;
             File reportsFolder = new File(scalaFolder.getAbsolutePath() + pathToReports);
+            boolean insideSbtFolder = false;
             if (!reportsFolder.isDirectory()) {
                 File sbtFolder = findFolder(scalaFolder, SBT);
                 if (sbtFolder != null) {
                     reportsFolder = new File(sbtFolder.getAbsolutePath() + pathToReports);
                     if (!reportsFolder.isDirectory()) {
+                        logger.warn("Can't find '*-compile.xml' report file");
                         return null;
                     }
+                } else {
+                    logger.warn("Can't find '*-compile.xml' report file");
+                    return null;
                 }
+                insideSbtFolder = true;
             }
-            File[] xmlFiles = reportsFolder.listFiles(new XmlFileNameFilter());
+            String scalaVersion = scalaFolder.getName().split(Constants.DASH)[1];
+            File[] xmlFiles = reportsFolder.listFiles(new XmlFileNameFilter(insideSbtFolder, scalaVersion));
             if (xmlFiles.length > 0) {
                 return xmlFiles[0];
             }
         }
+        logger.warn("Can't find '*-compile.xml' report file");
         return null;
     }
 
@@ -98,6 +108,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
                 return findXmlReport(folderPath);
             }
         }
+        logger.warn("Can't run '{} {}'", SBT, COMPILE);
         return null;
     }
 
@@ -198,7 +209,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return SCALA_SCRIPT_EXTENSION;
     }
 
@@ -208,8 +219,13 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected String getBomPattern() {
-        return BUILD_SBT;
+    protected String getDependencyTypeName() {
+        return SBT.toUpperCase();
+    }
+
+    @Override
+    protected String[] getBomPattern() {
+        return new String[]{BUILD_SBT};
     }
 
     @Override
@@ -232,8 +248,15 @@ class ScalaFileNameFilter implements FilenameFilter {
 }
 
 class XmlFileNameFilter implements FilenameFilter{
+    private boolean insideSbt;
+    private String scalaVersion;
+
+    public XmlFileNameFilter(boolean insideSbt, String scalaVersion){
+        this.insideSbt = insideSbt;
+        this.scalaVersion = scalaVersion;
+    }
     @Override
     public boolean accept(File file, String name){
-        return name.toLowerCase().endsWith("-compile.xml");
+        return name.toLowerCase().endsWith("-compile.xml") && (insideSbt || name.contains(scalaVersion));
     }
 }

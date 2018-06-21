@@ -19,6 +19,7 @@ import static org.whitesource.agent.dependency.resolver.docker.DockerResolver.*;
 public class DebianParser extends AbstractParser {
 
     /* --- Static members --- */
+
     private final Logger logger = LoggerFactory.getLogger(DebianParser.class);
     private static final String PACKAGE = "Package";
     private static final String VERSION = "Version";

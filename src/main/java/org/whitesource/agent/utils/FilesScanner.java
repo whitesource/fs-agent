@@ -66,7 +66,7 @@ public class FilesScanner {
         }
     }
 
-    public Collection<ResolvedFolder> findTopFolders(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
+    public Collection<ResolvedFolder> findTopFolders(Collection<String> pathsToScan, String[] includesPattern, Collection<String> excludes) {
         Collection<ResolvedFolder> resolvedFolders = new ArrayList<>();
         // get folders containing bom files
         Map<String, String[]> pathToBomFilesMap = findAllFiles(pathsToScan, includesPattern, excludes);
@@ -82,10 +82,10 @@ public class FilesScanner {
 
     /* --- Private methods --- */
 
-    private Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String includesPattern, Collection<String> excludes) {
+    private Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String[] includesPattern, Collection<String> excludes) {
         Map pathToIncludedFilesMap = new HashMap();
         pathsToScan.stream().forEach(scanFolder -> {
-            String[] includedFiles = getDirectoryContent(new File(scanFolder).getPath(), new String[]{includesPattern},
+            String[] includedFiles = getDirectoryContent(new File(scanFolder).getPath(), includesPattern,
                     excludes.toArray(new String[excludes.size()]), false, false);
             pathToIncludedFilesMap.put(new File(scanFolder).getAbsolutePath(), includedFiles);
         });

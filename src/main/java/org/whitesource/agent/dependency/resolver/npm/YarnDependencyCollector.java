@@ -21,6 +21,7 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
     protected static final String AT = "@";
     protected static final String NODE_MODULES = "node_modules";
     protected static final String PACKAGE_JSON = "package.json";
+    protected static final String DEV_DEPENDENCIES = "devDependencies";
     private final Logger logger = LoggerFactory.getLogger(YarnDependencyCollector.class);
     private static final String YARN_COMMAND = isWindows() ? "yarn.cmd" : "yarn";
     private String fileSeparator = System.getProperty(Constants.FILE_SEPARATOR);
@@ -123,7 +124,7 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
                         if (parentsMap.get(name) == null &&
                             ((includeDevDependencies ||
                              (!includeDevDependencies &&
-                              (devDependencies.get(groupId) == null || devDependencies.get(groupId).equals(name.split("@")[1]) == false))))){
+                              (devDependencies.get(groupId) == null || devDependencies.get(groupId).equals(name.split(AT)[1]) == false))))){
                             parentsMap.put(name, dependencyInfo);
                         }
                     }
@@ -174,9 +175,9 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
         if (packageJson.isFile()) {
             try {
                 InputStream is = new FileInputStream(packageJson.getPath());
-                String jsonText = IOUtils.toString(is, "UTF-8");
+                String jsonText = IOUtils.toString(is, Constants.UTF8);
                 JSONObject json = new JSONObject(jsonText);
-                devDependenciesMap = json.getJSONObject("devDependencies").toMap();
+                devDependenciesMap = json.getJSONObject(DEV_DEPENDENCIES).toMap();
 
             } catch (FileNotFoundException e) {
                 e.printStackTrace();

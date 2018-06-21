@@ -40,6 +40,8 @@ public final class Constants {
     public static final String JS_EXTENSION = ".js";
     public static final String PACKAGES = "packages";
     public static final String INSTALL = "install";
+    public static final String HTML = "html";
+    public static final String HTM = "htm";
     public static final String WINDOWS = "Windows";
     public static final String DOT = ".";
     public static final String DIRECTORY = "d";
@@ -61,6 +63,14 @@ public final class Constants {
     public static final String POUND = "#";
     public static final String QUOTATION_MARK = "\"";
     public static final String APOSTROPHE = "'";
+    public static final String HTTP = "http";
+    public static final String HTTPS = "https";
+    public static final String UTF8 = "UTF-8";
+    public static final String DLL = ".dll";
+    public static final String EXE = ".exe";
+    public static final String NUPKG = ".nupkg";
+    public static final String CS = ".cs";
+
 
     public static final char QUESTION_MARK = '?';
     public static final char WHITESPACE_CHAR = ' ';

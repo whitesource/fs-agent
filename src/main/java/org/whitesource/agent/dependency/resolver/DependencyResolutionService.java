@@ -21,6 +21,7 @@ import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.dotNet.DotNetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyResolver;
 import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
+import org.whitesource.agent.dependency.resolver.html.HtmlDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
@@ -100,6 +101,8 @@ public class DependencyResolutionService {
 
         final boolean sbtResolveDependencies    = config.isSbtResolveDependencies();
 
+        final boolean htmlResolveDependencies = config.isHtmlResolveDependencies();
+
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
@@ -140,8 +143,12 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new RubyDependencyResolver(rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems));
         }
 
-        if(phpResolveDependencies){
+        if (phpResolveDependencies){
             dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies));
+        }
+
+        if (htmlResolveDependencies) {
+            dependencyResolvers.add(new HtmlDependencyResolver());
         }
 
         if (sbtResolveDependencies){
@@ -193,11 +200,15 @@ public class DependencyResolutionService {
 
 
         topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
-            if (!resolvedFolder.getTopFoldersFound().isEmpty() && dependencyResolver.getDependencyType() != null) {
-                logger.info("Trying to resolve " + dependencyResolver.getDependencyType().toString() + " dependencies");
+            if (!resolvedFolder.getTopFoldersFound().isEmpty()) {
+                logger.info("Trying to resolve " + dependencyResolver.getDependencyTypeName() + " dependencies");
             }
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
-                logger.info("topFolder = " + topFolder);
+                // don't print folder in case of html resolution
+                if (dependencyResolver.printResolvedFolder()) {
+                    logger.info("topFolder = " + topFolder);
+                }
+                logger.debug("topFolder = " + topFolder);
                 ResolutionResult result = null;
                 try {
                     result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
@@ -207,8 +218,11 @@ public class DependencyResolutionService {
                 resolutionResults.add(result);
             });
         });
-
         return resolutionResults;
+    }
+
+    public Collection<AbstractDependencyResolver> getDependencyResolvers() {
+        return dependencyResolvers;
     }
 
     /* --- Private methods --- */
@@ -220,7 +234,9 @@ public class DependencyResolutionService {
         //remove all folders that have a parent already mapped
         topFolders.stream().sorted().forEach(topFolderParent -> {
             topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
-                resolvedFolder.getTopFoldersFound().entrySet().removeIf(topFolderChild -> isChildFolder(topFolderChild.getKey(), topFolderParent));
+                if (!(dependencyResolver instanceof HtmlDependencyResolver)) {
+                    resolvedFolder.getTopFoldersFound().entrySet().removeIf(topFolderChild -> isChildFolder(topFolderChild.getKey(), topFolderParent));
+                }
             });
         });
     }

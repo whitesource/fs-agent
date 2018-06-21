@@ -73,7 +73,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return GO_SCRIPT_EXTENSION;
     }
 
@@ -83,21 +83,26 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected String getBomPattern() {
+    protected String getDependencyTypeName() {
+        return DependencyType.GO.name();
+    }
+
+    @Override
+    protected String[] getBomPattern() {
         if (collectDependenciesAtRuntime || goDependencyManager == null) {
-            return Constants.PATTERN + GO_EXTENTION;
+            return new String[]{Constants.PATTERN + GO_EXTENTION};
         }
         if (goDependencyManager != null) {
             switch (goDependencyManager) {
                 case DEP:
-                    return Constants.PATTERN + GOPKG_LOCK;
+                    return new String[]{Constants.PATTERN + GOPKG_LOCK};
                 case GO_DEP:
-                    return Constants.PATTERN + GODEPS_JSON;
+                    return new String[]{Constants.PATTERN + GODEPS_JSON};
                 case VNDR:
-                    return Constants.PATTERN + VNDR_CONF;
+                    return new String[]{Constants.PATTERN + VNDR_CONF};
             }
         }
-        return Constants.EMPTY_STRING;
+        return new String[]{Constants.EMPTY_STRING};
     }
 
     @Override

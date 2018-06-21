@@ -31,8 +31,8 @@ public class ResolverConfiguration {
     @JsonCreator
     public ResolverConfiguration(
             @JsonProperty(NPM_RUN_PRE_STEP) boolean npmRunPreStep,
-            @JsonProperty(NPM_IGNORE_SCRIPTS) boolean npmIgnoreScripts,
             @JsonProperty(NPM_RESOLVE_DEPENDENCIES) boolean npmResolveDependencies,
+            @JsonProperty(NPM_IGNORE_SCRIPTS) boolean npmIgnoreScripts,
             @JsonProperty(NPM_INCLUDE_DEV_DEPENDENCIES) boolean npmIncludeDevDependencies,
             @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES) boolean npmIgnoreJavaScriptFiles,
             @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS) long npmTimeoutDependenciesCollector,
@@ -83,7 +83,9 @@ public class ResolverConfiguration {
             @JsonProperty(PHP_RESOLVE_DEPENDENCIES) boolean phpResolveDependencies,
             @JsonProperty(PHP_RUN_PRE_STEP) boolean phpRunPreStep,
             @JsonProperty(PHP_INCLUDE_DEV_DEPENDENCIES) boolean phpIncludeDevDependencies,
-            @JsonProperty(SBT_RESOLVE_DEPENDENCIES) boolean sbtResolveDependencies) {
+            @JsonProperty(SBT_RESOLVE_DEPENDENCIES) boolean sbtResolveDependencies,
+
+            @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmIgnoreScripts = npmIgnoreScripts;
         this.npmResolveDependencies = npmResolveDependencies;
@@ -141,6 +143,8 @@ public class ResolverConfiguration {
         this.phpIncludeDevDependencies = phpIncludeDevDependencies;
 
         this.sbtResolveDependencies = sbtResolveDependencies;
+
+        this.htmlResolveDependencies = htmlResolveDependencies;
     }
 
     /* --- Members --- */
@@ -196,6 +200,8 @@ public class ResolverConfiguration {
     private boolean phpIncludeDevDependencies;
 
     private boolean sbtResolveDependencies;
+
+    private boolean htmlResolveDependencies;
 
     /* --- Public getters --- */
 
@@ -415,6 +421,11 @@ public class ResolverConfiguration {
     @JsonProperty(SBT_RESOLVE_DEPENDENCIES)
     public boolean isSbtResolveDependencies() { return sbtResolveDependencies; }
 
+    @JsonProperty(HTML_RESOLVE_DEPENDENCIES)
+    public boolean isHtmlResolveDependencies() {
+        return htmlResolveDependencies;
+    }
+
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {
         this.npmResolveDependencies = npmResolveDependencies;
     }
@@ -477,6 +488,13 @@ public class ResolverConfiguration {
                 ", rubyResolveDependencies=" + rubyResolveDependencies +
                 ", rubyRunBundleInstall=" + rubyRunBundleInstall +
                 ", rubyOverwriteGemFile=" + rubyOverwriteGemFile +
-                ", rubyInstallMissingGems=" + rubyInstallMissingGems;
+                ", rubyInstallMissingGems=" + rubyInstallMissingGems + '\n' +
+                ", phpResolveDependencies=" + phpResolveDependencies +
+                ", phpRunPreStep=" + phpRunPreStep +
+                ", phpIncludeDevDependenices=" + phpIncludeDevDependencies + '\n' +
+                ", htmlResolveDependencies=" + htmlResolveDependencies + '\n' +
+                ", sbtResolveDependencies=" + sbtResolveDependencies;
     }
+
+
 }

@@ -37,10 +37,10 @@ public class FilesUtils {
 
     private final Logger logger = LoggerFactory.getLogger(FilesUtils.class);
     private final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
-    private static final String WHITESOURCE_PYTHON_TEMP_FOLDER = "Whitesource_python_resolver";
 
-    public String createTmpFolder(boolean addCharToEndOfUrl) {
-        String result = getTempDirPackages(addCharToEndOfUrl);
+
+    public String createTmpFolder(boolean addCharToEndOfUrl, String nameOfFolder) {
+        String result = getTempDirPackages(addCharToEndOfUrl, nameOfFolder);
         try {
             FileUtils.forceMkdir(new File(result));
         } catch (IOException e) {
@@ -50,10 +50,10 @@ public class FilesUtils {
         return result;
     }
 
-    private String getTempDirPackages(boolean addCharToEndOfUrl) {
+    private String getTempDirPackages(boolean addCharToEndOfUrl, String nameOfFolder) {
         String creationDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-        String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + WHITESOURCE_PYTHON_TEMP_FOLDER + File.separator + creationDate :
-                JAVA_TEMP_DIR + File.separator + WHITESOURCE_PYTHON_TEMP_FOLDER + File.separator + creationDate;
+        String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + nameOfFolder + File.separator + creationDate :
+                JAVA_TEMP_DIR + File.separator + nameOfFolder + File.separator + creationDate;
 
         if (addCharToEndOfUrl) {
             tempFolder = tempFolder + "1";

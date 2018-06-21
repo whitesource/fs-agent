@@ -146,6 +146,8 @@ public final class ConfigPropertyKeys {
 
     public static final String SBT_RESOLVE_DEPENDENCIES     = "sbt.resolveDependencies";
 
+    public static final String HTML_RESOLVE_DEPENDENCIES     = "html.resolveDependencies";
+
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 
     public static final String SCANNED_FOLDERS = "d";

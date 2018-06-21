@@ -127,7 +127,7 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return new ArrayList<>(Arrays.asList(PHP_EXTENSION));
     }
 
@@ -137,8 +137,13 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected String getBomPattern() {
-        return Constants.PATTERN + COMPOSER_JSON;
+    protected String getDependencyTypeName() {
+        return DependencyType.PHP.name();
+    }
+
+    @Override
+    protected String[] getBomPattern() {
+        return new String[]{Constants.PATTERN + COMPOSER_JSON};
     }
 
     @Override
