@@ -8,7 +8,7 @@ import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class Cli {
+public class Cli {
     private final Logger logger = LoggerFactory.getLogger(Cli.class);
 
     public  List<String> runCmd(String rootDirectory, String[] params){
