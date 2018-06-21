@@ -66,8 +66,12 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
                 if (sbtFolder != null) {
                     reportsFolder = new File(sbtFolder.getAbsolutePath() + pathToReports);
                     if (!reportsFolder.isDirectory()) {
+                        logger.warn("Can't find '*-compile.xml' report file");
                         return null;
                     }
+                } else {
+                    logger.warn("Can't find '*-compile.xml' report file");
+                    return null;
                 }
                 insideSbtFolder = true;
             }
@@ -77,6 +81,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
                 return xmlFiles[0];
             }
         }
+        logger.warn("Can't find '*-compile.xml' report file");
         return null;
     }
 
@@ -103,6 +108,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
                 return findXmlReport(folderPath);
             }
         }
+        logger.warn("Can't run '{} {}'", SBT, COMPILE);
         return null;
     }
 
