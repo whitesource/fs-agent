@@ -40,13 +40,13 @@ public abstract class AbstractParser {
     public abstract File findFile(String[] files, String filename, String operatingSystem);
 
     public static void findFolder(File dir, String folderName, Collection<String> folder, String operatingSystem) {
-        if (!operatingSystem.startsWith(Constants.WINDOWS)){
-            folderName = folderName.replace(Constants.FORWARD_SLASH, Constants.BACK_SLASH);
+        if (!operatingSystem.startsWith(Constants.WINDOWS)) {
+            folderName = folderName.replace(Constants.BACK_SLASH, Constants.FORWARD_SLASH);
         }
         if (dir.isDirectory()) {
             File[] files = dir.listFiles();
             if (files != null) {
-                for (File file :files) {
+                for (File file : files) {
                     if (file.isDirectory()) {
                         findFolder(file, folderName, folder, operatingSystem);
                         if (file.getName().equals(folderName)) {
