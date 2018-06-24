@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.whitesource.agent.Constants.*;
 import static org.whitesource.agent.archive.ArchiveExtractor.TAR_SUFFIX;
 
 /**
@@ -46,15 +47,14 @@ public class DockerResolver {
     private static final String ARCH_LINUX_PATTERN = "**/*desc";
     private static final String ALPINE_PATTERN = "**/*installed";
     private static final String DEBIAN_PATTERN_AVAILABLE = "**/*available";
-    private static final String RPM_PATTERN = "**var" + File.separator + "lib" + File.separator + "yum" + File.separator + "yumdb/**";
+    private static final String RPM_PATTERN = "**" + VAR + File.separator + LIB + File.separator + YUM + File.separator + YUM_DB + "/**";
     private static final String[] scanIncludes = {DEBIAN_PATTERN, ARCH_LINUX_PATTERN, ALPINE_PATTERN, RPM_PATTERN, DEBIAN_PATTERN_AVAILABLE};
     private static final String[] scanExcludes = {};
-    private static final String ARCH_LINUX_DESC_FOLDERS = "var" + File.separator + "lib" + File.separator + "pacman" + File.separator + "local";
-    private static final String RPM_YUM_DB_FOLDER_DEFAULT_PATH = "var" + File.separator + "lib" + File.separator + "yum" + File.separator + "yumdb";
+    private static final String ARCH_LINUX_DESC_FOLDERS = VAR + File.separator + LIB + File.separator + "pacman" + File.separator + "local";
+    private static final String RPM_YUM_DB_FOLDER_DEFAULT_PATH = VAR + File.separator + LIB + File.separator + YUM + File.separator + YUM_DB;
     private static final String DEBIAN_LIST_PACKAGES_FILE = File.separator + "eipp.log.xz";
     private static final String ALPINE_LIST_PACKAGES_FILE = File.separator + "installed";
     private static final String DEBIAN_LIST_PACKAGES_FILE_AVAILABLE = File.separator + "available";
-    private static final String YUMDB = "yumdb";
     private static final String PACKAGE_LOG_TXT = "packageLog.txt";
     private static final boolean PARTIAL_SHA1_MATCH = false;
 
@@ -168,8 +168,8 @@ public class DockerResolver {
             projects.add(projectInfo);
 
             File imageTarFile = new File(TEMP_FOLDER, dockerImage.getRepository() + TAR_SUFFIX);
-            File imageTarExtractDir = new File(TEMP_FOLDER, dockerImage.getRepository());
-            imageTarExtractDir.mkdirs();
+            File imageExtractionDir = new File(TEMP_FOLDER, dockerImage.getRepository());
+            imageExtractionDir.mkdirs();
             try {
                 //Save image as tar file
                 process = Runtime.getRuntime().exec(DOCKER_SAVE_IMAGE_COMMAND + Constants.WHITESPACE + dockerImage.getId() +
@@ -178,13 +178,13 @@ public class DockerResolver {
 
                 // extract tar archive
                 ArchiveExtractor archiveExtractor = new ArchiveExtractor(config.getAgent().getArchiveIncludes(), config.getAgent().getArchiveExcludes(), config.getAgent().getIncludes());
-                archiveExtractor.extractImageLayers(imageTarFile, imageTarExtractDir);
+                archiveExtractor.extractDockerImageLayers(imageTarFile, imageExtractionDir);
                 FilesScanner filesScanner = new FilesScanner();
-                String[] fileNames = filesScanner.getDirectoryContent(imageTarExtractDir.getParent(), scanIncludes, scanExcludes, true, false);
+                String[] fileNames = filesScanner.getDirectoryContent(imageExtractionDir.getParent(), scanIncludes, scanExcludes, true, false);
 
                 // build the full path correctly
                 for (int i = 0; i < fileNames.length; i++) {
-                    fileNames[i] = imageTarExtractDir.getParent() + File.separator + fileNames[i];
+                    fileNames[i] = imageExtractionDir.getParent() + File.separator + fileNames[i];
                 }
 
                 // check for dependencies for each docker operating system (Debian,Arch-Linux,Alpine,Rpm)
@@ -221,13 +221,13 @@ public class DockerResolver {
 
                 RpmParser rpmParser = new RpmParser();
                 Collection<String> yumDbFoldersPath = new LinkedList<>();
-                rpmParser.findFolder(imageTarExtractDir, YUMDB, yumDbFoldersPath);
+                rpmParser.findFolder(imageExtractionDir, YUM_DB, yumDbFoldersPath);
                 File yumDbFolder = rpmParser.checkFolders(yumDbFoldersPath, RPM_YUM_DB_FOLDER_DEFAULT_PATH);
                 int rpmPackages = parseProjectInfo(projectInfo, rpmParser, yumDbFolder);
                 logger.info("Found {} Rpm Packages", rpmPackages);
 
                 // scan files
-                String extractPath = imageTarExtractDir.getPath();
+                String extractPath = imageExtractionDir.getPath();
                 Set<String> setDirs = new HashSet<>();
                 setDirs.add(extractPath);
                 Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
@@ -248,7 +248,7 @@ public class DockerResolver {
                 e.printStackTrace();
             } finally {
                 process.destroy();
-                deleteDockerArchiveFiles(imageTarFile, imageTarExtractDir);
+                deleteDockerArchiveFiles(imageTarFile, imageExtractionDir);
             }
         }
     }

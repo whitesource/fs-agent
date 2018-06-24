@@ -221,27 +221,27 @@ public class ArchiveExtractor {
         }
     }
 
-    // extract all the layers of image
-    public void extractImageLayers(File imageTarFile, File imageTarExtractDir) {
+    // extract image layers
+    public void extractDockerImageLayers(File imageTarFile, File imageExtractionDir) {
         FilesScanner filesScanner = new FilesScanner();
         boolean success = false;
+        // docker layers are saved as TAR file (we save it as TAR)
         if (imageTarFile.getName().endsWith(TAR_SUFFIX)) {
-            success = unTar(imageTarFile.getName().toLowerCase(), imageTarExtractDir.getAbsolutePath(), imageTarFile.getPath());
+            success = unTar(imageTarFile.getName().toLowerCase(), imageExtractionDir.getAbsolutePath(), imageTarFile.getPath());
             boolean deleted = imageTarFile.delete();
             if (!deleted) {
-                logger.warn("Didn't succeed to delete {}", imageTarFile.getName());
+                logger.warn("Was not able to delete {} (docker image TAR file)", imageTarFile.getName());
             }
         }
         if (success) {
-            String[] fileNames = filesScanner.getDirectoryContent(imageTarExtractDir.getAbsolutePath(), new String[]{LAYER_TAR}, new String[]{}, true, false);
+            String[] fileNames = filesScanner.getDirectoryContent(imageExtractionDir.getAbsolutePath(), new String[]{LAYER_TAR}, new String[]{}, true, false);
             for (String filename : fileNames) {
-                File layerToExtract = new File(imageTarExtractDir + File.separator + filename);
-                extractImageLayers(layerToExtract, layerToExtract.getParentFile());
+                File layerToExtract = new File(imageExtractionDir + File.separator + filename);
+                extractDockerImageLayers(layerToExtract, layerToExtract.getParentFile());
             }
         } else {
-            logger.warn("Didn't succeed to extract {}", imageTarFile.getName());
+            logger.warn("Was not able to extract {} (docker image TAR file)", imageTarFile.getName());
         }
-
     }
 
     private String getDepthFolder(int depth) {
