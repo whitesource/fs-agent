@@ -60,13 +60,13 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
     }
 
     @Override
-    public String getBomPattern() {
-        return "**/*" + BOWER_JSON;
+    public String[] getBomPattern() {
+        return new String[]{Constants.PATTERN + BOWER_JSON};
     }
 
     @Override
     public String getPreferredFileName() {
-        return "." + BOWER_JSON;
+        return Constants.DOT + BOWER_JSON;
     }
 
     @Override
@@ -94,7 +94,7 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return Arrays.asList(Constants.JS_EXTENSION);
     }
 
@@ -104,7 +104,14 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
     }
 
     @Override
+    protected String getDependencyTypeName() {
+        return DependencyType.BOWER.name();
+    }
+
+    @Override
     protected boolean isMatchChildDependency(DependencyInfo childDependency, String name, String version) {
         return childDependency.getGroupId().equals(name) && childDependency.getVersion().equals(version);
     }
+
+
 }

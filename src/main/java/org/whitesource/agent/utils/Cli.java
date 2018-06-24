@@ -11,7 +11,7 @@ import java.util.List;
 public class Cli {
     private final Logger logger = LoggerFactory.getLogger(Cli.class);
 
-    public List<String> runCmd(String rootDirectory, String[] params){
+    public  List<String> runCmd(String rootDirectory, String[] params){
         try {
             CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, params);
             List<String> lines = commandLineProcess.executeProcess();

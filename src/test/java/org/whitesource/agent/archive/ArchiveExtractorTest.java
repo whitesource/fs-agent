@@ -69,7 +69,8 @@ public class ArchiveExtractorTest {
         String unzipFolder = getUnzippedFolderFromTest();
         Assert.assertNotNull(unzipFolder);
 
-        File fileDepth3 = new File(Paths.get(unzipFolder, TestHelper.getOsRelativePath("src_depth_2\\test\\resources\\dist\\node_modules\\node_modules\\accepts\\accepts\\index.js")).toString());
+        File fileDepth3 = new File(Paths.get(unzipFolder, TestHelper.getOsRelativePath(
+                "src_depth_2\\test\\resources\\dist\\node_modules\\node_modules\\accepts\\accepts\\index.js")).toString());
         Assert.assertTrue(fileDepth3.exists());
 
         for (Integer i = 0; i < 10; i++) {
@@ -120,7 +121,7 @@ public class ArchiveExtractorTest {
         String[] archiveExcludes = new String[0];
         ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, new String[0]);
 
-        String scannerBaseDir = Paths.get(currentDirectory, "src").toString();
+        String scannerBaseDir = Paths.get(currentDirectory, Constants.SRC).toString();
         int archiveExtractionDepth = 4;
         String unzipFolder = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth, new ArrayList<>());
         return unzipFolder;

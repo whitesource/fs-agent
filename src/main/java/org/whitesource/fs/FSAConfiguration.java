@@ -60,6 +60,18 @@ public class FSAConfiguration {
     private static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
 
+    @Override
+    public String toString() {
+        return "FSA Configuration {\n" +
+                sender.toString() + '\n' +
+                resolver.toString() + '\n' +
+                ", dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
+                request.toString() + '\n' +
+                ", scanPackageManager=" + scanPackageManager + '\n' +
+                ", scanDockerImages=" + scanDockerImages + '\n' +
+                '}';
+    }
+
     public static final String WHITE_SOURCE_DEFAULT_FOLDER_PATH = ".";
     public static final String PIP = "pip";
     public static final String PYTHON = "python";
@@ -217,7 +229,7 @@ public class FSAConfiguration {
         boolean iaLanguageValid = false;
         if (iaLanguage != null) {
             for (ViaLanguage viaLanguage : ViaLanguage.values()) {
-                if (iaLanguage.equals(viaLanguage.toString())) {
+                if (iaLanguage.toLowerCase().equals(viaLanguage.toString().toLowerCase())) {
                     iaLanguageValid = true;
                 }
             }
@@ -258,12 +270,14 @@ public class FSAConfiguration {
 
         // todo split this in multiple configuration before release fsa as a service
         boolean npmRunPreStep               = FSAConfiguration.getBooleanProperty(config, NPM_RUN_PRE_STEP, false);
+        boolean npmIgnoreScripts            = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_SCRIPTS, false);
         boolean npmResolveDependencies      = FSAConfiguration.getBooleanProperty(config, NPM_RESOLVE_DEPENDENCIES, true);
         boolean npmIncludeDevDependencies   = FSAConfiguration.getBooleanProperty(config, NPM_INCLUDE_DEV_DEPENDENCIES, false);
         boolean npmIgnoreJavaScriptFiles    = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
         long npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
         boolean npmIgnoreNpmLsErrors        = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_NPM_LS_ERRORS, false);
         String npmAccessToken               = config.getProperty(NPM_ACCESS_TOKEN);
+        boolean npmYarnProject              = FSAConfiguration.getBooleanProperty(config, NPM_YARN_PROJECT, false);
 
         boolean bowerResolveDependencies    = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
         boolean bowerRunPreStep             = FSAConfiguration.getBooleanProperty(config, BOWER_RUN_PRE_STEP, false);
@@ -285,6 +299,8 @@ public class FSAConfiguration {
         boolean pythonIsWssPluginInstalled          = FSAConfiguration.getBooleanProperty(config, PYTHON_IS_WSS_PLUGIN_INSTALLED, false);
         boolean pythonUninstallWssPluginInstalled   = FSAConfiguration.getBooleanProperty(config, PYTHON_UNINSTALL_WSS_PLUGIN, false);
         boolean pythonIgnorePipInstallErrors        = FSAConfiguration.getBooleanProperty(config, PYTHON_IGNORE_PIP_INSTALL_ERRORS, false);
+        boolean pythonInstallVirtualenv             = FSAConfiguration.getBooleanProperty(config, PYTHON_INSTALL_VIRTUALENV, false);
+        boolean pythonResolveHierarchyTree          = FSAConfiguration.getBooleanProperty(config, PYTHON_RESOLVE_HIERARCHY_TREE, true);
 
         boolean gradleResolveDependencies   = FSAConfiguration.getBooleanProperty(config, GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand    = FSAConfiguration.getBooleanProperty(config, GRADLE_RUN_ASSEMBLE_COMMAND, true);
@@ -304,12 +320,25 @@ public class FSAConfiguration {
         boolean rubyOverwriteGemFile        = FSAConfiguration.getBooleanProperty(config, RUBY_OVERWRITE_GEM_FILE, false);
         boolean rubyInstallMissingGems      = FSAConfiguration.getBooleanProperty(config, RUBY_INSTALL_MISSING_GEMS, false);
 
-        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
+        boolean phpResolveDependencies      = FSAConfiguration.getBooleanProperty(config,PHP_RESOLVE_DEPENDENCIES,true);
+        boolean phpRunPreStep               = FSAConfiguration.getBooleanProperty(config,PHP_RUN_PRE_STEP,false);
+        boolean phpIncludeDevDependencies   = FSAConfiguration.getBooleanProperty(config,PHP_INCLUDE_DEV_DEPENDENCIES,false);
+
+        boolean sbtResolveDependencies      = FSAConfiguration.getBooleanProperty(config,SBT_RESOLVE_DEPENDENCIES, true);
+
+        boolean htmlResolveDependencies     = FSAConfiguration.getBooleanProperty(config, HTML_RESOLVE_DEPENDENCIES, true);
+
+        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles,
+                npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
-                pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled, pythonIgnorePipInstallErrors,
-                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies, paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
-                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems);
+                pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
+                pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree,
+                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies,
+                paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
+                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall,
+                rubyOverwriteGemFile, rubyInstallMissingGems,
+                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, htmlResolveDependencies);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken,String userKey, String projectName, String projectToken) {

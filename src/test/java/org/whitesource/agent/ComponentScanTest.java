@@ -40,10 +40,6 @@ public class ComponentScanTest {
         Properties props = TestHelper.getPropertiesFromFile();
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
         String resolverFolder = Paths.get(config.getParent(), "resolver/npm").toString();
-//        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\CXBug\\package";
-//        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\Maven-Plugin\\maven-plugin1";
-//        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\Bower-Plugin\\bowerBug";
-//        String resolverFolder = "C:\\Users\\RazNitzan\\Desktop\\Bower-Plugin\\Bower";
         props.put("d", resolverFolder);
         props.put("archiveExtractionDepth", 4);
         props.put("includes", "**/**");

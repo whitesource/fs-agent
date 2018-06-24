@@ -89,7 +89,7 @@ public class RpmParser extends AbstractParser {
     // find yumdb folder from collection
     public File checkFolders(Collection<String> yumDbFolders,String yumDbFolderPath,String osName) {
         if (!osName.startsWith(Constants.WINDOWS)){
-            yumDbFolderPath = yumDbFolderPath.replace(Constants.WINDOWS_SEPARATOR, Constants.UNIX_PATH_SEPARATOR);
+            yumDbFolderPath = yumDbFolderPath.replace(Constants.BACK_SLASH, Constants.FORWARD_SLASH);
         }
         if(!yumDbFolders.isEmpty()){
             for (String folderPath:yumDbFolders) {

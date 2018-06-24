@@ -41,7 +41,7 @@ public abstract class AbstractParser {
 
     public static void findFolder(File dir, String folderName, Collection<String> folder, String operatingSystem) {
         if (!operatingSystem.startsWith(Constants.WINDOWS)){
-            folderName = folderName.replace(Constants.FORWARD_SLASH, Constants.BACK_SLASH);
+            folderName = folderName.replace(Constants.BACK_SLASH, Constants.FORWARD_SLASH);
         }
         if (dir.isDirectory()) {
             File[] files = dir.listFiles();

@@ -107,7 +107,7 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return JAVA_EXTENSIONS;
     }
 
@@ -117,8 +117,13 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    public String getBomPattern() {
-        return POM_XML;
+    protected String getDependencyTypeName() {
+        return DependencyType.MAVEN.name();
+    }
+
+    @Override
+    public String[] getBomPattern() {
+        return new String[]{POM_XML};
     }
 
     @Override

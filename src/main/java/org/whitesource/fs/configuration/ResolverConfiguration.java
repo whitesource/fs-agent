@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyManager;
 
+import java.util.Arrays;
+
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class ResolverConfiguration {
@@ -30,11 +32,13 @@ public class ResolverConfiguration {
     public ResolverConfiguration(
             @JsonProperty(NPM_RUN_PRE_STEP) boolean npmRunPreStep,
             @JsonProperty(NPM_RESOLVE_DEPENDENCIES) boolean npmResolveDependencies,
+            @JsonProperty(NPM_IGNORE_SCRIPTS) boolean npmIgnoreScripts,
             @JsonProperty(NPM_INCLUDE_DEV_DEPENDENCIES) boolean npmIncludeDevDependencies,
             @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES) boolean npmIgnoreJavaScriptFiles,
             @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS) long npmTimeoutDependenciesCollector,
             @JsonProperty(NPM_ACCESS_TOKEN) String npmAccessToken,
             @JsonProperty(NPM_IGNORE_NPM_LS_ERRORS) boolean npmIgnoreNpmLsErrors,
+            @JsonProperty(NPM_YARN_PROJECT) boolean npmYarnProject,
 
             @JsonProperty(BOWER_RESOLVE_DEPENDENCIES) boolean bowerResolveDependencies,
             @JsonProperty(BOWER_RUN_PRE_STEP) boolean bowerRunPreStep,
@@ -52,6 +56,8 @@ public class ResolverConfiguration {
             @JsonProperty(PYTHON_IS_WSS_PLUGIN_INSTALLED) boolean pythonIsWssPluginInstalled,
             @JsonProperty(PYTHON_UNINSTALL_WSS_PLUGIN) boolean pythonUninstallWssPlugin,
             @JsonProperty(PYTHON_IGNORE_PIP_INSTALL_ERRORS) boolean pythonIgnorePipInstallErrors,
+            @JsonProperty(PYTHON_INSTALL_VIRTUALENV) boolean pythonInstallVirtualenv,
+            @JsonProperty(PYTHON_RESOLVE_HIERARCHY_TREE) boolean pythonResolveHierarchyTree,
 
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
@@ -68,17 +74,27 @@ public class ResolverConfiguration {
             @JsonProperty(GO_RESOLVE_DEPENDENCIES) boolean goResolveDependencies,
             @JsonProperty(GO_DEPENDENCY_MANAGER) String goDependencyManager,
             @JsonProperty(GO_COLLECT_DEPENDENCIES_AT_RUNTIME) boolean goCollectDependenciesAtRuntime,
+
             @JsonProperty(RUBY_RESOLVE_DEPENDENCIES) boolean rubyResolveDependencies,
             @JsonProperty(RUBY_RUN_BUNDLE_INSTALL) boolean rubyRunBundleInstall,
             @JsonProperty(RUBY_OVERWRITE_GEM_FILE) boolean rubyOverwriteGemFile,
-            @JsonProperty(RUBY_INSTALL_MISSING_GEMS) boolean rubyInstallMissingGems) {
+            @JsonProperty(RUBY_INSTALL_MISSING_GEMS) boolean rubyInstallMissingGems,
+
+            @JsonProperty(PHP_RESOLVE_DEPENDENCIES) boolean phpResolveDependencies,
+            @JsonProperty(PHP_RUN_PRE_STEP) boolean phpRunPreStep,
+            @JsonProperty(PHP_INCLUDE_DEV_DEPENDENCIES) boolean phpIncludeDevDependencies,
+            @JsonProperty(SBT_RESOLVE_DEPENDENCIES) boolean sbtResolveDependencies,
+
+            @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies) {
         this.npmRunPreStep = npmRunPreStep;
+        this.npmIgnoreScripts = npmIgnoreScripts;
         this.npmResolveDependencies = npmResolveDependencies;
         this.npmIncludeDevDependencies = npmIncludeDevDependencies;
         this.npmIgnoreJavaScriptFiles = npmIgnoreJavaScriptFiles;
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
         this.npmAccessToken = npmAccessToken;
         this.npmIgnoreNpmLsErrors = npmIgnoreNpmLsErrors;
+        this.npmYarnProject = npmYarnProject;
 
         this.bowerResolveDependencies = bowerResolveDependencies;
         this.bowerRunPreStep = bowerRunPreStep;
@@ -96,6 +112,8 @@ public class ResolverConfiguration {
         this.pythonIsWssPluginInstalled = pythonIsWssPluginInstalled;
         this.pythonUninstallWssPlugin = pythonUninstallWssPlugin;
         this.pythonIgnorePipInstallErrors = pythonIgnorePipInstallErrors;
+        this.pythonInstallVirtualenv = pythonInstallVirtualenv;
+        this.pythonResolveHierarchyTree = pythonResolveHierarchyTree;
 
         this.dependenciesOnly = dependenciesOnly;
         this.whitesourceConfiguration = whitesourceConfiguration;
@@ -115,21 +133,31 @@ public class ResolverConfiguration {
         }
         this.goCollectDependenciesAtRuntime = goCollectDependenciesAtRuntime;
 
-        this.rubyResolveDependencies    = rubyResolveDependencies;
-        this.rubyRunBundleInstall       = rubyRunBundleInstall;
-        this.rubyOverwriteGemFile       = rubyOverwriteGemFile;
-        this.rubyInstallMissingGems     = rubyInstallMissingGems;
+        this.rubyResolveDependencies = rubyResolveDependencies;
+        this.rubyRunBundleInstall = rubyRunBundleInstall;
+        this.rubyOverwriteGemFile = rubyOverwriteGemFile;
+        this.rubyInstallMissingGems = rubyInstallMissingGems;
+
+        this.phpResolveDependencies = phpResolveDependencies;
+        this.phpRunPreStep = phpRunPreStep;
+        this.phpIncludeDevDependencies = phpIncludeDevDependencies;
+
+        this.sbtResolveDependencies = sbtResolveDependencies;
+
+        this.htmlResolveDependencies = htmlResolveDependencies;
     }
 
     /* --- Members --- */
 
     private boolean     npmRunPreStep;
+    private boolean     npmIgnoreScripts;
     private boolean     npmResolveDependencies;
     private boolean     npmIncludeDevDependencies;
     private boolean     npmIgnoreJavaScriptFiles;
     private String      npmAccessToken;
     private long        npmTimeoutDependenciesCollector;
-    private boolean     npmIgnoreNpmLsErrors; 
+    private boolean     npmIgnoreNpmLsErrors;
+    private boolean     npmYarnProject;
     private boolean     bowerResolveDependencies;
     private boolean     bowerRunPreStep;
     private boolean     nugetResolveDependencies;
@@ -143,33 +171,48 @@ public class ResolverConfiguration {
     private String      pipPath;
     private String      pythonPath;
     private boolean     pythonIgnorePipInstallErrors;
+    private boolean     pythonInstallVirtualenv;
+    private boolean     pythonResolveHierarchyTree;
 
-    private boolean     gradleResolveDependencies;
-    private boolean     gradleRunAssembleCommand;
+    private boolean gradleResolveDependencies;
+    private boolean gradleRunAssembleCommand;
 
     private final boolean pythonIsWssPluginInstalled;
     private final boolean pythonUninstallWssPlugin;
 
-    private boolean     paketResolveDependencies;
-    private String[]    paketIgnoredScopes;
-    private boolean     paketIgnoreFiles;
-    private boolean     paketRunPreStep;
-    private String      paketPath;
+    private boolean paketResolveDependencies;
+    private String[] paketIgnoredScopes;
+    private boolean paketIgnoreFiles;
+    private boolean paketRunPreStep;
+    private String paketPath;
 
-    private boolean     goResolveDependencies;
+    private boolean goResolveDependencies;
     private GoDependencyManager goDependencyManager;
-    private boolean     goCollectDependenciesAtRuntime;
+    private boolean goCollectDependenciesAtRuntime;
 
-    private boolean     rubyResolveDependencies;
-    private boolean     rubyRunBundleInstall;
-    private boolean     rubyOverwriteGemFile;
-    private boolean     rubyInstallMissingGems;
+    private boolean rubyResolveDependencies;
+    private boolean rubyRunBundleInstall;
+    private boolean rubyOverwriteGemFile;
+    private boolean rubyInstallMissingGems;
+
+    private boolean phpResolveDependencies;
+    private boolean phpRunPreStep;
+    private boolean phpIncludeDevDependencies;
+
+    private boolean sbtResolveDependencies;
+
+    private boolean htmlResolveDependencies;
 
     /* --- Public getters --- */
 
     @JsonProperty(NPM_RUN_PRE_STEP)
     public boolean isNpmRunPreStep() {
         return npmRunPreStep;
+    }
+
+    @JsonProperty(NPM_IGNORE_SCRIPTS)
+    public boolean isNpmIgnoreScripts() {
+        return npmIgnoreScripts;
     }
 
     @JsonProperty(NPM_RESOLVE_DEPENDENCIES)
@@ -201,6 +244,9 @@ public class ResolverConfiguration {
     public boolean getNpmIgnoreNpmLsErrors() {
         return npmIgnoreNpmLsErrors;
     }
+
+    @JsonProperty(NPM_YARN_PROJECT)
+    public boolean getNpmYarnProject()  {   return npmYarnProject;  }
 
     @JsonProperty(BOWER_RESOLVE_DEPENDENCIES)
     public boolean isBowerResolveDependencies() {
@@ -277,11 +323,25 @@ public class ResolverConfiguration {
         return pythonUninstallWssPlugin;
     }
 
+    @JsonProperty(PYTHON_INSTALL_VIRTUALENV)
+    public boolean isPythonInstallVirtualenv() {
+        return pythonInstallVirtualenv;
+    }
+
+    @JsonProperty(PYTHON_RESOLVE_HIERARCHY_TREE)
+    public boolean isPythonResolveHierarchyTree() {
+        return pythonResolveHierarchyTree;
+    }
+
     @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES)
-    public boolean isGradleResolveDependencies() { return gradleResolveDependencies; }
+    public boolean isGradleResolveDependencies() {
+        return gradleResolveDependencies;
+    }
 
     @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND)
-    public boolean isGradleRunAssembleCommand() { return gradleRunAssembleCommand; }
+    public boolean isGradleRunAssembleCommand() {
+        return gradleRunAssembleCommand;
+    }
 
     @JsonProperty(PAKET_RESOLVE_DEPENDENCIES)
     public boolean isPaketResolveDependencies() {
@@ -309,25 +369,62 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(GO_RESOLVE_DEPENDENCIES)
-    public boolean isGoResolveDependencies() { return goResolveDependencies; }
+    public boolean isGoResolveDependencies() {
+        return goResolveDependencies;
+    }
 
     @JsonProperty(GO_DEPENDENCY_MANAGER)
-    public GoDependencyManager getGoDependencyManager() {   return goDependencyManager; }
+    public GoDependencyManager getGoDependencyManager() {
+        return goDependencyManager;
+    }
 
     @JsonProperty(GO_COLLECT_DEPENDENCIES_AT_RUNTIME)
-    public boolean isGoCollectDependenciesAtRuntime() { return goCollectDependenciesAtRuntime; }
+    public boolean isGoCollectDependenciesAtRuntime() {
+        return goCollectDependenciesAtRuntime;
+    }
 
     @JsonProperty(RUBY_RESOLVE_DEPENDENCIES)
-    public boolean isRubyResolveDependencies() { return rubyResolveDependencies; }
+    public boolean isRubyResolveDependencies() {
+        return rubyResolveDependencies;
+    }
 
     @JsonProperty(RUBY_RUN_BUNDLE_INSTALL)
-    public boolean isRubyRunBundleInstall() { return rubyRunBundleInstall; }
+    public boolean isRubyRunBundleInstall() {
+        return rubyRunBundleInstall;
+    }
 
     @JsonProperty(RUBY_OVERWRITE_GEM_FILE)
-    public boolean isRubyOverwriteGemFile() {   return rubyOverwriteGemFile;    }
+    public boolean isRubyOverwriteGemFile() {
+        return rubyOverwriteGemFile;
+    }
 
     @JsonProperty(RUBY_INSTALL_MISSING_GEMS)
-    public boolean isRubyInstallMissingGems() { return rubyInstallMissingGems;  }
+    public boolean isRubyInstallMissingGems() {
+        return rubyInstallMissingGems;
+    }
+
+    @JsonProperty(PHP_RESOLVE_DEPENDENCIES)
+    public boolean isPhpResolveDependencies() {
+        return phpResolveDependencies;
+    }
+
+    @JsonProperty(PHP_RUN_PRE_STEP)
+    public boolean isPhpRunPreStep() {
+        return phpRunPreStep;
+    }
+
+    @JsonProperty(PHP_INCLUDE_DEV_DEPENDENCIES)
+    public boolean isPhpIncludeDevDependencies() {
+        return phpIncludeDevDependencies;
+    }
+
+    @JsonProperty(SBT_RESOLVE_DEPENDENCIES)
+    public boolean isSbtResolveDependencies() { return sbtResolveDependencies; }
+
+    @JsonProperty(HTML_RESOLVE_DEPENDENCIES)
+    public boolean isHtmlResolveDependencies() {
+        return htmlResolveDependencies;
+    }
 
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {
         this.npmResolveDependencies = npmResolveDependencies;
@@ -352,4 +449,52 @@ public class ResolverConfiguration {
     public void setGradleResolveDependencies(boolean gradleResolveDependencies) {
         this.gradleResolveDependencies = gradleResolveDependencies;
     }
+
+    public void setPhpResolveDependencies(boolean phpResolveDependencies) {
+        this.phpResolveDependencies = phpResolveDependencies;
+    }
+
+    @Override
+    public String toString() {
+
+        return  ", dependenciesOnly=" + dependenciesOnly + '\n' +
+                ", npmRunPreStep=" + npmRunPreStep +
+                ", npmIgnoreScripts=" + npmIgnoreScripts +
+                ", npmResolveDependencies=" + npmResolveDependencies +
+                ", npmIncludeDevDependencies=" + npmIncludeDevDependencies +
+                ", npmIgnoreJavaScriptFiles=" + npmIgnoreJavaScriptFiles +
+                ", npmTimeoutDependenciesCollector=" + npmTimeoutDependenciesCollector  +
+                ", npmIgnoreNpmLsErrors=" + npmIgnoreNpmLsErrors + '\n' +
+                ", bowerResolveDependencies=" + bowerResolveDependencies +
+                ", bowerRunPreStep=" + bowerRunPreStep + '\n' +
+                ", nugetResolveDependencies=" + nugetResolveDependencies +
+                ", nugetRestoreDependencies=" + nugetRestoreDependencies + '\n' +
+                ", mavenResolveDependencies=" + mavenResolveDependencies +
+                ", mavenIgnoredScopes=" + Arrays.toString(mavenIgnoredScopes) +
+                ", mavenAggregateModules=" + mavenAggregateModules + '\n' +
+                ", pythonResolveDependencies=" + pythonResolveDependencies +
+                ", pythonIgnorePipInstallErrors=" + pythonIgnorePipInstallErrors +
+                ", pythonInstallVirtualenv=" + pythonInstallVirtualenv +
+                ", pythonResolveHierarchyTree=" + pythonResolveHierarchyTree + '\n' +
+                ", gradleResolveDependencies=" + gradleResolveDependencies +
+                ", gradleRunAssembleCommand=" + gradleRunAssembleCommand + '\n' +
+                ", paketResolveDependencies=" + paketResolveDependencies +
+                ", paketIgnoredScopes=" + Arrays.toString(paketIgnoredScopes) +
+                ", paketIgnoreFiles=" + paketIgnoreFiles +
+                ", paketRunPreStep=" + paketRunPreStep + '\n' +
+                ", goResolveDependencies=" + goResolveDependencies +
+                ", goDependencyManager=" + goDependencyManager +
+                ", goCollectDependenciesAtRuntime=" + goCollectDependenciesAtRuntime + '\n' +
+                ", rubyResolveDependencies=" + rubyResolveDependencies +
+                ", rubyRunBundleInstall=" + rubyRunBundleInstall +
+                ", rubyOverwriteGemFile=" + rubyOverwriteGemFile +
+                ", rubyInstallMissingGems=" + rubyInstallMissingGems + '\n' +
+                ", phpResolveDependencies=" + phpResolveDependencies +
+                ", phpRunPreStep=" + phpRunPreStep +
+                ", phpIncludeDevDependenices=" + phpIncludeDevDependencies + '\n' +
+                ", htmlResolveDependencies=" + htmlResolveDependencies + '\n' +
+                ", sbtResolveDependencies=" + sbtResolveDependencies;
+    }
+
+
 }

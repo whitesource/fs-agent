@@ -81,12 +81,14 @@ public final class ConfigPropertyKeys {
     public static final String ACCEPT_EXTENSIONS_LIST = "acceptExtensionsList";
 
     public static final String NPM_RUN_PRE_STEP                             = "npm.runPreStep";
+    public static final String NPM_IGNORE_SCRIPTS                           = "npm.ignoreScripts";
     public static final String NPM_RESOLVE_DEPENDENCIES                     = "npm.resolveDependencies";
     public static final String NPM_INCLUDE_DEV_DEPENDENCIES                 = "npm.includeDevDependencies";
     public static final String NPM_IGNORE_JAVA_SCRIPT_FILES                 = "npm.ignoreJavaScriptFiles";
     public static final String NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS   = "npm.timeoutDependenciesCollectorInSeconds";
     public static final String NPM_ACCESS_TOKEN                             = "npm.accessToken";
     public static final String NPM_IGNORE_NPM_LS_ERRORS                     = "npm.ignoreNpmLsErrors";
+    public static final String NPM_YARN_PROJECT                             = "npm.yarnProject";
 
     public static final String BOWER_RESOLVE_DEPENDENCIES   = "bower.resolveDependencies";
     public static final String BOWER_RUN_PRE_STEP           = "bower.runPreStep";
@@ -97,6 +99,8 @@ public final class ConfigPropertyKeys {
     public static final String PYTHON_IS_WSS_PLUGIN_INSTALLED   = "python.isWssPluginInstalled";
     public static final String PYTHON_UNINSTALL_WSS_PLUGIN      = "python.uninstallWssPlugin";
     public static final String PYTHON_IGNORE_PIP_INSTALL_ERRORS = "python.ignorePipInstallErrors";
+    public static final String PYTHON_INSTALL_VIRTUALENV = "python.installVirtualenv";
+    public static final String PYTHON_RESOLVE_HIERARCHY_TREE = "python.resolveHierarchyTree";
 
     public static final String NUGET_RESOLVE_DEPENDENCIES   = "nuget.resolveDependencies";
     public static final String NUGET_RESTORE_DEPENDENCIES   = "nuget.restoreDependencies";
@@ -135,6 +139,14 @@ public final class ConfigPropertyKeys {
     public static final String RUBY_RUN_BUNDLE_INSTALL      = "ruby.runBundleInstall";
     public static final String RUBY_OVERWRITE_GEM_FILE      = "ruby.overwriteGemFile";
     public static final String RUBY_INSTALL_MISSING_GEMS    = "ruby.installMissingGems";
+
+    public static final String PHP_RESOLVE_DEPENDENCIES     = "php.resolveDependencies";
+    public static final String PHP_RUN_PRE_STEP             = "php.runPreStep";
+    public static final String PHP_INCLUDE_DEV_DEPENDENCIES = "php.includeDevDependencies";
+
+    public static final String SBT_RESOLVE_DEPENDENCIES     = "sbt.resolveDependencies";
+
+    public static final String HTML_RESOLVE_DEPENDENCIES     = "html.resolveDependencies";
 
     public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
 
