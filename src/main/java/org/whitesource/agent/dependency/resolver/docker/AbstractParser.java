@@ -1,6 +1,5 @@
 package org.whitesource.agent.dependency.resolver.docker;
 
-import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 
 import java.io.BufferedReader;
@@ -37,18 +36,15 @@ public abstract class AbstractParser {
 
     public abstract Collection<DependencyInfo> parse(File file);
 
-    public abstract File findFile(String[] files, String filename, String operatingSystem);
+    public abstract File findFile(String[] files, String filename);
 
-    public static void findFolder(File dir, String folderName, Collection<String> folder, String operatingSystem) {
-        if (!operatingSystem.startsWith(Constants.WINDOWS)) {
-            folderName = folderName.replace(Constants.BACK_SLASH, Constants.FORWARD_SLASH);
-        }
+    public static void findFolder(File dir, String folderName, Collection<String> folder) {
         if (dir.isDirectory()) {
             File[] files = dir.listFiles();
             if (files != null) {
                 for (File file : files) {
                     if (file.isDirectory()) {
-                        findFolder(file, folderName, folder, operatingSystem);
+                        findFolder(file, folderName, folder);
                         if (file.getName().equals(folderName)) {
                             folder.add(file.getPath());
                         }

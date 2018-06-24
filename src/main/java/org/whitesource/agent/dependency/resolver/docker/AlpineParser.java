@@ -71,10 +71,7 @@ public class AlpineParser extends AbstractParser {
     }
 
     @Override
-    public File findFile(String[] files, String filename, String operatingSystem) {
-        if (!operatingSystem.startsWith(Constants.WINDOWS)) {
-            filename = filename.replace(Constants.BACK_SLASH, Constants.FORWARD_SLASH);
-        }
+    public File findFile(String[] files, String filename) {
         for (String filepath : files) {
             if (filepath.endsWith(filename)) {
                 return new File(filepath);

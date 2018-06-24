@@ -223,7 +223,6 @@ public class ArchiveExtractor {
 
     // extract all the layers of image
     public void extractImageLayers(File imageTarFile, File imageTarExtractDir) {
-        logger.info("Starting to extract image layers");
         FilesScanner filesScanner = new FilesScanner();
         boolean success = false;
         if (imageTarFile.getName().endsWith(TAR_SUFFIX)) {

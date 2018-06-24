@@ -53,10 +53,9 @@ public class RpmParser extends AbstractParser {
                     }
                 }
             }
-        }catch (Exception e){
-            logger.warn("Failed to parse {} : {}",file,e.getMessage());
-        }
-        finally {
+        } catch (Exception e) {
+            logger.warn("Failed to parse {} : {}", file, e.getMessage());
+        } finally {
             closeStream(br, fr);
         }
         return dependencyInfos;
@@ -73,26 +72,23 @@ public class RpmParser extends AbstractParser {
             if (StringUtils.isNotBlank(packVersion)) {
                 return packVersion;
             }
-        }catch (Exception e){
-            logger.warn("Failed to create package version : {}",e.getMessage());
+        } catch (Exception e) {
+            logger.warn("Failed to create package version : {}", e.getMessage());
         }
         return null;
     }
 
     @Override
-    public File findFile(String[] files, String filename,String operatingSystem) {
+    public File findFile(String[] files, String filename) {
         return null;
     }
 
     // find yumdb folder from collection
-    public File checkFolders(Collection<String> yumDbFolders,String yumDbFolderPath,String osName) {
-        if (!osName.startsWith(Constants.WINDOWS)){
-            yumDbFolderPath = yumDbFolderPath.replace(Constants.BACK_SLASH, Constants.FORWARD_SLASH);
-        }
-        if(!yumDbFolders.isEmpty()){
-            for (String folderPath:yumDbFolders) {
+    public File checkFolders(Collection<String> yumDbFolders, String yumDbFolderPath) {
+        if (!yumDbFolders.isEmpty()) {
+            for (String folderPath : yumDbFolders) {
                 File file = new File(folderPath);
-                if(file.listFiles().length > 0 && folderPath.contains(yumDbFolderPath)){
+                if (file.listFiles().length > 0 && folderPath.contains(yumDbFolderPath)) {
                     return file;
                 }
             }
