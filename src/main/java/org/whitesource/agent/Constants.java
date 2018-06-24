@@ -55,8 +55,6 @@ public final class Constants {
     public static final String EMPTY_STRING = "";
     public static final String COLON = ":";
     public static final String PLUS = "+";
-    public static final String UNIX_PATH_SEPARATOR = "/";
-    public static final String WINDOWS_SEPARATOR = "\\";
     public static final String DASH = "-";
     public static final String PATTERN = "**/*";
     public static final String COMMA = ",";
@@ -74,7 +72,10 @@ public final class Constants {
     public static final String EXE = ".exe";
     public static final String NUPKG = ".nupkg";
     public static final String CS = ".cs";
-
+    public static final String VAR = "var";
+    public static final String LIB = "lib";
+    public static final String YUM_DB = "yumdb";
+    public static final String YUM = "yum";
 
     public static final char QUESTION_MARK = '?';
     public static final char WHITESPACE_CHAR = ' ';

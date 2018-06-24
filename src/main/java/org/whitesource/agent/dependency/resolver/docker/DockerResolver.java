@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.whitesource.agent.Constants.*;
 import static org.whitesource.agent.archive.ArchiveExtractor.TAR_SUFFIX;
 
 /**
@@ -35,30 +36,27 @@ public class DockerResolver {
 
     private static final String WHITE_SOURCE_DOCKER = "WhiteSource-Docker";
     private static final String TEMP_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + WHITE_SOURCE_DOCKER;
-    private static final String ARCHIVE_EXTRACTOR_TEMP_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + "WhiteSource-ArchiveExtractor";
     private static final String DOCKER_SAVE_IMAGE_COMMAND = "docker save";
-
     private static final String O_PARAMETER = "-o";
     private static final String REPOSITORY = "REPOSITORY";
     private static final String SPACES_REGEX = "\\s+";
     private static final String DOCKER_NAME_FORMAT_STRING = "{0} {1} ({2})";
     private static final MessageFormat DOCKER_NAME_FORMAT = new MessageFormat(DOCKER_NAME_FORMAT_STRING);
     private static final String DOCKER_IMAGES = "docker images";
-    private static final boolean PARTIAL_SHA1_MATCH = false;
     private static final String DEBIAN_PATTERN = "**/*eipp.log.xz";
     private static final String ARCH_LINUX_PATTERN = "**/*desc";
     private static final String ALPINE_PATTERN = "**/*installed";
     private static final String DEBIAN_PATTERN_AVAILABLE = "**/*available";
-    private static final String RPM_PATTERN = "**var\\lib\\yum\\yumdb/**";
+    private static final String RPM_PATTERN = "**" + VAR + File.separator + LIB + File.separator + YUM + File.separator + YUM_DB + "/**";
     private static final String[] scanIncludes = {DEBIAN_PATTERN, ARCH_LINUX_PATTERN, ALPINE_PATTERN, RPM_PATTERN, DEBIAN_PATTERN_AVAILABLE};
     private static final String[] scanExcludes = {};
-    private static final String ARCH_LINUX_DESC_FOLDERS = "var\\lib\\pacman\\local";
-    private static final String RPM_YUM_DB_FOLDER_DEFAULT_PATH = "var\\lib\\yum\\yumdb";
-    private static final String DEBIAN_LIST_PACKAGES_FILE = "\\eipp.log.xz";
-    private static final String ALPINE_LIST_PACKAGES_FILE = "\\installed";
-    private static final String DEBIAN_LIST_PACKAGES_FILE_AVAILABLE = "\\available";
-    public static final String YUMDB = "yumdb";
-    public static final String PACKAGE_LOG_TXT = "packageLog.txt";
+    private static final String ARCH_LINUX_DESC_FOLDERS = VAR + File.separator + LIB + File.separator + "pacman" + File.separator + "local";
+    private static final String RPM_YUM_DB_FOLDER_DEFAULT_PATH = VAR + File.separator + LIB + File.separator + YUM + File.separator + YUM_DB;
+    private static final String DEBIAN_LIST_PACKAGES_FILE = File.separator + "eipp.log.xz";
+    private static final String ALPINE_LIST_PACKAGES_FILE = File.separator + "installed";
+    private static final String DEBIAN_LIST_PACKAGES_FILE_AVAILABLE = File.separator + "available";
+    private static final String PACKAGE_LOG_TXT = "packageLog.txt";
+    private static final boolean PARTIAL_SHA1_MATCH = false;
 
     /* --- Members --- */
 
@@ -160,7 +158,7 @@ public class DockerResolver {
     private void saveDockerImages(Collection<DockerImage> dockerImages, Collection<AgentProjectInfo> projects) throws IOException {
         Process process = null;
         logger.info("Saving {} docker images", dockerImages.size());
-        String osName = System.getProperty(Constants.OS_NAME);
+        //String osName = System.getProperty(Constants.OS_NAME);
         for (DockerImage dockerImage : dockerImages) {
             logger.debug("Saving image {} {}", dockerImage.getRepository(), dockerImage.getTag());
             // create agent project info
@@ -169,78 +167,67 @@ public class DockerResolver {
                     dockerImage.getRepository(), dockerImage.getTag()), null));
             projects.add(projectInfo);
 
-            File containerTarFile = new File(TEMP_FOLDER, dockerImage.getRepository() + TAR_SUFFIX);
-            File containerTarExtractDir = new File(TEMP_FOLDER, dockerImage.getRepository());
-            containerTarExtractDir.mkdirs();
-            File containerTarArchiveExtractDir = new File(ARCHIVE_EXTRACTOR_TEMP_FOLDER);
-            containerTarArchiveExtractDir.mkdirs();
+            File imageTarFile = new File(TEMP_FOLDER, dockerImage.getRepository() + TAR_SUFFIX);
+            File imageExtractionDir = new File(TEMP_FOLDER, dockerImage.getRepository());
+            imageExtractionDir.mkdirs();
             try {
                 //Save image as tar file
                 process = Runtime.getRuntime().exec(DOCKER_SAVE_IMAGE_COMMAND + Constants.WHITESPACE + dockerImage.getId() +
-                        Constants.WHITESPACE  + O_PARAMETER + Constants.WHITESPACE + containerTarFile.getPath());
+                        Constants.WHITESPACE + O_PARAMETER + Constants.WHITESPACE + imageTarFile.getPath());
                 process.waitFor();
 
                 // extract tar archive
-                List<String> archiveDirs = new LinkedList<>();
-                archiveDirs.add(containerTarArchiveExtractDir.getPath());
                 ArchiveExtractor archiveExtractor = new ArchiveExtractor(config.getAgent().getArchiveIncludes(), config.getAgent().getArchiveExcludes(), config.getAgent().getIncludes());
-                archiveExtractor.extractArchives(containerTarFile.getPath(), config.getAgent().getArchiveExtractionDepth(), archiveDirs);
-
+                archiveExtractor.extractDockerImageLayers(imageTarFile, imageExtractionDir);
                 FilesScanner filesScanner = new FilesScanner();
-                String[] fileNames = filesScanner.getDirectoryContent(containerTarArchiveExtractDir.getPath(), scanIncludes, scanExcludes, true, false);
+                String[] fileNames = filesScanner.getDirectoryContent(imageExtractionDir.getParent(), scanIncludes, scanExcludes, true, false);
 
-                // check the operating system to build the full path correctly
-                if (osName.startsWith(Constants.WINDOWS)) {
-                    for (int i = 0; i < fileNames.length; i++) {
-                        fileNames[i] = containerTarArchiveExtractDir.getPath() + Constants.BACK_SLASH + fileNames[i];
-                    }
-                } else {
-                    for (int i = 0; i < fileNames.length; i++) {
-                        fileNames[i] = containerTarArchiveExtractDir.getPath() + Constants.FORWARD_SLASH + fileNames[i];
-                    }
+                // build the full path correctly
+                for (int i = 0; i < fileNames.length; i++) {
+                    fileNames[i] = imageExtractionDir.getParent() + File.separator + fileNames[i];
                 }
 
                 // check for dependencies for each docker operating system (Debian,Arch-Linux,Alpine,Rpm)
                 AbstractParser parser = new DebianParser();
-                File file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE, osName);
+                File file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE);
 
                 // extract .xz file to read the package log file
                 if (file != null) {
-                    file = getPackagesLogFile(file,osName,archiveExtractor);
+                    file = getPackagesLogFile(file, archiveExtractor);
                 }
                 parseProjectInfo(projectInfo, parser, file);
-                file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE_AVAILABLE, osName);
+                file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE_AVAILABLE);
                 if (file != null) {
                     parseProjectInfo(projectInfo, parser, file);
                 }
 
                 // try to find duplicates and clear them
                 Collection<DependencyInfo> debianDependencyInfos = mergeDependencyInfos(projectInfo);
-                if(debianDependencyInfos !=null && !debianDependencyInfos.isEmpty()){
+                if (debianDependencyInfos != null && !debianDependencyInfos.isEmpty()) {
                     projectInfo.getDependencies().clear();
                     projectInfo.getDependencies().addAll(debianDependencyInfos);
                 }
                 logger.info("Found {} Debian Packages", debianDependencyInfos.size());
 
                 parser = new ArchLinuxParser();
-                file = parser.findFile(fileNames, ARCH_LINUX_DESC_FOLDERS,osName);
+                file = parser.findFile(fileNames, ARCH_LINUX_DESC_FOLDERS);
                 int archLinuxPackages = parseProjectInfo(projectInfo, parser, file);
                 logger.info("Found {} Arch linux Packages", archLinuxPackages);
 
                 parser = new AlpineParser();
-                file = parser.findFile(fileNames, ALPINE_LIST_PACKAGES_FILE,osName);
+                file = parser.findFile(fileNames, ALPINE_LIST_PACKAGES_FILE);
                 int alpinePackages = parseProjectInfo(projectInfo, parser, file);
                 logger.info("Found {} Alpine Packages", alpinePackages);
 
                 RpmParser rpmParser = new RpmParser();
                 Collection<String> yumDbFoldersPath = new LinkedList<>();
-                rpmParser.findFolder(containerTarArchiveExtractDir,YUMDB,yumDbFoldersPath,osName);
-                File yumDbFolder = rpmParser.checkFolders(yumDbFoldersPath,RPM_YUM_DB_FOLDER_DEFAULT_PATH,osName);
+                rpmParser.findFolder(imageExtractionDir, YUM_DB, yumDbFoldersPath);
+                File yumDbFolder = rpmParser.checkFolders(yumDbFoldersPath, RPM_YUM_DB_FOLDER_DEFAULT_PATH);
                 int rpmPackages = parseProjectInfo(projectInfo, rpmParser, yumDbFolder);
                 logger.info("Found {} Rpm Packages", rpmPackages);
 
                 // scan files
-                String extractPath = containerTarArchiveExtractDir.getPath();
+                String extractPath = imageExtractionDir.getPath();
                 Set<String> setDirs = new HashSet<>();
                 setDirs.add(extractPath);
                 Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
@@ -250,61 +237,42 @@ public class DockerResolver {
                         config.getAgent().getGlobCaseSensitive(), config.getAgent().getArchiveExtractionDepth(), FileExtensions.ARCHIVE_INCLUDES,
                         FileExtensions.ARCHIVE_EXCLUDES, false, config.getAgent().isFollowSymlinks(), new ArrayList<>(), PARTIAL_SHA1_MATCH);
 
-//                // modify file paths relative to the container
-//                for (DependencyInfo dependencyInfo : dependencyInfos) {
-//                    String systemPath = dependencyInfo.getSystemPath();
-//                    if (StringUtils.isNotBlank(systemPath)) {
-//                        String containerRelativePath = systemPath;
-//                        containerRelativePath.replace(Constants.B, Constants.UNIX_PATH_SEPARATOR);
-//                        containerRelativePath = containerRelativePath.substring(containerRelativePath.indexOf(WHITE_SOURCE_DOCKER +
-//                                Constants.WINDOWS_SEPARATOR) + WHITE_SOURCE_DOCKER.length() + 1);
-//                        containerRelativePath = containerRelativePath.substring(containerRelativePath.indexOf(Constants.WINDOWS_SEPARATOR) + 1);
-//                        dependencyInfo.setSystemPath(containerRelativePath);
-//                    }
-//                }
                 projectInfo.getDependencies().addAll(dependencyInfos);
             } catch (IOException e) {
                 logger.error("Error exporting image {}: {}", dockerImage.getRepository(), e.getMessage());
                 logger.debug("Error exporting image {}", dockerImage.getRepository(), e);
             } catch (ArchiverException e) {
-                logger.error("Error extracting {}: {}", containerTarFile, e.getMessage());
+                logger.error("Error extracting {}: {}", imageTarFile, e.getMessage());
                 logger.debug("Error extracting tar archive", e);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
                 process.destroy();
-                deleteDockerArchiveFiles(containerTarFile, containerTarExtractDir, containerTarArchiveExtractDir);
+                deleteDockerArchiveFiles(imageTarFile, imageExtractionDir);
             }
         }
     }
 
     private Collection<DependencyInfo> mergeDependencyInfos(AgentProjectInfo projectInfo) {
-        Map<String,DependencyInfo> infoMap = new HashedMap();
+        Map<String, DependencyInfo> infoMap = new HashedMap();
         Collection<DependencyInfo> dependencyInfos = new LinkedList<>();
-        if(projectInfo!=null){
+        if (projectInfo != null) {
             Collection<DependencyInfo> dependencies = projectInfo.getDependencies();
-            for (DependencyInfo dependencyInfo:dependencies) {
-                infoMap.putIfAbsent(dependencyInfo.getArtifactId(),dependencyInfo);
+            for (DependencyInfo dependencyInfo : dependencies) {
+                infoMap.putIfAbsent(dependencyInfo.getArtifactId(), dependencyInfo);
             }
         }
-        for(Map.Entry<String, DependencyInfo> entry : infoMap.entrySet()) {
-            if(entry.getValue()!=null){
+        for (Map.Entry<String, DependencyInfo> entry : infoMap.entrySet()) {
+            if (entry.getValue() != null) {
                 dependencyInfos.add(entry.getValue());
             }
         }
         return dependencyInfos;
     }
 
-    private File getPackagesLogFile(File file,String osName,ArchiveExtractor archiveExtractor) throws IOException {
-
-       if(osName.startsWith(Constants.WINDOWS)){
-           archiveExtractor.unXz(file, Constants.BACK_SLASH + PACKAGE_LOG_TXT);
-           return new File(file.getParent() + Constants.BACK_SLASH + PACKAGE_LOG_TXT);
-       }
-       else {
-           archiveExtractor.unXz(file, Constants.FORWARD_SLASH + PACKAGE_LOG_TXT);
-           return new File(file.getParent() + Constants.FORWARD_SLASH + PACKAGE_LOG_TXT);
-       }
+    private File getPackagesLogFile(File file, ArchiveExtractor archiveExtractor) {
+        archiveExtractor.unXz(file, File.separator + PACKAGE_LOG_TXT);
+        return new File(file.getParent() + File.separator + PACKAGE_LOG_TXT);
     }
 
     private int parseProjectInfo(AgentProjectInfo projectInfo, AbstractParser parser, File file) {
@@ -318,15 +286,8 @@ public class DockerResolver {
         return 0;
     }
 
-    private void deleteDockerArchiveFiles(File containerTarFile, File containerTarExtractDir, File containerTarArchiveExtractDir) throws IOException {
-        FileUtils.deleteQuietly(containerTarFile);
-        FileUtils.deleteQuietly(containerTarExtractDir);
-        boolean succeed = FileUtils.deleteQuietly(containerTarArchiveExtractDir);
-        // In some cases files with size zero are not deleted, retry should resolve the issue.
-        if (!succeed) {
-            logger.debug("Didn't succeed to delete, retrying");
-            FileUtils.deleteQuietly(containerTarArchiveExtractDir);
-        }
+    private void deleteDockerArchiveFiles(File imageTarFile, File imageTarExtractDir) {
+        FileUtils.deleteQuietly(imageTarFile);
+        FileUtils.deleteQuietly(imageTarExtractDir);
     }
-
 }
