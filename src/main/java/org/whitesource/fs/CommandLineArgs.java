@@ -116,6 +116,12 @@ public class CommandLineArgs {
     @Parameter(names = "-userKey", description = "user key uniquely identifying the account at white source")
     String userKey = null;
 
+    @Parameter(names = "-projectToken", description = "API token to match an existing WhiteSource project")
+    String projectToken = null;
+
+    @Parameter(names = "-productToken", description = "Unique identifier of the product to update")
+    String productToken = null;
+
     /* --- Public methods --- */
 
     public String getConfigFilePath() {

@@ -82,7 +82,6 @@ public class ArchLinuxParser extends AbstractParser {
     public File findFile(String[] files, String pathToPackageManagerFolder) {
         int max = 0;
         File archLinuxPackageManagerFile = null;
-
         for (String filepath : files) {
             if (filepath.contains(pathToPackageManagerFolder) && filepath.endsWith(DESC)) {
                 int descStartIndex = filepath.lastIndexOf(pathToPackageManagerFolder);
