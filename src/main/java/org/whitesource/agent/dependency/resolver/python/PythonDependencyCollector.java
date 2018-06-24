@@ -273,10 +273,10 @@ public class PythonDependencyCollector extends DependencyCollector {
 
     private String[] getFullCmdInstallation(String requirementsTxtPath) {
         // execute all the command with and between them in order to save the virtualenv shell
-        String[] forWindows = new String[]{this.tempDirVirtualenv + SCRIPTS_ACTIVATE, AND, pipPath, INSTALL, R_PARAMETER,
+        String[] windowsCommand = new String[]{this.tempDirVirtualenv + SCRIPTS_ACTIVATE, AND, pipPath, INSTALL, R_PARAMETER,
                 requirementsTxtPath, F, this.tempDirPackages, AND, pipPath, INSTALL, PIPDEPTREE, AND, PIPDEPTREE,
                 JSON_TREE, ">", this.tempDirVirtualenv + HIERARCHY_TREE_TXT};
-        return forWindows;
+        return windowsCommand;
     }
 
     private boolean processCommand(String[] args, boolean withOutput) throws IOException {
@@ -341,18 +341,19 @@ public class PythonDependencyCollector extends DependencyCollector {
     private String createScript(String requirementsTxtPath) {
         FilesUtils filesUtils = new FilesUtils();
         String path = filesUtils.createTmpFolder(false, PythonDependencyResolver.WHITESOURCE_PYTHON_TEMP_FOLDER);
-        String pathOfScript = null;
+        String scriptPath = null;
         if (path != null) {
-            pathOfScript = path + SCRIPT_SH;
+            scriptPath = path + SCRIPT_SH;
             try {
-                File file = new File(pathOfScript);
+                File file = new File(scriptPath);
                 FileOutputStream fos = new FileOutputStream(file);
                 BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fos));
                 bufferedWriter.write(BIN_BASH);
                 bufferedWriter.newLine();
                 bufferedWriter.write(SOURCE + Constants.WHITESPACE + this.tempDirVirtualenv + BIN_ACTIVATE);
                 bufferedWriter.newLine();
-                bufferedWriter.write(pipPath + Constants.WHITESPACE + INSTALL + Constants.WHITESPACE + R_PARAMETER + Constants.WHITESPACE + requirementsTxtPath + Constants.WHITESPACE + F + Constants.WHITESPACE + this.tempDirPackages);
+                bufferedWriter.write(pipPath + Constants.WHITESPACE + INSTALL + Constants.WHITESPACE + R_PARAMETER +
+                        Constants.WHITESPACE + requirementsTxtPath + Constants.WHITESPACE + F + Constants.WHITESPACE + this.tempDirPackages);
                 bufferedWriter.newLine();
                 bufferedWriter.write(pipPath + Constants.WHITESPACE + INSTALL + Constants.WHITESPACE + PIPDEPTREE);
                 bufferedWriter.newLine();
@@ -364,7 +365,7 @@ public class PythonDependencyCollector extends DependencyCollector {
                 return null;
             }
         }
-        return pathOfScript;
+        return scriptPath;
     }
 
     /* --- Nested classes --- */
