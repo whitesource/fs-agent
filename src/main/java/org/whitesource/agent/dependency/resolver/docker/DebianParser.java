@@ -85,7 +85,7 @@ public class DebianParser extends AbstractParser {
     @Override
     public File findFile(String[] files, String filename,String operatingSystem) {
         if (!operatingSystem.startsWith(Constants.WINDOWS)){
-            filename = filename.replace(Constants.FORWARD_SLASH, Constants.BACK_SLASH);
+            filename = filename.replace(Constants.BACK_SLASH, Constants.FORWARD_SLASH);
         }
         for (String filepath : files) {
             if (filepath.endsWith(filename)) {
