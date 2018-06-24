@@ -5,9 +5,12 @@ import org.simpleframework.xml.core.Persister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.Constants;
+import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
+import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.Cli;
@@ -15,11 +18,14 @@ import org.whitesource.agent.utils.FilesScanner;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class SbtDependencyResolver extends AbstractDependencyResolver {
 
-    private static final String BUILD_SBT = "build.sbt";
+    private static final String BUILD_SBT = "-compile.xml";
     private static final String SCALA = "scala";
     private static final String SBT = "sbt";
     private static final String SCALA_EXTENSION = Constants.DOT + SCALA;
@@ -30,13 +36,69 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     protected static final String REPORTS = "reports";
     protected static final String SUCCESS = "success";
 
+    private boolean sbtAggregateModules;
+    private boolean dependenciesOnly;
 
     private final Logger logger = LoggerFactory.getLogger(SbtDependencyResolver.class);
 
+    public SbtDependencyResolver(boolean sbtAggregateModules, boolean dependenciesOnly){
+        this.sbtAggregateModules = sbtAggregateModules;
+        this.dependenciesOnly = dependenciesOnly;
+        this.bomParser = new SbtBomParser();
+    }
+
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
-        List<DependencyInfo> dependencies = collectDependencies(topLevelFolder);
-        return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
+        Collection<AgentProjectInfo> projects = new ArrayList<>();
+        List<File> xmlFiles = findXmlReport(topLevelFolder);
+        if (xmlFiles.size()== 0){
+            xmlFiles = loadXmlReport(topLevelFolder);
+        }
+        if (xmlFiles != null){
+            for (File xmlFile :xmlFiles){
+                projects.add(parseXmlReport(xmlFile));
+            }
+        }
+
+        List<BomFile> files = bomFiles.stream().map(bomParser::parseBomFile)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        // create excludes for .JAVA files upon finding MAVEN dependencies
+        Set<String> excludes = new HashSet<>();
+
+        Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
+
+            // map each pom file to specific project
+            Optional<BomFile> folderPath = files.stream().filter(file -> projectInfo.getCoordinates().getArtifactId().equals(file.getName())).findFirst();
+            if (folderPath.isPresent()) {
+                File topFolderFound = new File(folderPath.get().getLocalFileName()).getParentFile();
+
+                // in java do not remove anything since they are not the duplicates of the dependencies found
+                // discard other java files only if specified ( decenciesOnly = true)
+                if (dependenciesOnly) {
+                    excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), SCALA_SCRIPT_EXTENSION, null));
+                }
+                return topFolderFound.toPath();
+            }else {
+                if (dependenciesOnly) {
+                    excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder.toString(), SCALA_SCRIPT_EXTENSION, null));
+                }
+            }
+            return Paths.get(topLevelFolder);
+        }));
+
+        ResolutionResult resolutionResult;
+        if (!sbtAggregateModules) {
+            resolutionResult = new ResolutionResult(projectInfoPathMap, excludes, getDependencyType(), topLevelFolder);
+        } else {
+            resolutionResult = new ResolutionResult(projectInfoPathMap.keySet().stream()
+                    .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes, getDependencyType(), topLevelFolder);
+        }
+        return resolutionResult;
+
+
+        //List<DependencyInfo> dependencies = collectDependencies(topLevelFolder);
+        //return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
     }
 
     private List<DependencyInfo> collectDependencies(String folderPath){
@@ -45,7 +107,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
             xmlFiles = loadXmlReport(folderPath);
         }
         if (xmlFiles.size() != 0){
-            return parseXmlReport(xmlFiles);
+            //return parseXmlReport(xmlFiles);
         }
         return new ArrayList<>();
     }
@@ -109,20 +171,6 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         return null;*/
     }
 
-    private File findFolder(File parentFolder, String folderName){
-        if (parentFolder != null) {
-            File[] files = parentFolder.listFiles(new ScalaFileNameFilter(folderName));
-            if (files.length > 0) {
-                Arrays.sort(files, Collections.reverseOrder());
-                File folder = files[0];
-                if (folder.isDirectory()) {
-                    return folder;
-                }
-            }
-        }
-        return null;
-    }
-
     // creating the xml report using 'sbt "compile"' command
     private List<File> loadXmlReport(String folderPath){
         Cli cli = new Cli();
@@ -136,84 +184,85 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         return new LinkedList<>();
     }
 
-    private List<DependencyInfo> parseXmlReport(List<File> xmlReportFiles){
-        List<DependencyInfo> dependencyInfoList = new LinkedList<>();
+    private AgentProjectInfo parseXmlReport(File xmlReportFile){
+        AgentProjectInfo agentProjectInfo = new AgentProjectInfo();
         Serializer serializer = new Persister();
-        for (File xmlReportFile : xmlReportFiles) {
-            Map<String, DependencyInfo> parentsMap = new HashMap<>();
-            Map<String, List<String>> childrenMap = new HashMap<>();
-            try {
-                IvyReport ivyReport = serializer.read(IvyReport.class, xmlReportFile);
-                // using these properties to identify root dependencies (having the project's root as their parent)
-                String projectGroupId = ivyReport.getInfo().getGroupId();
-                String projectArtifactId = ivyReport.getInfo().getArtifactId();
-                for (Module dependency : ivyReport.getDependencies()) {
-                    String groupId = dependency.getGroupId();
-                    String artifactId = dependency.getArtifactId();
-                    for (Revision revision : dependency.getRevisions()) {
-                        // making sure this dependency's version is used (and not over-written by a newer version)
-                        if (!revision.isIgnored()) {
-                            String version = revision.getVersion();
-                            //Artifact artifact = revision.getArtifacts().get(0); // resolving path to jar file
-                            if (revision.getArtifacts().size() > 0 && revision.getArtifacts().get(0) != null) {
-                                File jarFile = new File(revision.getArtifacts().get(0).getPathToJar());
-                                if (jarFile.isFile()) {
-                                    String sha1 = ChecksumUtils.calculateSHA1(jarFile);
-                                    if (sha1 != null) {
-                                        DependencyInfo dependencyInfo = new DependencyInfo(groupId, artifactId, version);
-                                        dependencyInfo.setSha1(sha1);
-                                        //dependencyInfo.setDependencyType(DependencyType.GRADLE);
-                                        dependencyInfo.setFilename(jarFile.getName());
-                                        dependencyInfo.setSystemPath(jarFile.getPath());
-                                        String dependencyName = groupId + Constants.COLON + artifactId + Constants.COLON + version;
-                                        parentsMap.put(dependencyName, dependencyInfo);
-                                        for (Caller parent : revision.getParentsList()) {
-                                            String parentGroupId = parent.getGroupId();
-                                            String parentArtifactId = parent.getArtifactId();
-                                            // if this dependency's parent is the root - no need to add is as a child...
-                                            if (parentGroupId.equals(projectGroupId) == false && parentArtifactId.equals(projectArtifactId) == false) {
-                                                String parentVersion = parent.getVersion();
-                                                String parentName = parentGroupId + Constants.COLON + parentArtifactId + Constants.COLON + parentVersion;
-                                                DependencyInfo parentDependencyInfo = parentsMap.get(parentName);
-                                                if (parentDependencyInfo != null) { // the parent was already created - add it as a child
-                                                    parentDependencyInfo.getChildren().add(dependencyInfo);
-                                                } else { // add this dependency to the children map
-                                                    if (childrenMap.get(dependencyName) == null) {
-                                                        childrenMap.put(dependencyName, new ArrayList<>());
-                                                    }
-                                                    childrenMap.get(dependencyName).add(parentName);
+        Map<String, DependencyInfo> parentsMap = new HashMap<>();
+        Map<String, List<String>> childrenMap = new HashMap<>();
+        try {
+            IvyReport ivyReport = serializer.read(IvyReport.class, xmlReportFile);
+            // using these properties to identify root dependencies (having the project's root as their parent)
+            String projectGroupId = ivyReport.getInfo().getGroupId();
+            String projectArtifactId = ivyReport.getInfo().getArtifactId();
+            String projectVersion = ivyReport.getInfo().getVersion();
+            agentProjectInfo.setCoordinates(new Coordinates(projectGroupId, projectArtifactId, projectVersion));
+            for (Module dependency : ivyReport.getDependencies()) {
+                String groupId = dependency.getGroupId();
+                String artifactId = dependency.getArtifactId();
+                for (Revision revision : dependency.getRevisions()) {
+                    // making sure this dependency's version is used (and not over-written by a newer version)
+                    if (!revision.isIgnored()) {
+                        String version = revision.getVersion();
+                        //Artifact artifact = revision.getArtifacts().get(0); // resolving path to jar file
+                        if (revision.getArtifacts().size() > 0 && revision.getArtifacts().get(0) != null) {
+                            File jarFile = new File(revision.getArtifacts().get(0).getPathToJar());
+                            if (jarFile.isFile()) {
+                                String sha1 = ChecksumUtils.calculateSHA1(jarFile);
+                                if (sha1 != null) {
+                                    DependencyInfo dependencyInfo = new DependencyInfo(groupId, artifactId, version);
+                                    dependencyInfo.setSha1(sha1);
+                                    //dependencyInfo.setDependencyType(DependencyType.GRADLE);
+                                    dependencyInfo.setFilename(jarFile.getName());
+                                    dependencyInfo.setSystemPath(jarFile.getPath());
+                                    String dependencyName = groupId + Constants.COLON + artifactId + Constants.COLON + version;
+                                    parentsMap.put(dependencyName, dependencyInfo);
+                                    for (Caller parent : revision.getParentsList()) {
+                                        String parentGroupId = parent.getGroupId();
+                                        String parentArtifactId = parent.getArtifactId();
+                                        // if this dependency's parent is the root - no need to add is as a child...
+                                        if (parentGroupId.equals(projectGroupId) == false && parentArtifactId.equals(projectArtifactId) == false) {
+                                            String parentVersion = parent.getVersion();
+                                            String parentName = parentGroupId + Constants.COLON + parentArtifactId + Constants.COLON + parentVersion;
+                                            DependencyInfo parentDependencyInfo = parentsMap.get(parentName);
+                                            if (parentDependencyInfo != null) { // the parent was already created - add it as a child
+                                                parentDependencyInfo.getChildren().add(dependencyInfo);
+                                            } else { // add this dependency to the children map
+                                                if (childrenMap.get(dependencyName) == null) {
+                                                    childrenMap.put(dependencyName, new ArrayList<>());
                                                 }
-                                            } else { //... add it directly to the dependency info list
-                                                dependencyInfoList.add(dependencyInfo);
+                                                childrenMap.get(dependencyName).add(parentName);
                                             }
+                                        } else { //... add it directly to the dependency info list
+                                            agentProjectInfo.getDependencies().add(dependencyInfo);
                                         }
-                                    } else {
-                                        logger.warn("Could not find SHA1 for {}-{}-{}", groupId, revision.getArtifacts().get(0), version);
                                     }
                                 } else {
-                                    logger.warn("Could not find jar file {}", jarFile.getPath());
+                                    logger.warn("Could not find SHA1 for {}-{}-{}", groupId, revision.getArtifacts().get(0), version);
                                 }
                             } else {
-                                logger.warn("Could not find artifact ID for {}-{}", groupId, version);
+                                logger.warn("Could not find jar file {}", jarFile.getPath());
                             }
+                        } else {
+                            logger.warn("Could not find artifact ID for {}-{}", groupId, version);
                         }
                     }
                 }
-                // building dependencies tree
-                for (String child : childrenMap.keySet()) {
-                    List<String> parents = childrenMap.get(child);
-                    for (String parent : parents) {
-                        if (!isDescendant(parentsMap.get(child), parentsMap.get(parent))) {
-                            parentsMap.get(parent).getChildren().add(parentsMap.get(child));
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                logger.warn("Could not read {}: {}", xmlReportFile.getPath(), e.getMessage());
-                logger.debug("stacktrace {}", e.getStackTrace());
             }
+            // building dependencies tree
+            for (String child : childrenMap.keySet()) {
+                List<String> parents = childrenMap.get(child);
+                for (String parent : parents) {
+                    if (!isDescendant(parentsMap.get(child), parentsMap.get(parent))) {
+                        parentsMap.get(parent).getChildren().add(parentsMap.get(child));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Could not read {}: {}", xmlReportFile.getPath(), e.getMessage());
+            logger.debug("stacktrace {}", e.getStackTrace());
         }
-        return dependencyInfoList;
+
+        return agentProjectInfo;
     }
 
     // preventing circular dependencies by making sure the dependency is not a descendant of its own
@@ -231,6 +280,8 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
         excludes.add(Constants.PATTERN + SCALA_EXTENSION);
+        //excludes.add("**" + fileSeparator + "project" + fileSeparator + "**");
+        //excludes.add("**" + fileSeparator + "target" + fileSeparator + "**" + fileSeparator + "" + RESOLUTION_CACHE + fileSeparator + REPORTS + fileSeparator + "**" + fileSeparator + "*-compile.xml");
         return excludes;
     }
 
@@ -257,32 +308,5 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected Collection<String> getLanguageExcludes() {
         return null;
-    }
-}
-
-class ScalaFileNameFilter implements FilenameFilter {
-    private String folderName;
-
-    public ScalaFileNameFilter(String name){
-        folderName = name;
-    }
-
-    @Override
-    public boolean accept(File dir, String name) {
-        return name.toLowerCase().startsWith(folderName);
-    }
-}
-
-class XmlFileNameFilter implements FilenameFilter{
-    private boolean insideSbt;
-    private String scalaVersion;
-
-    public XmlFileNameFilter(boolean insideSbt, String scalaVersion){
-        this.insideSbt = insideSbt;
-        this.scalaVersion = scalaVersion;
-    }
-    @Override
-    public boolean accept(File file, String name){
-        return name.toLowerCase().endsWith("-compile.xml") && (insideSbt || name.contains(scalaVersion));
     }
 }
