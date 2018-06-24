@@ -81,26 +81,26 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private final NpmBomParser bomParser;
     private final boolean ignoreJavaScriptFiles;
     private final boolean runPreStep;
-    private final String accessToken;
     private final FilesScanner filesScanner;
     private final String npmAccessToken;
+    private final boolean npmYarnProject;
 
     /* --- Constructor --- */
 
     public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector,
-                                 boolean runPreStep, String accessToken, boolean npmIgnoreNpmLsErrors, String npmAccessToken) {
+                                 boolean runPreStep, boolean npmIgnoreNpmLsErrors, String npmAccessToken, boolean npmYarnProject, boolean ignoreScripts) {
         super();
-        bomCollector = new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, npmIgnoreNpmLsErrors);
+        bomCollector = npmYarnProject ? new YarnDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, ignoreJavaScriptFiles, ignoreScripts) : new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, npmIgnoreNpmLsErrors, ignoreScripts);
         bomParser = new NpmBomParser();
         this.ignoreJavaScriptFiles = ignoreJavaScriptFiles;
         this.runPreStep = runPreStep;
-        this.accessToken = accessToken;
         this.filesScanner = new FilesScanner();
         this.npmAccessToken = npmAccessToken;
+        this.npmYarnProject = npmYarnProject;
     }
 
     public NpmDependencyResolver(boolean runPreStep, String npmAccessToken) {
-        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, null, false, npmAccessToken);
+        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, false, npmAccessToken, false, false);
     }
 
     /* --- Overridden methods --- */
@@ -115,18 +115,17 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    public String getBomPattern() {
-        return "**/*" + PACKAGE_JSON;
+    public String[] getBomPattern() {
+        return new String[]{Constants.PATTERN + PACKAGE_JSON};
     }
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
-
         if (runPreStep) {
             getDependencyCollector().executePreparationStep(topLevelFolder);
             String[] excludesArray = new String[getExcludes().size()];
             excludesArray = getExcludes().toArray(excludesArray);
-            String[] otherBomFiles = filesScanner.getDirectoryContent(topLevelFolder, new String[]{getBomPattern()}, excludesArray, false, false);
+            String[] otherBomFiles = filesScanner.getDirectoryContent(topLevelFolder, getBomPattern(), excludesArray, false, false);
             Arrays.stream(otherBomFiles).forEach(file -> bomFiles.add(Paths.get(topLevelFolder, file).toString()));
         }
 
@@ -190,7 +189,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
-        String bomPattern = getBomPattern();
+        String bomPattern = getBomPattern()[0];
         excludes.add(EXAMPLE + bomPattern);
         excludes.add(EXAMPLES + bomPattern);
         excludes.add(WS_BOWER_FOLDER + bomPattern);
@@ -201,7 +200,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
+    public Collection<String> getSourceFileExtensions() {
         return Arrays.asList(Constants.JS_EXTENSION, TYPE_SCRIPT_EXTENSION, TSX_EXTENSION);
     }
 
@@ -227,6 +226,11 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     protected boolean isMatchChildDependency(DependencyInfo childDependency, String name, String version) {
         return childDependency.getArtifactId().equals(NpmBomParser.getNpmArtifactId(name, version));
+    }
+
+    @Override
+    protected String getDependencyTypeName() {
+        return DependencyType.NPM.name();
     }
 
     protected void enrichDependency(DependencyInfo dependency, BomFile packageJson, String npmAccessToken) {
@@ -264,7 +268,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
                 HttpHeaders httpHeaders = new HttpHeaders();
                 httpHeaders.set(AUTHORIZATION, BEARER + Constants.WHITESPACE + npmAccessToken);
                 HttpEntity entity = new HttpEntity(httpHeaders);
-                responseFromRegistry = restTemplate.exchange(uriScopeDep, HttpMethod.GET,entity,String.class).getBody();
+                responseFromRegistry = restTemplate.exchange(uriScopeDep, HttpMethod.GET, entity,String.class).getBody();
                 //responseFromRegistry = restTemplate.getForObject(uriScopeDep, String.class);
             } else {
                 responseFromRegistry = restTemplate.getForObject(registryPackageUrl, String.class);

@@ -21,16 +21,20 @@ import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.dotNet.DotNetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyResolver;
 import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
+import org.whitesource.agent.dependency.resolver.html.HtmlDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.NugetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.nuget.packagesConfig.NugetConfigFileType;
 import org.whitesource.agent.dependency.resolver.paket.PaketDependencyResolver;
+import org.whitesource.agent.dependency.resolver.php.PhpDependencyResolver;
 import org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ruby.RubyDependencyResolver;
+import org.whitesource.agent.dependency.resolver.sbt.SbtDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
+import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
@@ -55,12 +59,14 @@ public class DependencyResolutionService {
 
     public DependencyResolutionService(ResolverConfiguration config) {
         final boolean npmRunPreStep = config.isNpmRunPreStep();
+        final boolean npmIgnoreScripts = config.isNpmIgnoreScripts();
         final boolean npmResolveDependencies = config.isNpmResolveDependencies();
         final boolean npmIncludeDevDependencies = config.isNpmIncludeDevDependencies();
         final boolean npmIgnoreJavaScriptFiles = config.isNpmIgnoreJavaScriptFiles();
         final long npmTimeoutDependenciesCollector = config.getNpmTimeoutDependenciesCollector();
         final boolean npmIgnoreNpmLsErrors = config.getNpmIgnoreNpmLsErrors();
         final String npmAccessToken = config.getNpmAccessToken();
+        final boolean npmYarnProject = config.getNpmYarnProject();
 
         final boolean bowerResolveDependencies = config.isBowerResolveDependencies();
         final boolean bowerRunPreStep = config.isBowerRunPreStep();
@@ -84,17 +90,25 @@ public class DependencyResolutionService {
 
         final boolean goResolveDependencies = config.isGoResolveDependencies();
 
-        final boolean rubyResolveDependencies   = config.isRubyResolveDependencies();
-        final boolean rubyRunBundleInstall      = config.isRubyRunBundleInstall();
-        final boolean rubyOverwriteGemFile      = config.isRubyOverwriteGemFile();
-        final boolean rubyInstallMissingGems    = config.isRubyInstallMissingGems();
+        final boolean rubyResolveDependencies = config.isRubyResolveDependencies();
+        final boolean rubyRunBundleInstall = config.isRubyRunBundleInstall();
+        final boolean rubyOverwriteGemFile = config.isRubyOverwriteGemFile();
+        final boolean rubyInstallMissingGems = config.isRubyInstallMissingGems();
+
+        final boolean phpResolveDependencies    = config.isPhpResolveDependencies();
+        final boolean phpRunPreStep             = config.isPhpRunPreStep();
+        final boolean phpIncludeDevDependencies = config.isPhpIncludeDevDependencies();
+
+        final boolean sbtResolveDependencies    = config.isSbtResolveDependencies();
+
+        final boolean htmlResolveDependencies = config.isHtmlResolveDependencies();
 
         dependenciesOnly = config.isDependenciesOnly();
 
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmAccessToken, npmIgnoreNpmLsErrors, npmAccessToken));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmIgnoreNpmLsErrors, npmAccessToken, npmYarnProject, npmIgnoreScripts));
         }
         if (bowerResolveDependencies) {
             dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep));
@@ -109,7 +123,8 @@ public class DependencyResolutionService {
             separateProjects = !mavenAggregateModules;
         }
         if (pythonResolveDependencies) {
-            dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(), config.isPythonIgnorePipInstallErrors()));
+            dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(),
+                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree()));
         }
 
         if (gradleResolveDependencies) {
@@ -126,6 +141,18 @@ public class DependencyResolutionService {
 
         if (rubyResolveDependencies){
             dependencyResolvers.add(new RubyDependencyResolver(rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems));
+        }
+
+        if (phpResolveDependencies){
+            dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies));
+        }
+
+        if (htmlResolveDependencies) {
+            dependencyResolvers.add(new HtmlDependencyResolver());
+        }
+
+        if (sbtResolveDependencies){
+            dependencyResolvers.add(new SbtDependencyResolver());
         }
     }
 
@@ -173,14 +200,29 @@ public class DependencyResolutionService {
 
 
         topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
+            if (!resolvedFolder.getTopFoldersFound().isEmpty()) {
+                logger.info("Trying to resolve " + dependencyResolver.getDependencyTypeName() + " dependencies");
+            }
             resolvedFolder.getTopFoldersFound().forEach((topFolder, bomFiles) -> {
-                logger.info("topFolder = " + topFolder);
-                ResolutionResult result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
+                // don't print folder in case of html resolution
+                if (dependencyResolver.printResolvedFolder()) {
+                    logger.info("topFolder = " + topFolder);
+                }
+                logger.debug("topFolder = " + topFolder);
+                ResolutionResult result = null;
+                try {
+                    result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
+                } catch (FileNotFoundException e) {
+                    logger.error(e.getMessage());
+                }
                 resolutionResults.add(result);
             });
         });
-
         return resolutionResults;
+    }
+
+    public Collection<AbstractDependencyResolver> getDependencyResolvers() {
+        return dependencyResolvers;
     }
 
     /* --- Private methods --- */
@@ -192,7 +234,9 @@ public class DependencyResolutionService {
         //remove all folders that have a parent already mapped
         topFolders.stream().sorted().forEach(topFolderParent -> {
             topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
-                resolvedFolder.getTopFoldersFound().entrySet().removeIf(topFolderChild -> isChildFolder(topFolderChild.getKey(), topFolderParent));
+                if (!(dependencyResolver instanceof HtmlDependencyResolver)) {
+                    resolvedFolder.getTopFoldersFound().entrySet().removeIf(topFolderChild -> isChildFolder(topFolderChild.getKey(), topFolderParent));
+                }
             });
         });
     }

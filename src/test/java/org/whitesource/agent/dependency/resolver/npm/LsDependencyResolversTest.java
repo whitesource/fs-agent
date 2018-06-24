@@ -19,7 +19,7 @@ public class LsDependencyResolversTest {
     @Test
     public void shouldReturnDependenciesTreeNpm() {
         AgentProjectInfo projectInfo = new NpmLsJsonDependencyCollector(false,
-                60, false).collectDependencies(FOLDER_TO_TEST).stream().findFirst().get();
+                60, false, false).collectDependencies(FOLDER_TO_TEST).stream().findFirst().get();
         Collection<DependencyInfo> dependencies = projectInfo.getDependencies();
         Assert.assertTrue(dependencies.size() > 0);
 

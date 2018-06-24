@@ -78,8 +78,8 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     }
 
     @Override
-    protected Collection<String> getSourceFileExtensions() {
-        return new ArrayList<>(Arrays.asList(".dll", ".exe", ".nupkg", ".cs"));
+    public Collection<String> getSourceFileExtensions() {
+        return new ArrayList<>(Arrays.asList(Constants.DLL, Constants.EXE, Constants.NUPKG, Constants.CS));
     }
 
     @Override
@@ -88,8 +88,13 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     }
 
     @Override
-    protected String getBomPattern() {
-        return this.bomPattern;
+    protected String getDependencyTypeName() {
+        return DependencyType.NUGET.name();
+    }
+
+    @Override
+    protected String[] getBomPattern() {
+        return new String[]{this.bomPattern};
     }
 
     @Override

@@ -4,7 +4,7 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>18.5.3-SNAPSHOT</version>
+    <version>18.6.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>White Source File System Agent</name>
@@ -13,7 +13,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <agent.api.version>2.7.0</agent.api.version>
+        <agent.api.version>2.7.2</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
         <skipTests>true</skipTests>
     </properties>
@@ -147,6 +147,8 @@
             <!--<version>0.0.21</version>-->
          <!--</dependency>-->
 
+        <!-- end VIA -->
+
         <!-- LZMA -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -221,6 +223,12 @@
             <version>2.9.2</version>
         </dependency>
 
+        <!-- jsoup for html/css parsing -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.11.3</version>
+        </dependency>
 
         <!-- jaxb for nuget dependecy resolver -->
         <!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->

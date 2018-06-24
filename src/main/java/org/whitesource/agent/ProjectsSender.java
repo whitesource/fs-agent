@@ -115,7 +115,8 @@ public class ProjectsSender {
                     break;
                 } catch (WssServiceException e) {
                     if (e.getCause() != null &&
-                            e.getCause().getClass().getCanonicalName().substring(0, e.getCause().getClass().getCanonicalName().lastIndexOf(Constants.DOT)).equals(Constants.JAVA_NETWORKING)) {
+                            e.getCause().getClass().getCanonicalName().substring(0,
+                                    e.getCause().getClass().getCanonicalName().lastIndexOf(Constants.DOT)).equals(Constants.JAVA_NETWORKING)) {
                         statusCode = StatusCode.CONNECTION_FAILURE;
                         logger.error("Trying " + (retries + 1) + " more time" + (retries != 0 ? "s" : Constants.EMPTY_STRING));
                     } else {

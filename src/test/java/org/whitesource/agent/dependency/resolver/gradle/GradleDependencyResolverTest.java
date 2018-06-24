@@ -24,7 +24,8 @@ public class GradleDependencyResolverTest {
 
     @Test
     public void resolveDependencies() {
-        String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\gradle\\sample\\");
+        String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath(
+                "\\src\\test\\resources\\resolver\\gradle\\sample\\");
         ResolutionResult resolutionResult = gradleDependencyResolver.resolveDependencies(folderPath, folderPath, null);
 
         Assert.assertTrue(resolutionResult.getDependencyType() == DependencyType.GRADLE);
