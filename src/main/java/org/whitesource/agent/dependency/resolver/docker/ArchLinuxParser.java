@@ -84,7 +84,7 @@ public class ArchLinuxParser extends AbstractParser {
         int max = 0;
         File archLinuxPackageManagerFile = null;
         if (!operatingSystem.startsWith(Constants.WINDOWS)){
-            pathToPackageManagerFolder = pathToPackageManagerFolder.replace(Constants.WINDOWS_SEPARATOR, Constants.UNIX_PATH_SEPARATOR);
+            pathToPackageManagerFolder = pathToPackageManagerFolder.replace(Constants.BACK_SLASH, Constants.FORWARD_SLASH);
         }
         for (String filepath : files) {
             if (filepath.contains(pathToPackageManagerFolder) && filepath.endsWith(DESC)) {

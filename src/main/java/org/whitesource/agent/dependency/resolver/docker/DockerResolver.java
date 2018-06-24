@@ -192,11 +192,11 @@ public class DockerResolver {
                 // check the operating system to build the full path correctly
                 if (osName.startsWith(Constants.WINDOWS)) {
                     for (int i = 0; i < fileNames.length; i++) {
-                        fileNames[i] = containerTarArchiveExtractDir.getPath() + Constants.WINDOWS_SEPARATOR + fileNames[i];
+                        fileNames[i] = containerTarArchiveExtractDir.getPath() + Constants.BACK_SLASH + fileNames[i];
                     }
                 } else {
                     for (int i = 0; i < fileNames.length; i++) {
-                        fileNames[i] = containerTarArchiveExtractDir.getPath() + Constants.UNIX_PATH_SEPARATOR + fileNames[i];
+                        fileNames[i] = containerTarArchiveExtractDir.getPath() + Constants.FORWARD_SLASH + fileNames[i];
                     }
                 }
 
@@ -250,18 +250,18 @@ public class DockerResolver {
                         config.getAgent().getGlobCaseSensitive(), config.getAgent().getArchiveExtractionDepth(), FileExtensions.ARCHIVE_INCLUDES,
                         FileExtensions.ARCHIVE_EXCLUDES, false, config.getAgent().isFollowSymlinks(), new ArrayList<>(), PARTIAL_SHA1_MATCH);
 
-                // modify file paths relative to the container
-                for (DependencyInfo dependencyInfo : dependencyInfos) {
-                    String systemPath = dependencyInfo.getSystemPath();
-                    if (StringUtils.isNotBlank(systemPath)) {
-                        String containerRelativePath = systemPath;
-                        containerRelativePath.replace(Constants.WINDOWS_SEPARATOR, Constants.UNIX_PATH_SEPARATOR);
-                        containerRelativePath = containerRelativePath.substring(containerRelativePath.indexOf(WHITE_SOURCE_DOCKER +
-                                Constants.WINDOWS_SEPARATOR) + WHITE_SOURCE_DOCKER.length() + 1);
-                        containerRelativePath = containerRelativePath.substring(containerRelativePath.indexOf(Constants.WINDOWS_SEPARATOR) + 1);
-                        dependencyInfo.setSystemPath(containerRelativePath);
-                    }
-                }
+//                // modify file paths relative to the container
+//                for (DependencyInfo dependencyInfo : dependencyInfos) {
+//                    String systemPath = dependencyInfo.getSystemPath();
+//                    if (StringUtils.isNotBlank(systemPath)) {
+//                        String containerRelativePath = systemPath;
+//                        containerRelativePath.replace(Constants.B, Constants.UNIX_PATH_SEPARATOR);
+//                        containerRelativePath = containerRelativePath.substring(containerRelativePath.indexOf(WHITE_SOURCE_DOCKER +
+//                                Constants.WINDOWS_SEPARATOR) + WHITE_SOURCE_DOCKER.length() + 1);
+//                        containerRelativePath = containerRelativePath.substring(containerRelativePath.indexOf(Constants.WINDOWS_SEPARATOR) + 1);
+//                        dependencyInfo.setSystemPath(containerRelativePath);
+//                    }
+//                }
                 projectInfo.getDependencies().addAll(dependencyInfos);
             } catch (IOException e) {
                 logger.error("Error exporting image {}: {}", dockerImage.getRepository(), e.getMessage());
@@ -298,12 +298,12 @@ public class DockerResolver {
     private File getPackagesLogFile(File file,String osName,ArchiveExtractor archiveExtractor) throws IOException {
 
        if(osName.startsWith(Constants.WINDOWS)){
-           archiveExtractor.unXz(file, Constants.WINDOWS_SEPARATOR + PACKAGE_LOG_TXT);
-           return new File(file.getParent() + Constants.WINDOWS_SEPARATOR+PACKAGE_LOG_TXT);
+           archiveExtractor.unXz(file, Constants.BACK_SLASH + PACKAGE_LOG_TXT);
+           return new File(file.getParent() + Constants.BACK_SLASH + PACKAGE_LOG_TXT);
        }
        else {
-           archiveExtractor.unXz(file, Constants.UNIX_PATH_SEPARATOR + PACKAGE_LOG_TXT);
-           return new File(file.getParent() + Constants.UNIX_PATH_SEPARATOR + PACKAGE_LOG_TXT);
+           archiveExtractor.unXz(file, Constants.FORWARD_SLASH + PACKAGE_LOG_TXT);
+           return new File(file.getParent() + Constants.FORWARD_SLASH + PACKAGE_LOG_TXT);
        }
     }
 
