@@ -154,6 +154,7 @@ public class DependencyResolutionService {
 
         if (sbtResolveDependencies){
             dependencyResolvers.add(new SbtDependencyResolver(sbtAggregateModules, dependenciesOnly));
+            separateProjects = !sbtAggregateModules;
         }
     }
 

@@ -17,7 +17,6 @@ import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.FilesScanner;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -25,7 +24,7 @@ import java.util.stream.Collectors;
 
 public class SbtDependencyResolver extends AbstractDependencyResolver {
 
-    private static final String BUILD_SBT = "-compile.xml";
+    private static final String BUILD_SBT = "build.sbt";
     private static final String SCALA = "scala";
     private static final String SBT = "sbt";
     private static final String SCALA_EXTENSION = Constants.DOT + SCALA;
@@ -59,30 +58,10 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
                 projects.add(parseXmlReport(xmlFile));
             }
         }
-
-        List<BomFile> files = bomFiles.stream().map(bomParser::parseBomFile)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        // create excludes for .JAVA files upon finding MAVEN dependencies
         Set<String> excludes = new HashSet<>();
-
         Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
-
-            // map each pom file to specific project
-            Optional<BomFile> folderPath = files.stream().filter(file -> projectInfo.getCoordinates().getArtifactId().equals(file.getName())).findFirst();
-            if (folderPath.isPresent()) {
-                File topFolderFound = new File(folderPath.get().getLocalFileName()).getParentFile();
-
-                // in java do not remove anything since they are not the duplicates of the dependencies found
-                // discard other java files only if specified ( decenciesOnly = true)
-                if (dependenciesOnly) {
-                    excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), SCALA_SCRIPT_EXTENSION, null));
-                }
-                return topFolderFound.toPath();
-            }else {
-                if (dependenciesOnly) {
-                    excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder.toString(), SCALA_SCRIPT_EXTENSION, null));
-                }
+            if (dependenciesOnly) {
+                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder.toString(), SCALA_SCRIPT_EXTENSION, null));
             }
             return Paths.get(topLevelFolder);
         }));
@@ -95,21 +74,6 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
                     .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes, getDependencyType(), topLevelFolder);
         }
         return resolutionResult;
-
-
-        //List<DependencyInfo> dependencies = collectDependencies(topLevelFolder);
-        //return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
-    }
-
-    private List<DependencyInfo> collectDependencies(String folderPath){
-        List<File> xmlFiles = findXmlReport(folderPath);
-        if (xmlFiles.size()== 0){
-            xmlFiles = loadXmlReport(folderPath);
-        }
-        if (xmlFiles.size() != 0){
-            //return parseXmlReport(xmlFiles);
-        }
-        return new ArrayList<>();
     }
 
     /* looking for an xml file ending with '-compile.xml', which should be either in 'target/scala-{version number}/resolution-cache/reports'
@@ -141,34 +105,6 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
             }
         }
         return files;
-        /*File targetFolder = new File(folderPath + fileSeparator + TARGET);
-        if (targetFolder.isDirectory()){
-            File scalaFolder = findFolder(targetFolder, SCALA);
-            String pathToReports = fileSeparator + RESOLUTION_CACHE + fileSeparator + REPORTS;
-            File reportsFolder = new File(scalaFolder.getAbsolutePath() + pathToReports);
-            boolean insideSbtFolder = false;
-            if (!reportsFolder.isDirectory()) {
-                File sbtFolder = findFolder(scalaFolder, SBT);
-                if (sbtFolder != null) {
-                    reportsFolder = new File(sbtFolder.getAbsolutePath() + pathToReports);
-                    if (!reportsFolder.isDirectory()) {
-                        logger.warn("Can't find '*-compile.xml' report file");
-                        return null;
-                    }
-                } else {
-                    logger.warn("Can't find '*-compile.xml' report file");
-                    return null;
-                }
-                insideSbtFolder = true;
-            }
-            String scalaVersion = scalaFolder.getName().split(Constants.DASH)[1];
-            File[] xmlFiles = reportsFolder.listFiles(new XmlFileNameFilter(insideSbtFolder, scalaVersion));
-            if (xmlFiles.length > 0) {
-                return xmlFiles[0];
-            }
-        }
-        logger.warn("Can't find '*-compile.xml' report file");
-        return null;*/
     }
 
     // creating the xml report using 'sbt "compile"' command
@@ -280,8 +216,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
         excludes.add(Constants.PATTERN + SCALA_EXTENSION);
-        //excludes.add("**" + fileSeparator + "project" + fileSeparator + "**");
-        //excludes.add("**" + fileSeparator + "target" + fileSeparator + "**" + fileSeparator + "" + RESOLUTION_CACHE + fileSeparator + REPORTS + fileSeparator + "**" + fileSeparator + "*-compile.xml");
+        excludes.add("**" + fileSeparator + "project" + fileSeparator + "**");
         return excludes;
     }
 
@@ -292,7 +227,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected DependencyType getDependencyType() {
-        return null;
+        return DependencyType.MAVEN; // TEMP - we should add SBT
     }
 
     @Override
@@ -302,7 +237,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String[] getBomPattern() {
-        return new String[]{Constants.PATTERN + BUILD_SBT};
+        return new String[]{"**" + fileSeparator + BUILD_SBT};
     }
 
     @Override
