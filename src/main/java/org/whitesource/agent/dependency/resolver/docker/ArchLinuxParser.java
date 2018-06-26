@@ -3,7 +3,6 @@ package org.whitesource.agent.dependency.resolver.docker;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 
 import java.io.*;
@@ -75,26 +74,25 @@ public class ArchLinuxParser extends AbstractParser {
     }
 
     /**
-     * @param files - list of files to look for
+     * @param files                      - list of files to look for
      * @param pathToPackageManagerFolder the relevant path for the folder with all the installed packages
      * @return Folder file with all the information about the installed packages
      */
     @Override
-    public File findFile(String[] files, String pathToPackageManagerFolder,String operatingSystem) {
+    public File findFile(String[] files, String pathToPackageManagerFolder) {
         int max = 0;
         File archLinuxPackageManagerFile = null;
-        if (!operatingSystem.startsWith(Constants.WINDOWS)){
-            pathToPackageManagerFolder = pathToPackageManagerFolder.replace(Constants.BACK_SLASH, Constants.FORWARD_SLASH);
-        }
         for (String filepath : files) {
             if (filepath.contains(pathToPackageManagerFolder) && filepath.endsWith(DESC)) {
                 int descStartIndex = filepath.lastIndexOf(pathToPackageManagerFolder);
                 if (descStartIndex > 0) {
                     String descPath = filepath.substring(0, descStartIndex + pathToPackageManagerFolder.length());
                     File file = new File(descPath);
-                    if (max < file.listFiles().length) {
-                        max = file.listFiles().length;
-                        archLinuxPackageManagerFile = file;
+                    if (file.listFiles() != null) {
+                        if (max < file.listFiles().length) {
+                            max = file.listFiles().length;
+                            archLinuxPackageManagerFile = file;
+                        }
                     }
                 }
             }

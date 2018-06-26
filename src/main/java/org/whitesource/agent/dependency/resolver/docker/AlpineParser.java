@@ -71,10 +71,7 @@ public class AlpineParser extends AbstractParser {
     }
 
     @Override
-    public File findFile(String[] files, String filename,String operatingSystem) {
-        if (!operatingSystem.startsWith(Constants.WINDOWS)){
-            filename = filename.replace(Constants.BACK_SLASH, Constants.FORWARD_SLASH);
-        }
+    public File findFile(String[] files, String filename) {
         for (String filepath : files) {
             if (filepath.endsWith(filename)) {
                 return new File(filepath);
@@ -90,8 +87,8 @@ public class AlpineParser extends AbstractParser {
         if (StringUtils.isNotBlank(packageInfo.getPackageName()) && StringUtils.isNotBlank(packageInfo.getVersion()) &&
                 StringUtils.isNotBlank(packageInfo.getArchitecture())) {
             dependencyInfo = new DependencyInfo(
-                    null, MessageFormat.format(ALPINE_PACKAGE_PATTERN, packageInfo.getPackageName()+ Constants.DASH
-                    +packageInfo.getVersion()), packageInfo.getVersion()+ Constants.DASH +
+                    null, MessageFormat.format(ALPINE_PACKAGE_PATTERN, packageInfo.getPackageName() + Constants.DASH
+                    + packageInfo.getVersion()), packageInfo.getVersion() + Constants.DASH +
                     packageInfo.getArchitecture());
         }
         if (dependencyInfo != null) {
