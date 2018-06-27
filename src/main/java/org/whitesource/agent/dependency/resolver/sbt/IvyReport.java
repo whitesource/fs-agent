@@ -36,6 +36,9 @@ class Info {
     @Attribute
     private String module;
 
+    @Attribute
+    private String revision;
+
     /* --- Getters --- */
 
     public String getGroupId() {
@@ -44,6 +47,10 @@ class Info {
 
     public String getArtifactId() {
         return module;
+    }
+
+    public String getVersion() {
+        return revision;
     }
 }
 

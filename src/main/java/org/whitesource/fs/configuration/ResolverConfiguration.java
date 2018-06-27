@@ -18,6 +18,7 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyManager;
 
 import java.util.Arrays;
@@ -84,7 +85,7 @@ public class ResolverConfiguration {
             @JsonProperty(PHP_RUN_PRE_STEP) boolean phpRunPreStep,
             @JsonProperty(PHP_INCLUDE_DEV_DEPENDENCIES) boolean phpIncludeDevDependencies,
             @JsonProperty(SBT_RESOLVE_DEPENDENCIES) boolean sbtResolveDependencies,
-
+            @JsonProperty(SBT_AGGREGATE_MODULES) boolean sbtAggregateModules,
             @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmIgnoreScripts = npmIgnoreScripts;
@@ -143,6 +144,7 @@ public class ResolverConfiguration {
         this.phpIncludeDevDependencies = phpIncludeDevDependencies;
 
         this.sbtResolveDependencies = sbtResolveDependencies;
+        this.sbtAggregateModules = sbtAggregateModules;
 
         this.htmlResolveDependencies = htmlResolveDependencies;
     }
@@ -200,6 +202,7 @@ public class ResolverConfiguration {
     private boolean phpIncludeDevDependencies;
 
     private boolean sbtResolveDependencies;
+    private boolean sbtAggregateModules;
 
     private boolean htmlResolveDependencies;
 
@@ -421,6 +424,9 @@ public class ResolverConfiguration {
     @JsonProperty(SBT_RESOLVE_DEPENDENCIES)
     public boolean isSbtResolveDependencies() { return sbtResolveDependencies; }
 
+    @JsonProperty(SBT_AGGREGATE_MODULES)
+    public boolean isSbtAggregateModules() {    return sbtAggregateModules; }
+
     @JsonProperty(HTML_RESOLVE_DEPENDENCIES)
     public boolean isHtmlResolveDependencies() {
         return htmlResolveDependencies;
@@ -493,7 +499,8 @@ public class ResolverConfiguration {
                 ", phpRunPreStep=" + phpRunPreStep +
                 ", phpIncludeDevDependenices=" + phpIncludeDevDependencies + '\n' +
                 ", htmlResolveDependencies=" + htmlResolveDependencies + '\n' +
-                ", sbtResolveDependencies=" + sbtResolveDependencies;
+                ", sbtResolveDependencies=" + sbtResolveDependencies + '\n' +
+                ", sbtAggregateModules=" + sbtAggregateModules;
     }
 
 

@@ -100,6 +100,7 @@ public class DependencyResolutionService {
         final boolean phpIncludeDevDependencies = config.isPhpIncludeDevDependencies();
 
         final boolean sbtResolveDependencies    = config.isSbtResolveDependencies();
+        final boolean sbtAggregateModules       = config.isSbtAggregateModules();
 
         final boolean htmlResolveDependencies = config.isHtmlResolveDependencies();
 
@@ -152,7 +153,8 @@ public class DependencyResolutionService {
         }
 
         if (sbtResolveDependencies){
-            dependencyResolvers.add(new SbtDependencyResolver());
+            dependencyResolvers.add(new SbtDependencyResolver(sbtAggregateModules, dependenciesOnly));
+            separateProjects = !sbtAggregateModules;
         }
     }
 

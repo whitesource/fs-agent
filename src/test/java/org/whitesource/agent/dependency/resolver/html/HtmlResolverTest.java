@@ -10,6 +10,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 
 import static jdk.nashorn.internal.objects.Global.print;
 
@@ -23,12 +24,12 @@ public class HtmlResolverTest {
 
     @Test
     public void parseHtmlFile() throws IOException {
+        HashSet<String> set = new HashSet<>();
+        set.add("src\\test\\resources\\resolver\\html\\template\\modal\\window.html");
         HtmlDependencyResolver htmlDependencyResolver = new HtmlDependencyResolver();
-        htmlDependencyResolver.resolveDependencies("C:\\Users\\RazNitzan\\Desktop\\htmlTest\\bootstrap-master",
-                "C:\\Users\\RazNitzan\\Desktop\\htmlTest\\bootstrap-master", null);
-
+        htmlDependencyResolver.resolveDependencies("src\\test\\resources\\resolver\\html\\template",
+                "src\\test\\resources\\resolver\\html\\template", set);
     }
-
 
     public static String getOsRelativePath(String relativeFilePath) {
         return relativeFilePath.replace("\\", String.valueOf(File.separatorChar).replace(Constants.FORWARD_SLASH, String.valueOf(File.separatorChar)));
