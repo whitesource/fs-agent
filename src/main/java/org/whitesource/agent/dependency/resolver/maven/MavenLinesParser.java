@@ -31,7 +31,7 @@ public class MavenLinesParser {
     private static final String UTF_8 = "UTF-8";
 
     public List<Node> parseLines(List<String> lines) {
-        List<List<String>> projectsLines = lines.stream().filter(line->line.contains(INFO))
+        List<List<String>> projectsLines = lines.stream().filter(line -> line.contains(INFO))
                 .map(line -> line.replace(INFO, Constants.EMPTY_STRING))
                 .collect(splitBySeparator(formattedLines -> formattedLines.contains(MAVEN_DEPENDENCY_PLUGIN_TREE)));
 
@@ -52,7 +52,7 @@ public class MavenLinesParser {
                 logger.debug("error parsing output : {} ", e.getStackTrace());
             } catch (Exception e) {
                 // this can happen often - some parts of the output are not parsable
-                logger.warn("error parsing output : {}", e.getMessage());
+                logger.debug("error parsing output : {}", e.getMessage());
                 logger.debug("error parsing output : {} {}", e.getMessage(), mvnLines);
             }
         });
@@ -62,7 +62,15 @@ public class MavenLinesParser {
     // so : 29095967
     private static Collector<String, List<List<String>>, List<List<String>>> splitBySeparator(Predicate<String> sep) {
         return Collector.of(() -> new ArrayList<List<String>>(Arrays.asList(new ArrayList<>())),
-                (l, elem) -> {if(sep.test(elem)){l.add(new ArrayList<>());} else l.get(l.size()-1).add(elem);},
-                (l1, l2) -> {l1.get(l1.size() - 1).addAll(l2.remove(0)); l1.addAll(l2); return l1;});
+                (l, elem) -> {
+                    if (sep.test(elem)) {
+                        l.add(new ArrayList<>());
+                    } else l.get(l.size() - 1).add(elem);
+                },
+                (l1, l2) -> {
+                    l1.get(l1.size() - 1).addAll(l2.remove(0));
+                    l1.addAll(l2);
+                    return l1;
+                });
     }
 }
