@@ -254,7 +254,7 @@ public class FileSystemScanner {
 
                                 // if it is single project threat it as the main
                                 if (dependencyResolutionService.isSeparateProjects()) {
-                                    if (result.getDependencyType() != null && DependencyType.MAVEN.equals(result.getDependencyType()) && result.getResolvedProjects().size() > 1) {
+                                    if (result.getDependencyType() != null && (DependencyType.MAVEN.equals(result.getDependencyType()) || DependencyType.GRADLE.equals(result.getDependencyType())) && result.getResolvedProjects().size() > 1) {
                                         allProjects.put(project.getKey(), project.getValue());
                                         LinkedList<ViaComponents> listToNewProject = new LinkedList<>();
                                         if (impactAnalysisLanguage != null) {

@@ -80,7 +80,8 @@ public class DependencyResolutionService {
 
         boolean pythonResolveDependencies = config.isPythonResolveDependencies();
 
-        boolean gradleResolveDependencies = config.isGradleResolveDependencies();
+        boolean gradleResolveDependencies   = config.isGradleResolveDependencies();
+        boolean gradleAggregateModules       = config.isGradleAggregateModules();
 
         final boolean paketResolveDependencies = config.isPaketResolveDependencies();
         final String[] paketIgnoredScopes = config.getPaketIgnoredScopes();
@@ -129,7 +130,8 @@ public class DependencyResolutionService {
         }
 
         if (gradleResolveDependencies) {
-            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand()));
+            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), dependenciesOnly, gradleAggregateModules));
+            separateProjects = !gradleAggregateModules;
         }
 
         if (paketResolveDependencies) {

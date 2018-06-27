@@ -304,6 +304,7 @@ public class FSAConfiguration {
 
         boolean gradleResolveDependencies   = FSAConfiguration.getBooleanProperty(config, GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand    = FSAConfiguration.getBooleanProperty(config, GRADLE_RUN_ASSEMBLE_COMMAND, true);
+        boolean gradleAggregateModules      = FSAConfiguration.getBooleanProperty(config, GRADLE_AGGREGATE_MODULES, true);
 
         boolean paketResolveDependencies    = FSAConfiguration.getBooleanProperty(config, PAKET_RESOLVE_DEPENDENCIES, true);
         String[] paketIgnoredScopes         = FSAConfiguration.getListProperty(config, PAKET_IGNORED_GROUPS, null);
@@ -335,7 +336,7 @@ public class FSAConfiguration {
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree,
-                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies,
+                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, paketResolveDependencies,
                 paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall,
                 rubyOverwriteGemFile, rubyInstallMissingGems,
