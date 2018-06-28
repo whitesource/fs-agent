@@ -46,6 +46,8 @@ public final class Constants {
     public static final String XHTML = "xhtml";
     public static final String JSP = "jsp";
     public static final String ASP = "asp";
+    public static final String DO = "do";
+    public static final String ASPX = "aspx";
     public static final String WINDOWS = "Windows";
     public static final String DOT = ".";
     public static final String DIRECTORY = "d";
