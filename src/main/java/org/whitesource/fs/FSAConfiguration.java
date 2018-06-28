@@ -477,7 +477,7 @@ public class FSAConfiguration {
                     i = i + 3;
                 } else {
                     errors.add("Error: the '-appPath' parameter must have a following '-d'.");
-                    break;
+                    return;
                 }
             } else if (wasDir && args[i].equals(APP_PATH)) {
                 errors.add("Error: the '-appPath' parameter cannot follow the parameter '-d'.");
@@ -495,10 +495,14 @@ public class FSAConfiguration {
                     i++;
                 } else {
                     errors.add("Error: there is not path after the '-d' parameter.");
-                    break;
+                    return;
                 }
                 wasDir = true;
             }
+        }
+        if(!wasDir)
+        {
+            appPathsToDependencyDirs.put(DEFAULT_KEY,new HashSet<>(dependencyDirs));
         }
     }
 
