@@ -54,6 +54,9 @@ public class DependencyResolutionService {
 
     private final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
     private boolean separateProjects = false;
+    private boolean mavenAggregateModules;
+    private boolean sbtAggregateModules;
+    private boolean gradleAggregateModules;
 
     /* --- Constructors --- */
 
@@ -122,7 +125,7 @@ public class DependencyResolutionService {
         }
         if (mavenResolveDependencies) {
             dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, dependenciesOnly));
-            separateProjects = !mavenAggregateModules;
+            this.mavenAggregateModules = mavenAggregateModules;
         }
         if (pythonResolveDependencies) {
             dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(),
@@ -131,7 +134,7 @@ public class DependencyResolutionService {
 
         if (gradleResolveDependencies) {
             dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), dependenciesOnly, gradleAggregateModules));
-            separateProjects = !gradleAggregateModules;
+            this.gradleAggregateModules = gradleAggregateModules;
         }
 
         if (paketResolveDependencies) {
@@ -156,11 +159,23 @@ public class DependencyResolutionService {
 
         if (sbtResolveDependencies){
             dependencyResolvers.add(new SbtDependencyResolver(sbtAggregateModules, dependenciesOnly));
-            separateProjects = !sbtAggregateModules;
+            this.sbtAggregateModules = sbtAggregateModules;
         }
     }
 
     /* --- Public methods --- */
+
+    public boolean isMavenAggregateModules() {
+        return mavenAggregateModules;
+    }
+
+    public boolean isSbtAggregateModules() {
+        return sbtAggregateModules;
+    }
+
+    public boolean isGradleAggregateModules() {
+        return gradleAggregateModules;
+    }
 
     public boolean isSeparateProjects() {
         return separateProjects;
