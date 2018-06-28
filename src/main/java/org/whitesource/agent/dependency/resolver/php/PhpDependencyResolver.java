@@ -22,6 +22,7 @@ import java.util.*;
 
 import static org.whitesource.agent.Constants.FORWARD_SLASH;
 import static org.whitesource.agent.Constants.INSTALL;
+import static org.whitesource.agent.Constants.PATTERN;
 
 /**
  * @author chen.luigi
@@ -39,6 +40,7 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
     private static final String REQUIRE = "require";
     private static final String REQUIRE_DEV = "require-dev";
     private static final String PHP = "php";
+    private static final List<String> PHP_PATTERN_EXTENSION = Arrays.asList(PATTERN + ".php");
 
     /* --- Private Members --- */
 
@@ -123,7 +125,7 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected Collection<String> getExcludes() {
-        return new LinkedList<>();
+        return PHP_PATTERN_EXTENSION;
     }
 
     @Override
