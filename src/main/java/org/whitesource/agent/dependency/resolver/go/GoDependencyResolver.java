@@ -176,7 +176,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             if (cli.runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.DEP.getType(), GO_INIT))!= null) {
                 dependencyInfos.addAll(parseGopckLock(goPkgLock));
             } else {
-                error = "Can't run 'dep status' command.  Make sure 'dep is installed and run the 'dep status' command manually.";
+                error = "Can't run 'dep init' command.  Make sure dep is installed and run the 'dep init' command manually.";
             }
         } else {
             error = "Can't find " + GOPKG_LOCK + " file.  Run the 'dep init' command.";
@@ -187,6 +187,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     }
 
     private List<DependencyInfo> parseGopckLock(File goPckLock){
+        logger.debug("parsing {}", goPckLock.getPath());
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
         FileReader fileReader = null;
         try {
