@@ -18,6 +18,7 @@ package org.whitesource.agent.utils;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 
 import java.io.File;
 import java.io.IOException;
@@ -117,5 +118,15 @@ public class FilesUtils {
                 // do nothing
             }
         }
+    }
+
+    public static String getFileExtension(String fileName) {
+        if(fileName == null) fileName = Constants.EMPTY_STRING;
+        String extension = Constants.EMPTY_STRING;
+        int i = fileName.lastIndexOf(Constants.DOT);
+        if (i > 0 && i < fileName.length()-2) {
+            extension = fileName.substring(i+1);
+        }
+        return extension;
     }
 }

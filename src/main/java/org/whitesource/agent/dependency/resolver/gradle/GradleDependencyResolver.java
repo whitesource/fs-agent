@@ -161,8 +161,27 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     }
 
     private String getModuleName(String module){
-        module = module.substring(module.indexOf(Constants.APOSTROPHE) + 1, module.lastIndexOf(Constants.APOSTROPHE));
-        module = module.replace(Constants.COLON, Constants.EMPTY_STRING);
+        // Module can include single or double quotation, like:
+        // include "java-app" or include "libraries:common"
+        // include ':app'
+        // include 'blue', 'krill'
+        // include 'api', 'services:task'
+        // include ':app',
+        //    ':feature:my-first-feature',
+        //    ':feature:my-second-feature',
+        // include ':app', ':feature:my-first-feature', ':feature:my-second-feature',
+
+        // This change was only added to prevent exceptions in my Gradle tests, a full solution should be added that
+        // fixes the above cases ...
+
+        if(module.indexOf(Constants.APOSTROPHE) > 0) {
+            module = module.substring(module.indexOf(Constants.APOSTROPHE) + 1, module.lastIndexOf(Constants.APOSTROPHE));
+            module = module.replace(Constants.COLON, Constants.EMPTY_STRING);
+        }
+        if(module.indexOf(Constants.QUOTATION_MARK) > 0) {
+            module = module.substring(module.indexOf(Constants.QUOTATION_MARK) + 1, module.lastIndexOf(Constants.QUOTATION_MARK));
+            module = module.replace(Constants.COLON, Constants.EMPTY_STRING);
+        }
         return module;
     }
 
