@@ -195,9 +195,9 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     /* --- Protected methods --- */
 
     protected void getDependencies(JSONObject jsonObject, String rootDirectory, Collection<DependencyInfo> dependencies) {
-        CommandLineProcess npmLs = new CommandLineProcess(rootDirectory, getLsCommandParams());
-        npmLs.setTimeoutReadLineSeconds(this.npmTimeoutDependenciesCollector);
         try {
+            CommandLineProcess npmLs = new CommandLineProcess(rootDirectory, getLsCommandParams());
+            npmLs.setTimeoutReadLineSeconds(this.npmTimeoutDependenciesCollector);
             List<String> linesOfNpmLs = npmLs.executeProcess();
             getDependencies(jsonObject, linesOfNpmLs, 1, dependencies);
         } catch (IOException e) {
