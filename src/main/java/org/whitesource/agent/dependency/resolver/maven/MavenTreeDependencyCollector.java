@@ -155,6 +155,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         DependencyInfo dependency = new DependencyInfo(node.getGroupId(), node.getArtifactId(), node.getVersion());
         dependency.setDependencyType(DependencyType.MAVEN);
         dependency.setScope(node.getScope());
+        dependency.setType(node.getPackaging());
 
         String shortName;
         if (StringUtils.isBlank(node.getClassifier())) {

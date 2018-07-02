@@ -10,11 +10,11 @@ import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
-import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.FilesScanner;
+import org.whitesource.agent.utils.FilesUtils;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -147,9 +147,13 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
                                 if (sha1 != null) {
                                     DependencyInfo dependencyInfo = new DependencyInfo(groupId, artifactId, version);
                                     dependencyInfo.setSha1(sha1);
-                                    //dependencyInfo.setDependencyType(DependencyType.GRADLE);
+                                    dependencyInfo.setDependencyType(DependencyType.MAVEN);
                                     dependencyInfo.setFilename(jarFile.getName());
                                     dependencyInfo.setSystemPath(jarFile.getPath());
+
+                                    String extension = FilesUtils.getFileExtension(jarFile.getName());
+                                    dependencyInfo.setType(extension);
+
                                     String dependencyName = groupId + Constants.COLON + artifactId + Constants.COLON + version;
                                     parentsMap.put(dependencyName, dependencyInfo);
                                     for (Caller parent : revision.getParentsList()) {

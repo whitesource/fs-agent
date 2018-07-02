@@ -8,6 +8,7 @@ import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
+import org.whitesource.agent.utils.FilesUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,6 +110,10 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             currentDependency.setSystemPath(dependencyFile.getFilePath());
             currentDependency.setFilename(dependencyFile.getFileName());
             currentDependency.setDependencyType(DependencyType.GRADLE);
+
+            String extension = FilesUtils.getFileExtension(dependencyFile.getFilePath());
+            currentDependency.setType(extension);
+
             if (dependenciesList.contains(currentDependency)){
                 duplicateDependency = true;
                 continue;
