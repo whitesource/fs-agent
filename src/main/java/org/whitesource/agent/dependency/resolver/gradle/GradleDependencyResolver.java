@@ -1,36 +1,90 @@
 package org.whitesource.agent.dependency.resolver.gradle;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
+import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 
+import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private static final String BUILD_GRADLE = "**/*build.gradle";
     private static final List<String> GRADLE_SCRIPT_EXTENSION = Arrays.asList(".gradle",".groovy", ".java", ".jar", ".war", ".ear", ".car", ".class");
     private static final String JAR_EXTENSION = ".jar";
-
+    private static final String SETTINGS_GRADLE = "settings.gradle";
 
     private GradleLinesParser gradleLinesParser;
     private GradleCli gradleCli;
-
     private ArrayList<String> topLevelFoldersNames;
+    private boolean dependenciesOnly;
+    private boolean gradleAggregateModules;
 
-    public GradleDependencyResolver(boolean runAssembleCommand){
+    private final Logger logger = LoggerFactory.getLogger(GradleDependencyResolver.class);
+
+    public GradleDependencyResolver(boolean runAssembleCommand, boolean dependenciesOnly, boolean gradleAggregateModules){
         super();
         gradleLinesParser = new GradleLinesParser(runAssembleCommand);
         gradleCli = new GradleCli();
         topLevelFoldersNames = new ArrayList<>();
+        this.dependenciesOnly = dependenciesOnly;
+        this.gradleAggregateModules = gradleAggregateModules;
     }
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
-        List<DependencyInfo> dependencies = collectDependencies(topLevelFolder);
-        topLevelFoldersNames.add(topLevelFolder.substring(topLevelFolder.lastIndexOf(fileSeparator) + 1));
-        return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
+        // each bom-file ( = build.gradle) represents a module - identify its folder and scan it using 'gradle dependencies'
+        Collection<AgentProjectInfo> projects = new ArrayList<>();
+        List<String> modules = new LinkedList<>();
+        if (bomFiles.size() > 1){ // reading the 'settings.gradle' to extract a list of modules
+            modules = getModules(topLevelFolder);
+        }
+        for (String bomFile : bomFiles){
+            String bomFileFolder = new File(bomFile).getParent();
+            List<DependencyInfo> dependencies = collectDependencies(bomFileFolder);
+            if (dependencies.size() > 0) {
+                AgentProjectInfo agentProjectInfo = new AgentProjectInfo();
+                agentProjectInfo.getDependencies().addAll(dependencies);
+                File bomFolder = new File(new File(bomFile).getParent());
+                String moduleName = bomFolder.getName();
+                // making sure the module's folder is found in the modules' list taken from the settings.gradle
+                if (modules.size() > 0 && !modules.contains(moduleName) && !bomFolder.getPath().equals(topLevelFolder)){
+                    continue;
+                }
+                if (!gradleAggregateModules) {
+                    Coordinates coordinates = new Coordinates();
+                    coordinates.setArtifactId(moduleName);
+                    agentProjectInfo.setCoordinates(coordinates);
+                }
+                projects.add(agentProjectInfo);
+            }
+        }
+
+        Set<String> excludes = new HashSet<>();
+        Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
+            if (dependenciesOnly) {
+                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, GRADLE_SCRIPT_EXTENSION, null));
+            }
+            return Paths.get(topLevelFolder);
+        }));
+
+        ResolutionResult resolutionResult;
+        if (!gradleAggregateModules) {
+            resolutionResult = new ResolutionResult(projectInfoPathMap, excludes, getDependencyType(), topLevelFolder);
+        } else {
+            resolutionResult = new ResolutionResult(projectInfoPathMap.keySet().stream()
+                    .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes, getDependencyType(), topLevelFolder);
+        }
+        return resolutionResult;
     }
 
     @Override
@@ -65,6 +119,51 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected Collection<String> getLanguageExcludes() {
         return null;
+    }
+
+    private List<String> getModules(String folder){
+        List<String> modules = new LinkedList<>();
+        File settingsFile = new File(folder + fileSeparator + SETTINGS_GRADLE);
+        if (settingsFile.isFile()){
+            FileReader fileReader = null;
+            try {
+                fileReader = new FileReader(settingsFile);
+                BufferedReader bufferedReader = new BufferedReader(fileReader);
+                String currLine;
+                while ((currLine = bufferedReader.readLine()) != null){
+                    if (currLine.startsWith("include")){
+                        if (currLine.contains(Constants.COMMA)){
+                            String[] lineModules = currLine.split(Constants.COMMA);
+                            for (String lineModule : lineModules){
+                                modules.add(getModuleName(lineModule));
+                            }
+                        } else {
+                            modules.add(getModuleName(currLine));
+                        }
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                logger.warn("Could not find settings.gradle {}", e.getMessage());
+                logger.debug("stacktrace {}", e.getStackTrace());
+            } catch (IOException e) {
+                logger.warn("Could not parse settings.gradle {}", e.getMessage());
+                logger.debug("stacktrace {}", e.getStackTrace());
+            } finally {
+                try {
+                    fileReader.close();
+                } catch (Exception e) {
+                    logger.warn("Can't close settings.gradle {}", e.getMessage());
+                    logger.debug("stacktrace {}", e.getStackTrace());
+                }
+            }
+        }
+        return modules;
+    }
+
+    private String getModuleName(String module){
+        module = module.substring(module.indexOf(Constants.APOSTROPHE) + 1, module.lastIndexOf(Constants.APOSTROPHE));
+        module = module.replace(Constants.COLON, Constants.EMPTY_STRING);
+        return module;
     }
 
     private List<DependencyInfo> collectDependencies(String rootDirectory) {

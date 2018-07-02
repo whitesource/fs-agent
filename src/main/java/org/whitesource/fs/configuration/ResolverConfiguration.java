@@ -63,8 +63,9 @@ public class ResolverConfiguration {
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
 
-            @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean gradleResolveDependencies,
-            @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean gradleRunAssembleCommand,
+            @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean  gradleResolveDependencies,
+            @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean  gradleRunAssembleCommand,
+            @JsonProperty(GRADLE_AGGREGATE_MODULES) boolean     gradleAggregateModules,
 
             @JsonProperty(PAKET_RESOLVE_DEPENDENCIES) boolean paketResolveDependencies,
             @JsonProperty(PAKET_IGNORED_GROUPS) String[] paketIgnoredScopes,
@@ -120,6 +121,7 @@ public class ResolverConfiguration {
         this.whitesourceConfiguration = whitesourceConfiguration;
 
         this.gradleResolveDependencies = gradleResolveDependencies;
+        this.gradleAggregateModules = gradleAggregateModules;
         this.gradleRunAssembleCommand = gradleRunAssembleCommand;
 
         this.paketResolveDependencies = paketResolveDependencies;
@@ -178,6 +180,7 @@ public class ResolverConfiguration {
 
     private boolean gradleResolveDependencies;
     private boolean gradleRunAssembleCommand;
+    private boolean gradleAggregateModules;
 
     private final boolean pythonIsWssPluginInstalled;
     private final boolean pythonUninstallWssPlugin;
@@ -339,6 +342,11 @@ public class ResolverConfiguration {
     @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES)
     public boolean isGradleResolveDependencies() {
         return gradleResolveDependencies;
+    }
+
+    @JsonProperty(GRADLE_AGGREGATE_MODULES)
+    public boolean isGradleAggregateModules(){
+        return gradleAggregateModules;
     }
 
     @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND)

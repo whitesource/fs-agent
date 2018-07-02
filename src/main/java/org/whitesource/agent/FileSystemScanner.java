@@ -51,7 +51,7 @@ public class FileSystemScanner {
     /* --- Static members --- */
 
     private final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
-    private static String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
+    private String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
 
     /* --- Members --- */
 
@@ -106,30 +106,10 @@ public class FileSystemScanner {
         return projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
     }
 
-    public List<DependencyInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
-                                               String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
-                                               String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
-                                               Collection<String> excludedCopyrights, boolean partialSha1Match) {
-        return createProjects(scannerBaseDirs, convertListDirsToMap(scannerBaseDirs), scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth,
-                archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match);
-    }
-
-    public Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, boolean hasScmConnector) {
-        return createProjects(scannerBaseDirs, convertListDirsToMap(scannerBaseDirs), hasScmConnector);
-    }
-
     public  Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean hasScmConnector) {
         return createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnector, agent.getIncludes(), agent.getExcludes(), agent.getGlobCaseSensitive(), agent.getArchiveExtractionDepth(),
         agent.getArchiveIncludes(), agent.getArchiveExcludes(), agent.isArchiveFastUnpack(), agent.isFollowSymlinks(),
                 agent.getExcludedCopyrights(), agent.isPartialSha1Match(), agent.isCalculateHints(), agent.isCalculateMd5());
-    }
-
-    public  Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
-                                                                            String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
-                                                                            String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
-                                                                            Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5) {
-        return createProjects(scannerBaseDirs, convertListDirsToMap(scannerBaseDirs), scmConnector, includes, excludes, globCaseSensitive, archiveExtractionDepth, archiveIncludes, archiveExcludes,
-                archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match, calculateHints, calculateMd5);
     }
 
     public  Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean scmConnector,
@@ -153,7 +133,7 @@ public class FileSystemScanner {
         // scan directories
         int totalFiles = 0;
 
-        String unpackDirectory = null;
+        String unpackDirectory;
         boolean archiveExtraction = false;
         // go over all base directories, look for archives
         Map<String, String> archiveToBaseDirMap = new HashMap<>();
@@ -198,7 +178,7 @@ public class FileSystemScanner {
         if(enableImpactAnalysis && iaLanguage != null) {
             for (String appPath : appPathsToDependencyDirs.keySet()) {
                 if (!appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
-                    if (((HashSet<String>) appPathsToDependencyDirs.get(appPath)).iterator().next() != null) {
+                    if ((appPathsToDependencyDirs.get(appPath)).iterator().next() != null) {
                         String pojoAppPath = appPath;
                         allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(new ViaComponents(pojoAppPath, iaLanguage));
                     }
@@ -253,23 +233,17 @@ public class FileSystemScanner {
                                 AgentProjectInfo currentProject;
 
                                 // if it is single project threat it as the main
-                                if (dependencyResolutionService.isSeparateProjects()) {
-                                    if (result.getDependencyType() != null && DependencyType.MAVEN.equals(result.getDependencyType()) && result.getResolvedProjects().size() > 1) {
-                                        allProjects.put(project.getKey(), project.getValue());
-                                        LinkedList<ViaComponents> listToNewProject = new LinkedList<>();
-                                        if (impactAnalysisLanguage != null) {
-                                            listToNewProject.add(viaComponents);
-                                        }
-                                        allProjectsToViaComponents.put(project.getKey(), listToNewProject);
-                                    } else {
-                                        currentProject = allProjects.keySet().stream().findFirst().get();
-                                        currentProject.getDependencies().addAll(project.getKey().getDependencies());
-                                        if (impactAnalysisLanguage != null) {
-                                            allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(viaComponents);
-                                        }
+                                if (((DependencyType.MAVEN.equals(result.getDependencyType()) &&
+                                        (!dependencyResolutionService.isMavenAggregateModules() || dependencyResolutionService.isSbtAggregateModules()) ||
+                                        DependencyType.GRADLE.equals(result.getDependencyType()) && !dependencyResolutionService.isGradleAggregateModules())) &&
+                                        result.getResolvedProjects().size() > 1) {
+                                    allProjects.put(project.getKey(), project.getValue());
+                                    LinkedList<ViaComponents> listToNewProject = new LinkedList<>();
+                                    if (impactAnalysisLanguage != null) {
+                                        listToNewProject.add(viaComponents);
                                     }
+                                    allProjectsToViaComponents.put(project.getKey(), listToNewProject);
                                 } else {
-                                    //allProjects.put(project.getKey(), project.getValue());
                                     currentProject = allProjects.keySet().stream().findFirst().get();
                                     currentProject.getDependencies().addAll(project.getKey().getDependencies());
                                     if (impactAnalysisLanguage != null) {
@@ -409,15 +383,6 @@ public class FileSystemScanner {
     }
 
     /* --- Private methods --- */
-
-    private Map<String, Set<String>> convertListDirsToMap(List<String> scannerBaseDirs) {
-        Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
-        appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, new HashSet<>());
-        for (String dir : scannerBaseDirs) {
-            appPathsToDependencyDirs.get(FSAConfiguration.DEFAULT_KEY).add(dir);
-        }
-        return appPathsToDependencyDirs;
-    }
 
     private Set<String> getCanonicalPaths(Collection<String> scannerBaseDirs) {
         // use canonical paths to resolve '.' in path
