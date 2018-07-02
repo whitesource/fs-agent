@@ -468,6 +468,26 @@ public class ResolverConfiguration {
         this.phpResolveDependencies = phpResolveDependencies;
     }
 
+    public void setPaketResolveDependencies(boolean paketResolveDependencies) {
+        this.paketResolveDependencies = paketResolveDependencies;
+    }
+
+    public void setGoResolveDependencies(boolean goResolveDependencies) {
+        this.goResolveDependencies = goResolveDependencies;
+    }
+
+    public void setRubyResolveDependencies(boolean rubyResolveDependencies) {
+        this.rubyResolveDependencies = rubyResolveDependencies;
+    }
+
+    public void setSbtResolveDependencies(boolean sbtResolveDependencies) {
+        this.sbtResolveDependencies = sbtResolveDependencies;
+    }
+
+    public void setHtmlResolveDependencies(boolean htmlResolveDependencies) {
+        this.htmlResolveDependencies = htmlResolveDependencies;
+    }
+
     @Override
     public String toString() {
 
