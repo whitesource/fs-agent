@@ -17,6 +17,9 @@ package org.whitesource.agent.dependency.resolver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
+import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.dotNet.DotNetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyResolver;
@@ -35,6 +38,7 @@ import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.io.FileNotFoundException;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -83,8 +87,8 @@ public class DependencyResolutionService {
 
         boolean pythonResolveDependencies = config.isPythonResolveDependencies();
 
-        boolean gradleResolveDependencies   = config.isGradleResolveDependencies();
-        boolean gradleAggregateModules       = config.isGradleAggregateModules();
+        boolean gradleResolveDependencies = config.isGradleResolveDependencies();
+        boolean gradleAggregateModules = config.isGradleAggregateModules();
 
         final boolean paketResolveDependencies = config.isPaketResolveDependencies();
         final String[] paketIgnoredScopes = config.getPaketIgnoredScopes();
@@ -99,12 +103,12 @@ public class DependencyResolutionService {
         final boolean rubyOverwriteGemFile = config.isRubyOverwriteGemFile();
         final boolean rubyInstallMissingGems = config.isRubyInstallMissingGems();
 
-        final boolean phpResolveDependencies    = config.isPhpResolveDependencies();
-        final boolean phpRunPreStep             = config.isPhpRunPreStep();
+        final boolean phpResolveDependencies = config.isPhpResolveDependencies();
+        final boolean phpRunPreStep = config.isPhpRunPreStep();
         final boolean phpIncludeDevDependencies = config.isPhpIncludeDevDependencies();
 
-        final boolean sbtResolveDependencies    = config.isSbtResolveDependencies();
-        final boolean sbtAggregateModules       = config.isSbtAggregateModules();
+        final boolean sbtResolveDependencies = config.isSbtResolveDependencies();
+        final boolean sbtAggregateModules = config.isSbtAggregateModules();
 
         final boolean htmlResolveDependencies = config.isHtmlResolveDependencies();
 
@@ -141,15 +145,15 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new PaketDependencyResolver(paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath));
         }
 
-        if (goResolveDependencies){
+        if (goResolveDependencies) {
             dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), config.isDependenciesOnly()));
         }
 
-        if (rubyResolveDependencies){
+        if (rubyResolveDependencies) {
             dependencyResolvers.add(new RubyDependencyResolver(rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems));
         }
 
-        if (phpResolveDependencies){
+        if (phpResolveDependencies) {
             dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies));
         }
 
@@ -157,7 +161,7 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new HtmlDependencyResolver());
         }
 
-        if (sbtResolveDependencies){
+        if (sbtResolveDependencies) {
             dependencyResolvers.add(new SbtDependencyResolver(sbtAggregateModules, dependenciesOnly));
             this.sbtAggregateModules = sbtAggregateModules;
         }
@@ -199,6 +203,9 @@ public class DependencyResolutionService {
 
     public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes) {
         Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap = new HashMap<>();
+        Collection<ResolutionResult> mavenResults = new LinkedList<>();
+        Collection<ResolutionResult> htmlResults = new LinkedList<>();
+
         dependencyResolvers.forEach(dependencyResolver -> {
             // add resolver excludes
             Collection<String> combinedExcludes = new LinkedList<>(Arrays.asList(excludes));
@@ -235,9 +242,43 @@ public class DependencyResolutionService {
                     logger.error(e.getMessage());
                 }
                 resolutionResults.add(result);
+                if (Constants.MAVEN.toUpperCase().equals(dependencyResolver.getDependencyTypeName())) {
+                    mavenResults.add(result);
+
+                } else if (Constants.HTML.toUpperCase().equals(dependencyResolver.getDependencyTypeName())) {
+                    htmlResults.add(result);
+                }
             });
         });
+        Map<AgentProjectInfo, Path> mavenProjects = new HashMap<>();
+        Map<AgentProjectInfo, Path> htmlProjects = new HashMap<>();
+        Map<Coordinates, ResolutionResult> coordinatesResolutionResultMap = new HashMap<>();
+        if (!(mavenResults.isEmpty() && htmlResults.isEmpty())) {
+            initializeMaps(mavenProjects, mavenResults, coordinatesResolutionResultMap);
+            initializeMaps(htmlProjects, htmlResults, coordinatesResolutionResultMap);
+            for (Map.Entry<AgentProjectInfo, Path> mavenProject : mavenProjects.entrySet()) {
+                for (Map.Entry<AgentProjectInfo, Path> htmlProject : htmlProjects.entrySet()) {
+                    if (htmlProject.getValue().toAbsolutePath().toString().contains(mavenProject.getValue().toAbsolutePath().toString())) {
+                        ResolutionResult htmlResult = coordinatesResolutionResultMap.get(htmlProject.getKey().getCoordinates());
+                        resolutionResults.remove(htmlResult);
+                        mavenProject.getKey().getDependencies().addAll(htmlProject.getKey().getDependencies());
+                        ResolutionResult mavenResult = coordinatesResolutionResultMap.get(mavenProject.getKey().getCoordinates());
+                        mavenResult.getResolvedProjects().put(mavenProject.getKey(), mavenProject.getValue());
+                    }
+                }
+            }
+        }
         return resolutionResults;
+    }
+
+    private void initializeMaps(Map<AgentProjectInfo, Path> projectsMap, Collection<ResolutionResult> projectResults, Map<Coordinates, ResolutionResult> coordinatesResolutionResultMap) {
+        for (ResolutionResult htmlResult : projectResults) {
+            Map<AgentProjectInfo, Path> resolvedProjects = htmlResult.getResolvedProjects();
+            projectsMap.putAll(resolvedProjects);
+            for (Map.Entry<AgentProjectInfo, Path> resolvedProject : resolvedProjects.entrySet()) {
+                coordinatesResolutionResultMap.put(resolvedProject.getKey().getCoordinates(), htmlResult);
+            }
+        }
     }
 
     public Collection<AbstractDependencyResolver> getDependencyResolvers() {
