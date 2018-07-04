@@ -50,16 +50,16 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         }
         for (String bomFile : bomFiles){
             String bomFileFolder = new File(bomFile).getParent();
+            File bomFolder = new File(new File(bomFile).getParent());
+            String moduleName = bomFolder.getName();
+            // making sure the module's folder is found in the modules' list taken from the settings.gradle
+            if (modules.size() > 0 && !modules.contains(moduleName)){
+                continue;
+            }
             List<DependencyInfo> dependencies = collectDependencies(bomFileFolder);
             if (dependencies.size() > 0) {
                 AgentProjectInfo agentProjectInfo = new AgentProjectInfo();
                 agentProjectInfo.getDependencies().addAll(dependencies);
-                File bomFolder = new File(new File(bomFile).getParent());
-                String moduleName = bomFolder.getName();
-                // making sure the module's folder is found in the modules' list taken from the settings.gradle
-                if (modules.size() > 0 && !modules.contains(moduleName) && !bomFolder.getPath().equals(topLevelFolder)){
-                    continue;
-                }
                 if (!gradleAggregateModules) {
                     Coordinates coordinates = new Coordinates();
                     coordinates.setArtifactId(moduleName);
@@ -174,14 +174,19 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         // This change was only added to prevent exceptions in my Gradle tests, a full solution should be added that
         // fixes the above cases ...
 
+        String separator = null;
         if(module.indexOf(Constants.APOSTROPHE) > 0) {
-            module = module.substring(module.indexOf(Constants.APOSTROPHE) + 1, module.lastIndexOf(Constants.APOSTROPHE));
-            module = module.replace(Constants.COLON, Constants.EMPTY_STRING);
+            separator = Constants.APOSTROPHE;
+        } else if (module.indexOf(Constants.QUOTATION_MARK) > 0) {
+            separator = Constants.QUOTATION_MARK;
         }
-        if(module.indexOf(Constants.QUOTATION_MARK) > 0) {
-            module = module.substring(module.indexOf(Constants.QUOTATION_MARK) + 1, module.lastIndexOf(Constants.QUOTATION_MARK));
-            module = module.replace(Constants.COLON, Constants.EMPTY_STRING);
+        if (separator != null) {
+            module = module.substring(module.indexOf(separator) + 1, module.lastIndexOf(separator));
+            if (module.indexOf(Constants.COLON) > -1){
+                module = module.substring(module.indexOf(Constants.COLON) + 1);
+            }
         }
+
         return module;
     }
 
