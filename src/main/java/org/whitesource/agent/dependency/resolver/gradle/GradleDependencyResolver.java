@@ -68,8 +68,8 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
                 projects.add(agentProjectInfo);
             }
         }
-
-        Set<String> excludes = new HashSet<>();
+        topLevelFoldersNames.add(topLevelFolder.substring(topLevelFolder.lastIndexOf(fileSeparator) + 1));
+        Collection<String> excludes = getExcludes();
         Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
             if (dependenciesOnly) {
                 excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, GRADLE_SCRIPT_EXTENSION, null));
