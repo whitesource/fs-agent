@@ -153,7 +153,7 @@ public class RequestConfiguration {
                 ", projectPerSubFolder=" + projectPerSubFolder + '\n' +
                 ", apiToken='" + "*******" + '\n' +
                 ", userKey='" + "*******" + '\n' +
-                ", requesterEmail='" + requesterEmail + '\n' +
+                ", requesterEmail='" + requesterEmail + "'" + '\n' +
                 ", productToken='" + productToken + '\n' +
                 ", productName='" + productName + '\n' +
                 ", productVersion='" + productVersion + '\n' +

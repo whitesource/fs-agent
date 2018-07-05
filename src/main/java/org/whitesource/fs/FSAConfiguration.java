@@ -69,6 +69,7 @@ public class FSAConfiguration {
                 request.toString() + '\n' +
                 ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", scanDockerImages=" + scanDockerImages + '\n' +
+                getAgent().toString() + '\n' +
                 '}';
     }
 
