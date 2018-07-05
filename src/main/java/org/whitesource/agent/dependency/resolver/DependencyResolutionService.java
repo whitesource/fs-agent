@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
-import org.whitesource.agent.api.model.Coordinates;
+import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.dotNet.DotNetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyResolver;
@@ -50,17 +50,20 @@ public class DependencyResolutionService {
 
     /* --- Members --- */
 
+    private final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
+
     private final FilesScanner fileScanner;
     private final Collection<AbstractDependencyResolver> dependencyResolvers;
     private final boolean dependenciesOnly;
 
-    /* --- Static members --- */
-
-    private final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
-    private boolean separateProjects = false;
+    private boolean separateProjects;
     private boolean mavenAggregateModules;
     private boolean sbtAggregateModules;
     private boolean gradleAggregateModules;
+
+    /* --- Static members --- */
+
+    public static final List<DependencyType> multiModuleDependencyTypes = Arrays.asList(DependencyType.MAVEN, DependencyType.GRADLE);
 
     /* --- Constructors --- */
 
@@ -165,6 +168,8 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new SbtDependencyResolver(sbtAggregateModules, dependenciesOnly));
             this.sbtAggregateModules = sbtAggregateModules;
         }
+
+        this.separateProjects = false;
     }
 
     /* --- Public methods --- */
@@ -203,7 +208,7 @@ public class DependencyResolutionService {
 
     public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes) {
         Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap = new HashMap<>();
-        Collection<ResolutionResult> mavenResults = new LinkedList<>();
+        Collection<ResolutionResult> multiModuleResults = new LinkedList<>();
         Collection<ResolutionResult> htmlResults = new LinkedList<>();
 
         dependencyResolvers.forEach(dependencyResolver -> {
@@ -242,43 +247,55 @@ public class DependencyResolutionService {
                     logger.error(e.getMessage());
                 }
                 resolutionResults.add(result);
-                if (Constants.MAVEN.toUpperCase().equals(dependencyResolver.getDependencyTypeName())) {
-                    mavenResults.add(result);
+
+                // create lists in order to match htmlResolver dependencies to their original project (Maven/Gradle/Sbt)
+                if (multiModuleDependencyTypes.contains(dependencyResolver.getDependencyType())) {
+                    multiModuleResults.add(result);
 
                 } else if (Constants.HTML.toUpperCase().equals(dependencyResolver.getDependencyTypeName())) {
                     htmlResults.add(result);
                 }
             });
         });
-        Map<AgentProjectInfo, Path> mavenProjects = new HashMap<>();
-        Map<AgentProjectInfo, Path> htmlProjects = new HashMap<>();
-        Map<Coordinates, ResolutionResult> coordinatesResolutionResultMap = new HashMap<>();
-        if (!(mavenResults.isEmpty() && htmlResults.isEmpty())) {
-            initializeMaps(mavenProjects, mavenResults, coordinatesResolutionResultMap);
-            initializeMaps(htmlProjects, htmlResults, coordinatesResolutionResultMap);
-            for (Map.Entry<AgentProjectInfo, Path> mavenProject : mavenProjects.entrySet()) {
+        // match htmlResolver dependencies to their original project (Maven/Gradle/Sbt)
+        findAndSetHtmlProject(multiModuleResults, htmlResults, resolutionResults);
+        return resolutionResults;
+    }
+
+    private void findAndSetHtmlProject(Collection<ResolutionResult> multiModuleResults, Collection<ResolutionResult> htmlResults,
+                                       Collection<ResolutionResult> resolutionResults) {
+        if (!(multiModuleResults.isEmpty() && htmlResults.isEmpty())) {
+            // parameters initialization
+            Map<AgentProjectInfo, ResolutionResult> agentProjectInfoToResolutionResult = new HashMap<>();
+            Map<AgentProjectInfo, Path> multiModuleProjects = generateMultiProjectMap(multiModuleResults, agentProjectInfoToResolutionResult);
+            Map<AgentProjectInfo, Path> htmlProjects = generateMultiProjectMap(htmlResults, agentProjectInfoToResolutionResult);
+            // Match for each html project its original project & remove its "fake" project from the list.
+            for (Map.Entry<AgentProjectInfo, Path> multiModuleProject : multiModuleProjects.entrySet()) {
                 for (Map.Entry<AgentProjectInfo, Path> htmlProject : htmlProjects.entrySet()) {
-                    if (htmlProject.getValue().toAbsolutePath().toString().contains(mavenProject.getValue().toAbsolutePath().toString())) {
-                        ResolutionResult htmlResult = coordinatesResolutionResultMap.get(htmlProject.getKey().getCoordinates());
+                    if (htmlProject.getValue().toAbsolutePath().toString().contains(multiModuleProject.getValue().toAbsolutePath().toString())) {
+                        ResolutionResult htmlResult = agentProjectInfoToResolutionResult.get(htmlProject.getKey());
                         resolutionResults.remove(htmlResult);
-                        mavenProject.getKey().getDependencies().addAll(htmlProject.getKey().getDependencies());
-                        ResolutionResult mavenResult = coordinatesResolutionResultMap.get(mavenProject.getKey().getCoordinates());
-                        mavenResult.getResolvedProjects().put(mavenProject.getKey(), mavenProject.getValue());
+                        multiModuleProject.getKey().getDependencies().addAll(htmlProject.getKey().getDependencies());
+                        ResolutionResult multiModuleResult = agentProjectInfoToResolutionResult.get(htmlProject.getKey());
+                        multiModuleResult.getResolvedProjects().put(multiModuleProject.getKey(), multiModuleProject.getValue());
                     }
                 }
             }
         }
-        return resolutionResults;
     }
 
-    private void initializeMaps(Map<AgentProjectInfo, Path> projectsMap, Collection<ResolutionResult> projectResults, Map<Coordinates, ResolutionResult> coordinatesResolutionResultMap) {
-        for (ResolutionResult htmlResult : projectResults) {
-            Map<AgentProjectInfo, Path> resolvedProjects = htmlResult.getResolvedProjects();
-            projectsMap.putAll(resolvedProjects);
-            for (Map.Entry<AgentProjectInfo, Path> resolvedProject : resolvedProjects.entrySet()) {
-                coordinatesResolutionResultMap.put(resolvedProject.getKey().getCoordinates(), htmlResult);
+    private Map<AgentProjectInfo, Path> generateMultiProjectMap(Collection<ResolutionResult> projectResults, Map<AgentProjectInfo,
+            ResolutionResult> agentProjectInfoToResolutionResult) {
+        Map<AgentProjectInfo, Path> resolvedProjects = new HashMap<>();
+        // initialize projectResults & resolvedProjects
+        for (ResolutionResult result : projectResults) {
+            Map<AgentProjectInfo, Path> projects = result.getResolvedProjects();
+            for (Map.Entry<AgentProjectInfo, Path> project : projects.entrySet()) {
+                agentProjectInfoToResolutionResult.put(project.getKey(), result);
             }
+            resolvedProjects.putAll(projects);
         }
+        return resolvedProjects;
     }
 
     public Collection<AbstractDependencyResolver> getDependencyResolvers() {
