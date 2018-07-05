@@ -18,6 +18,7 @@ package org.whitesource.fs.configuration;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
@@ -179,5 +180,22 @@ public class AgentConfiguration {
     @JsonProperty(PROJECT_PER_FOLDER_EXCLUDES)
     public String[] getProjectPerFolderExcludes() {
         return projectPerFolderExcludes;
+    }
+
+
+    @Override
+    public String toString() {
+        return  ", includes=" + Arrays.toString(includes) + "\n" +
+                ", excludes=" + Arrays.toString(excludes)+ "\n" +
+                ", dockerScan=" + dockerScan +
+                ", dockerIncludes=" + Arrays.toString(dockerIncludes) +
+                ", dockerExcludes=" + Arrays.toString(dockerExcludes) + "\n" +
+                ", archiveExtractionDepth=" + archiveExtractionDepth +
+                ", archiveIncludes=" + Arrays.toString(archiveIncludes) +
+                ", archiveExcludes=" + Arrays.toString(archiveExcludes) + "\n" +
+                ", followSymlinks=" + followSymlinks +
+                ", globCaseSensitive=" + globCaseSensitive +
+                ", projectPerFolderIncludes=" + Arrays.toString(projectPerFolderIncludes) +
+                ", projectPerFolderExcludes=" + Arrays.toString(projectPerFolderExcludes) ;
     }
 }

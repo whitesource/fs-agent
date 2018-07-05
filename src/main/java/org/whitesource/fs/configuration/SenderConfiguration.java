@@ -143,8 +143,8 @@ public class SenderConfiguration {
 
     @Override
     public String toString() {
-        return  ", checkPolicies=" + checkPolicies + '\n' +
-                ", serviceUrl='" + serviceUrl + "'\n" +
+        return  ", serviceUrl='" + serviceUrl + "'\n" +
+                ", checkPolicies=" + checkPolicies + '\n' +
                 ", forceCheckAllDependencies=" + forceCheckAllDependencies + '\n' +
                 ", forceUpdate=" + forceUpdate + '\n' +
                 ", updateTypeValue='" + updateTypeValue + "'";
