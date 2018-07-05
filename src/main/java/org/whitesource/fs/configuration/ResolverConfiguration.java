@@ -526,9 +526,9 @@ public class ResolverConfiguration {
                 ", phpResolveDependencies=" + phpResolveDependencies +
                 ", phpRunPreStep=" + phpRunPreStep +
                 ", phpIncludeDevDependenices=" + phpIncludeDevDependencies + '\n' +
-                ", htmlResolveDependencies=" + htmlResolveDependencies + '\n' +
-                ", sbtResolveDependencies=" + sbtResolveDependencies + '\n' +
-                ", sbtAggregateModules=" + sbtAggregateModules;
+                ", sbtResolveDependencies=" + sbtResolveDependencies +
+                ", sbtAggregateModules=" + sbtAggregateModules + '\n' +
+                ", htmlResolveDependencies=" + htmlResolveDependencies ;
     }
 
 
