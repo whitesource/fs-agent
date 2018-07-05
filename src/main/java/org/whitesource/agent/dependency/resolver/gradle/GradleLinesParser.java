@@ -56,7 +56,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private boolean removeJavaFile;
 
     GradleLinesParser(boolean runAssembleCommand){
-        super(null);
+        super(null, true);
         this.runAssembleCommand = runAssembleCommand;
         gradleCli = new GradleCli();
         fileSeparator = System.getProperty(Constants.FILE_SEPARATOR);

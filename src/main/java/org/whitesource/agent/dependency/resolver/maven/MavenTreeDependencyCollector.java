@@ -65,11 +65,12 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     protected String M2Path;
     private final Set<String> mavenIgnoredScopes;
     private boolean showMavenTreeError;
+    private boolean ignorePomModules;
     private MavenLinesParser mavenLinesParser;
 
     /* --- Constructors --- */
 
-    public MavenTreeDependencyCollector(String[] mavenIgnoredScopes) {
+    public MavenTreeDependencyCollector(String[] mavenIgnoredScopes, boolean ignorePomModules) {
         mavenLinesParser = new MavenLinesParser();
         this.mavenIgnoredScopes = new HashSet<>();
         if (mavenIgnoredScopes == null) {
@@ -83,6 +84,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                         .map(exclude -> this.mavenIgnoredScopes.add(exclude));
             }
         }
+        this.ignorePomModules = ignorePomModules;
     }
 
     /* --- Public methods --- */
@@ -105,7 +107,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                         nodes.stream().map(node -> node.getArtifactId()).collect(Collectors.toList())));
 
                 projects = nodes.stream()
-                        .filter(node -> !node.getPackaging().equals(POM))
+                        .filter(node -> !this.ignorePomModules || (ignorePomModules && !node.getPackaging().equals(POM)))
                         .map(tree -> {
 
                     List<DependencyInfo> dependencies = new LinkedList<>();

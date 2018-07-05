@@ -41,7 +41,7 @@ public class MavenTreeDependencyCollectorTest {
     }
 
     private Collection<DependencyInfo> testFsa(String currentDirectory) {
-        MavenTreeDependencyCollector mavenTreeDependencyCollector = new MavenTreeDependencyCollector(null);
+        MavenTreeDependencyCollector mavenTreeDependencyCollector = new MavenTreeDependencyCollector(null, true);
 
         Collection<AgentProjectInfo> projects = mavenTreeDependencyCollector.collectDependencies(currentDirectory);
 

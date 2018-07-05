@@ -18,7 +18,6 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyManager;
 
 import java.util.Arrays;
@@ -50,6 +49,7 @@ public class ResolverConfiguration {
             @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES) boolean mavenResolveDependencies,
             @JsonProperty(MAVEN_IGNORED_SCOPES) String[] mavenIgnoredScopes,
             @JsonProperty(MAVEN_AGGREGATE_MODULES) boolean mavenAggregateModules,
+            @JsonProperty(MAVEN_IGNORE_POM_MODULES) boolean mavenIgnorePomModules,
 
             @JsonProperty(PYTHON_RESOLVE_DEPENDENCIES) boolean pythonResolveDependencies,
             @JsonProperty(PYTHON_PIP_PATH) String pipPath,
@@ -107,6 +107,7 @@ public class ResolverConfiguration {
         this.mavenResolveDependencies = mavenResolveDependencies;
         this.mavenIgnoredScopes = mavenIgnoredScopes;
         this.mavenAggregateModules = mavenAggregateModules;
+        this.mavenIgnorePomModules = mavenIgnorePomModules;
 
         this.pythonResolveDependencies = pythonResolveDependencies;
         this.pipPath = pipPath;
@@ -169,6 +170,7 @@ public class ResolverConfiguration {
     private boolean     mavenResolveDependencies;
     private String[]    mavenIgnoredScopes;
     private boolean     mavenAggregateModules;
+    private boolean     mavenIgnorePomModules;
     private boolean     dependenciesOnly;
     private String      whitesourceConfiguration;
     private boolean     pythonResolveDependencies;
@@ -287,6 +289,11 @@ public class ResolverConfiguration {
     @JsonProperty(MAVEN_AGGREGATE_MODULES)
     public boolean isMavenAggregateModules() {
         return mavenAggregateModules;
+    }
+
+    @JsonProperty(MAVEN_IGNORE_POM_MODULES)
+    public boolean isMavenIgnorePomModules(){
+        return mavenIgnorePomModules;
     }
 
     @JsonProperty(DEPENDENCIES_ONLY)

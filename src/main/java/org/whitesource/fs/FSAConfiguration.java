@@ -289,6 +289,7 @@ public class FSAConfiguration {
         boolean mavenResolveDependencies    = FSAConfiguration.getBooleanProperty(config, MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes         = FSAConfiguration.getListProperty(config, MAVEN_IGNORED_SCOPES, null);
         boolean mavenAggregateModules       = FSAConfiguration.getBooleanProperty(config, MAVEN_AGGREGATE_MODULES, true);
+        boolean mavenIgnoredPomModules      = FSAConfiguration.getBooleanProperty(config, MAVEN_IGNORE_POM_MODULES, true);
 
         boolean dependenciesOnly            = FSAConfiguration.getBooleanProperty(config, DEPENDENCIES_ONLY, false);
 
@@ -334,7 +335,7 @@ public class FSAConfiguration {
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles,
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
-                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
+                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree,
                 dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, paketResolveDependencies,
