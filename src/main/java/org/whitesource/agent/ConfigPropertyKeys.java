@@ -124,6 +124,7 @@ public final class ConfigPropertyKeys {
 
     public static final String GRADLE_RESOLVE_DEPENDENCIES = "gradle.resolveDependencies";
     public static final String GRADLE_RUN_ASSEMBLE_COMMAND = "gradle.runAssembleCommand";
+    public static final String GRADLE_AGGREGATE_MODULES    = "gradle.aggregateModules";
 
     public static final String PAKET_RESOLVE_DEPENDENCIES   = "paket.resolveDependencies";
     public static final String PAKET_IGNORED_GROUPS         = "paket.ignoredGroups";
@@ -145,10 +146,11 @@ public final class ConfigPropertyKeys {
     public static final String PHP_INCLUDE_DEV_DEPENDENCIES = "php.includeDevDependencies";
 
     public static final String SBT_RESOLVE_DEPENDENCIES     = "sbt.resolveDependencies";
+    public static final String SBT_AGGREGATE_MODULES        = "sbt.aggregateModules";
 
-    public static final String HTML_RESOLVE_DEPENDENCIES     = "html.resolveDependencies";
+    public static final String HTML_RESOLVE_DEPENDENCIES    = "html.resolveDependencies";
 
-    public static final String WHITESOURCE_CONFIGURATION = "whitesourceConfiguration";
+    public static final String WHITESOURCE_CONFIGURATION    = "whitesourceConfiguration";
 
     public static final String SCANNED_FOLDERS = "d";
 }

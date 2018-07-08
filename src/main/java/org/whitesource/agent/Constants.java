@@ -42,6 +42,12 @@ public final class Constants {
     public static final String INSTALL = "install";
     public static final String HTML = "html";
     public static final String HTM = "htm";
+    public static final String SHTML = "shtml";
+    public static final String XHTML = "xhtml";
+    public static final String JSP = "jsp";
+    public static final String ASP = "asp";
+    public static final String DO = "do";
+    public static final String ASPX = "aspx";
     public static final String WINDOWS = "Windows";
     public static final String DOT = ".";
     public static final String DIRECTORY = "d";
@@ -51,8 +57,6 @@ public final class Constants {
     public static final String EMPTY_STRING = "";
     public static final String COLON = ":";
     public static final String PLUS = "+";
-    public static final String UNIX_PATH_SEPARATOR = "/";
-    public static final String WINDOWS_SEPARATOR = "\\";
     public static final String DASH = "-";
     public static final String PATTERN = "**/*";
     public static final String COMMA = ",";
@@ -70,7 +74,10 @@ public final class Constants {
     public static final String EXE = ".exe";
     public static final String NUPKG = ".nupkg";
     public static final String CS = ".cs";
-
+    public static final String VAR = "var";
+    public static final String LIB = "lib";
+    public static final String YUM_DB = "yumdb";
+    public static final String YUM = "yum";
 
     public static final char QUESTION_MARK = '?';
     public static final char WHITESPACE_CHAR = ' ';

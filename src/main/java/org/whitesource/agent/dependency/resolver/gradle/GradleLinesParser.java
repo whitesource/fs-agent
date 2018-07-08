@@ -8,6 +8,7 @@ import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
+import org.whitesource.agent.utils.FilesUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,7 +84,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         int prevLineIndentation = 0;
         boolean duplicateDependency = false;
         for (String line : projectsLines){
-            if (line.indexOf(Constants.COLON) == -1){
+            if (line.indexOf(Constants.COLON) == -1 || line.contains("project :")){
                 continue;
             }
             String[] strings = line.split(Constants.COLON);
@@ -109,33 +110,36 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             currentDependency.setSystemPath(dependencyFile.getFilePath());
             currentDependency.setFilename(dependencyFile.getFileName());
             currentDependency.setDependencyType(DependencyType.GRADLE);
+
+            String extension = FilesUtils.getFileExtension(dependencyFile.getFilePath());
+            currentDependency.setType(extension);
+
             if (dependenciesList.contains(currentDependency)){
                 duplicateDependency = true;
                 continue;
             }
             // In case the dependency is transitive/child dependency
             if (line.startsWith(Constants.WHITESPACE) || line.startsWith(Constants.PIPE)){
-                if (duplicateDependency || parentDependencies.isEmpty())
+                if (duplicateDependency || parentDependencies.isEmpty()) {
                     continue;
-                //if (!parentDependencies.isEmpty()) {
-                    // Check if 2 dependencies are siblings (under the hierarchy level)
-                    if (lastSpace == prevLineIndentation){
-                        parentDependencies.pop();
+                }
+                // Check if 2 dependencies are siblings (under the hierarchy level)
+                if (lastSpace == prevLineIndentation){
+                    parentDependencies.pop();
 
-                    } else if (lastSpace < prevLineIndentation) {
-                    // Find father dependency of current node
-                    /*+--- org.webjars.npm:isurl:1.0.0
-                      |    +--- org.webjars.npm:has-to-string-tag-x:[1.2.0,2) -> 1.4.1
-                      |    |    \--- org.webjars.npm:has-symbol-support-x:[1.4.1,2) -> 1.4.1
-                      |    \--- org.webjars.npm:is-object:[1.0.1,2) -> 1.0.1
-                    */
-                        while (prevLineIndentation > lastSpace - INDENTETION_SPACE){
-                            parentDependencies.pop();
-                            prevLineIndentation -= INDENTETION_SPACE;
-                        }
+                } else if (lastSpace < prevLineIndentation) {
+                // Find father dependency of current node
+                /*+--- org.webjars.npm:isurl:1.0.0
+                  |    +--- org.webjars.npm:has-to-string-tag-x:[1.2.0,2) -> 1.4.1
+                  |    |    \--- org.webjars.npm:has-symbol-support-x:[1.4.1,2) -> 1.4.1
+                  |    \--- org.webjars.npm:is-object:[1.0.1,2) -> 1.0.1
+                */
+                    while (prevLineIndentation > lastSpace - INDENTETION_SPACE){
+                        parentDependencies.pop();
+                        prevLineIndentation -= INDENTETION_SPACE;
                     }
-                    parentDependencies.peek().getChildren().add(currentDependency);
-                //}
+                }
+                parentDependencies.peek().getChildren().add(currentDependency);
                 parentDependencies.push(currentDependency);
             } else {
                 duplicateDependency = false;

@@ -87,6 +87,7 @@ public class CommandLineProcess {
             logger.error("'{}' was interrupted {}", args, e);
         }
         if (this.processStart.exitValue() != 0) {
+            logger.debug("error in execute command {}", this.processStart.exitValue());
             this.errorInProcess = true;
         }
         return linesOutput;

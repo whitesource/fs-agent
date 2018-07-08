@@ -37,7 +37,8 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
 
     private final Logger logger = LoggerFactory.getLogger(HtmlDependencyResolver.class);
 
-    public static final List<String> htmlTypeExtensions = Arrays.asList(Constants.HTM, Constants.HTML);
+    public static final List<String> htmlTypeExtensions = Arrays.asList(Constants.HTM, Constants.HTML, Constants.SHTML,
+            Constants.XHTML, Constants.JSP, Constants.ASP, Constants.DO, Constants.ASPX);
     public final String[] includesPattern = new String[htmlTypeExtensions.size()];
 
     public static final String WHITESOURCE_HTML_RESOLVER = "whitesource-html-resolver";
@@ -86,6 +87,13 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     }
 
     private boolean isLegitSrcUrl(String srcUrl) {
+        // Remove parameters if JS is called with parameters
+        // For example: http://somexample.com/test.js?a=1&b=3
+        if(srcUrl.contains("?"))
+        {
+            String[] srcURLSplit = srcUrl.split("\\?");
+            srcUrl = srcURLSplit[0];
+        }
         if (srcUrl.endsWith(Constants.JS_EXTENSION)) {
             Matcher matcher = this.patternOfLegitSrcUrl.matcher(srcUrl);
             if (!matcher.find()) {
@@ -173,8 +181,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String[] getBomPattern() {
-        return new String[]{Constants.PATTERN + Constants.DOT + Constants.HTML,
-                Constants.PATTERN + Constants.DOT + Constants.HTM};
+        return includesPattern;
     }
 
     @Override

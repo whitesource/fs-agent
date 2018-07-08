@@ -69,6 +69,7 @@ public class FSAConfiguration {
                 request.toString() + '\n' +
                 ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", scanDockerImages=" + scanDockerImages + '\n' +
+                getAgent().toString() + '\n' +
                 '}';
     }
 
@@ -304,6 +305,7 @@ public class FSAConfiguration {
 
         boolean gradleResolveDependencies   = FSAConfiguration.getBooleanProperty(config, GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand    = FSAConfiguration.getBooleanProperty(config, GRADLE_RUN_ASSEMBLE_COMMAND, true);
+        boolean gradleAggregateModules      = FSAConfiguration.getBooleanProperty(config, GRADLE_AGGREGATE_MODULES, true);
 
         boolean paketResolveDependencies    = FSAConfiguration.getBooleanProperty(config, PAKET_RESOLVE_DEPENDENCIES, true);
         String[] paketIgnoredScopes         = FSAConfiguration.getListProperty(config, PAKET_IGNORED_GROUPS, null);
@@ -325,6 +327,7 @@ public class FSAConfiguration {
         boolean phpIncludeDevDependencies   = FSAConfiguration.getBooleanProperty(config,PHP_INCLUDE_DEV_DEPENDENCIES,false);
 
         boolean sbtResolveDependencies      = FSAConfiguration.getBooleanProperty(config,SBT_RESOLVE_DEPENDENCIES, true);
+        boolean sbtAggregateModules         = FSAConfiguration.getBooleanProperty(config,SBT_AGGREGATE_MODULES, true);
 
         boolean htmlResolveDependencies     = FSAConfiguration.getBooleanProperty(config, HTML_RESOLVE_DEPENDENCIES, true);
 
@@ -334,11 +337,11 @@ public class FSAConfiguration {
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree,
-                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, paketResolveDependencies,
+                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, paketResolveDependencies,
                 paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall,
                 rubyOverwriteGemFile, rubyInstallMissingGems,
-                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, htmlResolveDependencies);
+                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, htmlResolveDependencies);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken,String userKey, String projectName, String projectToken) {
@@ -477,7 +480,7 @@ public class FSAConfiguration {
                     i = i + 3;
                 } else {
                     errors.add("Error: the '-appPath' parameter must have a following '-d'.");
-                    break;
+                    return;
                 }
             } else if (wasDir && args[i].equals(APP_PATH)) {
                 errors.add("Error: the '-appPath' parameter cannot follow the parameter '-d'.");
@@ -495,10 +498,14 @@ public class FSAConfiguration {
                     i++;
                 } else {
                     errors.add("Error: there is not path after the '-d' parameter.");
-                    break;
+                    return;
                 }
                 wasDir = true;
             }
+        }
+        if(!wasDir)
+        {
+            appPathsToDependencyDirs.put(DEFAULT_KEY,new HashSet<>(dependencyDirs));
         }
     }
 
@@ -695,6 +702,9 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY, commandLineArgs.productVersion);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_VERSION_PROPERTY_KEY, commandLineArgs.projectVersion);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.USER_KEY_PROPERTY_KEY, commandLineArgs.userKey);
+
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_TOKEN_PROPERTY_KEY, commandLineArgs.projectToken);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY, commandLineArgs.productToken);
 
         // request file
         List<String> offlineRequestFiles = new LinkedList<>();

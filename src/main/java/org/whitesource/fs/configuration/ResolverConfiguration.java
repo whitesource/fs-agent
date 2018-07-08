@@ -18,6 +18,7 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyManager;
 
 import java.util.Arrays;
@@ -62,8 +63,9 @@ public class ResolverConfiguration {
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
 
-            @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean gradleResolveDependencies,
-            @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean gradleRunAssembleCommand,
+            @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean  gradleResolveDependencies,
+            @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean  gradleRunAssembleCommand,
+            @JsonProperty(GRADLE_AGGREGATE_MODULES) boolean     gradleAggregateModules,
 
             @JsonProperty(PAKET_RESOLVE_DEPENDENCIES) boolean paketResolveDependencies,
             @JsonProperty(PAKET_IGNORED_GROUPS) String[] paketIgnoredScopes,
@@ -84,7 +86,7 @@ public class ResolverConfiguration {
             @JsonProperty(PHP_RUN_PRE_STEP) boolean phpRunPreStep,
             @JsonProperty(PHP_INCLUDE_DEV_DEPENDENCIES) boolean phpIncludeDevDependencies,
             @JsonProperty(SBT_RESOLVE_DEPENDENCIES) boolean sbtResolveDependencies,
-
+            @JsonProperty(SBT_AGGREGATE_MODULES) boolean sbtAggregateModules,
             @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmIgnoreScripts = npmIgnoreScripts;
@@ -119,6 +121,7 @@ public class ResolverConfiguration {
         this.whitesourceConfiguration = whitesourceConfiguration;
 
         this.gradleResolveDependencies = gradleResolveDependencies;
+        this.gradleAggregateModules = gradleAggregateModules;
         this.gradleRunAssembleCommand = gradleRunAssembleCommand;
 
         this.paketResolveDependencies = paketResolveDependencies;
@@ -143,6 +146,7 @@ public class ResolverConfiguration {
         this.phpIncludeDevDependencies = phpIncludeDevDependencies;
 
         this.sbtResolveDependencies = sbtResolveDependencies;
+        this.sbtAggregateModules = sbtAggregateModules;
 
         this.htmlResolveDependencies = htmlResolveDependencies;
     }
@@ -176,6 +180,7 @@ public class ResolverConfiguration {
 
     private boolean gradleResolveDependencies;
     private boolean gradleRunAssembleCommand;
+    private boolean gradleAggregateModules;
 
     private final boolean pythonIsWssPluginInstalled;
     private final boolean pythonUninstallWssPlugin;
@@ -200,6 +205,7 @@ public class ResolverConfiguration {
     private boolean phpIncludeDevDependencies;
 
     private boolean sbtResolveDependencies;
+    private boolean sbtAggregateModules;
 
     private boolean htmlResolveDependencies;
 
@@ -338,6 +344,11 @@ public class ResolverConfiguration {
         return gradleResolveDependencies;
     }
 
+    @JsonProperty(GRADLE_AGGREGATE_MODULES)
+    public boolean isGradleAggregateModules(){
+        return gradleAggregateModules;
+    }
+
     @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND)
     public boolean isGradleRunAssembleCommand() {
         return gradleRunAssembleCommand;
@@ -421,6 +432,9 @@ public class ResolverConfiguration {
     @JsonProperty(SBT_RESOLVE_DEPENDENCIES)
     public boolean isSbtResolveDependencies() { return sbtResolveDependencies; }
 
+    @JsonProperty(SBT_AGGREGATE_MODULES)
+    public boolean isSbtAggregateModules() {    return sbtAggregateModules; }
+
     @JsonProperty(HTML_RESOLVE_DEPENDENCIES)
     public boolean isHtmlResolveDependencies() {
         return htmlResolveDependencies;
@@ -452,6 +466,26 @@ public class ResolverConfiguration {
 
     public void setPhpResolveDependencies(boolean phpResolveDependencies) {
         this.phpResolveDependencies = phpResolveDependencies;
+    }
+
+    public void setPaketResolveDependencies(boolean paketResolveDependencies) {
+        this.paketResolveDependencies = paketResolveDependencies;
+    }
+
+    public void setGoResolveDependencies(boolean goResolveDependencies) {
+        this.goResolveDependencies = goResolveDependencies;
+    }
+
+    public void setRubyResolveDependencies(boolean rubyResolveDependencies) {
+        this.rubyResolveDependencies = rubyResolveDependencies;
+    }
+
+    public void setSbtResolveDependencies(boolean sbtResolveDependencies) {
+        this.sbtResolveDependencies = sbtResolveDependencies;
+    }
+
+    public void setHtmlResolveDependencies(boolean htmlResolveDependencies) {
+        this.htmlResolveDependencies = htmlResolveDependencies;
     }
 
     @Override
@@ -492,8 +526,9 @@ public class ResolverConfiguration {
                 ", phpResolveDependencies=" + phpResolveDependencies +
                 ", phpRunPreStep=" + phpRunPreStep +
                 ", phpIncludeDevDependenices=" + phpIncludeDevDependencies + '\n' +
-                ", htmlResolveDependencies=" + htmlResolveDependencies + '\n' +
-                ", sbtResolveDependencies=" + sbtResolveDependencies;
+                ", sbtResolveDependencies=" + sbtResolveDependencies +
+                ", sbtAggregateModules=" + sbtAggregateModules + '\n' +
+                ", htmlResolveDependencies=" + htmlResolveDependencies ;
     }
 
 

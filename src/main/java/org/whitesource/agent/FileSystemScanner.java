@@ -51,7 +51,7 @@ public class FileSystemScanner {
     /* --- Static members --- */
 
     private final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
-    private static String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
+    private String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
 
     /* --- Members --- */
 
@@ -153,7 +153,7 @@ public class FileSystemScanner {
         // scan directories
         int totalFiles = 0;
 
-        String unpackDirectory = null;
+        String unpackDirectory;
         boolean archiveExtraction = false;
         // go over all base directories, look for archives
         Map<String, String> archiveToBaseDirMap = new HashMap<>();
@@ -198,7 +198,7 @@ public class FileSystemScanner {
         if(enableImpactAnalysis && iaLanguage != null) {
             for (String appPath : appPathsToDependencyDirs.keySet()) {
                 if (!appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
-                    if (((HashSet<String>) appPathsToDependencyDirs.get(appPath)).iterator().next() != null) {
+                    if ((appPathsToDependencyDirs.get(appPath)).iterator().next() != null) {
                         String pojoAppPath = appPath;
                         allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(new ViaComponents(pojoAppPath, iaLanguage));
                     }
@@ -253,23 +253,17 @@ public class FileSystemScanner {
                                 AgentProjectInfo currentProject;
 
                                 // if it is single project threat it as the main
-                                if (dependencyResolutionService.isSeparateProjects()) {
-                                    if (result.getDependencyType() != null && DependencyType.MAVEN.equals(result.getDependencyType()) && result.getResolvedProjects().size() > 1) {
-                                        allProjects.put(project.getKey(), project.getValue());
-                                        LinkedList<ViaComponents> listToNewProject = new LinkedList<>();
-                                        if (impactAnalysisLanguage != null) {
-                                            listToNewProject.add(viaComponents);
-                                        }
-                                        allProjectsToViaComponents.put(project.getKey(), listToNewProject);
-                                    } else {
-                                        currentProject = allProjects.keySet().stream().findFirst().get();
-                                        currentProject.getDependencies().addAll(project.getKey().getDependencies());
-                                        if (impactAnalysisLanguage != null) {
-                                            allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(viaComponents);
-                                        }
+                                if (((DependencyType.MAVEN.equals(result.getDependencyType()) &&
+                                        (!dependencyResolutionService.isMavenAggregateModules() || !dependencyResolutionService.isSbtAggregateModules()) ||
+                                        DependencyType.GRADLE.equals(result.getDependencyType()) && !dependencyResolutionService.isGradleAggregateModules())) &&
+                                        result.getResolvedProjects().size() > 1) {
+                                    allProjects.put(project.getKey(), project.getValue());
+                                    LinkedList<ViaComponents> listToNewProject = new LinkedList<>();
+                                    if (impactAnalysisLanguage != null) {
+                                        listToNewProject.add(viaComponents);
                                     }
+                                    allProjectsToViaComponents.put(project.getKey(), listToNewProject);
                                 } else {
-                                    //allProjects.put(project.getKey(), project.getValue());
                                     currentProject = allProjects.keySet().stream().findFirst().get();
                                     currentProject.getDependencies().addAll(project.getKey().getDependencies());
                                     if (impactAnalysisLanguage != null) {
