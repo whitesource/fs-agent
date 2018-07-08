@@ -35,25 +35,27 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     private final String pipPath;
     private final Collection<String> excludes = Arrays.asList(Constants.PATTERN + PY_EXT);
     private boolean ignorePipInstallErrors;
-    private boolean  installVirutalenv;
+    private boolean installVirutalenv;
     private boolean resolveHierarchyTree;
+    private String[] pythonRequirementsFileIncludes;
 
     /* --- Static members --- */
 
-    private static final String PYTHON_BOM = "requirements.txt";
+    //private static final String PYTHON_BOM = "requirements.txt";
     private static final String PY_EXT = ".py";
     public static final String WHITESOURCE_PYTHON_TEMP_FOLDER = "Whitesource_python_resolver";
 
     /* --- Constructors --- */
 
     public PythonDependencyResolver(String pythonPath, String pipPath, boolean ignorePipInstallErrors,
-                                    boolean installVirtualEnv, boolean resolveHierarchyTree) {
+                                    boolean installVirtualEnv, boolean resolveHierarchyTree, String[] pythonRequirementsFileIncludes) {
         super();
         this.pythonPath = pythonPath;
         this.pipPath = pipPath;
         this.ignorePipInstallErrors = ignorePipInstallErrors;
         this.installVirutalenv = installVirtualEnv;
         this.resolveHierarchyTree = resolveHierarchyTree;
+        this.pythonRequirementsFileIncludes = pythonRequirementsFileIncludes;
     }
 
     @Override
@@ -104,7 +106,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public String[] getBomPattern() {
-        return new String[]{Constants.PATTERN + PYTHON_BOM};
+        return pythonRequirementsFileIncludes;
     }
 
     @Override

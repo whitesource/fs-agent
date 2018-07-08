@@ -115,6 +115,7 @@ public final class ConfigPropertyKeys {
     public static final String PROJECT_CONFIGURATION_PATH   = "configFilePath";
     public static final String SCAN_PACKAGE_MANAGER         = "scanPackageManager";
     public static final String WHITESOURCE_FOLDER_PATH      = "whiteSourceFolderPath";
+    public static final String PYTHON_REQUIREMENTS_FILE_INCLUDES = "python.requirementsFileIncludes";
 
     public static final String ENDPOINT_ENABLED         = "endpoint.enabled";
     public static final String ENDPOINT_PORT            = "endpoint.port";

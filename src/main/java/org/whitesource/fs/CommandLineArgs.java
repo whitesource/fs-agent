@@ -19,7 +19,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.CommaParameterSplitter;
 import org.whitesource.agent.Constants;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -121,6 +120,9 @@ public class CommandLineArgs {
 
     @Parameter(names = "-productToken", description = "Unique identifier of the product to update")
     String productToken = null;
+
+    @Parameter(names = "-requirementsFileIncludes", description = "List of dependency files split by comma")
+    List<String> requirementsFileIncludes = new LinkedList<>();
 
     /* --- Public methods --- */
 
