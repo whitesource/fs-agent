@@ -122,6 +122,9 @@ public class CommandLineArgs {
     @Parameter(names = "-productToken", description = "Unique identifier of the product to update")
     String productToken = null;
 
+    @Parameter(names = "-logLevel", description = "log level of the project")
+    String logLevel = null;
+
     /* --- Public methods --- */
 
     public String getConfigFilePath() {

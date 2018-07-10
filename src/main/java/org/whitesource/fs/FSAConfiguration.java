@@ -705,7 +705,7 @@ public class FSAConfiguration {
 
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_TOKEN_PROPERTY_KEY, commandLineArgs.projectToken);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY, commandLineArgs.productToken);
-
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.LOG_LEVEL_KEY, commandLineArgs.logLevel);
         // request file
         List<String> offlineRequestFiles = new LinkedList<>();
         offlineRequestFiles.addAll(commandLineArgs.requestFiles);
