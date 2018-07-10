@@ -30,6 +30,7 @@ public class AgentConfiguration {
     private final String[] excludes;
     private final String[] dockerIncludes;
     private final String[] dockerExcludes;
+    private final String[] pythonRequirementsFileIncludes;
     private final int archiveExtractionDepth;
     private final String[] archiveIncludes;
     private final String[] archiveExcludes;
@@ -70,6 +71,7 @@ public class AgentConfiguration {
                               @JsonProperty(EXCLUDED_COPYRIGHT_KEY) Collection<String> excludedCopyrights,
                               @JsonProperty(PROJECT_PER_FOLDER_INCLUDES) String[] projectPerFolderIncludes,
                               @JsonProperty(PROJECT_PER_FOLDER_EXCLUDES) String[] projectPerFolderExcludes,
+                              @JsonProperty(PYTHON_REQUIREMENTS_FILE_INCLUDES) String[] pythonRequirementsFileIncludes,
                               @JsonProperty(ERROR) String error) {
         this.includes = includes == null ? new String[0] : includes;
         this.excludes = excludes == null ? new String[0] : excludes;
@@ -90,6 +92,7 @@ public class AgentConfiguration {
         this.excludedCopyrights = excludedCopyrights;
         this.projectPerFolderIncludes = projectPerFolderIncludes;
         this.projectPerFolderExcludes = projectPerFolderExcludes;
+        this.pythonRequirementsFileIncludes = pythonRequirementsFileIncludes == null ? new String[0] : pythonRequirementsFileIncludes;
     }
 
     @JsonProperty(SHOW_PROGRESS_BAR)
@@ -130,6 +133,11 @@ public class AgentConfiguration {
     @JsonProperty(ARCHIVE_EXCLUDES_PATTERN_KEY)
     public String[] getArchiveExcludes() {
         return archiveExcludes;
+    }
+
+    @JsonProperty(PYTHON_REQUIREMENTS_FILE_INCLUDES)
+    public String[] getPythonRequirementsFileIncludes() {
+        return pythonRequirementsFileIncludes;
     }
 
     @JsonProperty(ARCHIVE_FAST_UNPACK_KEY)
@@ -185,8 +193,8 @@ public class AgentConfiguration {
 
     @Override
     public String toString() {
-        return  ", includes=" + Arrays.toString(includes) + "\n" +
-                ", excludes=" + Arrays.toString(excludes)+ "\n" +
+        return ", includes=" + Arrays.toString(includes) + "\n" +
+                ", excludes=" + Arrays.toString(excludes) + "\n" +
                 ", dockerScan=" + dockerScan +
                 ", dockerIncludes=" + Arrays.toString(dockerIncludes) +
                 ", dockerExcludes=" + Arrays.toString(dockerExcludes) + "\n" +
@@ -196,6 +204,7 @@ public class AgentConfiguration {
                 ", followSymlinks=" + followSymlinks +
                 ", globCaseSensitive=" + globCaseSensitive +
                 ", projectPerFolderIncludes=" + Arrays.toString(projectPerFolderIncludes) +
-                ", projectPerFolderExcludes=" + Arrays.toString(projectPerFolderExcludes) ;
+                ", projectPerFolderExcludes=" + Arrays.toString(projectPerFolderExcludes) +
+                ", pythonRequirementsFileIncludes=" + Arrays.toString(pythonRequirementsFileIncludes);
     }
 }

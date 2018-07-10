@@ -90,6 +90,7 @@ public class DependencyResolutionService {
         final boolean mavenIgnorePomModules = config.isMavenIgnorePomModules();
 
         boolean pythonResolveDependencies = config.isPythonResolveDependencies();
+        final String[] pythonRequirementsFileIncludes = config.getPythonRequirementsFileIncludes();
 
         boolean gradleResolveDependencies = config.isGradleResolveDependencies();
         boolean gradleAggregateModules = config.isGradleAggregateModules();
@@ -137,7 +138,7 @@ public class DependencyResolutionService {
         }
         if (pythonResolveDependencies) {
             dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(),
-                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree()));
+                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree(), pythonRequirementsFileIncludes));
         }
 
         if (gradleResolveDependencies) {

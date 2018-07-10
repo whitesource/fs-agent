@@ -3,6 +3,7 @@ package org.whitesource.agent.dependency.resolver.python;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
@@ -25,7 +26,7 @@ public class PythonDependencyResolverTest {
     public void shouldFindDependecies() {
         File setupPyFile = TestHelper.getFileFromResources("resolver/python/sample/test.py");
 
-        PythonDependencyResolver pythonDependencyResolver = new PythonDependencyResolver("python.exe", "pip3.exe", false, false, false);
+        PythonDependencyResolver pythonDependencyResolver = new PythonDependencyResolver("python.exe", "pip3.exe", false, false, false, new String[]{Constants.PYTHON_REQUIREMENTS});
         ResolutionResult projectsDetails = pythonDependencyResolver.resolveDependencies(setupPyFile.getParentFile().getParent(), setupPyFile.getParent(), Stream.of(setupPyFile.toString()).collect(Collectors.toSet()));
 
         Assert.assertNotNull(projectsDetails);

@@ -59,6 +59,7 @@ public class ResolverConfiguration {
             @JsonProperty(PYTHON_IGNORE_PIP_INSTALL_ERRORS) boolean pythonIgnorePipInstallErrors,
             @JsonProperty(PYTHON_INSTALL_VIRTUALENV) boolean pythonInstallVirtualenv,
             @JsonProperty(PYTHON_RESOLVE_HIERARCHY_TREE) boolean pythonResolveHierarchyTree,
+            @JsonProperty(PYTHON_REQUIREMENTS_FILE_INCLUDES) String[] pythonRequirementsFileIncludes,
 
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
@@ -117,6 +118,7 @@ public class ResolverConfiguration {
         this.pythonIgnorePipInstallErrors = pythonIgnorePipInstallErrors;
         this.pythonInstallVirtualenv = pythonInstallVirtualenv;
         this.pythonResolveHierarchyTree = pythonResolveHierarchyTree;
+        this.pythonRequirementsFileIncludes = pythonRequirementsFileIncludes;
 
         this.dependenciesOnly = dependenciesOnly;
         this.whitesourceConfiguration = whitesourceConfiguration;
@@ -179,6 +181,7 @@ public class ResolverConfiguration {
     private boolean     pythonIgnorePipInstallErrors;
     private boolean     pythonInstallVirtualenv;
     private boolean     pythonResolveHierarchyTree;
+    private String[] pythonRequirementsFileIncludes;
 
     private boolean gradleResolveDependencies;
     private boolean gradleRunAssembleCommand;
@@ -254,7 +257,9 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(NPM_YARN_PROJECT)
-    public boolean getNpmYarnProject()  {   return npmYarnProject;  }
+    public boolean getNpmYarnProject() {
+        return npmYarnProject;
+    }
 
     @JsonProperty(BOWER_RESOLVE_DEPENDENCIES)
     public boolean isBowerResolveDependencies() {
@@ -346,13 +351,17 @@ public class ResolverConfiguration {
         return pythonResolveHierarchyTree;
     }
 
+    public String[] getPythonRequirementsFileIncludes() {
+        return pythonRequirementsFileIncludes;
+    }
+
     @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES)
     public boolean isGradleResolveDependencies() {
         return gradleResolveDependencies;
     }
 
     @JsonProperty(GRADLE_AGGREGATE_MODULES)
-    public boolean isGradleAggregateModules(){
+    public boolean isGradleAggregateModules() {
         return gradleAggregateModules;
     }
 
@@ -437,10 +446,14 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(SBT_RESOLVE_DEPENDENCIES)
-    public boolean isSbtResolveDependencies() { return sbtResolveDependencies; }
+    public boolean isSbtResolveDependencies() {
+        return sbtResolveDependencies;
+    }
 
     @JsonProperty(SBT_AGGREGATE_MODULES)
-    public boolean isSbtAggregateModules() {    return sbtAggregateModules; }
+    public boolean isSbtAggregateModules() {
+        return sbtAggregateModules;
+    }
 
     @JsonProperty(HTML_RESOLVE_DEPENDENCIES)
     public boolean isHtmlResolveDependencies() {
@@ -498,13 +511,13 @@ public class ResolverConfiguration {
     @Override
     public String toString() {
 
-        return  ", dependenciesOnly=" + dependenciesOnly + '\n' +
+        return ", dependenciesOnly=" + dependenciesOnly + '\n' +
                 ", npmRunPreStep=" + npmRunPreStep +
                 ", npmIgnoreScripts=" + npmIgnoreScripts +
                 ", npmResolveDependencies=" + npmResolveDependencies +
                 ", npmIncludeDevDependencies=" + npmIncludeDevDependencies +
                 ", npmIgnoreJavaScriptFiles=" + npmIgnoreJavaScriptFiles +
-                ", npmTimeoutDependenciesCollector=" + npmTimeoutDependenciesCollector  +
+                ", npmTimeoutDependenciesCollector=" + npmTimeoutDependenciesCollector +
                 ", npmIgnoreNpmLsErrors=" + npmIgnoreNpmLsErrors + '\n' +
                 ", bowerResolveDependencies=" + bowerResolveDependencies +
                 ", bowerRunPreStep=" + bowerRunPreStep + '\n' +
@@ -517,6 +530,7 @@ public class ResolverConfiguration {
                 ", pythonIgnorePipInstallErrors=" + pythonIgnorePipInstallErrors +
                 ", pythonInstallVirtualenv=" + pythonInstallVirtualenv +
                 ", pythonResolveHierarchyTree=" + pythonResolveHierarchyTree + '\n' +
+                ", pythonRequirementsFileIncludes=" + Arrays.toString(pythonRequirementsFileIncludes) + '\n' +
                 ", gradleResolveDependencies=" + gradleResolveDependencies +
                 ", gradleRunAssembleCommand=" + gradleRunAssembleCommand + '\n' +
                 ", paketResolveDependencies=" + paketResolveDependencies +
@@ -535,7 +549,7 @@ public class ResolverConfiguration {
                 ", phpIncludeDevDependenices=" + phpIncludeDevDependencies + '\n' +
                 ", sbtResolveDependencies=" + sbtResolveDependencies +
                 ", sbtAggregateModules=" + sbtAggregateModules + '\n' +
-                ", htmlResolveDependencies=" + htmlResolveDependencies ;
+                ", htmlResolveDependencies=" + htmlResolveDependencies;
     }
 
 
