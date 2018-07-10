@@ -344,7 +344,7 @@ public class FSAConfiguration {
         boolean phpIncludeDevDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PHP_INCLUDE_DEV_DEPENDENCIES, false);
 
         boolean sbtResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_RESOLVE_DEPENDENCIES, true);
-        boolean sbtAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_AGGREGATE_MODULES, true);
+        boolean sbtAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_AGGREGATE_MODULES, false);
 
         boolean htmlResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
 
