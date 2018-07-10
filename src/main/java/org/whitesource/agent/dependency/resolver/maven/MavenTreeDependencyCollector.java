@@ -103,7 +103,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             if (!mvnDependencies.isErrorInProcess()) {
                 List<Node> nodes = mavenLinesParser.parseLines(lines);
 
-                logger.info("End parsing pom files , found : " + String.join(",",
+                logger.info("End parsing pom files , found : " + String.join(Constants.COMMA,
                         nodes.stream().map(node -> node.getArtifactId()).collect(Collectors.toList())));
 
                 projects = nodes.stream()
