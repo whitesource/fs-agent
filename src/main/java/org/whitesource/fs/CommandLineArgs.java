@@ -121,6 +121,9 @@ public class CommandLineArgs {
     @Parameter(names = "-productToken", description = "Unique identifier of the product to update")
     String productToken = null;
 
+    @Parameter(names = "-logLevel", description = "log level of the project")
+    String logLevel = null;
+
     @Parameter(names = "-requirementsFileIncludes", description = "List of dependency files split by comma")
     List<String> requirementsFileIncludes = new LinkedList<>();
 
