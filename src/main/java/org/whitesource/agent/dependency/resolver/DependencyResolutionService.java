@@ -17,6 +17,9 @@ package org.whitesource.agent.dependency.resolver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
+import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.dotNet.DotNetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyResolver;
@@ -35,6 +38,7 @@ import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.io.FileNotFoundException;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -46,17 +50,20 @@ public class DependencyResolutionService {
 
     /* --- Members --- */
 
+    private final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
+
     private final FilesScanner fileScanner;
     private final Collection<AbstractDependencyResolver> dependencyResolvers;
     private final boolean dependenciesOnly;
 
-    /* --- Static members --- */
-
-    private final Logger logger = LoggerFactory.getLogger(DependencyResolutionService.class);
-    private boolean separateProjects = false;
+    private boolean separateProjects;
     private boolean mavenAggregateModules;
     private boolean sbtAggregateModules;
     private boolean gradleAggregateModules;
+
+    /* --- Static members --- */
+
+    public static final List<DependencyType> multiModuleDependencyTypes = Arrays.asList(DependencyType.MAVEN, DependencyType.GRADLE);
 
     /* --- Constructors --- */
 
@@ -82,9 +89,10 @@ public class DependencyResolutionService {
         final boolean mavenAggregateModules = config.isMavenAggregateModules();
 
         boolean pythonResolveDependencies = config.isPythonResolveDependencies();
+        final String[] pythonRequirementsFileIncludes = config.getPythonRequirementsFileIncludes();
 
-        boolean gradleResolveDependencies   = config.isGradleResolveDependencies();
-        boolean gradleAggregateModules       = config.isGradleAggregateModules();
+        boolean gradleResolveDependencies = config.isGradleResolveDependencies();
+        boolean gradleAggregateModules = config.isGradleAggregateModules();
 
         final boolean paketResolveDependencies = config.isPaketResolveDependencies();
         final String[] paketIgnoredScopes = config.getPaketIgnoredScopes();
@@ -99,12 +107,12 @@ public class DependencyResolutionService {
         final boolean rubyOverwriteGemFile = config.isRubyOverwriteGemFile();
         final boolean rubyInstallMissingGems = config.isRubyInstallMissingGems();
 
-        final boolean phpResolveDependencies    = config.isPhpResolveDependencies();
-        final boolean phpRunPreStep             = config.isPhpRunPreStep();
+        final boolean phpResolveDependencies = config.isPhpResolveDependencies();
+        final boolean phpRunPreStep = config.isPhpRunPreStep();
         final boolean phpIncludeDevDependencies = config.isPhpIncludeDevDependencies();
 
-        final boolean sbtResolveDependencies    = config.isSbtResolveDependencies();
-        final boolean sbtAggregateModules       = config.isSbtAggregateModules();
+        final boolean sbtResolveDependencies = config.isSbtResolveDependencies();
+        final boolean sbtAggregateModules = config.isSbtAggregateModules();
 
         final boolean htmlResolveDependencies = config.isHtmlResolveDependencies();
 
@@ -129,7 +137,7 @@ public class DependencyResolutionService {
         }
         if (pythonResolveDependencies) {
             dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(),
-                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree()));
+                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree(), pythonRequirementsFileIncludes));
         }
 
         if (gradleResolveDependencies) {
@@ -141,15 +149,15 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new PaketDependencyResolver(paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath));
         }
 
-        if (goResolveDependencies){
+        if (goResolveDependencies) {
             dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), config.isDependenciesOnly()));
         }
 
-        if (rubyResolveDependencies){
+        if (rubyResolveDependencies) {
             dependencyResolvers.add(new RubyDependencyResolver(rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems));
         }
 
-        if (phpResolveDependencies){
+        if (phpResolveDependencies) {
             dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies));
         }
 
@@ -157,10 +165,12 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new HtmlDependencyResolver());
         }
 
-        if (sbtResolveDependencies){
+        if (sbtResolveDependencies) {
             dependencyResolvers.add(new SbtDependencyResolver(sbtAggregateModules, dependenciesOnly));
             this.sbtAggregateModules = sbtAggregateModules;
         }
+
+        this.separateProjects = false;
     }
 
     /* --- Public methods --- */
@@ -199,6 +209,9 @@ public class DependencyResolutionService {
 
     public List<ResolutionResult> resolveDependencies(Collection<String> pathsToScan, String[] excludes) {
         Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap = new HashMap<>();
+        Collection<ResolutionResult> multiModuleResults = new LinkedList<>();
+        Collection<ResolutionResult> htmlResults = new LinkedList<>();
+
         dependencyResolvers.forEach(dependencyResolver -> {
             // add resolver excludes
             Collection<String> combinedExcludes = new LinkedList<>(Arrays.asList(excludes));
@@ -235,9 +248,55 @@ public class DependencyResolutionService {
                     logger.error(e.getMessage());
                 }
                 resolutionResults.add(result);
+
+                // create lists in order to match htmlResolver dependencies to their original project (Maven/Gradle/Sbt)
+                if (multiModuleDependencyTypes.contains(dependencyResolver.getDependencyType())) {
+                    multiModuleResults.add(result);
+
+                } else if (Constants.HTML.toUpperCase().equals(dependencyResolver.getDependencyTypeName())) {
+                    htmlResults.add(result);
+                }
             });
         });
+        // match htmlResolver dependencies to their original project (Maven/Gradle/Sbt)
+        findAndSetHtmlProject(multiModuleResults, htmlResults, resolutionResults);
         return resolutionResults;
+    }
+
+    private void findAndSetHtmlProject(Collection<ResolutionResult> multiModuleResults, Collection<ResolutionResult> htmlResults,
+                                       Collection<ResolutionResult> resolutionResults) {
+        if (!(multiModuleResults.isEmpty() && htmlResults.isEmpty())) {
+            // parameters initialization
+            Map<AgentProjectInfo, ResolutionResult> agentProjectInfoToResolutionResult = new HashMap<>();
+            Map<AgentProjectInfo, Path> multiModuleProjects = generateMultiProjectMap(multiModuleResults, agentProjectInfoToResolutionResult);
+            Map<AgentProjectInfo, Path> htmlProjects = generateMultiProjectMap(htmlResults, agentProjectInfoToResolutionResult);
+            // Match for each html project its original project & remove its "fake" project from the list.
+            for (Map.Entry<AgentProjectInfo, Path> multiModuleProject : multiModuleProjects.entrySet()) {
+                for (Map.Entry<AgentProjectInfo, Path> htmlProject : htmlProjects.entrySet()) {
+                    if (htmlProject.getValue().toAbsolutePath().toString().contains(multiModuleProject.getValue().toAbsolutePath().toString())) {
+                        ResolutionResult htmlResult = agentProjectInfoToResolutionResult.get(htmlProject.getKey());
+                        resolutionResults.remove(htmlResult);
+                        multiModuleProject.getKey().getDependencies().addAll(htmlProject.getKey().getDependencies());
+                        ResolutionResult multiModuleResult = agentProjectInfoToResolutionResult.get(htmlProject.getKey());
+                        multiModuleResult.getResolvedProjects().put(multiModuleProject.getKey(), multiModuleProject.getValue());
+                    }
+                }
+            }
+        }
+    }
+
+    private Map<AgentProjectInfo, Path> generateMultiProjectMap(Collection<ResolutionResult> projectResults, Map<AgentProjectInfo,
+            ResolutionResult> agentProjectInfoToResolutionResult) {
+        Map<AgentProjectInfo, Path> resolvedProjects = new HashMap<>();
+        // initialize projectResults & resolvedProjects
+        for (ResolutionResult result : projectResults) {
+            Map<AgentProjectInfo, Path> projects = result.getResolvedProjects();
+            for (Map.Entry<AgentProjectInfo, Path> project : projects.entrySet()) {
+                agentProjectInfoToResolutionResult.put(project.getKey(), result);
+            }
+            resolvedProjects.putAll(projects);
+        }
+        return resolvedProjects;
     }
 
     public Collection<AbstractDependencyResolver> getDependencyResolvers() {

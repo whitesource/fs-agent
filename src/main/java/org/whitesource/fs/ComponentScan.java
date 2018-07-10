@@ -24,7 +24,7 @@ public class ComponentScan {
 
     /* --- Members --- */
 
-    private  Properties config;
+    private Properties config;
 
     /* --- Constructors --- */
 
@@ -68,7 +68,7 @@ public class ComponentScan {
                     scannerBaseDirs, appPathsToDependencyDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getAgent().getArchiveExtractionDepth(),
                     fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(),
                     followSymlinks, excludedCopyrights, fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(),
-                    fsaConfiguration.getAgent().isCalculateMd5()).keySet();
+                    fsaConfiguration.getAgent().isCalculateMd5(), fsaConfiguration.getAgent().getPythonRequirementsFileIncludes()).keySet();
             logger.info("Finished dependency resolution");
             for (AgentProjectInfo project : projects) {
                 project.setProjectToken(Constants.WHITESPACE);
@@ -76,7 +76,7 @@ public class ComponentScan {
                     project.setDependencies(getDependenciesFromExtensionsListOnly(project.getDependencies(), acceptExtensionsList));
                 }
             }
-//             Return dependencies
+            //             Return dependencies
             String jsonString = new ConfigurationSerializer().getAsString(projects, true);
             return jsonString;
         } else {

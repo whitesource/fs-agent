@@ -16,6 +16,7 @@
 package org.whitesource.fs.configuration;
 
 import org.apache.commons.lang.StringUtils;
+import org.whitesource.agent.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +33,9 @@ public class ConfigurationValidation {
     private static final int MAX_EXTRACTION_DEPTH = 7;
 
     public List<String> getConfigurationErrors(boolean projectPerFolder, String configProjectToken, String configProjectName, String configApiToken, String configFilePath,
-                                               int archiveDepth, String[] includes, String[] projectPerFolderIncludes) {
+                                               int archiveDepth, String[] includes, String[] projectPerFolderIncludes, String[] pythonIncludes) {
         List<String> errors = new ArrayList<>();
-
+        String[] requirements = pythonIncludes[0].split(Constants.WHITESPACE);
         if (StringUtils.isBlank(configApiToken)) {
             String error = "Could not retrieve " + ORG_TOKEN_PROPERTY_KEY + " property from " + configFilePath;
             errors.add(error);
@@ -58,6 +59,16 @@ public class ConfigurationValidation {
         if (projectPerFolder && projectPerFolderIncludes == null) {
             errors.add("projectPerFolderIncludes parameter is empty, specify folders to include or mark as comment to scan all folders");
         }
+
+        if (requirements.length > 0) {
+            for (String requirement : requirements) {
+                if (!requirement.endsWith(Constants.TXT_EXTENSION)) {
+                    String error = "Invalid file name: " + requirement + Constants.WHITESPACE + "in property" + PYTHON_REQUIREMENTS_FILE_INCLUDES + "from " + configFilePath;
+                    errors.add(error);
+                }
+            }
+        }
+
         return errors;
     }
 }

@@ -19,7 +19,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.CommaParameterSplitter;
 import org.whitesource.agent.Constants;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -124,6 +123,9 @@ public class CommandLineArgs {
 
     @Parameter(names = "-logLevel", description = "log level of the project")
     String logLevel = null;
+
+    @Parameter(names = "-requirementsFileIncludes", description = "List of dependency files split by comma")
+    List<String> requirementsFileIncludes = new LinkedList<>();
 
     /* --- Public methods --- */
 
