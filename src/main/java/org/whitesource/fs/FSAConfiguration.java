@@ -322,7 +322,7 @@ public class FSAConfiguration {
 
         boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
-        boolean gradleAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, true);
+        boolean gradleAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
 
         boolean paketResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PAKET_RESOLVE_DEPENDENCIES, true);
         String[] paketIgnoredScopes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.PAKET_IGNORED_GROUPS, null);
