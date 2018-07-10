@@ -237,7 +237,7 @@ public class FileSystemScanner {
                         }
                     }
                 } else if (resolutionResult.size() > 1 && enableImpactAnalysis) {
-                    //                logger.info("Impact analysis won't run, more than one language detected");
+                    // logger.info("Impact analysis won't run, more than one language detected");
                     // TODO return message when needed WSE-342
                 }
                 if (impactAnalysisLanguage != null) {
