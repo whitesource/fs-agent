@@ -187,6 +187,7 @@ public class FSAConfiguration {
         boolean npmIgnoreJavaScriptFiles = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_JAVA_SCRIPT_FILES, true);
         long npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
         boolean npmIgnoreNpmLsErrors = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_NPM_LS_ERRORS, false);
+        boolean npmIgnoreScripts            = FSAConfiguration.getBooleanProperty(config, NPM_IGNORE_SCRIPTS, false);
         String npmAccessToken = config.getProperty(NPM_ACCESS_TOKEN);
 
         boolean bowerResolveDependencies = FSAConfiguration.getBooleanProperty(config, BOWER_RESOLVE_DEPENDENCIES, true);
@@ -212,12 +213,14 @@ public class FSAConfiguration {
         boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = FSAConfiguration.getBooleanProperty(config, GRADLE_RUN_ASSEMBLE_COMMAND, true);
 
-        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
+        return new ResolverConfiguration(npmRunPreStep, npmIgnoreScripts, npmResolveDependencies, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 dependenciesOnly, whitesourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand);
     }
+
+
 
     private RequestConfiguration getRequest(Properties config, String apiToken, String projectName, String projectToken) {
         String productToken = config.getProperty(ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY);

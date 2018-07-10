@@ -48,7 +48,7 @@ public class BowerLsJsonDependencyCollector extends NpmLsJsonDependencyCollector
     /* --- Constructors --- */
 
     public BowerLsJsonDependencyCollector(long npmTimeoutDependenciesCollector) {
-        super(false, npmTimeoutDependenciesCollector, false);
+        super(false, npmTimeoutDependenciesCollector, false, false);
     }
 
     /* --- Overridden methods --- */

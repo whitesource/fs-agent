@@ -28,6 +28,7 @@ public class ResolverConfiguration {
     @JsonCreator
     public ResolverConfiguration(
             @JsonProperty(NPM_RUN_PRE_STEP) boolean npmRunPreStep,
+            @JsonProperty(NPM_IGNORE_SCRIPTS) boolean npmIgnoreScripts,
             @JsonProperty(NPM_RESOLVE_DEPENDENCIES) boolean npmResolveDependencies,
             @JsonProperty(NPM_INCLUDE_DEV_DEPENDENCIES) boolean npmIncludeDevDependencies,
             @JsonProperty(NPM_IGNORE_JAVA_SCRIPT_FILES) boolean npmIgnoreJavaScriptFiles,
@@ -64,6 +65,7 @@ public class ResolverConfiguration {
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
         this.npmAccessToken = npmAccessToken;
         this.npmIgnoreNpmLsErrors = npmIgnoreNpmLsErrors;
+        this.npmIgnoreScripts = npmIgnoreScripts;
 
         this.bowerResolveDependencies = bowerResolveDependencies;
         this.bowerRunPreStep = bowerRunPreStep;
@@ -96,7 +98,8 @@ public class ResolverConfiguration {
     private boolean     npmIgnoreJavaScriptFiles;
     private String      npmAccessToken;
     private long        npmTimeoutDependenciesCollector;
-    private boolean     npmIgnoreNpmLsErrors; 
+    private boolean     npmIgnoreNpmLsErrors;
+    private boolean     npmIgnoreScripts;
     private boolean     bowerResolveDependencies;
     private boolean     bowerRunPreStep;
     private boolean     nugetResolveDependencies;
@@ -151,6 +154,11 @@ public class ResolverConfiguration {
     @JsonProperty(NPM_IGNORE_NPM_LS_ERRORS)
     public boolean getNpmIgnoreNpmLsErrors() {
         return npmIgnoreNpmLsErrors;
+    }
+
+    @JsonProperty(NPM_IGNORE_SCRIPTS)
+    public boolean isNpmIgnoreScripts() {
+        return npmIgnoreScripts;
     }
 
     @JsonProperty(BOWER_RESOLVE_DEPENDENCIES)

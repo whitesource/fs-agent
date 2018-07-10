@@ -59,6 +59,8 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     public static final String PEER_MISSING = "peerMissing";
     private static final String DEDUPED = "deduped";
     private static final String REQUIRED = "required";
+    private static final String IGNORE_SCRIPTS = "--ignore-scripts";
+    public static final String INSTALL = "install";
 
     /* --- Members --- */
 
@@ -67,13 +69,15 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     private final Pattern patternOfNameOfPackageFromLine = Pattern.compile(".* (.*)@");
     private boolean showNpmLsError;
     private final long npmTimeoutDependenciesCollector;
+    private final boolean ignoreScripts;
 
     /* --- Constructors --- */
 
-    public NpmLsJsonDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector, boolean ignoreNpmLsErrors) {
+    public NpmLsJsonDependencyCollector(boolean includeDevDependencies, long npmTimeoutDependenciesCollector, boolean ignoreNpmLsErrors, boolean ignoreScripts) {
         this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
         this.includeDevDependencies = includeDevDependencies;
         this.ignoreNpmLsErrors = ignoreNpmLsErrors;
+        this.ignoreScripts = ignoreScripts;
     }
 
     /* --- Public methods --- */
@@ -110,7 +114,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
         return getSingleProjectList(dependencies);
     }
 
-    public boolean executePreparationStep(String folder ) {
+    public boolean executePreparationStep(String folder) {
         String[] command = getInstallParams();
         logger.debug("Running install command : " + command);
         CommandLineProcess npmInstall = new CommandLineProcess(folder, command);
@@ -196,8 +200,14 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     }
 
     protected String[] getInstallParams() {
-        return new String[]{NPM_COMMAND, INSTALL_COMMAND};
+        if (this.ignoreScripts) {
+            return new String[]{NPM_COMMAND, INSTALL, IGNORE_SCRIPTS};
+        } else {
+            return new String[]{NPM_COMMAND, INSTALL};
+        }
     }
+
+
 
     protected String[] getLsCommandParams() {
         if (includeDevDependencies) {
