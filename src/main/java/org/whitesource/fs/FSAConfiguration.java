@@ -304,7 +304,7 @@ public class FSAConfiguration {
 
         boolean mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
-        boolean mavenAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, true);
+        boolean mavenAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, false);
 
         boolean dependenciesOnly = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.DEPENDENCIES_ONLY, false);
 
