@@ -62,6 +62,10 @@ public class FSAConfiguration {
     @Override
     public String toString() {
         return "FSA Configuration {\n" +
+                "logLevel" +  logLevel + '\n' +
+                "configFilePath=" + configFilePath + '\n' +
+                "fileListPath=" + fileListPath + '\n' +
+                "dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
                 sender.toString() + '\n' +
                 resolver.toString() + '\n' +
                 ", dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
@@ -69,6 +73,7 @@ public class FSAConfiguration {
                 ", requirementsFileIncludes=" + Arrays.asList(requirementsFileIncludes) + '\n' +
                 ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", scanDockerImages=" + scanDockerImages + '\n' +
+                ", requirementsFileIncludes=" + Arrays.asList(requirementsFileIncludes) + '\n' +
                 getAgent().toString() + '\n' +
                 '}';
     }
