@@ -73,11 +73,10 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             return new ArrayList<>();
         }
         this.rootDirectory = rootDirectory;
+        logger.info("Start parsing gradle dependencies");
         List<String> projectsLines = lines.stream()
                 .filter(line->(line.contains(PLUS) || line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))
                 .collect(Collectors.toList());
-
-        logger.info("Start parsing gradle dependencies");
         List<DependencyInfo> dependenciesList = new ArrayList<>();
         Stack<DependencyInfo> parentDependencies = new Stack<>();
         List<String> sha1s = new ArrayList<>();
