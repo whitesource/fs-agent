@@ -62,6 +62,10 @@ public class FSAConfiguration {
     @Override
     public String toString() {
         return "FSA Configuration {\n" +
+                "logLevel" +  logLevel + '\n' +
+                "configFilePath=" + configFilePath + '\n' +
+                "fileListPath=" + fileListPath + '\n' +
+                "dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
                 sender.toString() + '\n' +
                 resolver.toString() + '\n' +
                 ", dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
@@ -69,6 +73,7 @@ public class FSAConfiguration {
                 ", requirementsFileIncludes=" + Arrays.asList(requirementsFileIncludes) + '\n' +
                 ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", scanDockerImages=" + scanDockerImages + '\n' +
+                ", requirementsFileIncludes=" + Arrays.asList(requirementsFileIncludes) + '\n' +
                 getAgent().toString() + '\n' +
                 '}';
     }
@@ -304,7 +309,7 @@ public class FSAConfiguration {
 
         boolean mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
-        boolean mavenAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, true);
+        boolean mavenAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, false);
 
         boolean dependenciesOnly = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.DEPENDENCIES_ONLY, false);
 
@@ -322,7 +327,7 @@ public class FSAConfiguration {
 
         boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
-        boolean gradleAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, true);
+        boolean gradleAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
 
         boolean paketResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PAKET_RESOLVE_DEPENDENCIES, true);
         String[] paketIgnoredScopes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.PAKET_IGNORED_GROUPS, null);
@@ -344,7 +349,7 @@ public class FSAConfiguration {
         boolean phpIncludeDevDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PHP_INCLUDE_DEV_DEPENDENCIES, false);
 
         boolean sbtResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_RESOLVE_DEPENDENCIES, true);
-        boolean sbtAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_AGGREGATE_MODULES, true);
+        boolean sbtAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_AGGREGATE_MODULES, false);
 
         boolean htmlResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
 
