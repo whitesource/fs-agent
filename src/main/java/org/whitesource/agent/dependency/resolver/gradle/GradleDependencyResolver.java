@@ -48,6 +48,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         if (bomFiles.size() > 1){ // reading the 'settings.gradle' to extract a list of modules
             modules = getModules(topLevelFolder);
         }
+        logger.info("Start parsing gradle dependencies");
         for (String bomFile : bomFiles){
             String bomFileFolder = new File(bomFile).getParent();
             File bomFolder = new File(new File(bomFile).getParent());
