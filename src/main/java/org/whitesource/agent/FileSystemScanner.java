@@ -217,7 +217,11 @@ public class FileSystemScanner {
                 Collection<ResolutionResult> resolutionResult = new LinkedList<>();
                 LinkedList<String> pathsList = new LinkedList<>();
                 pathsList.addAll(appPathsToDependencyDirs.get(appPath));
-                resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, excludes);
+                if (appPath.equals(FSAConfiguration.DEFAULT_KEY) && appPathsToDependencyDirs.keySet().size() == 1) {
+                    resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, excludes);
+                } else if (!appPath.equals(FSAConfiguration.DEFAULT_KEY) && appPathsToDependencyDirs.keySet().size() > 1) {
+                    resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, excludes);
+                }
                 if (resolutionResult.size() == 1 && !appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
                     DependencyType dependencyType = resolutionResult.stream().findFirst().get().getDependencyType();
                     if (dependencyType == null) {
