@@ -34,10 +34,10 @@ import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.OfflineConfiguration;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.fs.configuration.SenderConfiguration;
-import whitesource.analysis.server.FSAgentServer;
-import whitesource.analysis.server.Server;
-import whitesource.analysis.vulnerabilities.VulnerabilitiesAnalysis;
-import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResult;
+//import whitesource.analysis.server.FSAgentServer;
+//import whitesource.analysis.server.Server;
+//import whitesource.analysis.vulnerabilities.VulnerabilitiesAnalysis;
+//import whitesource.via.api.vulnerability.update.GlobalVulnerabilityAnalysisResult;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,12 +109,12 @@ public class ProjectsSender {
             StatusCode statusCode = StatusCode.SUCCESS;
 
 //            // TODO remove projects.size() == 1 when via will scan more than one project
-            if (senderConfig.isEnableImpactAnalysis() && projects.size() == 1) {
-                runViaAnalysis(projectsDetails, service);
-            }  else if (!senderConfig.isEnableImpactAnalysis()) {
-//                logger.info("Impact analysis won't run, via is not enabled");
-                //todo return logs when needed would be enabled for all WSE-342
-            }
+//            if (senderConfig.isEnableImpactAnalysis() && projects.size() == 1) {
+//                runViaAnalysis(projectsDetails, service);
+//            }  else if (!senderConfig.isEnableImpactAnalysis()) {
+////                logger.info("Impact analysis won't run, via is not enabled");
+//                //todo return logs when needed would be enabled for all WSE-342
+//            }
 
             int retries = senderConfig.getConnectionRetries();
             while (retries-- > -1) {
@@ -160,38 +160,38 @@ public class ProjectsSender {
         }
     }
 
-    private void runViaAnalysis(ProjectsDetails projectsDetails, WhitesourceService service) {
-        //todo comment in via code
-        VulnerabilitiesAnalysis vulnerabilitiesAnalysis = null;
-        GlobalVulnerabilityAnalysisResult result = null;
-
-        for (AgentProjectInfo project : projectsDetails.getProjectToLanguage().keySet()) {
-            Server server = new FSAgentServer(project, service, requestConfig.getApiToken());
-            //TODO remove later
-//            Server server = new DemoServerProjInfo();
-//            server.setdb("c:/Users/AharonAbadi/work/vulnerabilityCleaner/via-visual-studio-integration/examples/via-server/via.db");
-            try {
-                String appPath = requestConfig.getAppPath();
-                // check language for scan according to user file
-                logger.info("Starting VIA impact analysis");
-                String language = projectsDetails.getProjectToLanguage().get(project);
-                vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language);
-                // set app path for java script
-                if (language.equals(JAVA_SCRIPT)) {
-                    int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
-                    appPath = appPath.substring(0, lastIndex);
-                }
-
-                if (vulnerabilitiesAnalysis != null) {
-                    vulnerabilitiesAnalysis.runAnalysis(server, appPath, project.getDependencies(),
-                            Boolean.valueOf(requestConfig.getViaDebug()));
-                    logger.info("Got impact analysis result from server");
-                }
-            } catch (Exception e) {
-                logger.error("Failed to run impact analysis {}", e.getMessage());
-            }
-        }
-    }
+//    private void runViaAnalysis(ProjectsDetails projectsDetails, WhitesourceService service) {
+//        //todo comment in via code
+//        VulnerabilitiesAnalysis vulnerabilitiesAnalysis = null;
+//        GlobalVulnerabilityAnalysisResult result = null;
+//
+//        for (AgentProjectInfo project : projectsDetails.getProjectToLanguage().keySet()) {
+//            Server server = new FSAgentServer(project, service, requestConfig.getApiToken());
+//            //TODO remove later
+////            Server server = new DemoServerProjInfo();
+////            server.setdb("c:/Users/AharonAbadi/work/vulnerabilityCleaner/via-visual-studio-integration/examples/via-server/via.db");
+//            try {
+//                String appPath = requestConfig.getAppPath();
+//                // check language for scan according to user file
+//                logger.info("Starting VIA impact analysis");
+//                String language = projectsDetails.getProjectToLanguage().get(project);
+//                vulnerabilitiesAnalysis = VulnerabilitiesAnalysis.getAnalysis(language);
+//                // set app path for java script
+//                if (language.equals(JAVA_SCRIPT)) {
+//                    int lastIndex = appPath.lastIndexOf(BACK_SLASH) != -1 ? appPath.lastIndexOf(BACK_SLASH) : appPath.lastIndexOf(FORWARD_SLASH);
+//                    appPath = appPath.substring(0, lastIndex);
+//                }
+//
+//                if (vulnerabilitiesAnalysis != null) {
+//                    vulnerabilitiesAnalysis.runAnalysis(server, appPath, project.getDependencies(),
+//                            Boolean.valueOf(requestConfig.getViaDebug()));
+//                    logger.info("Got impact analysis result from server");
+//                }
+//            } catch (Exception e) {
+//                logger.error("Failed to run impact analysis {}", e.getMessage());
+//            }
+//        }
+//    }
 
 
     private void checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
