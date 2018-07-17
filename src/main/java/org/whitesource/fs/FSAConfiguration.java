@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static org.whitesource.agent.ConfigPropertyKeys.MAVEN_IGNORE_POM_MODULES;
 import static org.whitesource.agent.client.ClientConstants.SERVICE_URL_KEYWORD;
 
 /**
@@ -62,6 +63,10 @@ public class FSAConfiguration {
     @Override
     public String toString() {
         return "FSA Configuration {\n" +
+                "logLevel" + logLevel + '\n' +
+                "configFilePath=" + configFilePath + '\n' +
+                "fileListPath=" + fileListPath + '\n' +
+                "dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
                 sender.toString() + '\n' +
                 resolver.toString() + '\n' +
                 ", dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
@@ -69,6 +74,7 @@ public class FSAConfiguration {
                 ", requirementsFileIncludes=" + Arrays.asList(requirementsFileIncludes) + '\n' +
                 ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", scanDockerImages=" + scanDockerImages + '\n' +
+                ", requirementsFileIncludes=" + Arrays.asList(requirementsFileIncludes) + '\n' +
                 getAgent().toString() + '\n' +
                 '}';
     }
@@ -218,28 +224,10 @@ public class FSAConfiguration {
         String[] projectPerFolderIncludes = FSAConfiguration.getProjectPerFolderIncludes(config);
         String[] pythonRequirementsFileIncludes = FSAConfiguration.getPythonIncludes(config);
         String[] argsForAppPathAndDirs = args;
-        if (StringUtils.isNotEmpty(config.getProperty(ConfigPropertyKeys.X_PATHS))) {
-            try {
-                String textFromFile = new String(Files.readAllBytes(Paths.get(config.getProperty(ConfigPropertyKeys.X_PATHS))), StandardCharsets.UTF_8);
-                textFromFile = textFromFile.replaceAll(Constants.COMMA + Constants.WHITESPACE, Constants.COMMA);
-                textFromFile = textFromFile.replaceAll(System.lineSeparator(), Constants.WHITESPACE);
-                argsForAppPathAndDirs = textFromFile.split(Constants.WHITESPACE);
-                if (argsForAppPathAndDirs != null && argsForAppPathAndDirs.length > 0) {
-                    initializeDependencyDirsToAppPath(argsForAppPathAndDirs);
-                }
-                for (String appPath : this.appPathsToDependencyDirs.keySet()) {
-                    for (String dir : this.appPathsToDependencyDirs.get(appPath)) {
-                        this.dependencyDirs.add(dir);
-                    }
-                }
-            } catch (IOException e) {
-                errors.add("Error: Could not read the xPaths file: " + config.getProperty(ConfigPropertyKeys.X_PATHS));
-            }
-        } else {
-            if (argsForAppPathAndDirs != null && argsForAppPathAndDirs.length > 0) {
-                initializeDependencyDirsToAppPath(argsForAppPathAndDirs);
-            }
+        if (argsForAppPathAndDirs != null && argsForAppPathAndDirs.length == 0 && !dependencyDirs.isEmpty()) {
+            argsForAppPathAndDirs = dependencyDirs.toArray(new String[0]);
         }
+        initializeDependencyDirs(argsForAppPathAndDirs, config);
 
         // validate iaLanguage
         String iaLanguage = config.getProperty(ConfigPropertyKeys.IA_LANGUAGE);
@@ -275,6 +263,31 @@ public class FSAConfiguration {
         endpoint = getEndpoint(config);
     }
 
+    private void initializeDependencyDirs(String[] argsForAppPathAndDirs, Properties config) {
+        if (StringUtils.isNotEmpty(config.getProperty(ConfigPropertyKeys.X_PATHS))) {
+            try {
+                String textFromFile = new String(Files.readAllBytes(Paths.get(config.getProperty(ConfigPropertyKeys.X_PATHS))), StandardCharsets.UTF_8);
+                textFromFile = textFromFile.replaceAll(Constants.COMMA + Constants.WHITESPACE, Constants.COMMA);
+                textFromFile = textFromFile.replaceAll(System.lineSeparator(), Constants.WHITESPACE);
+                argsForAppPathAndDirs = textFromFile.split(Constants.WHITESPACE);
+                if (argsForAppPathAndDirs != null && argsForAppPathAndDirs.length > 0) {
+                    initializeDependencyDirsToAppPath(argsForAppPathAndDirs);
+                }
+                for (String appPath : this.appPathsToDependencyDirs.keySet()) {
+                    for (String dir : this.appPathsToDependencyDirs.get(appPath)) {
+                        this.dependencyDirs.add(dir);
+                    }
+                }
+            } catch (IOException e) {
+                errors.add("Error: Could not read the xPaths file: " + config.getProperty(ConfigPropertyKeys.X_PATHS));
+            }
+        } else {
+            if (argsForAppPathAndDirs != null && argsForAppPathAndDirs.length > 0) {
+                initializeDependencyDirsToAppPath(argsForAppPathAndDirs);
+            }
+        }
+    }
+
     private EndPointConfiguration getEndpoint(Properties config) {
         return new EndPointConfiguration(FSAConfiguration.getIntProperty(config, ConfigPropertyKeys.ENDPOINT_PORT, DEFAULT_PORT),
                 config.getProperty(ConfigPropertyKeys.ENDPOINT_CERTIFICATE),
@@ -305,6 +318,7 @@ public class FSAConfiguration {
         boolean mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
         boolean mavenAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, false);
+        boolean mavenIgnoredPomModules = FSAConfiguration.getBooleanProperty(config, MAVEN_IGNORE_POM_MODULES, true);
 
         boolean dependenciesOnly = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.DEPENDENCIES_ONLY, false);
 
@@ -351,7 +365,7 @@ public class FSAConfiguration {
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles,
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
-                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules,
+                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes,
                 dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, paketResolveDependencies,

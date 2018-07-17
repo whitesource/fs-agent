@@ -38,22 +38,25 @@ public class MavenLinesParser {
         logger.info("Start parsing pom files");
         List<Node> nodes = new ArrayList<>();
         projectsLines.forEach(singleProjectLines -> {
-            String mvnLines = String.join(System.lineSeparator(), singleProjectLines);
-            try (InputStream is = new ByteArrayInputStream(mvnLines.getBytes(StandardCharsets.UTF_8.name()));
-                 Reader lineReader = new InputStreamReader(is, UTF_8)) {
-                Parser parser = InputType.TEXT.newParser();
-                Node tree = parser.parse(lineReader);
-                nodes.add(tree);
-            } catch (UnsupportedEncodingException e) {
-                logger.warn("unsupportedEncoding error parsing output : {}", e.getMessage());
-                logger.debug("unsupportedEncoding error parsing output : {}", e.getStackTrace());
-            } catch (ParseException e) {
-                logger.warn("error parsing output : {} ", e.getMessage());
-                logger.debug("error parsing output : {} ", e.getStackTrace());
-            } catch (Exception e) {
-                // this can happen often - some parts of the output are not parsable
-                logger.debug("error parsing output : {}", e.getMessage());
-                logger.debug("error parsing output : {} {}", e.getMessage(), mvnLines);
+            // for cases such as the output_log.txt in WSE-600, where the first line of the block of output can't be parsed
+            if (singleProjectLines.get(0).contains(Constants.COLON)) {
+                String mvnLines = String.join(System.lineSeparator(), singleProjectLines);
+                try (InputStream is = new ByteArrayInputStream(mvnLines.getBytes(StandardCharsets.UTF_8.name()));
+                     Reader lineReader = new InputStreamReader(is, UTF_8)) {
+                    Parser parser = InputType.TEXT.newParser();
+                    Node tree = parser.parse(lineReader);
+                    nodes.add(tree);
+                } catch (UnsupportedEncodingException e) {
+                    logger.warn("unsupportedEncoding error parsing output : {}", e.getMessage());
+                    logger.debug("unsupportedEncoding error parsing output : {}", e.getStackTrace());
+                } catch (ParseException e) {
+                    logger.warn("error parsing output : {} ", e.getMessage());
+                    logger.debug("error parsing output : {} ", e.getStackTrace());
+                } catch (Exception e) {
+                    // this can happen often - some parts of the output are not parsable
+                    logger.debug("error parsing output : {}", e.getMessage());
+                    logger.debug("error parsing output : {} {}", e.getMessage(), mvnLines);
+                }
             }
         });
         return nodes;

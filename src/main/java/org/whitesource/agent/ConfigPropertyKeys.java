@@ -107,6 +107,7 @@ public final class ConfigPropertyKeys {
     public static final String MAVEN_IGNORED_SCOPES         = "maven.ignoredScopes";
     public static final String MAVEN_RESOLVE_DEPENDENCIES   = "maven.resolveDependencies";
     public static final String MAVEN_AGGREGATE_MODULES      = "maven.aggregateModules";
+    public static final String MAVEN_IGNORE_POM_MODULES     = "maven.ignorePomModules";
     public static final String DEPENDENCIES_ONLY            = "dependenciesOnly";
     public static final String PROJECT_PER_SUBFOLDER        = "projectPerFolder";
     public static final String PROJECT_PER_FOLDER_INCLUDES  = "projectPerFolderIncludes";

@@ -49,6 +49,7 @@ public class ResolverConfiguration {
             @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES) boolean mavenResolveDependencies,
             @JsonProperty(MAVEN_IGNORED_SCOPES) String[] mavenIgnoredScopes,
             @JsonProperty(MAVEN_AGGREGATE_MODULES) boolean mavenAggregateModules,
+            @JsonProperty(MAVEN_IGNORE_POM_MODULES) boolean mavenIgnorePomModules,
 
             @JsonProperty(PYTHON_RESOLVE_DEPENDENCIES) boolean pythonResolveDependencies,
             @JsonProperty(PYTHON_PIP_PATH) String pipPath,
@@ -63,9 +64,9 @@ public class ResolverConfiguration {
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
 
-            @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean gradleResolveDependencies,
-            @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean gradleRunAssembleCommand,
-            @JsonProperty(GRADLE_AGGREGATE_MODULES) boolean gradleAggregateModules,
+            @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean  gradleResolveDependencies,
+            @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean  gradleRunAssembleCommand,
+            @JsonProperty(GRADLE_AGGREGATE_MODULES) boolean     gradleAggregateModules,
 
             @JsonProperty(PAKET_RESOLVE_DEPENDENCIES) boolean paketResolveDependencies,
             @JsonProperty(PAKET_IGNORED_GROUPS) String[] paketIgnoredScopes,
@@ -107,6 +108,7 @@ public class ResolverConfiguration {
         this.mavenResolveDependencies = mavenResolveDependencies;
         this.mavenIgnoredScopes = mavenIgnoredScopes;
         this.mavenAggregateModules = mavenAggregateModules;
+        this.mavenIgnorePomModules = mavenIgnorePomModules;
 
         this.pythonResolveDependencies = pythonResolveDependencies;
         this.pipPath = pipPath;
@@ -154,30 +156,31 @@ public class ResolverConfiguration {
 
     /* --- Members --- */
 
-    private boolean npmRunPreStep;
-    private boolean npmIgnoreScripts;
-    private boolean npmResolveDependencies;
-    private boolean npmIncludeDevDependencies;
-    private boolean npmIgnoreJavaScriptFiles;
-    private String npmAccessToken;
-    private long npmTimeoutDependenciesCollector;
-    private boolean npmIgnoreNpmLsErrors;
-    private boolean npmYarnProject;
-    private boolean bowerResolveDependencies;
-    private boolean bowerRunPreStep;
-    private boolean nugetResolveDependencies;
-    private boolean nugetRestoreDependencies;
-    private boolean mavenResolveDependencies;
-    private String[] mavenIgnoredScopes;
-    private boolean mavenAggregateModules;
-    private boolean dependenciesOnly;
-    private String whitesourceConfiguration;
-    private boolean pythonResolveDependencies;
-    private String pipPath;
-    private String pythonPath;
-    private boolean pythonIgnorePipInstallErrors;
-    private boolean pythonInstallVirtualenv;
-    private boolean pythonResolveHierarchyTree;
+    private boolean     npmRunPreStep;
+    private boolean     npmIgnoreScripts;
+    private boolean     npmResolveDependencies;
+    private boolean     npmIncludeDevDependencies;
+    private boolean     npmIgnoreJavaScriptFiles;
+    private String      npmAccessToken;
+    private long        npmTimeoutDependenciesCollector;
+    private boolean     npmIgnoreNpmLsErrors;
+    private boolean     npmYarnProject;
+    private boolean     bowerResolveDependencies;
+    private boolean     bowerRunPreStep;
+    private boolean     nugetResolveDependencies;
+    private boolean     nugetRestoreDependencies;
+    private boolean     mavenResolveDependencies;
+    private String[]    mavenIgnoredScopes;
+    private boolean     mavenAggregateModules;
+    private boolean     mavenIgnorePomModules;
+    private boolean     dependenciesOnly;
+    private String      whitesourceConfiguration;
+    private boolean     pythonResolveDependencies;
+    private String      pipPath;
+    private String      pythonPath;
+    private boolean     pythonIgnorePipInstallErrors;
+    private boolean     pythonInstallVirtualenv;
+    private boolean     pythonResolveHierarchyTree;
     private String[] pythonRequirementsFileIncludes;
 
     private boolean gradleResolveDependencies;
@@ -291,6 +294,11 @@ public class ResolverConfiguration {
     @JsonProperty(MAVEN_AGGREGATE_MODULES)
     public boolean isMavenAggregateModules() {
         return mavenAggregateModules;
+    }
+
+    @JsonProperty(MAVEN_IGNORE_POM_MODULES)
+    public boolean isMavenIgnorePomModules(){
+        return mavenIgnorePomModules;
     }
 
     @JsonProperty(DEPENDENCIES_ONLY)
