@@ -138,7 +138,8 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                         prevLineIndentation -= INDENTETION_SPACE;
                     }
                 }
-                parentDependencies.peek().getChildren().add(currentDependency);
+                if(!parentDependencies.isEmpty())
+                    parentDependencies.peek().getChildren().add(currentDependency);
                 parentDependencies.push(currentDependency);
             } else {
                 duplicateDependency = false;

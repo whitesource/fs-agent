@@ -224,7 +224,7 @@ public class FSAConfiguration {
         String[] projectPerFolderIncludes = FSAConfiguration.getProjectPerFolderIncludes(config);
         String[] pythonRequirementsFileIncludes = FSAConfiguration.getPythonIncludes(config);
         String[] argsForAppPathAndDirs = args;
-        if (argsForAppPathAndDirs.length == 0 && !dependencyDirs.isEmpty()) {
+        if (argsForAppPathAndDirs != null && argsForAppPathAndDirs.length == 0 && !dependencyDirs.isEmpty()) {
             argsForAppPathAndDirs = dependencyDirs.toArray(new String[0]);
         }
         initializeDependencyDirs(argsForAppPathAndDirs, config);
