@@ -179,14 +179,14 @@ public class FileSystemScanner {
         }
 
         // create dependencies from files - first project is always the default one
-        logger.info("Starting Analysis");
+        logger.info("Starting analysis");
         Map<AgentProjectInfo, Path> allProjects = new HashMap<>();
         Map<AgentProjectInfo, LinkedList<ViaComponents>> allProjectsToViaComponents = new HashMap<>();
         AgentProjectInfo mainProject = new AgentProjectInfo();
         allProjects.put(mainProject, null);
         allProjectsToViaComponents.put(mainProject, new LinkedList<>());
 
-        logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
+        logger.info("Scanning directories {} for matching Files (may take a few minutes)", pathsToScan);
         logger.info("Included file types: {}", String.join(Constants.COMMA, includes));
         logger.info("Excluded file types: {}", String.join(Constants.COMMA, excludes));
         String[] resolversIncludesPattern = createResolversIncludesPattern(dependencyResolutionService.getDependencyResolvers());
@@ -288,7 +288,7 @@ public class FileSystemScanner {
                 resolutionResults.addAll(resolutionResult);
             }
 
-            logger.info(MessageFormat.format("Total dependencies Found: {0}", totalDependencies[0]));
+            logger.info(MessageFormat.format("Total dependencies found: {0}", totalDependencies[0]));
 
             // merge additional excludes
             Set<String> allExcludes = resolutionResults.stream().flatMap(resolution -> resolution.getExcludes().stream()).collect(Collectors.toSet());
@@ -301,7 +301,7 @@ public class FileSystemScanner {
         }
 
         String[] excludesExtended = excludeFileSystemAgent(excludes);
-        logger.info("Scanning Directories {} for Matching Files (may take a few minutes)", pathsToScan);
+        logger.info("Scanning directories {} for matching Files (may take a few minutes)", pathsToScan);
         Map<File, Collection<String>> fileMap = new FilesUtils().fillFilesMap(pathsToScan, includes, excludesExtended, followSymlinks, globCaseSensitive);
         long filesCount = fileMap.entrySet().stream().flatMap(folder -> folder.getValue().stream()).count();
         totalFiles += filesCount;
@@ -385,7 +385,7 @@ public class FileSystemScanner {
                 }
             }
         }
-        logger.info("Finished Analyzing Files");
+        logger.info("Finished analyzing Files");
         systemStats = MemoryUsageHelper.getMemoryUsage();
         logger.debug(systemStats.toString());
         // add dependencies to project in case of pojo project
