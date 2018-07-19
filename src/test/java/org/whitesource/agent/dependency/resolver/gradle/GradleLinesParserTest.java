@@ -8,7 +8,7 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.agent.utils.CommandLineProcess;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +29,29 @@ public class GradleLinesParserTest {
         CommandLineProcess commandLineProcess = new CommandLineProcess(folderPath, params);
         List<String> lines = commandLineProcess.executeProcess();
         gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
+    }
+
+    @Test
+    public void parseLineFromFile(){
+        File file = TestHelper.getFileFromResources("resolver/gradle/dependencies.log");
+        List<String> lines = readFileAsList(file.getAbsolutePath());
+        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
+    }
+
+    private List<String> readFileAsList(String fileName) {
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                // process the line.
+                lines.add(line);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return lines;
     }
 
     @Test

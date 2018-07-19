@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
  * @author erez.huberman
  */
 public class GradleLinesParser extends MavenTreeDependencyCollector {
+    protected static final String ARROW = " -> ";
 
     /* --- Static members --- */
 
@@ -90,13 +91,19 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             String groupId = strings[0];
             int lastSpace = groupId.lastIndexOf(Constants.WHITESPACE);
             groupId = groupId.substring(lastSpace + 1);
-            String artifactId = strings[1];
-            String version = strings[2];
-            if (version.contains(Constants.WHITESPACE)){
-                if (version.contains("->")){
-                    version = version.split(Constants.WHITESPACE)[version.split(Constants.WHITESPACE).length-1];
-                } else {
-                    version = version.split(Constants.WHITESPACE)[0];
+            String artifactId, version;
+            if (strings.length == 2){
+                artifactId = strings[1].split(ARROW)[0];
+                version = strings[1].split(ARROW)[1];
+            } else {
+                artifactId = strings[1];
+                version = strings[2];
+                if (version.contains(Constants.WHITESPACE)) {
+                    if (version.contains(ARROW)) {
+                        version = version.split(ARROW)[1];
+                    } else {
+                        version = version.split(Constants.WHITESPACE)[0];
+                    }
                 }
             }
             // Create dependencyInfo & calculate SHA1
@@ -133,7 +140,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                   |    |    \--- org.webjars.npm:has-symbol-support-x:[1.4.1,2) -> 1.4.1
                   |    \--- org.webjars.npm:is-object:[1.0.1,2) -> 1.0.1
                 */
-                    while (prevLineIndentation > lastSpace - INDENTETION_SPACE){
+                    while (prevLineIndentation > lastSpace - INDENTETION_SPACE && !parentDependencies.isEmpty()){
                         parentDependencies.pop();
                         prevLineIndentation -= INDENTETION_SPACE;
                     }
