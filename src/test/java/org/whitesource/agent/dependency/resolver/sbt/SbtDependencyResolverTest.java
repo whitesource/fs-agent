@@ -29,12 +29,11 @@ public class SbtDependencyResolverTest {
 
     @Test
     public void resolveDependencies() {
-        File buildSbtFile = new File("C:\\Users\\ErezHuberman\\Documents\\sbt\\hello-world\\target\\scala-2.12\\resolution-cache\\reports\\default-hello-world-build-compile.xml");//TestHelper.getFileFromResources("resolver/sbt/build.sbt");
+        File buildSbtFile = TestHelper.getFileFromResources("resolver/sbt/build.sbt");
         String folderPath = Paths.get(Constants.DOT).toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\sbt\\");
-        folderPath = "C:\\Users\\ErezHuberman\\Documents\\sbt\\hello-world";
         Set<String> bomFiles = Stream.of(buildSbtFile.toString()).collect(Collectors.toSet());
         ResolutionResult resolutionResult = sbtDependencyResolver.resolveDependencies("", folderPath, bomFiles);
         Collection<DependencyInfo> dependencies = resolutionResult.getResolvedProjects().keySet().iterator().next().getDependencies();
-        Assert.assertTrue(dependencies.size() == 14);
+        Assert.assertTrue(dependencies.size() == 3);
     }
 }

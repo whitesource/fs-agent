@@ -56,7 +56,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private boolean removeJavaFile;
 
     GradleLinesParser(boolean runAssembleCommand){
-        super(null);
+        super(null, true);
         this.runAssembleCommand = runAssembleCommand;
         gradleCli = new GradleCli();
         fileSeparator = System.getProperty(Constants.FILE_SEPARATOR);
@@ -73,11 +73,10 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             return new ArrayList<>();
         }
         this.rootDirectory = rootDirectory;
+        logger.info("Start parsing gradle dependencies of: {}", rootDirectory);
         List<String> projectsLines = lines.stream()
                 .filter(line->(line.contains(PLUS) || line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))
                 .collect(Collectors.toList());
-
-        logger.info("Start parsing gradle dependencies");
         List<DependencyInfo> dependenciesList = new ArrayList<>();
         Stack<DependencyInfo> parentDependencies = new Stack<>();
         List<String> sha1s = new ArrayList<>();
@@ -139,7 +138,8 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                         prevLineIndentation -= INDENTETION_SPACE;
                     }
                 }
-                parentDependencies.peek().getChildren().add(currentDependency);
+                if(!parentDependencies.isEmpty())
+                    parentDependencies.peek().getChildren().add(currentDependency);
                 parentDependencies.push(currentDependency);
             } else {
                 duplicateDependency = false;

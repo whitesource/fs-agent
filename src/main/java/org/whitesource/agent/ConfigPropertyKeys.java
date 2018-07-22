@@ -107,6 +107,7 @@ public final class ConfigPropertyKeys {
     public static final String MAVEN_IGNORED_SCOPES         = "maven.ignoredScopes";
     public static final String MAVEN_RESOLVE_DEPENDENCIES   = "maven.resolveDependencies";
     public static final String MAVEN_AGGREGATE_MODULES      = "maven.aggregateModules";
+    public static final String MAVEN_IGNORE_POM_MODULES     = "maven.ignorePomModules";
     public static final String DEPENDENCIES_ONLY            = "dependenciesOnly";
     public static final String PROJECT_PER_SUBFOLDER        = "projectPerFolder";
     public static final String PROJECT_PER_FOLDER_INCLUDES  = "projectPerFolderIncludes";
@@ -115,6 +116,7 @@ public final class ConfigPropertyKeys {
     public static final String PROJECT_CONFIGURATION_PATH   = "configFilePath";
     public static final String SCAN_PACKAGE_MANAGER         = "scanPackageManager";
     public static final String WHITESOURCE_FOLDER_PATH      = "whiteSourceFolderPath";
+    public static final String PYTHON_REQUIREMENTS_FILE_INCLUDES = "python.requirementsFileIncludes";
 
     public static final String ENDPOINT_ENABLED         = "endpoint.enabled";
     public static final String ENDPOINT_PORT            = "endpoint.port";

@@ -57,7 +57,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     private static final String DEDUPED = "deduped";
     private static final String REQUIRED = "required";
     private static final String IGNORE_SCRIPTS = "--ignore-scripts";
-
+    private static final String UNMET_DEPENDENCY = "+-- UNMET DEPENDENCY";
     /* --- Members --- */
 
     protected final boolean includeDevDependencies;
@@ -136,7 +136,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
             if (dependenciesJsonObject != null) {
                 for (int i = 0; i < dependenciesJsonObject.keySet().size(); i++) {
                     String currentLine = linesOfNpmLs.get(currentLineNumber);
-                    if (currentLine.endsWith(DEDUPED)) {
+                    if (currentLine.endsWith(DEDUPED) || currentLine.startsWith(UNMET_DEPENDENCY)) {
                         currentLineNumber++;
                         continue;
                     }

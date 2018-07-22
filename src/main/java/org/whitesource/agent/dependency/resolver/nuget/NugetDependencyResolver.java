@@ -68,13 +68,14 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     protected ResolutionResult getResolutionResultFromParsing(String topLevelFolder, Set<String> configFiles, boolean onlyDependenciesFromReferenceTag) {
         Collection<DependencyInfo> dependencies = parseNugetPackageFiles(configFiles, onlyDependenciesFromReferenceTag);
-
         return new ResolutionResult(dependencies, new LinkedList<>(), getDependencyType(), topLevelFolder);
     }
 
     @Override
     protected Collection<String> getExcludes() {
-        return new ArrayList<>();
+        List<String> excludes = new LinkedList<>();
+        excludes.add(CommandLineArgs.CONFIG_FILE_NAME);
+        return excludes;
     }
 
     @Override
@@ -114,7 +115,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
                 if (!configFile.getName().equals(CommandLineArgs.CONFIG_FILE_NAME)) {
                     NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(configFile, this.nugetConfigFileType);
                     Set<DependencyInfo> dependenciesFromSingleFile = parser.parsePackagesConfigFile(getDependenciesFromReferenceTag,configFilePath);
-                    if (dependenciesFromSingleFile != null) {
+                    if (!dependenciesFromSingleFile.isEmpty()) {
                         dependencies.addAll(dependenciesFromSingleFile);
                     }
                 }
