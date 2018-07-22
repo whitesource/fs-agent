@@ -34,13 +34,15 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     protected static final String RESOLUTION_CACHE = "resolution-cache";
     protected static final String REPORTS = "reports";
     protected static final String SUCCESS = "success";
+    public static final String PROJECT = "project";
+    public static final String COMPILE_XML = "-compile.xml";
 
     private boolean sbtAggregateModules;
     private boolean dependenciesOnly;
 
     private final Logger logger = LoggerFactory.getLogger(SbtDependencyResolver.class);
 
-    public SbtDependencyResolver(boolean sbtAggregateModules, boolean dependenciesOnly){
+    public SbtDependencyResolver(boolean sbtAggregateModules, boolean dependenciesOnly) {
         this.sbtAggregateModules = sbtAggregateModules;
         this.dependenciesOnly = dependenciesOnly;
         this.bomParser = new SbtBomParser();
@@ -50,11 +52,11 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         Collection<AgentProjectInfo> projects = new ArrayList<>();
         List<File> xmlFiles = findXmlReport(topLevelFolder);
-        if (xmlFiles.size()== 0){
+        if (xmlFiles.size() == 0) {
             xmlFiles = loadXmlReport(topLevelFolder);
         }
-        if (xmlFiles != null){
-            for (File xmlFile :xmlFiles){
+        if (xmlFiles != null) {
+            for (File xmlFile : xmlFiles) {
                 projects.add(parseXmlReport(xmlFile));
             }
         }
@@ -81,26 +83,35 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
      There are some cases where 2 files inside that folder end with '-compile.xml'.  in such case, the way to find the relevant is if its name
      contains the scala-version (which is part of the scala folder name), and that's relevant only if the xml file isn't inside 'sbt-{}' folder.
      */
-    private List<File> findXmlReport(String folderPath){
+    private List<File> findXmlReport(String folderPath) {
         FilesScanner filesScanner = new FilesScanner();
-        String[] includes = {"**" + fileSeparator + "target" + fileSeparator + "**" + fileSeparator + "" + RESOLUTION_CACHE + fileSeparator + REPORTS + fileSeparator + "*-compile.xml"};
-        String[] excludes = {"**" + fileSeparator + "project" + fileSeparator + "**"};
+        String[] includes = {"**" + fileSeparator + TARGET + fileSeparator + "**" + fileSeparator + Constants.EMPTY_STRING + RESOLUTION_CACHE + fileSeparator + REPORTS + fileSeparator + "*" + COMPILE_XML};
+        String[] excludes = {"**" + fileSeparator + PROJECT + fileSeparator + "**"};
+
+        // trying to search *-compile.xml file under target folder if we didn't find any results we are searching in entire project.
+        logger.debug("Trying to find *" + COMPILE_XML + " file under target folder");
         String[] directoryContent = filesScanner.getDirectoryContent(folderPath, includes, excludes, false, false);
+        if (directoryContent.length == 0) {
+            logger.debug("Didn't find *" + COMPILE_XML + " file under target folder, searching in entire project {}", folderPath);
+            includes = new String[]{Constants.PATTERN + COMPILE_XML};
+            excludes = new String[]{};
+            directoryContent = filesScanner.getDirectoryContent(folderPath, includes, excludes, false, false);
+        }
         List<File> files = new LinkedList<>();
-        for (String filePath : directoryContent){
+        for (String filePath : directoryContent) {
             boolean add = true;
             File reportFile = new File(folderPath + fileSeparator + filePath);
-            for (File file : files){
-                if (file.getParent().equals(reportFile.getParent())){
+            for (File file : files) {
+                if (file.getParent().equals(reportFile.getParent())) {
                     add = false;
-                    if (reportFile.getName().length() < file.getName().length()){
+                    if (reportFile.getName().length() < file.getName().length()) {
                         files.remove(file);
                         files.add(reportFile);
                         break;
                     }
                 }
             }
-            if (add){
+            if (add) {
                 files.add(reportFile);
             }
         }
@@ -108,11 +119,11 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     }
 
     // creating the xml report using 'sbt "compile"' command
-    private List<File> loadXmlReport(String folderPath){
+    private List<File> loadXmlReport(String folderPath) {
         Cli cli = new Cli();
         List<String> compileOutput = cli.runCmd(folderPath, cli.getCommandParams(SBT, COMPILE));
-        if (compileOutput != null){
-            if (compileOutput.get(compileOutput.size()-1).contains(SUCCESS)){
+        if (compileOutput != null) {
+            if (compileOutput.get(compileOutput.size() - 1).contains(SUCCESS)) {
                 return findXmlReport(folderPath);
             }
         }
@@ -120,7 +131,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         return new LinkedList<>();
     }
 
-    private AgentProjectInfo parseXmlReport(File xmlReportFile){
+    private AgentProjectInfo parseXmlReport(File xmlReportFile) {
         AgentProjectInfo agentProjectInfo = new AgentProjectInfo();
         Serializer serializer = new Persister();
         Map<String, DependencyInfo> parentsMap = new HashMap<>();
@@ -206,9 +217,9 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     }
 
     // preventing circular dependencies by making sure the dependency is not a descendant of its own
-    private boolean isDescendant(DependencyInfo ancestor, DependencyInfo descendant){
-        for (DependencyInfo child : ancestor.getChildren()){
-            if (child.equals(descendant)){
+    private boolean isDescendant(DependencyInfo ancestor, DependencyInfo descendant) {
+        for (DependencyInfo child : ancestor.getChildren()) {
+            if (child.equals(descendant)) {
                 return true;
             }
             return isDescendant(child, descendant);
