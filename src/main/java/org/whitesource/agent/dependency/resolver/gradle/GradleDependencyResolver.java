@@ -58,7 +58,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
             File bomFolder = new File(new File(bomFile).getParent());
             String moduleName = bomFolder.getName();
             // making sure the module's folder is found inside the settings.gradle file
-            if (!validateModule(moduleName, settingsFileContent, commentBlocks)){
+            if (settingsFileContent != null && !validateModule(moduleName, settingsFileContent, commentBlocks)){
                 continue;
             }
             List<DependencyInfo> dependencies = collectDependencies(bomFileFolder);
