@@ -39,6 +39,8 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
 
     private boolean sbtAggregateModules;
     private boolean dependenciesOnly;
+    private String[] includes = {"**" + fileSeparator + TARGET + fileSeparator + "**" + fileSeparator + Constants.EMPTY_STRING + RESOLUTION_CACHE + fileSeparator + REPORTS + fileSeparator + "*" + COMPILE_XML};
+    private String[] excludes = {"**" + fileSeparator + PROJECT + fileSeparator + "**"};
 
     private final Logger logger = LoggerFactory.getLogger(SbtDependencyResolver.class);
 
@@ -51,11 +53,14 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         Collection<AgentProjectInfo> projects = new ArrayList<>();
-        List<File> xmlFiles = findXmlReport(topLevelFolder);
-        if (xmlFiles.size() == 0) {
+        List<File> xmlFiles = findXmlReport(topLevelFolder, includes, excludes);
+        if (xmlFiles.isEmpty()) {
             xmlFiles = loadXmlReport(topLevelFolder);
-        }
-        if (xmlFiles != null) {
+            if (xmlFiles.isEmpty()) {
+                includes = new String[]{Constants.PATTERN + COMPILE_XML};
+                excludes = new String[]{};
+                xmlFiles = findXmlReport(topLevelFolder, includes, excludes);
+            }
             for (File xmlFile : xmlFiles) {
                 projects.add(parseXmlReport(xmlFile));
             }
@@ -83,20 +88,12 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
      There are some cases where 2 files inside that folder end with '-compile.xml'.  in such case, the way to find the relevant is if its name
      contains the scala-version (which is part of the scala folder name), and that's relevant only if the xml file isn't inside 'sbt-{}' folder.
      */
-    private List<File> findXmlReport(String folderPath) {
+    private List<File> findXmlReport(String folderPath, String[] includes, String[] excludes) {
         FilesScanner filesScanner = new FilesScanner();
-        String[] includes = {"**" + fileSeparator + TARGET + fileSeparator + "**" + fileSeparator + Constants.EMPTY_STRING + RESOLUTION_CACHE + fileSeparator + REPORTS + fileSeparator + "*" + COMPILE_XML};
-        String[] excludes = {"**" + fileSeparator + PROJECT + fileSeparator + "**"};
 
         // trying to search *-compile.xml file under target folder if we didn't find any results we are searching in entire project.
         logger.debug("Trying to find *" + COMPILE_XML + " file under target folder");
-        String[] directoryContent = filesScanner.getDirectoryContent(folderPath, includes, excludes, false, false);
-        if (directoryContent.length == 0) {
-            logger.debug("Didn't find *" + COMPILE_XML + " file under target folder, searching in entire project {}", folderPath);
-            includes = new String[]{Constants.PATTERN + COMPILE_XML};
-            excludes = new String[]{};
-            directoryContent = filesScanner.getDirectoryContent(folderPath, includes, excludes, false, false);
-        }
+        String[] directoryContent = filesScanner.getDirectoryContent(folderPath, this.includes, this.excludes, false, false);
         List<File> files = new LinkedList<>();
         for (String filePath : directoryContent) {
             boolean add = true;
@@ -124,7 +121,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         List<String> compileOutput = cli.runCmd(folderPath, cli.getCommandParams(SBT, COMPILE));
         if (compileOutput != null) {
             if (compileOutput.get(compileOutput.size() - 1).contains(SUCCESS)) {
-                return findXmlReport(folderPath);
+                return findXmlReport(folderPath, includes, excludes);
             }
         }
         logger.warn("Can't run '{} {}'", SBT, COMPILE);
