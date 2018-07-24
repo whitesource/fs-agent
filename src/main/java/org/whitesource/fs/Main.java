@@ -59,7 +59,7 @@ public class Main {
 
         if (isHelpArg(args)) {
             printHelpContent();
-            return;
+            System.exit(StatusCode.SUCCESS.getValue());
         }
 
         new JCommander(commandLineArgs, args);
