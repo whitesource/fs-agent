@@ -11,6 +11,17 @@
 		</encoder>
 	</appender>
 
+	<!--appender name="collectToFile" class="ch.qos.logback.core.FileAppender">
+		<file>main.log</file>
+		<append>false</append>
+		<encoder>
+			<pattern>[%level] %d{"HH:mm:ss"} - %msg%n</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>TRACE</level>
+		</filter>
+	</appender-->
+
 	<logger name="com.wss" level="debug"/>
 	<logger name="org.apache.maven" level="debug"/>
 
@@ -19,6 +30,10 @@
 	<logger name="org.apache" level="error"/>
 	<logger name="com.aragost.javahg.log.JULLogger" level="error"/>
 	<logger name="org.redline_rpm" level="error"/>
+
+	<!--logger name="org">
+		<appender-ref ref="console"/>
+	</logger-->
 
 	<root>
 		<appender-ref ref="console"/>

@@ -15,6 +15,7 @@
  */
 package org.whitesource.fs;
 
+import ch.qos.logback.classic.Level;
 import com.beust.jcommander.JCommander;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -60,6 +61,11 @@ public class Main {
 
         // read configuration senderConfig
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
+        // read log level from configuration file
+        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        String logLevel = fsaConfiguration.getLogLevel();
+        root.setLevel(Level.toLevel(logLevel, Level.INFO));
+
         boolean isStandalone = commandLineArgs.web.equals(Constants.FALSE);
         logger.info(fsaConfiguration.toString());
         if (isStandalone) {
