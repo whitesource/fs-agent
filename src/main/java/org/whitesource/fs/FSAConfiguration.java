@@ -398,6 +398,7 @@ public class FSAConfiguration {
         boolean checkPolicies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.CHECK_POLICIES_PROPERTY_KEY, false);
         boolean forceCheckAllDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.FORCE_CHECK_ALL_DEPENDENCIES, false);
         boolean forceUpdate = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.FORCE_UPDATE, false);
+        boolean forceUpdateBuildFailed = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION, false);
         boolean enableImpactAnalysis = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false);
         String serviceUrl = config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
         String proxyHost = config.getProperty(ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY);
@@ -420,7 +421,7 @@ public class FSAConfiguration {
 
         return new SenderConfiguration(checkPolicies, serviceUrl, connectionTimeOut,
                 proxyHost, proxyPort, proxyUser, proxyPassword,
-                forceCheckAllDependencies, forceUpdate, updateTypeValue, enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals);
+                forceCheckAllDependencies, forceUpdate, forceUpdateBuildFailed, updateTypeValue, enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals);
     }
 
     private OfflineConfiguration getOffline(Properties config) {

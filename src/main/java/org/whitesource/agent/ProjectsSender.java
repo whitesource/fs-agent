@@ -109,7 +109,7 @@ public class ProjectsSender {
             while (retries-- > -1) {
                 try {
                     statusCode = checkPolicies(service, projects);
-                    if (statusCode == StatusCode.SUCCESS) {
+                    if (statusCode == StatusCode.SUCCESS || (senderConfig.isForceUpdate() && senderConfig.isForceUpdateFailBuildOnPolicyViolation())) {
                         resultInfo = update(service, projects);
                     }
                     break;
@@ -234,6 +234,9 @@ public class ProjectsSender {
                 if (senderConfig.isForceUpdate()) {
                     logger.info("Some dependencies violate open source policies, however all were force " +
                             "updated to organization inventory.");
+                    if (senderConfig.isForceUpdateFailBuildOnPolicyViolation()) {
+                        policyCompliance = false;
+                    }
                 } else {
                     logger.info("Some dependencies did not conform with open source policies, review report for details");
                     logger.info("=== UPDATE ABORTED ===");
