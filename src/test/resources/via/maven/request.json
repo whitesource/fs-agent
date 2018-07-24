@@ -1,0 +1,300 @@
+{
+  "AgentProjectInfo@3c41ed1d[coordinates\u003d Coordinates@440182f8[groupId\u003d null,artifactId\u003d maven-via-test,version\u003d  ],parentCoordinates\u003d null,projectToken\u003d null ]": [
+    {
+      "appPath": "C:\\Tests\\ksa\\ksa-core\\target\\ksa-core-3.9.0.jar",
+      "language": "JAVA",
+      "dependencies": [
+        {
+          "groupId": "org.springframework",
+          "artifactId": "spring-core",
+          "version": "3.1.1.RELEASE",
+          "type": "jar",
+          "scope": "compile",
+          "sha1": "419e9233c8d55f64a0c524bb94c3ba87e51e7d95",
+          "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\org\\springframework\\spring-core\\3.1.1.RELEASE\\spring-core-3.1.1.RELEASE.jar",
+          "optional": false,
+          "children": [
+            {
+              "groupId": "org.springframework",
+              "artifactId": "spring-asm",
+              "version": "3.1.1.RELEASE",
+              "type": "jar",
+              "scope": "compile",
+              "sha1": "08717ad8947fcada5c55da89eb474bf053c30e57",
+              "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\org\\springframework\\spring-asm\\3.1.1.RELEASE\\spring-asm-3.1.1.RELEASE.jar",
+              "optional": false,
+              "children": [],
+              "exclusions": [],
+              "licenses": [],
+              "copyrights": [],
+              "filename": "spring-asm-3.1.1.RELEASE.jar",
+              "dependencyType": "MAVEN",
+              "checksums": {
+                "SHA1": "08717ad8947fcada5c55da89eb474bf053c30e57"
+              }
+            },
+            {
+              "groupId": "commons-logging",
+              "artifactId": "commons-logging",
+              "version": "1.1.1",
+              "type": "jar",
+              "scope": "compile",
+              "sha1": "5043bfebc3db072ed80fbd362e7caf00e885d8ae",
+              "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\commons-logging\\commons-logging\\1.1.1\\commons-logging-1.1.1.jar",
+              "optional": false,
+              "children": [],
+              "exclusions": [],
+              "licenses": [],
+              "copyrights": [],
+              "filename": "commons-logging-1.1.1.jar",
+              "dependencyType": "MAVEN",
+              "checksums": {
+                "SHA1": "5043bfebc3db072ed80fbd362e7caf00e885d8ae"
+              }
+            }
+          ],
+          "exclusions": [],
+          "licenses": [],
+          "copyrights": [],
+          "filename": "spring-core-3.1.1.RELEASE.jar",
+          "dependencyType": "MAVEN",
+          "checksums": {
+            "SHA1": "419e9233c8d55f64a0c524bb94c3ba87e51e7d95"
+          }
+        },
+        {
+          "groupId": "org.springframework",
+          "artifactId": "spring-context",
+          "version": "3.1.1.RELEASE",
+          "type": "jar",
+          "scope": "compile",
+          "sha1": "ecb0784a0712c1bfbc1c2018eeef6776861300e4",
+          "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\org\\springframework\\spring-context\\3.1.1.RELEASE\\spring-context-3.1.1.RELEASE.jar",
+          "optional": false,
+          "children": [
+            {
+              "groupId": "org.springframework",
+              "artifactId": "spring-aop",
+              "version": "3.1.1.RELEASE",
+              "type": "jar",
+              "scope": "compile",
+              "sha1": "3c86058cdaea30df35e4b951a615e09eb07da589",
+              "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\org\\springframework\\spring-aop\\3.1.1.RELEASE\\spring-aop-3.1.1.RELEASE.jar",
+              "optional": false,
+              "children": [
+                {
+                  "groupId": "aopalliance",
+                  "artifactId": "aopalliance",
+                  "version": "1.0",
+                  "type": "jar",
+                  "scope": "compile",
+                  "sha1": "0235ba8b489512805ac13a8f9ea77a1ca5ebe3e8",
+                  "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\aopalliance\\aopalliance\\1.0\\aopalliance-1.0.jar",
+                  "optional": false,
+                  "children": [],
+                  "exclusions": [],
+                  "licenses": [],
+                  "copyrights": [],
+                  "filename": "aopalliance-1.0.jar",
+                  "dependencyType": "MAVEN",
+                  "checksums": {
+                    "SHA1": "0235ba8b489512805ac13a8f9ea77a1ca5ebe3e8"
+                  }
+                }
+              ],
+              "exclusions": [],
+              "licenses": [],
+              "copyrights": [],
+              "filename": "spring-aop-3.1.1.RELEASE.jar",
+              "dependencyType": "MAVEN",
+              "checksums": {
+                "SHA1": "3c86058cdaea30df35e4b951a615e09eb07da589"
+              }
+            },
+            {
+              "groupId": "org.springframework",
+              "artifactId": "spring-beans",
+              "version": "3.1.1.RELEASE",
+              "type": "jar",
+              "scope": "compile",
+              "sha1": "83d0e5adc98714783f0fb7d8a5e97ef4cf08da49",
+              "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\org\\springframework\\spring-beans\\3.1.1.RELEASE\\spring-beans-3.1.1.RELEASE.jar",
+              "optional": false,
+              "children": [],
+              "exclusions": [],
+              "licenses": [],
+              "copyrights": [],
+              "filename": "spring-beans-3.1.1.RELEASE.jar",
+              "dependencyType": "MAVEN",
+              "checksums": {
+                "SHA1": "83d0e5adc98714783f0fb7d8a5e97ef4cf08da49"
+              }
+            },
+            {
+              "groupId": "org.springframework",
+              "artifactId": "spring-expression",
+              "version": "3.1.1.RELEASE",
+              "type": "jar",
+              "scope": "compile",
+              "sha1": "1486d7787ec4ff8da8cbf8752d30e4c808412b3f",
+              "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\org\\springframework\\spring-expression\\3.1.1.RELEASE\\spring-expression-3.1.1.RELEASE.jar",
+              "optional": false,
+              "children": [],
+              "exclusions": [],
+              "licenses": [],
+              "copyrights": [],
+              "filename": "spring-expression-3.1.1.RELEASE.jar",
+              "dependencyType": "MAVEN",
+              "checksums": {
+                "SHA1": "1486d7787ec4ff8da8cbf8752d30e4c808412b3f"
+              }
+            }
+          ],
+          "exclusions": [],
+          "licenses": [],
+          "copyrights": [],
+          "filename": "spring-context-3.1.1.RELEASE.jar",
+          "dependencyType": "MAVEN",
+          "checksums": {
+            "SHA1": "ecb0784a0712c1bfbc1c2018eeef6776861300e4"
+          }
+        },
+        {
+          "groupId": "commons-lang",
+          "artifactId": "commons-lang",
+          "version": "2.6",
+          "type": "jar",
+          "scope": "compile",
+          "sha1": "0ce1edb914c94ebc388f086c6827e8bdeec71ac2",
+          "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\commons-lang\\commons-lang\\2.6\\commons-lang-2.6.jar",
+          "optional": false,
+          "children": [],
+          "exclusions": [],
+          "licenses": [],
+          "copyrights": [],
+          "filename": "commons-lang-2.6.jar",
+          "dependencyType": "MAVEN",
+          "checksums": {
+            "SHA1": "0ce1edb914c94ebc388f086c6827e8bdeec71ac2"
+          }
+        },
+        {
+          "groupId": "com.ksa",
+          "artifactId": "ksa-debug",
+          "version": "3.9.0",
+          "type": "jar",
+          "scope": "compile",
+          "sha1": "174ca91def0da362a2fed66b5a87900a52c09508",
+          "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\com\\ksa\\ksa-debug\\3.9.0\\ksa-debug-3.9.0.jar",
+          "optional": false,
+          "children": [
+            {
+              "groupId": "commons-dbcp",
+              "artifactId": "commons-dbcp",
+              "version": "1.4",
+              "type": "jar",
+              "scope": "compile",
+              "sha1": "30be73c965cc990b153a100aaaaafcf239f82d39",
+              "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\commons-dbcp\\commons-dbcp\\1.4\\commons-dbcp-1.4.jar",
+              "optional": false,
+              "children": [
+                {
+                  "groupId": "commons-pool",
+                  "artifactId": "commons-pool",
+                  "version": "1.5.4",
+                  "type": "jar",
+                  "scope": "compile",
+                  "sha1": "75b6e20c596ed2945a259cea26d7fadd298398e6",
+                  "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\commons-pool\\commons-pool\\1.5.4\\commons-pool-1.5.4.jar",
+                  "optional": false,
+                  "children": [],
+                  "exclusions": [],
+                  "licenses": [],
+                  "copyrights": [],
+                  "filename": "commons-pool-1.5.4.jar",
+                  "dependencyType": "MAVEN",
+                  "checksums": {
+                    "SHA1": "75b6e20c596ed2945a259cea26d7fadd298398e6"
+                  }
+                }
+              ],
+              "exclusions": [],
+              "licenses": [],
+              "copyrights": [],
+              "filename": "commons-dbcp-1.4.jar",
+              "dependencyType": "MAVEN",
+              "checksums": {
+                "SHA1": "30be73c965cc990b153a100aaaaafcf239f82d39"
+              }
+            },
+            {
+              "groupId": "com.h2database",
+              "artifactId": "h2",
+              "version": "1.3.162",
+              "type": "jar",
+              "scope": "compile",
+              "sha1": "fb381c2cb2805c7135cde33045955fb6e6fa94fd",
+              "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\com\\h2database\\h2\\1.3.162\\h2-1.3.162.jar",
+              "optional": false,
+              "children": [],
+              "exclusions": [],
+              "licenses": [],
+              "copyrights": [],
+              "filename": "h2-1.3.162.jar",
+              "dependencyType": "MAVEN",
+              "checksums": {
+                "SHA1": "fb381c2cb2805c7135cde33045955fb6e6fa94fd"
+              }
+            },
+            {
+              "groupId": "mysql",
+              "artifactId": "mysql-connector-java",
+              "version": "5.1.18",
+              "type": "jar",
+              "scope": "compile",
+              "sha1": "85dfedad243dc0303ad7ae3a323c39421d220690",
+              "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\mysql\\mysql-connector-java\\5.1.18\\mysql-connector-java-5.1.18.jar",
+              "optional": false,
+              "children": [],
+              "exclusions": [],
+              "licenses": [],
+              "copyrights": [],
+              "filename": "mysql-connector-java-5.1.18.jar",
+              "dependencyType": "MAVEN",
+              "checksums": {
+                "SHA1": "85dfedad243dc0303ad7ae3a323c39421d220690"
+              }
+            }
+          ],
+          "exclusions": [],
+          "licenses": [],
+          "copyrights": [],
+          "filename": "ksa-debug-3.9.0.jar",
+          "dependencyType": "MAVEN",
+          "checksums": {
+            "SHA1": "174ca91def0da362a2fed66b5a87900a52c09508"
+          }
+        },
+        {
+          "groupId": "org.slf4j",
+          "artifactId": "slf4j-api",
+          "version": "1.6.1",
+          "type": "jar",
+          "scope": "compile",
+          "sha1": "6f3b8a24bf970f17289b234284c94f43eb42f0e4",
+          "systemPath": "C:\\Users\\ChenLuigi\\.m2\\repository\\org\\slf4j\\slf4j-api\\1.6.1\\slf4j-api-1.6.1.jar",
+          "optional": false,
+          "children": [],
+          "exclusions": [],
+          "licenses": [],
+          "copyrights": [],
+          "filename": "slf4j-api-1.6.1.jar",
+          "dependencyType": "MAVEN",
+          "checksums": {
+            "SHA1": "6f3b8a24bf970f17289b234284c94f43eb42f0e4"
+          }
+        }
+      ]
+    }
+  ]
+}

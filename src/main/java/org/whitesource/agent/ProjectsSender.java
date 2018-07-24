@@ -15,6 +15,7 @@
  */
 package org.whitesource.agent;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,7 +174,7 @@ public class ProjectsSender {
                         }
                         if (vulnerabilitiesAnalysis != null) {
                             AgentProjectInfo projectToServer = new AgentProjectInfo();
-                            projectToServer.setDependencies(viaComponents.getDependencies());
+                            projectToServer.setDependencies(Lists.newArrayList(project.getDependencies()));
                             projectToServer.setProjectSetupDescription(project.getProjectSetupDescription());
                             projectToServer.setCoordinates(project.getCoordinates());
                             projectToServer.setProjectToken(project.getProjectToken());
@@ -187,6 +188,7 @@ public class ProjectsSender {
                             Method runAnalysis = vulnerabilitiesAnalysisClass.getDeclaredMethod("runAnalysis", serverClass, String.class, Collection.class, Boolean.class);
                             runAnalysis.invoke(vulnerabilitiesAnalysis, server, appPath, project.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
                             logger.info("Got impact analysis result from server");
+
                         }
                     } catch (InvocationTargetException e) {
                         logger.error("Failed to run VIA impact analysis {}", e.getTargetException().getMessage());
@@ -209,7 +211,7 @@ public class ProjectsSender {
         }
     }
 
-    private WhitesourceService createService() {
+    protected WhitesourceService createService() {
         logger.info("Service URL is " + senderConfig.getServiceUrl());
         boolean setProxy = false;
         if (StringUtils.isNotBlank(senderConfig.getProxyHost()) || !offlineConfig.isEnabled()) {
@@ -263,7 +265,7 @@ public class ProjectsSender {
         return policyCompliance ? StatusCode.SUCCESS : StatusCode.POLICY_VIOLATION;
     }
 
-    private String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
+    protected String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
         UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
                 requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey());

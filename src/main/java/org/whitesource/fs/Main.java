@@ -52,7 +52,24 @@ public class Main {
 
     /* --- Main --- */
 
+    // test
+    static ProjectsSender projectsSender = null;
+    private boolean test() {
+        return Main.projectsSender!=null;
+    }
+    protected static void mainTest(String[] args,ProjectsSender testProjectsSender) {
+        projectsSender = testProjectsSender;
+        myMain(args);
+    }
+   //test
+
+
     public static void main(String[] args) {
+        int exitCode = myMain(args);
+        System.exit(exitCode);
+    }
+
+    private static int myMain(String[] args) {
         CommandLineArgs commandLineArgs = new CommandLineArgs();
         new JCommander(commandLineArgs, args);
 
@@ -62,6 +79,7 @@ public class Main {
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
         boolean isStandalone = commandLineArgs.web.equals(Constants.FALSE);
         logger.info(fsaConfiguration.toString());
+        int exitCode =0;
         if (isStandalone) {
             try {
                 if (fsaConfiguration.getErrors() == null || fsaConfiguration.getErrors().size() > 0) {
@@ -77,7 +95,9 @@ public class Main {
                 processExitCode = StatusCode.ERROR;
             }
             logger.info("Process finished with exit code {} ({})", processExitCode.name(), processExitCode.getValue());
-            System.exit(processExitCode.getValue());
+             exitCode = processExitCode.getValue();
+
+
         } else {
             //this is a work around
             vertx = Vertx.vertx(new VertxOptions()
@@ -90,6 +110,7 @@ public class Main {
                     .setWorker(true);
             vertx.deployVerticle(FsaVerticle.class.getName(), options);
         }
+        return exitCode;
     }
 
     public ProjectsDetails scanAndSend(FSAConfiguration fsaConfiguration, boolean shouldSend) {
@@ -139,7 +160,7 @@ public class Main {
         }
 
         if (shouldSend) {
-            ProjectsSender projectsSender = new ProjectsSender(fsaConfiguration.getSender(), fsaConfiguration.getOffline(), req, new FileSystemAgentInfo());
+            ProjectsSender projectsSender = getProjectsSender(fsaConfiguration, req);
             Pair<String, StatusCode> processExitCode = sendProjects(projectsSender, result);
             logger.debug("Process finished with exit code {} ({})", processExitCode.getKey(), processExitCode.getValue());
             return new ProjectsDetails(new ArrayList<>(), processExitCode.getValue(), processExitCode.getKey());
@@ -147,6 +168,19 @@ public class Main {
             return new ProjectsDetails(result.getProjects(), result.getStatusCode(), Constants.EMPTY_STRING);
         }
     }
+
+    private ProjectsSender getProjectsSender(FSAConfiguration fsaConfiguration, RequestConfiguration req) {
+        ProjectsSender projectsSender = null;
+        if(!test()){
+
+              projectsSender = new ProjectsSender(fsaConfiguration.getSender(), fsaConfiguration.getOffline(), req, new FileSystemAgentInfo());
+        }else {
+            projectsSender  = Main.projectsSender;
+        }
+        return projectsSender;
+    }
+
+
 
     private Pair<String, StatusCode> sendProjects(ProjectsSender projectsSender, ProjectsDetails projectsDetails) {
         Collection<AgentProjectInfo> projects = projectsDetails.getProjects();
