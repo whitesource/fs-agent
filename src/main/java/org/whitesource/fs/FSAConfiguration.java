@@ -359,6 +359,8 @@ public class FSAConfiguration {
 
         boolean sbtResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_RESOLVE_DEPENDENCIES, true);
         boolean sbtAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_AGGREGATE_MODULES, false);
+        boolean sbtRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_RUN_PRE_STEP, false);
+        String sbtTargetFolder = config.getProperty(ConfigPropertyKeys.SBT_TARGET_FOLDER, Constants.EMPTY_STRING);
 
         boolean htmlResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
 
@@ -372,7 +374,7 @@ public class FSAConfiguration {
                 paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall,
                 rubyOverwriteGemFile, rubyInstallMissingGems,
-                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, htmlResolveDependencies);
+                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, htmlResolveDependencies);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken, String userKey, String projectName, String projectToken) {
