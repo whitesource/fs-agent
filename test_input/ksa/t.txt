@@ -1,0 +1,1030 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] ksa-root
+[INFO] ksa-debug
+[INFO] ksa-core
+[INFO] ksa-dao-context
+[INFO] ksa-dao-root
+[INFO] ksa-security-dao
+[INFO] ksa-bd-dao
+[INFO] ksa-logistics-dao
+[INFO] ksa-finance-dao
+[INFO] ksa-service-root
+[INFO] ksa-security-service
+[INFO] ksa-bd-service
+[INFO] ksa-logistics-service
+[INFO] ksa-finance-service
+[INFO] ksa-web-core
+[INFO] ksa-web-root
+[INFO] ksa-security-web
+[INFO] ksa-bd-web
+[INFO] ksa-logistics-web
+[INFO] ksa-finance-web
+[INFO] ksa-statistics-web
+[INFO] ksa-system-web
+[INFO] ksa-web
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-root 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-root ---
+[INFO] com.ksa:ksa-root:pom:3.9.0
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-debug 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-debug ---
+[INFO] com.ksa:ksa-debug:jar:3.9.0
+[INFO] +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] +- com.h2database:h2:jar:1.3.162:compile
+[INFO] +- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  \- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] +- org.freemarker:freemarker:jar:2.3.18:compile
+[INFO] +- junit:junit:jar:4.8.2:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-core 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-core ---
+[INFO] com.ksa:ksa-core:jar:3.9.0
+[INFO] +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] +- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |  +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |  |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |  +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |  \- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] +- org.freemarker:freemarker:jar:2.3.18:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-dao-context 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-dao-context ---
+[INFO] com.ksa:ksa-dao-context:jar:3.9.0
+[INFO] +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] +- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  +- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] |  \- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |     +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |     |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |     +- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |     \- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     +- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] |     \- org.freemarker:freemarker:jar:2.3.18:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-dao-root 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-dao-root ---
+[INFO] com.ksa:ksa-dao-root:pom:3.9.0
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-lang:commons-lang:jar:2.6:compile
+[INFO] +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] +- com.ksa:ksa-debug:jar:3.9.0:test
+[INFO] |  +- commons-dbcp:commons-dbcp:jar:1.4:test
+[INFO] |  |  \- commons-pool:commons-pool:jar:1.5.4:test
+[INFO] |  +- com.h2database:h2:jar:1.3.162:test
+[INFO] |  +- mysql:mysql-connector-java:jar:5.1.18:test
+[INFO] |  \- org.freemarker:freemarker:jar:2.3.18:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-security-dao 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-security-dao ---
+[INFO] com.ksa:ksa-security-dao:jar:3.9.0
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-lang:commons-lang:jar:2.6:compile
+[INFO] +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] +- com.ksa:ksa-debug:jar:3.9.0:test
+[INFO] |  +- commons-dbcp:commons-dbcp:jar:1.4:test
+[INFO] |  |  \- commons-pool:commons-pool:jar:1.5.4:test
+[INFO] |  +- com.h2database:h2:jar:1.3.162:test
+[INFO] |  +- mysql:mysql-connector-java:jar:5.1.18:test
+[INFO] |  \- org.freemarker:freemarker:jar:2.3.18:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-bd-dao 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-bd-dao ---
+[INFO] com.ksa:ksa-bd-dao:jar:3.9.0
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-lang:commons-lang:jar:2.6:compile
+[INFO] +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] +- com.ksa:ksa-debug:jar:3.9.0:test
+[INFO] |  +- commons-dbcp:commons-dbcp:jar:1.4:test
+[INFO] |  |  \- commons-pool:commons-pool:jar:1.5.4:test
+[INFO] |  +- com.h2database:h2:jar:1.3.162:test
+[INFO] |  +- mysql:mysql-connector-java:jar:5.1.18:test
+[INFO] |  \- org.freemarker:freemarker:jar:2.3.18:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-logistics-dao 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-logistics-dao ---
+[INFO] com.ksa:ksa-logistics-dao:jar:3.9.0
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-lang:commons-lang:jar:2.6:compile
+[INFO] +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] +- com.ksa:ksa-debug:jar:3.9.0:test
+[INFO] |  +- commons-dbcp:commons-dbcp:jar:1.4:test
+[INFO] |  |  \- commons-pool:commons-pool:jar:1.5.4:test
+[INFO] |  +- com.h2database:h2:jar:1.3.162:test
+[INFO] |  +- mysql:mysql-connector-java:jar:5.1.18:test
+[INFO] |  \- org.freemarker:freemarker:jar:2.3.18:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-finance-dao 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-finance-dao ---
+[INFO] com.ksa:ksa-finance-dao:jar:3.9.0
+[INFO] +- com.ksa:ksa-bd-dao:jar:3.9.0:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-lang:commons-lang:jar:2.6:compile
+[INFO] +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] +- com.ksa:ksa-debug:jar:3.9.0:test
+[INFO] |  +- commons-dbcp:commons-dbcp:jar:1.4:test
+[INFO] |  |  \- commons-pool:commons-pool:jar:1.5.4:test
+[INFO] |  +- com.h2database:h2:jar:1.3.162:test
+[INFO] |  +- mysql:mysql-connector-java:jar:5.1.18:test
+[INFO] |  \- org.freemarker:freemarker:jar:2.3.18:test
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-service-root 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-service-root ---
+[INFO] com.ksa:ksa-service-root:pom:3.9.0
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     +- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] |     \- org.freemarker:freemarker:jar:2.3.18:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-security-service 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-security-service ---
+[INFO] com.ksa:ksa-security-service:jar:3.9.0
+[INFO] +- com.ksa:ksa-security-dao:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |     +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |     \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |        +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |        \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] +- org.apache.shiro:shiro-core:jar:1.2.0:compile
+[INFO] |  \- commons-beanutils:commons-beanutils:jar:1.8.3:compile
+[INFO] +- org.apache.shiro:shiro-ehcache:jar:1.2.0:compile
+[INFO] |  \- net.sf.ehcache:ehcache-core:jar:2.5.0:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     +- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] |     \- org.freemarker:freemarker:jar:2.3.18:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-bd-service 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-bd-service ---
+[INFO] com.ksa:ksa-bd-service:jar:3.9.0
+[INFO] +- com.ksa:ksa-bd-dao:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |     +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |     \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |        +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |        \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     +- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] |     \- org.freemarker:freemarker:jar:2.3.18:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-logistics-service 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-logistics-service ---
+[INFO] com.ksa:ksa-logistics-service:jar:3.9.0
+[INFO] +- com.ksa:ksa-logistics-dao:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |     +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |     \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |        +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |        \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     +- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] |     \- org.freemarker:freemarker:jar:2.3.18:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-finance-service 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-finance-service ---
+[INFO] com.ksa:ksa-finance-service:jar:3.9.0
+[INFO] +- com.ksa:ksa-finance-dao:jar:3.9.0:compile
+[INFO] |  +- com.ksa:ksa-bd-dao:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |     +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |     \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |        +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |        \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     +- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] |     \- org.freemarker:freemarker:jar:2.3.18:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-web-core 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-web-core ---
+[INFO] com.ksa:ksa-web-core:jar:3.9.0
+[INFO] +- org.apache.geronimo.specs:geronimo-servlet_2.5_spec:jar:1.2:provided
+[INFO] +- org.apache.geronimo.specs:geronimo-jsp_2.1_spec:jar:1.0.1:provided
+[INFO] +- org.springframework:spring-web:jar:3.1.1.RELEASE:compile
+[INFO] |  +- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  \- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] +- org.apache.struts:struts2-core:jar:2.2.1:compile
+[INFO] |  +- org.apache.struts.xwork:xwork-core:jar:2.2.1:compile
+[INFO] |  +- org.freemarker:freemarker:jar:2.3.16:compile
+[INFO] |  +- ognl:ognl:jar:3.0:compile
+[INFO] |  +- commons-fileupload:commons-fileupload:jar:1.2.2:compile
+[INFO] |  \- commons-io:commons-io:jar:2.1:compile
+[INFO] +- org.apache.struts:struts2-json-plugin:jar:2.3.31:compile
+[INFO] |  \- org.apache.commons:commons-lang3:jar:3.2:compile
+[INFO] +- ro.isdc.wro4j:wro4j-core:jar:1.4.0:compile
+[INFO] |  \- commons-lang:commons-lang:jar:2.6:compile
+[INFO] +- org.apache.shiro:shiro-web:jar:1.2.0:compile
+[INFO] |  \- org.apache.shiro:shiro-core:jar:1.2.0:compile
+[INFO] |     \- commons-beanutils:commons-beanutils:jar:1.8.3:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     \- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] +- commons-configuration:commons-configuration:jar:1.9:compile
+[INFO] |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] +- junit:junit:jar:4.8.2:test
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:test
+[INFO] \- log4j:log4j:jar:1.2.16:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-web-root 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-web-root ---
+[INFO] com.ksa:ksa-web-root:pom:3.9.0
+[INFO] +- org.apache.geronimo.specs:geronimo-servlet_2.5_spec:jar:1.2:provided
+[INFO] +- org.apache.geronimo.specs:geronimo-jsp_2.1_spec:jar:1.0.1:provided
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:compile
+[INFO] +- log4j:log4j:jar:1.2.16:compile
+[INFO] +- org.sitemesh:sitemesh:jar:3.0-alpha-2:compile
+[INFO] +- org.apache.struts:struts2-core:jar:2.3.31:compile
+[INFO] |  +- org.apache.struts.xwork:xwork-core:jar:2.3.31:compile
+[INFO] |  |  +- asm:asm:jar:3.3:compile
+[INFO] |  |  \- asm:asm-commons:jar:3.3:compile
+[INFO] |  |     \- asm:asm-tree:jar:3.3:compile
+[INFO] |  +- org.freemarker:freemarker:jar:2.3.22:compile
+[INFO] |  +- ognl:ognl:jar:3.0.19:compile
+[INFO] |  |  \- javassist:javassist:jar:3.11.0.GA:compile
+[INFO] |  +- commons-fileupload:commons-fileupload:jar:1.2.2:compile
+[INFO] |  \- commons-io:commons-io:jar:2.1:compile
+[INFO] +- org.apache.struts:struts2-json-plugin:jar:2.3.31:compile
+[INFO] |  \- org.apache.commons:commons-lang3:jar:3.2:compile
+[INFO] +- org.apache.shiro:shiro-web:jar:1.2.0:compile
+[INFO] |  \- org.apache.shiro:shiro-core:jar:1.2.0:compile
+[INFO] |     \- commons-beanutils:commons-beanutils:jar:1.8.3:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     \- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] +- com.ksa:ksa-web-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-web:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  +- ro.isdc.wro4j:wro4j-core:jar:1.4.0:compile
+[INFO] |  +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |  |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |  |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-configuration:commons-configuration:jar:1.9:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] \- junit:junit:jar:4.8.2:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-security-web 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-security-web ---
+[INFO] com.ksa:ksa-security-web:jar:3.9.0
+[INFO] +- com.ksa:ksa-security-service:jar:3.9.0:compile
+[INFO] |  +- com.ksa:ksa-security-dao:jar:3.9.0:compile
+[INFO] |  +- org.apache.shiro:shiro-core:jar:1.2.0:compile
+[INFO] |  |  \- commons-beanutils:commons-beanutils:jar:1.8.3:compile
+[INFO] |  \- org.apache.shiro:shiro-ehcache:jar:1.2.0:compile
+[INFO] |     \- net.sf.ehcache:ehcache-core:jar:2.5.0:compile
+[INFO] +- org.apache.geronimo.specs:geronimo-servlet_2.5_spec:jar:1.2:provided
+[INFO] +- org.apache.geronimo.specs:geronimo-jsp_2.1_spec:jar:1.0.1:provided
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:compile
+[INFO] +- log4j:log4j:jar:1.2.16:compile
+[INFO] +- org.sitemesh:sitemesh:jar:3.0-alpha-2:compile
+[INFO] +- org.apache.struts:struts2-core:jar:2.3.31:compile
+[INFO] |  +- org.apache.struts.xwork:xwork-core:jar:2.3.31:compile
+[INFO] |  |  +- asm:asm:jar:3.3:compile
+[INFO] |  |  \- asm:asm-commons:jar:3.3:compile
+[INFO] |  |     \- asm:asm-tree:jar:3.3:compile
+[INFO] |  +- org.freemarker:freemarker:jar:2.3.22:compile
+[INFO] |  +- ognl:ognl:jar:3.0.19:compile
+[INFO] |  |  \- javassist:javassist:jar:3.11.0.GA:compile
+[INFO] |  +- commons-fileupload:commons-fileupload:jar:1.2.2:compile
+[INFO] |  \- commons-io:commons-io:jar:2.1:compile
+[INFO] +- org.apache.struts:struts2-json-plugin:jar:2.3.31:compile
+[INFO] |  \- org.apache.commons:commons-lang3:jar:3.2:compile
+[INFO] +- org.apache.shiro:shiro-web:jar:1.2.0:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     \- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] +- com.ksa:ksa-web-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-web:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  +- ro.isdc.wro4j:wro4j-core:jar:1.4.0:compile
+[INFO] |  +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |  |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |  |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-configuration:commons-configuration:jar:1.9:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] \- junit:junit:jar:4.8.2:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-bd-web 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-bd-web ---
+[INFO] com.ksa:ksa-bd-web:jar:3.9.0
+[INFO] +- com.ksa:ksa-security-web:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-security-service:jar:3.9.0:compile
+[INFO] |     +- com.ksa:ksa-security-dao:jar:3.9.0:compile
+[INFO] |     \- org.apache.shiro:shiro-ehcache:jar:1.2.0:compile
+[INFO] |        \- net.sf.ehcache:ehcache-core:jar:2.5.0:compile
+[INFO] +- com.ksa:ksa-bd-service:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-bd-dao:jar:3.9.0:compile
+[INFO] +- org.apache.geronimo.specs:geronimo-servlet_2.5_spec:jar:1.2:provided
+[INFO] +- org.apache.geronimo.specs:geronimo-jsp_2.1_spec:jar:1.0.1:provided
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:compile
+[INFO] +- log4j:log4j:jar:1.2.16:compile
+[INFO] +- org.sitemesh:sitemesh:jar:3.0-alpha-2:compile
+[INFO] +- org.apache.struts:struts2-core:jar:2.3.31:compile
+[INFO] |  +- org.apache.struts.xwork:xwork-core:jar:2.3.31:compile
+[INFO] |  |  +- asm:asm:jar:3.3:compile
+[INFO] |  |  \- asm:asm-commons:jar:3.3:compile
+[INFO] |  |     \- asm:asm-tree:jar:3.3:compile
+[INFO] |  +- org.freemarker:freemarker:jar:2.3.22:compile
+[INFO] |  +- ognl:ognl:jar:3.0.19:compile
+[INFO] |  |  \- javassist:javassist:jar:3.11.0.GA:compile
+[INFO] |  +- commons-fileupload:commons-fileupload:jar:1.2.2:compile
+[INFO] |  \- commons-io:commons-io:jar:2.1:compile
+[INFO] +- org.apache.struts:struts2-json-plugin:jar:2.3.31:compile
+[INFO] |  \- org.apache.commons:commons-lang3:jar:3.2:compile
+[INFO] +- org.apache.shiro:shiro-web:jar:1.2.0:compile
+[INFO] |  \- org.apache.shiro:shiro-core:jar:1.2.0:compile
+[INFO] |     \- commons-beanutils:commons-beanutils:jar:1.8.3:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     \- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] +- com.ksa:ksa-web-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-web:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  +- ro.isdc.wro4j:wro4j-core:jar:1.4.0:compile
+[INFO] |  +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |  |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |  |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-configuration:commons-configuration:jar:1.9:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] \- junit:junit:jar:4.8.2:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-logistics-web 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-logistics-web ---
+[INFO] com.ksa:ksa-logistics-web:jar:3.9.0
+[INFO] +- com.ksa:ksa-logistics-service:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-logistics-dao:jar:3.9.0:compile
+[INFO] +- com.ksa:ksa-security-web:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-security-service:jar:3.9.0:compile
+[INFO] |     +- com.ksa:ksa-security-dao:jar:3.9.0:compile
+[INFO] |     \- org.apache.shiro:shiro-ehcache:jar:1.2.0:compile
+[INFO] |        \- net.sf.ehcache:ehcache-core:jar:2.5.0:compile
+[INFO] +- com.ksa:ksa-bd-web:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-bd-service:jar:3.9.0:compile
+[INFO] |     \- com.ksa:ksa-bd-dao:jar:3.9.0:compile
+[INFO] +- org.apache.poi:poi:jar:3.8:compile
+[INFO] |  \- commons-codec:commons-codec:jar:1.5:compile
+[INFO] +- org.apache.geronimo.specs:geronimo-servlet_2.5_spec:jar:1.2:provided
+[INFO] +- org.apache.geronimo.specs:geronimo-jsp_2.1_spec:jar:1.0.1:provided
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:compile
+[INFO] +- log4j:log4j:jar:1.2.16:compile
+[INFO] +- org.sitemesh:sitemesh:jar:3.0-alpha-2:compile
+[INFO] +- org.apache.struts:struts2-core:jar:2.3.31:compile
+[INFO] |  +- org.apache.struts.xwork:xwork-core:jar:2.3.31:compile
+[INFO] |  |  +- asm:asm:jar:3.3:compile
+[INFO] |  |  \- asm:asm-commons:jar:3.3:compile
+[INFO] |  |     \- asm:asm-tree:jar:3.3:compile
+[INFO] |  +- org.freemarker:freemarker:jar:2.3.22:compile
+[INFO] |  +- ognl:ognl:jar:3.0.19:compile
+[INFO] |  |  \- javassist:javassist:jar:3.11.0.GA:compile
+[INFO] |  +- commons-fileupload:commons-fileupload:jar:1.2.2:compile
+[INFO] |  \- commons-io:commons-io:jar:2.1:compile
+[INFO] +- org.apache.struts:struts2-json-plugin:jar:2.3.31:compile
+[INFO] |  \- org.apache.commons:commons-lang3:jar:3.2:compile
+[INFO] +- org.apache.shiro:shiro-web:jar:1.2.0:compile
+[INFO] |  \- org.apache.shiro:shiro-core:jar:1.2.0:compile
+[INFO] |     \- commons-beanutils:commons-beanutils:jar:1.8.3:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     \- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] +- com.ksa:ksa-web-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-web:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  +- ro.isdc.wro4j:wro4j-core:jar:1.4.0:compile
+[INFO] |  +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |  |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |  |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-configuration:commons-configuration:jar:1.9:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] \- junit:junit:jar:4.8.2:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-finance-web 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-finance-web ---
+[INFO] com.ksa:ksa-finance-web:jar:3.9.0
+[INFO] +- com.ksa:ksa-finance-service:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-finance-dao:jar:3.9.0:compile
+[INFO] |     \- com.ksa:ksa-bd-dao:jar:3.9.0:compile
+[INFO] +- com.ksa:ksa-logistics-web:jar:3.9.0:compile
+[INFO] |  +- com.ksa:ksa-logistics-service:jar:3.9.0:compile
+[INFO] |  |  \- com.ksa:ksa-logistics-dao:jar:3.9.0:compile
+[INFO] |  +- com.ksa:ksa-security-web:jar:3.9.0:compile
+[INFO] |  |  \- com.ksa:ksa-security-service:jar:3.9.0:compile
+[INFO] |  |     +- com.ksa:ksa-security-dao:jar:3.9.0:compile
+[INFO] |  |     \- org.apache.shiro:shiro-ehcache:jar:1.2.0:compile
+[INFO] |  |        \- net.sf.ehcache:ehcache-core:jar:2.5.0:compile
+[INFO] |  +- com.ksa:ksa-bd-web:jar:3.9.0:compile
+[INFO] |  |  \- com.ksa:ksa-bd-service:jar:3.9.0:compile
+[INFO] |  \- org.apache.poi:poi:jar:3.8:compile
+[INFO] |     \- commons-codec:commons-codec:jar:1.5:compile
+[INFO] +- org.apache.geronimo.specs:geronimo-servlet_2.5_spec:jar:1.2:provided
+[INFO] +- org.apache.geronimo.specs:geronimo-jsp_2.1_spec:jar:1.0.1:provided
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:compile
+[INFO] +- log4j:log4j:jar:1.2.16:compile
+[INFO] +- org.sitemesh:sitemesh:jar:3.0-alpha-2:compile
+[INFO] +- org.apache.struts:struts2-core:jar:2.3.31:compile
+[INFO] |  +- org.apache.struts.xwork:xwork-core:jar:2.3.31:compile
+[INFO] |  |  +- asm:asm:jar:3.3:compile
+[INFO] |  |  \- asm:asm-commons:jar:3.3:compile
+[INFO] |  |     \- asm:asm-tree:jar:3.3:compile
+[INFO] |  +- org.freemarker:freemarker:jar:2.3.22:compile
+[INFO] |  +- ognl:ognl:jar:3.0.19:compile
+[INFO] |  |  \- javassist:javassist:jar:3.11.0.GA:compile
+[INFO] |  +- commons-fileupload:commons-fileupload:jar:1.2.2:compile
+[INFO] |  \- commons-io:commons-io:jar:2.1:compile
+[INFO] +- org.apache.struts:struts2-json-plugin:jar:2.3.31:compile
+[INFO] |  \- org.apache.commons:commons-lang3:jar:3.2:compile
+[INFO] +- org.apache.shiro:shiro-web:jar:1.2.0:compile
+[INFO] |  \- org.apache.shiro:shiro-core:jar:1.2.0:compile
+[INFO] |     \- commons-beanutils:commons-beanutils:jar:1.8.3:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     \- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] +- com.ksa:ksa-web-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-web:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  +- ro.isdc.wro4j:wro4j-core:jar:1.4.0:compile
+[INFO] |  +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |  |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |  |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-configuration:commons-configuration:jar:1.9:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] \- junit:junit:jar:4.8.2:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-statistics-web 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-statistics-web ---
+[INFO] com.ksa:ksa-statistics-web:jar:3.9.0
+[INFO] +- com.ksa:ksa-finance-web:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-finance-service:jar:3.9.0:compile
+[INFO] |     \- com.ksa:ksa-finance-dao:jar:3.9.0:compile
+[INFO] |        \- com.ksa:ksa-bd-dao:jar:3.9.0:compile
+[INFO] +- com.ksa:ksa-logistics-web:jar:3.9.0:compile
+[INFO] |  +- com.ksa:ksa-logistics-service:jar:3.9.0:compile
+[INFO] |  |  \- com.ksa:ksa-logistics-dao:jar:3.9.0:compile
+[INFO] |  +- com.ksa:ksa-security-web:jar:3.9.0:compile
+[INFO] |  |  \- com.ksa:ksa-security-service:jar:3.9.0:compile
+[INFO] |  |     +- com.ksa:ksa-security-dao:jar:3.9.0:compile
+[INFO] |  |     \- org.apache.shiro:shiro-ehcache:jar:1.2.0:compile
+[INFO] |  |        \- net.sf.ehcache:ehcache-core:jar:2.5.0:compile
+[INFO] |  +- com.ksa:ksa-bd-web:jar:3.9.0:compile
+[INFO] |  |  \- com.ksa:ksa-bd-service:jar:3.9.0:compile
+[INFO] |  \- org.apache.poi:poi:jar:3.8:compile
+[INFO] |     \- commons-codec:commons-codec:jar:1.5:compile
+[INFO] +- org.apache.geronimo.specs:geronimo-servlet_2.5_spec:jar:1.2:provided
+[INFO] +- org.apache.geronimo.specs:geronimo-jsp_2.1_spec:jar:1.0.1:provided
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:compile
+[INFO] +- log4j:log4j:jar:1.2.16:compile
+[INFO] +- org.sitemesh:sitemesh:jar:3.0-alpha-2:compile
+[INFO] +- org.apache.struts:struts2-core:jar:2.3.31:compile
+[INFO] |  +- org.apache.struts.xwork:xwork-core:jar:2.3.31:compile
+[INFO] |  |  +- asm:asm:jar:3.3:compile
+[INFO] |  |  \- asm:asm-commons:jar:3.3:compile
+[INFO] |  |     \- asm:asm-tree:jar:3.3:compile
+[INFO] |  +- org.freemarker:freemarker:jar:2.3.22:compile
+[INFO] |  +- ognl:ognl:jar:3.0.19:compile
+[INFO] |  |  \- javassist:javassist:jar:3.11.0.GA:compile
+[INFO] |  +- commons-fileupload:commons-fileupload:jar:1.2.2:compile
+[INFO] |  \- commons-io:commons-io:jar:2.1:compile
+[INFO] +- org.apache.struts:struts2-json-plugin:jar:2.3.31:compile
+[INFO] |  \- org.apache.commons:commons-lang3:jar:3.2:compile
+[INFO] +- org.apache.shiro:shiro-web:jar:1.2.0:compile
+[INFO] |  \- org.apache.shiro:shiro-core:jar:1.2.0:compile
+[INFO] |     \- commons-beanutils:commons-beanutils:jar:1.8.3:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     \- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] +- com.ksa:ksa-web-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-web:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  +- ro.isdc.wro4j:wro4j-core:jar:1.4.0:compile
+[INFO] |  +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |  |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |  |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-configuration:commons-configuration:jar:1.9:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] \- junit:junit:jar:4.8.2:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-system-web 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-system-web ---
+[INFO] com.ksa:ksa-system-web:jar:3.9.0
+[INFO] +- com.ksa:ksa-security-service:jar:3.9.0:compile
+[INFO] |  +- com.ksa:ksa-security-dao:jar:3.9.0:compile
+[INFO] |  +- org.apache.shiro:shiro-core:jar:1.2.0:compile
+[INFO] |  |  \- commons-beanutils:commons-beanutils:jar:1.8.3:compile
+[INFO] |  \- org.apache.shiro:shiro-ehcache:jar:1.2.0:compile
+[INFO] |     \- net.sf.ehcache:ehcache-core:jar:2.5.0:compile
+[INFO] +- com.ksa:ksa-bd-service:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-bd-dao:jar:3.9.0:compile
+[INFO] +- com.ksa:ksa-logistics-service:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-logistics-dao:jar:3.9.0:compile
+[INFO] +- com.ksa:ksa-finance-service:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-finance-dao:jar:3.9.0:compile
+[INFO] +- org.apache.geronimo.specs:geronimo-servlet_2.5_spec:jar:1.2:provided
+[INFO] +- org.apache.geronimo.specs:geronimo-jsp_2.1_spec:jar:1.0.1:provided
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:compile
+[INFO] +- log4j:log4j:jar:1.2.16:compile
+[INFO] +- org.sitemesh:sitemesh:jar:3.0-alpha-2:compile
+[INFO] +- org.apache.struts:struts2-core:jar:2.3.31:compile
+[INFO] |  +- org.apache.struts.xwork:xwork-core:jar:2.3.31:compile
+[INFO] |  |  +- asm:asm:jar:3.3:compile
+[INFO] |  |  \- asm:asm-commons:jar:3.3:compile
+[INFO] |  |     \- asm:asm-tree:jar:3.3:compile
+[INFO] |  +- org.freemarker:freemarker:jar:2.3.22:compile
+[INFO] |  +- ognl:ognl:jar:3.0.19:compile
+[INFO] |  |  \- javassist:javassist:jar:3.11.0.GA:compile
+[INFO] |  +- commons-fileupload:commons-fileupload:jar:1.2.2:compile
+[INFO] |  \- commons-io:commons-io:jar:2.1:compile
+[INFO] +- org.apache.struts:struts2-json-plugin:jar:2.3.31:compile
+[INFO] |  \- org.apache.commons:commons-lang3:jar:3.2:compile
+[INFO] +- org.apache.shiro:shiro-web:jar:1.2.0:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |     |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     \- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] +- com.ksa:ksa-web-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-web:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  +- ro.isdc.wro4j:wro4j-core:jar:1.4.0:compile
+[INFO] |  +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |  |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |  |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-configuration:commons-configuration:jar:1.9:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] \- junit:junit:jar:4.8.2:test
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Building ksa-web 3.9.0
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ ksa-web ---
+[INFO] com.ksa:ksa-web:war:3.9.0
+[INFO] +- com.ksa:ksa-security-service:jar:3.9.0:compile
+[INFO] |  +- com.ksa:ksa-security-dao:jar:3.9.0:compile
+[INFO] |  +- org.apache.shiro:shiro-core:jar:1.2.0:compile
+[INFO] |  |  \- commons-beanutils:commons-beanutils:jar:1.8.3:compile
+[INFO] |  \- org.apache.shiro:shiro-ehcache:jar:1.2.0:compile
+[INFO] |     \- net.sf.ehcache:ehcache-core:jar:2.5.0:compile
+[INFO] +- com.ksa:ksa-security-web:jar:3.9.0:compile
+[INFO] +- com.ksa:ksa-bd-web:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-bd-service:jar:3.9.0:compile
+[INFO] |     \- com.ksa:ksa-bd-dao:jar:3.9.0:compile
+[INFO] +- com.ksa:ksa-logistics-web:jar:3.9.0:compile
+[INFO] |  +- com.ksa:ksa-logistics-service:jar:3.9.0:compile
+[INFO] |  |  \- com.ksa:ksa-logistics-dao:jar:3.9.0:compile
+[INFO] |  \- org.apache.poi:poi:jar:3.8:compile
+[INFO] |     \- commons-codec:commons-codec:jar:1.5:compile
+[INFO] +- com.ksa:ksa-finance-web:jar:3.9.0:compile
+[INFO] |  \- com.ksa:ksa-finance-service:jar:3.9.0:compile
+[INFO] |     \- com.ksa:ksa-finance-dao:jar:3.9.0:compile
+[INFO] +- com.ksa:ksa-statistics-web:jar:3.9.0:compile
+[INFO] +- com.ksa:ksa-system-web:jar:3.9.0:compile
+[INFO] +- commons-dbcp:commons-dbcp:jar:1.4:compile
+[INFO] |  \- commons-pool:commons-pool:jar:1.5.4:compile
+[INFO] +- org.apache.geronimo.specs:geronimo-servlet_2.5_spec:jar:1.2:provided
+[INFO] +- org.apache.geronimo.specs:geronimo-jsp_2.1_spec:jar:1.0.1:provided
+[INFO] +- org.slf4j:slf4j-log4j12:jar:1.6.1:compile
+[INFO] +- log4j:log4j:jar:1.2.16:compile
+[INFO] +- org.sitemesh:sitemesh:jar:3.0-alpha-2:compile
+[INFO] +- org.apache.struts:struts2-core:jar:2.3.31:compile
+[INFO] |  +- org.apache.struts.xwork:xwork-core:jar:2.3.31:compile
+[INFO] |  |  +- asm:asm:jar:3.3:compile
+[INFO] |  |  \- asm:asm-commons:jar:3.3:compile
+[INFO] |  |     \- asm:asm-tree:jar:3.3:compile
+[INFO] |  +- org.freemarker:freemarker:jar:2.3.22:compile
+[INFO] |  +- ognl:ognl:jar:3.0.19:compile
+[INFO] |  |  \- javassist:javassist:jar:3.11.0.GA:compile
+[INFO] |  +- commons-fileupload:commons-fileupload:jar:1.2.2:compile
+[INFO] |  \- commons-io:commons-io:jar:2.1:compile
+[INFO] +- org.apache.struts:struts2-json-plugin:jar:2.3.31:compile
+[INFO] |  \- org.apache.commons:commons-lang3:jar:3.2:compile
+[INFO] +- org.apache.shiro:shiro-web:jar:1.2.0:compile
+[INFO] +- com.ksa:ksa-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-core:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-asm:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- commons-logging:commons-logging:jar:1.1.1:compile
+[INFO] |  +- org.springframework:spring-context:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-aop:jar:3.1.1.RELEASE:compile
+[INFO] |  |  +- org.springframework:spring-beans:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- org.springframework:spring-expression:jar:3.1.1.RELEASE:compile
+[INFO] |  +- commons-lang:commons-lang:jar:2.6:compile
+[INFO] |  \- com.ksa:ksa-debug:jar:3.9.0:compile
+[INFO] |     +- com.h2database:h2:jar:1.3.162:compile
+[INFO] |     \- mysql:mysql-connector-java:jar:5.1.18:compile
+[INFO] +- com.ksa:ksa-web-core:jar:3.9.0:compile
+[INFO] |  +- org.springframework:spring-web:jar:3.1.1.RELEASE:compile
+[INFO] |  |  \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] |  +- ro.isdc.wro4j:wro4j-core:jar:1.4.0:compile
+[INFO] |  +- com.ksa:ksa-dao-context:jar:3.9.0:compile
+[INFO] |  |  +- org.mybatis:mybatis:jar:3.1.1:compile
+[INFO] |  |  \- org.mybatis:mybatis-spring:jar:1.1.1:compile
+[INFO] |  |     +- org.springframework:spring-tx:jar:3.1.1.RELEASE:compile
+[INFO] |  |     \- org.springframework:spring-jdbc:jar:3.1.1.RELEASE:compile
+[INFO] |  \- commons-configuration:commons-configuration:jar:1.9:compile
+[INFO] +- org.slf4j:slf4j-api:jar:1.6.1:compile
+[INFO] \- junit:junit:jar:4.8.2:test
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary:
+[INFO] 
+[INFO] ksa-root ........................................... SUCCESS [  1.066 s]
+[INFO] ksa-debug .......................................... SUCCESS [  0.081 s]
+[INFO] ksa-core ........................................... SUCCESS [  0.030 s]
+[INFO] ksa-dao-context .................................... SUCCESS [  0.062 s]
+[INFO] ksa-dao-root ....................................... SUCCESS [  0.039 s]
+[INFO] ksa-security-dao ................................... SUCCESS [  0.030 s]
+[INFO] ksa-bd-dao ......................................... SUCCESS [  0.030 s]
+[INFO] ksa-logistics-dao .................................. SUCCESS [  0.036 s]
+[INFO] ksa-finance-dao .................................... SUCCESS [  0.038 s]
+[INFO] ksa-service-root ................................... SUCCESS [  0.027 s]
+[INFO] ksa-security-service ............................... SUCCESS [  0.068 s]
+[INFO] ksa-bd-service ..................................... SUCCESS [  0.049 s]
+[INFO] ksa-logistics-service .............................. SUCCESS [  0.040 s]
+[INFO] ksa-finance-service ................................ SUCCESS [  0.032 s]
+[INFO] ksa-web-core ....................................... SUCCESS [  0.192 s]
+[INFO] ksa-web-root ....................................... SUCCESS [  0.092 s]
+[INFO] ksa-security-web ................................... SUCCESS [  0.059 s]
+[INFO] ksa-bd-web ......................................... SUCCESS [  0.088 s]
+[INFO] ksa-logistics-web .................................. SUCCESS [  0.103 s]
+[INFO] ksa-finance-web .................................... SUCCESS [  0.091 s]
+[INFO] ksa-statistics-web ................................. SUCCESS [  0.086 s]
+[INFO] ksa-system-web ..................................... SUCCESS [  0.092 s]
+[INFO] ksa-web ............................................ SUCCESS [  0.114 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 3.107 s
+[INFO] Finished at: 2018-06-11T17:04:55+03:00
+[INFO] Final Memory: 17M/217M
+[INFO] ------------------------------------------------------------------------
