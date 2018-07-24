@@ -90,5 +90,6 @@ public final class Constants {
 
     public static final int MAX_NUMBER_OF_DEPENDENCIES = 1000000;
 
-
+    public static final String HELP_ARG1 = "-help";
+    public static final String HELP_ARG2 = "-h";
 }
