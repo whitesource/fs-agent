@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration debug="false">
 
+    <define name="collectLoggerName" class="org.whitesource.fs.LogSetDefiner" />
+
 	<contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
     	<resetJUL>true</resetJUL>
   	</contextListener>
@@ -11,16 +13,12 @@
 		</encoder>
 	</appender>
 
-	<!--appender name="collectToFile" class="ch.qos.logback.core.FileAppender">
-		<file>main.log</file>
+	<appender name="collectToSet" class="org.whitesource.fs.LogSetAppender">
 		<append>false</append>
 		<encoder>
 			<pattern>[%level] %d{"HH:mm:ss"} - %msg%n</pattern>
 		</encoder>
-		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-			<level>TRACE</level>
-		</filter>
-	</appender-->
+	</appender>
 
 	<logger name="com.wss" level="debug"/>
 	<logger name="org.apache.maven" level="debug"/>
@@ -31,11 +29,11 @@
 	<logger name="com.aragost.javahg.log.JULLogger" level="error"/>
 	<logger name="org.redline_rpm" level="error"/>
 
-	<!--logger name="org">
-		<appender-ref ref="console"/>
-	</logger-->
+	<logger name="${collectLoggerName}" level="trace">
+		<appender-ref ref="collectToSet"/>
+	</logger>
 
 	<root>
-		<appender-ref ref="console"/>
+		<appender-ref ref="console" />
 	</root>
 </configuration>
