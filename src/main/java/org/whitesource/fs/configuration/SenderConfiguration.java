@@ -32,6 +32,7 @@ public class SenderConfiguration {
     private final String proxyPassword;
     private final boolean forceCheckAllDependencies;
     private final boolean forceUpdate;
+    private final boolean forceUpdateFailBuildOnPolicyViolation;
     private final String updateTypeValue;
     private final boolean enableImpactAnalysis;
     private final boolean ignoreCertificateCheck;
@@ -50,6 +51,7 @@ public class SenderConfiguration {
 
             @JsonProperty(FORCE_CHECK_ALL_DEPENDENCIES) boolean forceCheckAllDependencies,
             @JsonProperty(FORCE_UPDATE) boolean forceUpdate,
+            @JsonProperty(FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION) boolean forceUpdateFailBuildOnPolicyViolation,
             @JsonProperty(UPDATE_TYPE) String updateTypeValue,
             @JsonProperty(ENABLE_IMPACT_ANALYSIS) boolean enableImpactAnalysis,
             @JsonProperty(IGNORE_CERTIFICATE_CHECK) boolean ignoreCertificateCheck,
@@ -64,6 +66,7 @@ public class SenderConfiguration {
         this.proxyPassword = proxyPassword;
         this.forceCheckAllDependencies = forceCheckAllDependencies;
         this.forceUpdate = forceUpdate;
+        this.forceUpdateFailBuildOnPolicyViolation = forceUpdateFailBuildOnPolicyViolation;
         this.updateTypeValue = updateTypeValue;
         this.enableImpactAnalysis = enableImpactAnalysis;
         this.ignoreCertificateCheck = ignoreCertificateCheck;
@@ -131,6 +134,11 @@ public class SenderConfiguration {
         return forceUpdate;
     }
 
+    @JsonProperty(FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION)
+    public boolean isForceUpdateFailBuildOnPolicyViolation() {
+        return forceUpdateFailBuildOnPolicyViolation;
+    }
+
     @JsonProperty(ENABLE_IMPACT_ANALYSIS)
     public boolean isEnableImpactAnalysis() {
         return enableImpactAnalysis;
@@ -147,6 +155,7 @@ public class SenderConfiguration {
                 ", checkPolicies=" + checkPolicies + '\n' +
                 ", forceCheckAllDependencies=" + forceCheckAllDependencies + '\n' +
                 ", forceUpdate=" + forceUpdate + '\n' +
+                ", forceUpdate.failBuildOnPolicyViolation=" + forceUpdateFailBuildOnPolicyViolation + '\n' +
                 ", updateTypeValue='" + updateTypeValue + "'";
 //                ", enableImpactAnalysis=" + enableImpactAnalysis;
     }
