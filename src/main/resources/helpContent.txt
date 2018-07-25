@@ -1,0 +1,62 @@
+Usage: java -jar path/to/jarfile [parameters] [args...]
+
+where parameters include:
+    -c        Configuration file name (including file path)
+              Optional - the default filename is whitesource-fs-agent.config.
+    -d        Comma separated list of directories and / or files to scan
+              Optional - the default directory is the directory where the jar file is located.
+    -f        File list path
+              To avoid a long command line string,
+              use a text file with folders and files separated by new lines
+              Optional.
+    -apiKey   Unique identifier of the organization
+              It can be retrieved from the admin page in your WhiteSource account.
+              Required.
+    -project
+              Name of the project to update.
+              Required - unless a valid projectToken is specified.
+    -projectVersion
+              Version of the project
+              Optional - value is only read if projectName is specified.
+    -projectToken
+              Unique identifier of the product to update
+              It can be retrieved from the 'Integrate' page in your WhiteSource account.
+              Optional - if both projectToken and projectName are empty, projectName will default to "My Project".
+    -product  Name of the product to update
+              Optional - if empty, an existing WhiteSource product will attempt to be matched by the value of productToken
+              If productToken is empty or invalid, it defaults to "My Product".
+    -productVersion
+              Version of the product and project to update
+              This overrides the project version
+              Optional - only evaluated if productName is specified.
+    -productToken
+              Unique identifier of the product to update
+              It can be retrieved from the 'Integrate' page in your WhiteSource account
+              Optional - if both productToken and productName are empty, productName will default to "My Product".
+    -proxy.host
+              Proxy hostname
+              Optional.
+    -proxy.port
+              Proxy port number
+              Optional.
+    -proxy.user
+              Proxy username
+              Optional.
+    -proxy.pass
+              Proxy password
+              Optional.
+    -requestFiles
+              Comma separated list of paths to offline request files
+              Optional.
+    -projectPerFolder
+              Creates a project for each subfolder. The subfolder's name is used as the project name
+              Optional.
+    -updateType
+              Specifies whether or not the project dependencies should be removed before adding the new ones
+              Specify APPEND in case of adding files to an existing project
+              Optional.
+    -userKey  Unique identifier of user
+              It can be generated from the 'Profile' page in your WhiteSource account
+              Optional - unless WhiteSource administrator has enabled "Enforce user level access" option.
+
+See https://whitesource.atlassian.net/wiki/spaces/WD/pages/33718339/File+System+Agent for more details.

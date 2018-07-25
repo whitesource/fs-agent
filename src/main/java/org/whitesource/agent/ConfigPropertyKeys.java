@@ -25,6 +25,7 @@ public final class ConfigPropertyKeys {
 
     public static final String CHECK_POLICIES_PROPERTY_KEY = "checkPolicies";
     public static final String FORCE_UPDATE = "forceUpdate";
+    public static final String FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION = "forceUpdate.failBuildOnPolicyViolation";
     public static final String FORCE_CHECK_ALL_DEPENDENCIES = "forceCheckAllDependencies"; // optional
     public static final String ENABLE_IMPACT_ANALYSIS = "enableImpactAnalysis"; // optional
     public static final String IA_LANGUAGE = "iaLanguage"; // optional
@@ -149,6 +150,8 @@ public final class ConfigPropertyKeys {
 
     public static final String SBT_RESOLVE_DEPENDENCIES     = "sbt.resolveDependencies";
     public static final String SBT_AGGREGATE_MODULES        = "sbt.aggregateModules";
+    public static final String SBT_RUN_PRE_STEP             = "sbt.runPreStep";
+    public static final String SBT_TARGET_FOLDER            = "sbt.targetFolder";
 
     public static final String HTML_RESOLVE_DEPENDENCIES    = "html.resolveDependencies";
 
