@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration debug="false">
 
-    <define name="collectLoggerName" class="org.whitesource.fs.LogSetDefiner" />
+	<define name="collectLoggerName" class="org.whitesource.fs.LogMapDefiner" >
+		<propertyLookupKey>loggerName</propertyLookupKey>
+	</define>
+
+	<define name="collectAppenderName" class="org.whitesource.fs.LogMapDefiner" >
+		<propertyLookupKey>appenderName</propertyLookupKey>
+	</define>
 
 	<contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
     	<resetJUL>true</resetJUL>
@@ -13,7 +19,7 @@
 		</encoder>
 	</appender>
 
-	<appender name="collectToSet" class="org.whitesource.fs.LogSetAppender">
+	<appender name="${collectAppenderName}" class="org.whitesource.fs.LogMapAppender">
 		<append>false</append>
 		<encoder>
 			<pattern>[%level] %d{"HH:mm:ss"} - %msg%n</pattern>
@@ -30,7 +36,7 @@
 	<logger name="org.redline_rpm" level="error"/>
 
 	<logger name="${collectLoggerName}" level="trace">
-		<appender-ref ref="collectToSet"/>
+		<appender-ref ref="collectToMap"/>
 	</logger>
 
 	<root>
