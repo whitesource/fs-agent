@@ -5,26 +5,22 @@ import org.junit.Before;
 import org.junit.Test;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.junit.Assert.*;
 
 public class SbtDependencyResolverTest {
 
     private SbtDependencyResolver sbtDependencyResolver;
     @Before
     public void setUp() throws Exception {
-        sbtDependencyResolver = new SbtDependencyResolver(true, true);
+        sbtDependencyResolver = new SbtDependencyResolver(true, true, true , "");
     }
 
     @Test

@@ -92,4 +92,6 @@ public final class Constants {
 
     public static final String MAP_LOG_NAME = "org.whitesource";
     public static final String MAP_APPENDER_NAME = "collectToMap";
+    public static final String HELP_ARG1 = "-help";
+    public static final String HELP_ARG2 = "-h";
 }

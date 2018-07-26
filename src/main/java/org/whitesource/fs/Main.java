@@ -33,6 +33,7 @@ import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.web.FsaVerticle;
 
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,8 +44,9 @@ public class Main {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    public static final Logger logger = LoggerFactory.getLogger(Main.class);
     public static final long MAX_TIMEOUT = 1000 * 60 * 60;
+    public static final String HELP_CONTENT_FILE_NAME = "helpContent.txt";
 
     /* --- Main --- */
 
@@ -55,6 +57,12 @@ public class Main {
 
     public static void main(String[] args) {
         CommandLineArgs commandLineArgs = new CommandLineArgs();
+
+        if (isHelpArg(args)) {
+            printHelpContent();
+            System.exit(StatusCode.SUCCESS.getValue());
+        }
+
         new JCommander(commandLineArgs, args);
 
         StatusCode processExitCode;
@@ -184,6 +192,44 @@ public class Main {
             return new Pair<>("Exiting, nothing to update", StatusCode.SUCCESS);
         } else {
             return projectsSender.sendRequest(projectsDetails);//todo
+        }
+    }
+
+    private static boolean isHelpArg(String[] args) {
+        for (String arg : args) {
+            if (Constants.HELP_ARG1.equals(arg) || Constants.HELP_ARG2.equals(arg)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void printHelpContent() {
+        InputStream inputStream = null;
+        BufferedReader bufferedReader = null;
+        try {
+            ClassLoader classLoader = Main.class.getClassLoader();
+            inputStream = classLoader.getResourceAsStream(HELP_CONTENT_FILE_NAME);
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+            String result = "";
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                result = result + line + System.lineSeparator();
+                line = bufferedReader.readLine();
+            }
+            logger.info(result);
+        } catch (IOException e) {
+            logger.warn("Could not show the help command");
+        }
+        try {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            if (bufferedReader != null) {
+                bufferedReader.close();
+            }
+        } catch (IOException e) {
+            logger.warn("Could not close the help file");
         }
     }
 }
