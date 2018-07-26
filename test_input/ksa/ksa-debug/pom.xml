@@ -23,6 +23,10 @@
 			<groupId>commons-dbcp</groupId>
 			<artifactId>commons-dbcp</artifactId>
 		</dependency>
+        <!-- <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+        </dependency> -->
 		<!-- 默认调试所用的数据库环境 -->
 		<dependency>
 			<groupId>com.h2database</groupId>

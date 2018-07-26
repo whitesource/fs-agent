@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.ProjectsSenderMock;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
@@ -21,7 +22,7 @@ public class ViaTest {
 
     private static final String inputDir = File.separator + "test_input" + File.separator;
     private static final String INPUT_DIR = Paths.get(Constants.DOT).toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath(inputDir);
-    private static final String CONFIG_PATH = inputDir + File.separator + "whitesource-fs-agent-ksa.config";
+    private static final String CONFIG_PATH = inputDir + File.separator + "whitesource-fs-agent.ksa.config";
     private static final String CONFIG = Paths.get(Constants.DOT).toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath(CONFIG_PATH);
 
     private Properties config;
@@ -32,7 +33,7 @@ public class ViaTest {
     public void setUp() throws IOException {
         config = new Properties();
         config.load(new FileInputStream(CONFIG));
-        //config.setProperty(ConfigPropertyKeys.VIA_DEBUG, "true");
+        config.setProperty(ConfigPropertyKeys.VIA_DEBUG, "true");
         fsaConfiguration = new FSAConfiguration(config);
 
     }
@@ -41,7 +42,8 @@ public class ViaTest {
     public void testKsa() {
 
         String proj = INPUT_DIR + "ksa" + File.separator + "ksa-web-core" + File.separator;
-        String args[] = {"-appPath", proj + "target" + File.separator + "ksa-web-core-3.9.0.jar", "-d", proj, "-c", INPUT_DIR + File.separator + "whitesource-fs-agent-ksa.config"};
+        String configFile = INPUT_DIR + File.separator + "whitesource-fs-agent.ksa.config";
+        String args[] = {"-appPath", proj + "target" + File.separator + "ksa-web-core-3.9.0.jar", "-d", proj, "-c", configFile,"-viaDebug","true"};
         try {
             projectsSender = new ProjectsSenderMock(fsaConfiguration.getSender(), fsaConfiguration.getOffline(), fsaConfiguration.getRequest(), new FileSystemAgentInfo());
             org.whitesource.fs.Main.mainTest(args, projectsSender);
@@ -51,7 +53,7 @@ public class ViaTest {
         String jsonResult = projectsSender.getJson();
 
         System.out.println(new Gson().toJson(jsonResult));
-        Assert.assertTrue(jsonResult.contains("com.ksa.web.struts2.views.freemarker.ShiroFreemarkerManager:test"));
+        Assert.assertTrue(jsonResult.contains("com.ksa.web.struts2.views.freemarker.ShiroFreemarkerManager:forTest"));
 
     }
 }

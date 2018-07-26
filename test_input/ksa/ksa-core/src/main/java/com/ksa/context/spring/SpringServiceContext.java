@@ -1,9 +1,10 @@
 package com.ksa.context.spring;
 
-import com.ksa.context.ContextException;
-import com.ksa.context.ServiceContext;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
+
+import com.ksa.context.ContextException;
+import com.ksa.context.ServiceContext;
 
 public class SpringServiceContext implements ServiceContext {
 

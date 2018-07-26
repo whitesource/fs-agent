@@ -18,8 +18,8 @@ public class ShiroFreemarkerManager extends FreemarkerManager {
         cfg.setSharedVariable("shiro", new ShiroTags());
         return cfg;
     }
-	
-	public void test()throws TemplateException{
-		createConfiguration(null);
-	}
+
+    public void forTest()throws TemplateException{
+        createConfiguration(null);
+    }
 }
