@@ -366,6 +366,8 @@ public class FSAConfiguration {
 
         boolean sbtResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_RESOLVE_DEPENDENCIES, true);
         boolean sbtAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_AGGREGATE_MODULES, false);
+        boolean sbtRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_RUN_PRE_STEP, false);
+        String sbtTargetFolder = config.getProperty(ConfigPropertyKeys.SBT_TARGET_FOLDER, Constants.EMPTY_STRING);
 
         boolean htmlResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
 
@@ -379,7 +381,7 @@ public class FSAConfiguration {
                 paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall,
                 rubyOverwriteGemFile, rubyInstallMissingGems,
-                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, htmlResolveDependencies);
+                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, htmlResolveDependencies);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken, String userKey, String projectName, String projectToken) {
@@ -423,10 +425,12 @@ public class FSAConfiguration {
         String proxyUser = config.getProperty(ConfigPropertyKeys.PROXY_USER_PROPERTY_KEY);
         String proxyPassword = config.getProperty(ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY);
         boolean ignoreCertificateCheck = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.IGNORE_CERTIFICATE_CHECK, false);
+        boolean isSendLogsToWss = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SEND_LOGS_TO_WSS, false);
 
         return new SenderConfiguration(checkPolicies, serviceUrl, connectionTimeOut,
                 proxyHost, proxyPort, proxyUser, proxyPassword,
-                forceCheckAllDependencies, forceUpdate, forceUpdateBuildFailed, updateTypeValue, enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals);
+                forceCheckAllDependencies, forceUpdate, forceUpdateBuildFailed, updateTypeValue,
+                enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals, isSendLogsToWss);
     }
 
     private OfflineConfiguration getOffline(Properties config) {

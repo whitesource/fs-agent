@@ -151,10 +151,13 @@ public final class ConfigPropertyKeys {
 
     public static final String SBT_RESOLVE_DEPENDENCIES     = "sbt.resolveDependencies";
     public static final String SBT_AGGREGATE_MODULES        = "sbt.aggregateModules";
+    public static final String SBT_RUN_PRE_STEP             = "sbt.runPreStep";
+    public static final String SBT_TARGET_FOLDER            = "sbt.targetFolder";
 
     public static final String HTML_RESOLVE_DEPENDENCIES    = "html.resolveDependencies";
 
     public static final String WHITESOURCE_CONFIGURATION    = "whitesourceConfiguration";
 
     public static final String SCANNED_FOLDERS = "d";
+    public static final String SEND_LOGS_TO_WSS = "sendLogsToWss";
 }

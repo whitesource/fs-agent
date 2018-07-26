@@ -65,9 +65,9 @@ public class ResolverConfiguration {
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
 
-            @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean  gradleResolveDependencies,
-            @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean  gradleRunAssembleCommand,
-            @JsonProperty(GRADLE_AGGREGATE_MODULES) boolean     gradleAggregateModules,
+            @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean gradleResolveDependencies,
+            @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean gradleRunAssembleCommand,
+            @JsonProperty(GRADLE_AGGREGATE_MODULES) boolean gradleAggregateModules,
 
             @JsonProperty(PAKET_RESOLVE_DEPENDENCIES) boolean paketResolveDependencies,
             @JsonProperty(PAKET_IGNORED_GROUPS) String[] paketIgnoredScopes,
@@ -89,6 +89,8 @@ public class ResolverConfiguration {
             @JsonProperty(PHP_INCLUDE_DEV_DEPENDENCIES) boolean phpIncludeDevDependencies,
             @JsonProperty(SBT_RESOLVE_DEPENDENCIES) boolean sbtResolveDependencies,
             @JsonProperty(SBT_AGGREGATE_MODULES) boolean sbtAggregateModules,
+            @JsonProperty(SBT_RUN_PRE_STEP) boolean sbtRunPreStep,
+            @JsonProperty(SBT_TARGET_FOLDER) String sbtTargetFolder,
             @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies) {
         this.npmRunPreStep = npmRunPreStep;
         this.npmIgnoreScripts = npmIgnoreScripts;
@@ -152,37 +154,39 @@ public class ResolverConfiguration {
 
         this.sbtResolveDependencies = sbtResolveDependencies;
         this.sbtAggregateModules = sbtAggregateModules;
+        this.sbtRunPreStep = sbtRunPreStep;
+        this.sbtTargetFolder = sbtTargetFolder;
 
         this.htmlResolveDependencies = htmlResolveDependencies;
     }
 
     /* --- Members --- */
 
-    private boolean     npmRunPreStep;
-    private boolean     npmIgnoreScripts;
-    private boolean     npmResolveDependencies;
-    private boolean     npmIncludeDevDependencies;
-    private boolean     npmIgnoreJavaScriptFiles;
-    private String      npmAccessToken;
-    private long        npmTimeoutDependenciesCollector;
-    private boolean     npmIgnoreNpmLsErrors;
-    private boolean     npmYarnProject;
-    private boolean     bowerResolveDependencies;
-    private boolean     bowerRunPreStep;
-    private boolean     nugetResolveDependencies;
-    private boolean     nugetRestoreDependencies;
-    private boolean     mavenResolveDependencies;
-    private String[]    mavenIgnoredScopes;
-    private boolean     mavenAggregateModules;
-    private boolean     mavenIgnorePomModules;
-    private boolean     dependenciesOnly;
-    private String      whitesourceConfiguration;
-    private boolean     pythonResolveDependencies;
-    private String      pipPath;
-    private String      pythonPath;
-    private boolean     pythonIgnorePipInstallErrors;
-    private boolean     pythonInstallVirtualenv;
-    private boolean     pythonResolveHierarchyTree;
+    private boolean npmRunPreStep;
+    private boolean npmIgnoreScripts;
+    private boolean npmResolveDependencies;
+    private boolean npmIncludeDevDependencies;
+    private boolean npmIgnoreJavaScriptFiles;
+    private String npmAccessToken;
+    private long npmTimeoutDependenciesCollector;
+    private boolean npmIgnoreNpmLsErrors;
+    private boolean npmYarnProject;
+    private boolean bowerResolveDependencies;
+    private boolean bowerRunPreStep;
+    private boolean nugetResolveDependencies;
+    private boolean nugetRestoreDependencies;
+    private boolean mavenResolveDependencies;
+    private String[] mavenIgnoredScopes;
+    private boolean mavenAggregateModules;
+    private boolean mavenIgnorePomModules;
+    private boolean dependenciesOnly;
+    private String whitesourceConfiguration;
+    private boolean pythonResolveDependencies;
+    private String pipPath;
+    private String pythonPath;
+    private boolean pythonIgnorePipInstallErrors;
+    private boolean pythonInstallVirtualenv;
+    private boolean pythonResolveHierarchyTree;
     private String[] pythonRequirementsFileIncludes;
     private boolean pythonResolveSetupPyFiles;
 
@@ -214,6 +218,8 @@ public class ResolverConfiguration {
 
     private boolean sbtResolveDependencies;
     private boolean sbtAggregateModules;
+    private boolean sbtRunPreStep;
+    private String sbtTargetFolder;
 
     private boolean htmlResolveDependencies;
 
@@ -300,7 +306,7 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(MAVEN_IGNORE_POM_MODULES)
-    public boolean isMavenIgnorePomModules(){
+    public boolean isMavenIgnorePomModules() {
         return mavenIgnorePomModules;
     }
 
@@ -463,6 +469,12 @@ public class ResolverConfiguration {
         return sbtAggregateModules;
     }
 
+    @JsonProperty(SBT_RUN_PRE_STEP)
+    public boolean isSbtRunPreStep() { return sbtRunPreStep; }
+
+    @JsonProperty(SBT_TARGET_FOLDER)
+    public String getSbtTargetFolder() { return sbtTargetFolder; }
+
     @JsonProperty(HTML_RESOLVE_DEPENDENCIES)
     public boolean isHtmlResolveDependencies() {
         return htmlResolveDependencies;
@@ -516,6 +528,14 @@ public class ResolverConfiguration {
         this.htmlResolveDependencies = htmlResolveDependencies;
     }
 
+    public void setSbtRunPreStep(boolean sbtRunPreStep) {
+        this.sbtRunPreStep = sbtRunPreStep;
+    }
+
+    public void setSbtTargetFolder(String sbtTargetFolder) {
+        this.sbtTargetFolder = sbtTargetFolder;
+    }
+
     @Override
     public String toString() {
 
@@ -557,6 +577,8 @@ public class ResolverConfiguration {
                 ", phpIncludeDevDependenices=" + phpIncludeDevDependencies + '\n' +
                 ", sbtResolveDependencies=" + sbtResolveDependencies +
                 ", sbtAggregateModules=" + sbtAggregateModules + '\n' +
+                ", sbtRunPreStep=" + sbtRunPreStep + '\n' +
+                ", sbtTargetFolder=" + sbtTargetFolder + '\n' +
                 ", htmlResolveDependencies=" + htmlResolveDependencies;
     }
 

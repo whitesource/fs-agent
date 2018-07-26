@@ -38,6 +38,7 @@ public class SenderConfiguration {
     private final boolean ignoreCertificateCheck;
     private final int connectionRetries;
     private final int connectionRetriesIntervals;
+    private final boolean sendLogsToWss;
 
     public SenderConfiguration(
             @JsonProperty(CHECK_POLICIES_PROPERTY_KEY) boolean checkPolicies,
@@ -56,7 +57,8 @@ public class SenderConfiguration {
             @JsonProperty(ENABLE_IMPACT_ANALYSIS) boolean enableImpactAnalysis,
             @JsonProperty(IGNORE_CERTIFICATE_CHECK) boolean ignoreCertificateCheck,
             @JsonProperty(CONNECTION_RETRIES) int connectionRetries,
-            @JsonProperty(CONNECTION_RETRIES_INTERVALS) int connectionRetriesIntervals){
+            @JsonProperty(CONNECTION_RETRIES_INTERVALS) int connectionRetriesIntervals,
+            @JsonProperty(SEND_LOGS_TO_WSS) boolean sendLogsToWss){
         this.checkPolicies = checkPolicies;
         this.serviceUrl = serviceUrl;
         this.proxyHost = proxyHost;
@@ -72,6 +74,7 @@ public class SenderConfiguration {
         this.ignoreCertificateCheck = ignoreCertificateCheck;
         this.connectionRetries = connectionRetries;
         this.connectionRetriesIntervals = connectionRetriesIntervals;
+        this.sendLogsToWss = sendLogsToWss;
     }
 
     @JsonProperty(SERVICE_URL_KEYWORD)
@@ -148,6 +151,9 @@ public class SenderConfiguration {
     public boolean isIgnoreCertificateCheck() {
         return ignoreCertificateCheck;
     }
+
+    @JsonProperty(SEND_LOGS_TO_WSS)
+    public boolean isSendLogsToWss(){ return sendLogsToWss; }
 
     @Override
     public String toString() {
