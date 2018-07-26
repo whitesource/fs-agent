@@ -289,7 +289,7 @@ public class ProjectsSender {
         // generate offline request
         UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(),
                 requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
-
+        updateRequest.setLogData(getLogData());
         updateRequest.setRequesterEmail(requestConfig.getRequesterEmail());
         try {
             OfflineUpdateRequest offlineUpdateRequest = new OfflineUpdateRequest(updateRequest);
