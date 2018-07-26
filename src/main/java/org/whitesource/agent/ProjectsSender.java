@@ -30,6 +30,7 @@ import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.contracts.PluginInfo;
+import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.LogMapAppender;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
@@ -231,9 +232,15 @@ public class ProjectsSender {
         boolean policyCompliance = true;
         if (senderConfig.isCheckPolicies()) {
             logger.info("Checking policies");
-            String logData = getLogData();
-            CheckPolicyComplianceResult checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(),
-                    requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(), requestConfig.getRequesterEmail(), logData);
+            CheckPolicyComplianceResult checkPoliciesResult;
+            if (senderConfig.isSendLogsToWss()) {
+                String logData = getLogData();
+                checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(),
+                        requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(), requestConfig.getRequesterEmail(), logData);
+            } else {
+                checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(),
+                        requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(), requestConfig.getRequesterEmail());
+            }
             if (checkPoliciesResult.hasRejections()) {
                 if (senderConfig.isForceUpdate()) {
                     logger.info("Some dependencies violate open source policies, however all were force " +
@@ -272,9 +279,16 @@ public class ProjectsSender {
 
     private String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
-        String logData = getLogData();
-        UpdateInventoryResult updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
-                requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), logData);
+        UpdateInventoryResult updateResult;
+        if (senderConfig.isSendLogsToWss()) {
+            String logData = getLogData();
+            updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
+                    requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), logData);
+
+        } else {
+            updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
+                    requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
+        }
         String resultInfo = logResult(updateResult);
 
         // remove line separators
@@ -289,7 +303,9 @@ public class ProjectsSender {
         // generate offline request
         UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(),
                 requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
-        updateRequest.setLogData(getLogData());
+        if (senderConfig.isSendLogsToWss()) {
+            updateRequest.setLogData(getLogData());
+        }
         updateRequest.setRequesterEmail(requestConfig.getRequesterEmail());
         try {
             OfflineUpdateRequest offlineUpdateRequest = new OfflineUpdateRequest(updateRequest);
@@ -388,7 +404,7 @@ public class ProjectsSender {
         ConcurrentSkipListMap<Long, ILoggingEvent> collectToSet = ((LogMapAppender) setLog.getAppender(Constants.MAP_APPENDER_NAME)).getLogEvents();
         // going over all the collected events, filtering out the empty ones, and writing them to a long string
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
-        for (ILoggingEvent event : collectToSet.values()){
+        for (ILoggingEvent event : collectToSet.values()) {
             if (!event.getMessage().isEmpty() && !event.getMessage().equals(Constants.NEW_LINE)) {
                 logs = logs.concat("[" + event.getLevel() + "] " + simpleDateFormat.format(new Date(event.getTimeStamp()))
                         + " - " + event.getFormattedMessage()).concat(Constants.NEW_LINE);

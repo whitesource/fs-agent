@@ -158,4 +158,5 @@ public final class ConfigPropertyKeys {
     public static final String WHITESOURCE_CONFIGURATION    = "whitesourceConfiguration";
 
     public static final String SCANNED_FOLDERS = "d";
+    public static final String SEND_LOGS_TO_WSS = "sendLogsToWss";
 }

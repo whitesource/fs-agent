@@ -418,10 +418,12 @@ public class FSAConfiguration {
         String proxyUser = config.getProperty(ConfigPropertyKeys.PROXY_USER_PROPERTY_KEY);
         String proxyPassword = config.getProperty(ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY);
         boolean ignoreCertificateCheck = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.IGNORE_CERTIFICATE_CHECK, false);
+        boolean isSendLogsToWss = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SEND_LOGS_TO_WSS, false);
 
         return new SenderConfiguration(checkPolicies, serviceUrl, connectionTimeOut,
                 proxyHost, proxyPort, proxyUser, proxyPassword,
-                forceCheckAllDependencies, forceUpdate, forceUpdateBuildFailed, updateTypeValue, enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals);
+                forceCheckAllDependencies, forceUpdate, forceUpdateBuildFailed, updateTypeValue,
+                enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals, isSendLogsToWss);
     }
 
     private OfflineConfiguration getOffline(Properties config) {
