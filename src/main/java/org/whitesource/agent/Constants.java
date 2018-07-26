@@ -90,6 +90,6 @@ public final class Constants {
 
     public static final int MAX_NUMBER_OF_DEPENDENCIES = 1000000;
 
-    public static final String MAP_LOG_NAME = "org";
+    public static final String MAP_LOG_NAME = "org.whitesource";
     public static final String MAP_APPENDER_NAME = "collectToMap";
 }

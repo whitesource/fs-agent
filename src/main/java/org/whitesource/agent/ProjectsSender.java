@@ -383,14 +383,15 @@ public class ProjectsSender {
     }
 
     private String getLogData(){
-        String logs = "";
+        String logs = Constants.EMPTY_STRING;
         ch.qos.logback.classic.Logger setLog = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.MAP_LOG_NAME);
         ConcurrentSkipListMap<Long, ILoggingEvent> collectToSet = ((LogMapAppender) setLog.getAppender(Constants.MAP_APPENDER_NAME)).getLogEvents();
-
+        // going over all the collected events, filtering out the empty ones, and writing them to a long string
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
         for (ILoggingEvent event : collectToSet.values()){
             if (!event.getMessage().isEmpty() && !event.getMessage().equals(Constants.NEW_LINE)) {
-                logs = logs.concat("[" + event.getLevel() + "] " + simpleDateFormat.format(new Date(event.getTimeStamp())) + " - " + event.getFormattedMessage()).concat(Constants.NEW_LINE);
+                logs = logs.concat("[" + event.getLevel() + "] " + simpleDateFormat.format(new Date(event.getTimeStamp()))
+                        + " - " + event.getFormattedMessage()).concat(Constants.NEW_LINE);
             }
         }
         return logs;

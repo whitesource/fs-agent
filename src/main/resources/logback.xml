@@ -36,7 +36,7 @@
 	<logger name="org.redline_rpm" level="error"/>
 
 	<logger name="${collectLoggerName}" level="trace">
-		<appender-ref ref="collectToMap"/>
+		<appender-ref ref="${collectAppenderName}"/>
 	</logger>
 
 	<root>
