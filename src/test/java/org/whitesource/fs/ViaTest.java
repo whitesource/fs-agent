@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.ProjectsSenderMock;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
@@ -33,7 +32,7 @@ public class ViaTest {
     public void setUp() throws IOException {
         config = new Properties();
         config.load(new FileInputStream(CONFIG));
-        config.setProperty(ConfigPropertyKeys.VIA_DEBUG, "true");
+       // config.setProperty(ConfigPropertyKeys.VIA_DEBUG, "true");
         fsaConfiguration = new FSAConfiguration(config);
 
     }
@@ -43,7 +42,7 @@ public class ViaTest {
 
         String proj = INPUT_DIR + "ksa" + File.separator + "ksa-web-core" + File.separator;
         String configFile = INPUT_DIR + File.separator + "whitesource-fs-agent.ksa.config";
-        String args[] = {"-appPath", proj + "target" + File.separator + "ksa-web-core-3.9.0.jar", "-d", proj, "-c", configFile,"-viaDebug","true"};
+        String args[] = {"-appPath", proj + "target" + File.separator + "ksa-web-core-3.9.0.jar", "-d", proj, "-c", configFile};
         try {
             projectsSender = new ProjectsSenderMock(fsaConfiguration.getSender(), fsaConfiguration.getOffline(), fsaConfiguration.getRequest(), new FileSystemAgentInfo());
             org.whitesource.fs.Main.mainTest(args, projectsSender);
