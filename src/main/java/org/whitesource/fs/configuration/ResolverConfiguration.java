@@ -60,6 +60,7 @@ public class ResolverConfiguration {
             @JsonProperty(PYTHON_INSTALL_VIRTUALENV) boolean pythonInstallVirtualenv,
             @JsonProperty(PYTHON_RESOLVE_HIERARCHY_TREE) boolean pythonResolveHierarchyTree,
             @JsonProperty(PYTHON_REQUIREMENTS_FILE_INCLUDES) String[] pythonRequirementsFileIncludes,
+            @JsonProperty(PYTHON_RESOLVE_SETUP_PY_FILES) boolean pythonResolveSetupPyFiles,
 
             @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
@@ -119,6 +120,7 @@ public class ResolverConfiguration {
         this.pythonInstallVirtualenv = pythonInstallVirtualenv;
         this.pythonResolveHierarchyTree = pythonResolveHierarchyTree;
         this.pythonRequirementsFileIncludes = pythonRequirementsFileIncludes;
+        this.pythonResolveSetupPyFiles = pythonResolveSetupPyFiles;
 
         this.dependenciesOnly = dependenciesOnly;
         this.whitesourceConfiguration = whitesourceConfiguration;
@@ -182,6 +184,7 @@ public class ResolverConfiguration {
     private boolean     pythonInstallVirtualenv;
     private boolean     pythonResolveHierarchyTree;
     private String[] pythonRequirementsFileIncludes;
+    private boolean pythonResolveSetupPyFiles;
 
     private boolean gradleResolveDependencies;
     private boolean gradleRunAssembleCommand;
@@ -349,6 +352,11 @@ public class ResolverConfiguration {
     @JsonProperty(PYTHON_RESOLVE_HIERARCHY_TREE)
     public boolean isPythonResolveHierarchyTree() {
         return pythonResolveHierarchyTree;
+    }
+
+    @JsonProperty(PYTHON_RESOLVE_SETUP_PY_FILES)
+    public boolean isPythonResolveSetupPyFiles() {
+        return this.pythonResolveSetupPyFiles;
     }
 
     public String[] getPythonRequirementsFileIncludes() {
