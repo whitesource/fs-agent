@@ -18,6 +18,7 @@ import java.util.Collection;
  */
 public class ProjectsSenderMock extends ProjectsSender {
 
+    /* --- Private methods --- */
 
     private final WhitesourceServiceMock whitesourceService;
 
@@ -27,16 +28,12 @@ public class ProjectsSenderMock extends ProjectsSender {
 
     public static class WhitesourceServiceMock extends WhitesourceService {
 
-
         public WhitesourceServiceMock(final String agent, final String agentVersion, String pluginVersion, final String serviceUrl, boolean setProxy,
                                       int connectionTimeoutMinutes, boolean ignoreCertificateCheck) {
             super(agent, agentVersion, pluginVersion, serviceUrl, setProxy, connectionTimeoutMinutes, ignoreCertificateCheck);
-
         }
 
-
         String json = null;
-
 
         public String getJson() {
             return json;
@@ -45,9 +42,7 @@ public class ProjectsSenderMock extends ProjectsSender {
         @Override
         public UpdateInventoryResult update(String orgToken, String requesterEmail, UpdateType updateType, String product, String productVersion, Collection<AgentProjectInfo> projectInfos, String userKey) throws WssServiceException {
             json = new Gson().toJson(this.getRequestFactory().newUpdateInventoryRequest(orgToken, updateType, requesterEmail, product, productVersion, projectInfos, userKey));
-
             return new UpdateInventoryResult("via-test", true);
-
         }
 
     }
@@ -61,7 +56,6 @@ public class ProjectsSenderMock extends ProjectsSender {
 
     @Override
     protected WhitesourceService createService() {
-
         return whitesourceService;
     }
 }

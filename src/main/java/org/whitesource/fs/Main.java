@@ -44,30 +44,29 @@ public class Main {
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     public static final long MAX_TIMEOUT = 1000 * 60 * 60;
-
-    /* --- Main --- */
-
+    private static ProjectsSender projectsSender = null;
     private static Vertx vertx;
+
+    /* --- Private Members --- */
+
     ProjectsCalculator projectsCalculator = new ProjectsCalculator();
 
     /* --- Main --- */
 
-    // test
-    static ProjectsSender projectsSender = null;
-    private boolean test() {
-        return Main.projectsSender!=null;
-    }
-    protected static void mainTest(String[] args,ProjectsSender testProjectsSender) {
+    private boolean test() { return Main.projectsSender != null; }
+
+    // main test
+    protected static void mainTest(String[] args, ProjectsSender testProjectsSender) {
         projectsSender = testProjectsSender;
-        myMain(args);
+        mainTest(args);
     }
-   //test
-    public static void main(String[] args) {
-        int exitCode = myMain(args);
+
+    public static void mainTest(String[] args) {
+        int exitCode = main(args);
         System.exit(exitCode);
     }
 
-    private static int myMain(String[] args) {
+    private static int main(String[] args) {
         CommandLineArgs commandLineArgs = new CommandLineArgs();
         new JCommander(commandLineArgs, args);
 
@@ -77,7 +76,7 @@ public class Main {
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
         boolean isStandalone = commandLineArgs.web.equals(Constants.FALSE);
         logger.info(fsaConfiguration.toString());
-        int exitCode =0;
+        int exitCode = 0;
         if (isStandalone) {
             try {
                 if (fsaConfiguration.getErrors() == null || fsaConfiguration.getErrors().size() > 0) {
@@ -93,7 +92,7 @@ public class Main {
                 processExitCode = StatusCode.ERROR;
             }
             logger.info("Process finished with exit code {} ({})", processExitCode.name(), processExitCode.getValue());
-             exitCode = processExitCode.getValue();
+            exitCode = processExitCode.getValue();
 
 
         } else {
@@ -148,9 +147,9 @@ public class Main {
         // updating the product name and version from the offline file
         if (fsaConfiguration != null && !fsaConfiguration.getUseCommandLineProductName() && updateInventoryRequests.size() > 0) {
             UpdateInventoryRequest offLineReq = updateInventoryRequests.stream().findFirst().get();
-            req = new RequestConfiguration(req.getApiToken(),req.getUserKey(), req.getRequesterEmail(), req.isProjectPerSubFolder(), req.getProjectName(),
+            req = new RequestConfiguration(req.getApiToken(), req.getUserKey(), req.getRequesterEmail(), req.isProjectPerSubFolder(), req.getProjectName(),
                     req.getProjectToken(), req.getProjectVersion(), offLineReq.product(), null, offLineReq.productVersion(),
-                    req.getAppPaths(), req.getViaDebug(),req.getViaAnalysisLevel(), req.getIaLanguage());
+                    req.getAppPaths(), req.getViaDebug(), req.getViaAnalysisLevel(), req.getIaLanguage());
         }
 
         if (!result.getStatusCode().equals(StatusCode.SUCCESS)) {
@@ -168,16 +167,14 @@ public class Main {
     }
 
     private ProjectsSender getProjectsSender(FSAConfiguration fsaConfiguration, RequestConfiguration req) {
-        ProjectsSender projectsSender = null;
-        if(!test()){
-
-              projectsSender = new ProjectsSender(fsaConfiguration.getSender(), fsaConfiguration.getOffline(), req, new FileSystemAgentInfo());
-        }else {
-            projectsSender  = Main.projectsSender;
+        ProjectsSender projectsSender;
+        if (!test()) {
+            projectsSender = new ProjectsSender(fsaConfiguration.getSender(), fsaConfiguration.getOffline(), req, new FileSystemAgentInfo());
+        } else {
+            projectsSender = Main.projectsSender;
         }
         return projectsSender;
     }
-
 
 
     private Pair<String, StatusCode> sendProjects(ProjectsSender projectsSender, ProjectsDetails projectsDetails) {

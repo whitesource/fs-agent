@@ -1,9 +1,10 @@
 package org.whitesource.fs;
 
-import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.ProjectsSenderMock;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
@@ -19,6 +20,7 @@ import java.util.Properties;
  */
 public class ViaTest {
 
+    private static final Logger logger = LoggerFactory.getLogger(ViaTest.class);
     private static final String inputDir = File.separator + "test_input" + File.separator;
     private static final String INPUT_DIR = Paths.get(Constants.DOT).toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath(inputDir);
     private static final String CONFIG_PATH = inputDir + File.separator + "whitesource-fs-agent.ksa.config";
@@ -32,7 +34,7 @@ public class ViaTest {
     public void setUp() throws IOException {
         config = new Properties();
         config.load(new FileInputStream(CONFIG));
-       // config.setProperty(ConfigPropertyKeys.VIA_DEBUG, "true");
+        // config.setProperty(ConfigPropertyKeys.VIA_DEBUG, "true");
         fsaConfiguration = new FSAConfiguration(config);
 
     }
@@ -47,11 +49,9 @@ public class ViaTest {
             projectsSender = new ProjectsSenderMock(fsaConfiguration.getSender(), fsaConfiguration.getOffline(), fsaConfiguration.getRequest(), new FileSystemAgentInfo());
             org.whitesource.fs.Main.mainTest(args, projectsSender);
         } catch (Exception e) {
-
+            logger.error(e.getMessage());
         }
         String jsonResult = projectsSender.getJson();
-
-        System.out.println(new Gson().toJson(jsonResult));
         Assert.assertTrue(jsonResult.contains("com.ksa.web.struts2.views.freemarker.ShiroFreemarkerManager:forTest"));
 
     }
