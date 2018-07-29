@@ -48,28 +48,15 @@ public class Main {
     public static final long MAX_TIMEOUT = 1000 * 60 * 60;
     private static ProjectsSender projectsSender = null;
     private static Vertx vertx;
+    public static int exitCode = 0;
 
-    /* --- Private Members --- */
 
     ProjectsCalculator projectsCalculator = new ProjectsCalculator();
     public static final String HELP_CONTENT_FILE_NAME = "helpContent.txt";
 
     /* --- Main --- */
 
-    private boolean test() { return Main.projectsSender != null; }
-
-    // main test
-    protected static void mainTest(String[] args, ProjectsSender testProjectsSender) {
-        projectsSender = testProjectsSender;
-        mainTest(args);
-    }
-
-    public static void mainTest(String[] args) {
-        int exitCode = main(args);
-        System.exit(exitCode);
-    }
-
-    private static int main(String[] args) {
+    public static void main(String[] args) {
         CommandLineArgs commandLineArgs = new CommandLineArgs();
 
         if (isHelpArg(args)) {
@@ -103,9 +90,7 @@ public class Main {
                 processExitCode = StatusCode.ERROR;
             }
             logger.info("Process finished with exit code {} ({})", processExitCode.name(), processExitCode.getValue());
-            exitCode = processExitCode.getValue();
-
-
+            System.exit(processExitCode.getValue());
         } else {
             //this is a work around
             vertx = Vertx.vertx(new VertxOptions()
@@ -118,7 +103,7 @@ public class Main {
                     .setWorker(true);
             vertx.deployVerticle(FsaVerticle.class.getName(), options);
         }
-        return exitCode;
+        setExitCode(exitCode);
     }
 
     private static void setLogLevel(String logLevel) {
@@ -187,7 +172,7 @@ public class Main {
 
     private ProjectsSender getProjectsSender(FSAConfiguration fsaConfiguration, RequestConfiguration req) {
         ProjectsSender projectsSender;
-        if (!test()) {
+        if (!projectSenderExist()) {
             projectsSender = new ProjectsSender(fsaConfiguration.getSender(), fsaConfiguration.getOffline(), req, new FileSystemAgentInfo());
         } else {
             projectsSender = Main.projectsSender;
@@ -260,5 +245,27 @@ public class Main {
         } catch (IOException e) {
             logger.warn("Could not close the help file");
         }
+    }
+
+    private boolean projectSenderExist() {
+        return Main.projectsSender != null;
+    }
+
+    // end to end integration projectSenderExist
+    protected static void endToEndIntegration(String[] args, ProjectsSender testProjectsSender) {
+        projectsSender = testProjectsSender;
+        main(args);
+        int exitCode = getExitCode();
+        System.exit(exitCode);
+    }
+
+    /* --- Getters / Setters --- */
+
+    public static int getExitCode() {
+        return exitCode;
+    }
+
+    public static void setExitCode(int exitCode) {
+        Main.exitCode = exitCode;
     }
 }
