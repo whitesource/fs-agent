@@ -15,6 +15,7 @@
  */
 package org.whitesource.fs;
 
+import ch.qos.logback.classic.Level;
 import com.beust.jcommander.JCommander;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -32,6 +33,7 @@ import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.web.FsaVerticle;
 
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,7 +44,7 @@ public class Main {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    public static final Logger logger = LoggerFactory.getLogger(Main.class);
     public static final long MAX_TIMEOUT = 1000 * 60 * 60;
     private static ProjectsSender projectsSender = null;
     private static Vertx vertx;
@@ -68,12 +70,20 @@ public class Main {
 
     private static int main(String[] args) {
         CommandLineArgs commandLineArgs = new CommandLineArgs();
+
+        if (isHelpArg(args)) {
+            printHelpContent();
+            System.exit(StatusCode.SUCCESS.getValue());
+        }
+
         new JCommander(commandLineArgs, args);
 
         StatusCode processExitCode;
 
         // read configuration senderConfig
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
+        setLogLevel(fsaConfiguration.getLogLevel());
+
         boolean isStandalone = commandLineArgs.web.equals(Constants.FALSE);
         logger.info(fsaConfiguration.toString());
         int exitCode = 0;
@@ -108,6 +118,14 @@ public class Main {
             vertx.deployVerticle(FsaVerticle.class.getName(), options);
         }
         return exitCode;
+    }
+
+    private static void setLogLevel(String logLevel) {
+        // read log level from configuration file
+        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        ch.qos.logback.classic.Logger mapLog = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.MAP_LOG_NAME);
+        root.setLevel(Level.toLevel(logLevel, Level.INFO));
+        //((LogMapAppender) mapLog.getAppender(Constants.MAP_APPENDER_NAME)).setRootLevel(root.getLevel());
     }
 
     public ProjectsDetails scanAndSend(FSAConfiguration fsaConfiguration, boolean shouldSend) {
@@ -202,6 +220,44 @@ public class Main {
             return new Pair<>("Exiting, nothing to update", StatusCode.SUCCESS);
         } else {
             return projectsSender.sendRequest(projectsDetails);//todo
+        }
+    }
+
+    private static boolean isHelpArg(String[] args) {
+        for (String arg : args) {
+            if (Constants.HELP_ARG1.equals(arg) || Constants.HELP_ARG2.equals(arg)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void printHelpContent() {
+        InputStream inputStream = null;
+        BufferedReader bufferedReader = null;
+        try {
+            ClassLoader classLoader = Main.class.getClassLoader();
+            inputStream = classLoader.getResourceAsStream(HELP_CONTENT_FILE_NAME);
+            bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+            String result = "";
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                result = result + line + System.lineSeparator();
+                line = bufferedReader.readLine();
+            }
+            logger.info(result);
+        } catch (IOException e) {
+            logger.warn("Could not show the help command");
+        }
+        try {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            if (bufferedReader != null) {
+                bufferedReader.close();
+            }
+        } catch (IOException e) {
+            logger.warn("Could not close the help file");
         }
     }
 }

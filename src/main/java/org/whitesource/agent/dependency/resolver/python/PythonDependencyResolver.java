@@ -33,7 +33,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     private final String pythonPath;
     private final String pipPath;
-    private final Collection<String> excludes = Arrays.asList(Constants.PATTERN + PY_EXT);
+    private Collection<String> excludes = new ArrayList<>();
     private boolean ignorePipInstallErrors;
     private boolean installVirutalenv;
     private boolean resolveHierarchyTree;
@@ -59,9 +59,10 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> requirementsFiles) {
+    public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> dependenciesFiles) {
+        this.excludes = Arrays.asList(Constants.PATTERN + PY_EXT);
         Collection<DependencyInfo> resultDependencies = new LinkedList<>();
-        for (String requirementsTxtPath : requirementsFiles) {
+        for (String dependencyFile : dependenciesFiles) {
             FilesUtils filesUtils = new FilesUtils();
             String tempDirVirtualEnv = filesUtils.createTmpFolder(true, WHITESOURCE_PYTHON_TEMP_FOLDER);
             String tempDirPackages = filesUtils.createTmpFolder(false, WHITESOURCE_PYTHON_TEMP_FOLDER);
@@ -70,8 +71,8 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             PythonDependencyCollector pythonDependencyCollector;
             if (tempDirVirtualEnv != null && tempDirPackages != null) {
                 pythonDependencyCollector = new PythonDependencyCollector(this.pythonPath, this.pipPath, this.installVirutalenv, this.resolveHierarchyTree, this.ignorePipInstallErrors,
-                        requirementsTxtPath, tempDirPackages, tempDirVirtualEnv);
-                String currentTopLevelFolder = requirementsTxtPath.substring(0, requirementsTxtPath.replaceAll("\\\\",
+                        dependencyFile, tempDirPackages, tempDirVirtualEnv);
+                String currentTopLevelFolder = dependencyFile.substring(0, dependencyFile.replaceAll("\\\\",
                         Constants.FORWARD_SLASH).lastIndexOf(Constants.FORWARD_SLASH));
                 Collection<AgentProjectInfo> projects = pythonDependencyCollector.collectDependencies(currentTopLevelFolder);
                 dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());

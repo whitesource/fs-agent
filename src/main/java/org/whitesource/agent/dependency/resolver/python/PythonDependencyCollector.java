@@ -36,13 +36,14 @@ public class PythonDependencyCollector extends DependencyCollector {
     private boolean installVirtualEnv;
     private boolean resolveHierarchyTree;
     private boolean ignorePipInstallErrors;
-    private String requirementsTxtPath;
+    private String requirementsTxtOrSetupPyPath;
     private String pythonPath;
     private String pipPath;
     private String tempDirPackages;
     private String tempDirVirtualenv;
     private String topLevelFolder;
     private AtomicInteger counterFolders = new AtomicInteger(0);
+    private DependenciesFileType dependencyFileType;
 
     private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver.class);
 
@@ -75,17 +76,24 @@ public class PythonDependencyCollector extends DependencyCollector {
     private static final String FORWARD_SLASH = "/";
     private static final String SCRIPT_SH = "/script.sh";
     private static final String BIN_BASH = "#!/bin/bash";
+    private static final String ARROW = ">";
 
     /* --- Constructors --- */
 
     public PythonDependencyCollector(String pythonPath, String pipPath, boolean installVirtualEnv, boolean resolveHierarchyTree, boolean ignorePipInstallErrors,
-                                     String requirementsTxtPath, String tempDirPackages, String tempDirVirtualEnv) {
+                                     String requirementsTxtOrSetupPyPath, String tempDirPackages, String tempDirVirtualEnv) {
         super();
         this.pythonPath = pythonPath;
         this.pipPath = pipPath;
         this.installVirtualEnv = installVirtualEnv;
         this.resolveHierarchyTree = resolveHierarchyTree;
-        this.requirementsTxtPath = requirementsTxtPath;
+        if (requirementsTxtOrSetupPyPath.endsWith(Constants.SETUP_PY)) {
+            requirementsTxtOrSetupPyPath = requirementsTxtOrSetupPyPath.substring(0, requirementsTxtOrSetupPyPath.length() - (Constants.SETUP_PY.length() + 1));
+            this.dependencyFileType = DependenciesFileType.SETUP_PY;
+        } else {
+            this.dependencyFileType = DependenciesFileType.REQUIREMENTS_TXT;
+        }
+        this.requirementsTxtOrSetupPyPath = requirementsTxtOrSetupPyPath;
         this.tempDirPackages = tempDirPackages;
         this.tempDirVirtualenv = tempDirVirtualEnv;
         this.ignorePipInstallErrors = ignorePipInstallErrors;
@@ -109,29 +117,39 @@ public class PythonDependencyCollector extends DependencyCollector {
             try {
                 logger.debug("Collecting python dependencies. It might take a few minutes.");
                 boolean failedGetTree;
-                boolean failed = processCommand(new String[]{pipPath, DOWNLOAD, R_PARAMETER, this.requirementsTxtPath, D_PARAMETER, tempDirPackages}, true);
-                // if process failed, download each package line by line
+                boolean failed = false;
+                if (this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
+                    failed = processCommand(new String[]{pipPath, DOWNLOAD, R_PARAMETER, this.requirementsTxtOrSetupPyPath, D_PARAMETER, tempDirPackages}, true);
+                } else if (this.dependencyFileType == DependenciesFileType.SETUP_PY) {
+                    failed = processCommand(new String[]{pipPath, DOWNLOAD, this.requirementsTxtOrSetupPyPath, D_PARAMETER, tempDirPackages}, true);
+                }
                 if (failed) {
-                    String error = "Fail to run 'pip install -r " + this.requirementsTxtPath + "'";
+                    String error = null;
+                    if (this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
+                        error = "Fail to run 'pip install -r " + this.requirementsTxtOrSetupPyPath + "'";
+                    } else if (this.dependencyFileType == DependenciesFileType.SETUP_PY) {
+                        error = "Fail to run 'pip install " + this.requirementsTxtOrSetupPyPath + "'";
+                    }
                     logger.warn(error + ". To see the full error, re-run the plugin with this parameter in the config file: log.level=debug");
                 } else if (!failed && !this.resolveHierarchyTree) {
-                    dependencies = collectDependencies(new File(tempDirPackages), this.requirementsTxtPath);
+                    dependencies = collectDependencies(new File(tempDirPackages), this.requirementsTxtOrSetupPyPath);
                 } else if (!failed && this.resolveHierarchyTree) {
-                    failedGetTree = getTree(this.requirementsTxtPath);
+                    failedGetTree = getTree(this.requirementsTxtOrSetupPyPath);
                     if (!failedGetTree) {
-                        dependencies = collectDependenciesWithTree(this.tempDirVirtualenv + HIERARCHY_TREE_TXT, requirementsTxtPath);
+                        dependencies = collectDependenciesWithTree(this.tempDirVirtualenv + HIERARCHY_TREE_TXT, requirementsTxtOrSetupPyPath);
                     } else {
                         // collect flat list if hierarchy tree failed
-                        dependencies = collectDependencies(new File(tempDirPackages), this.requirementsTxtPath);
+                        dependencies = collectDependencies(new File(tempDirPackages), this.requirementsTxtOrSetupPyPath);
                     }
                 }
-                if (failed && this.ignorePipInstallErrors) {
+                // If there was an error and the dependency file type is requirements.txt, download each dependency in the requirements.txt file one by one
+                if (failed && this.ignorePipInstallErrors && this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
                     logger.info("Try to download each dependency in the requirements.txt file one by one. It might take a few minutes.");
                     FilesUtils.deleteDirectory(new File(tempDirPackages));
                     this.tempDirPackages = new FilesUtils().createTmpFolder(false, PythonDependencyResolver.WHITESOURCE_PYTHON_TEMP_FOLDER);
                     if (this.tempDirPackages != null) {
-                        downloadLineByLine(this.requirementsTxtPath);
-                        dependencies = collectDependencies(new File(tempDirPackages), this.requirementsTxtPath);
+                        downloadLineByLine(this.requirementsTxtOrSetupPyPath);
+                        dependencies = collectDependencies(new File(tempDirPackages), this.requirementsTxtOrSetupPyPath);
                         FilesUtils.deleteDirectory(new File(tempDirPackages));
                     }
                 }
@@ -151,7 +169,12 @@ public class PythonDependencyCollector extends DependencyCollector {
             String allTreeFile = new String(Files.readAllBytes(Paths.get(treeFile)), StandardCharsets.UTF_8);
             JSONArray treeArray = new JSONArray(allTreeFile);
             File[] files = (new File(this.tempDirPackages)).listFiles();
-            dependencies = collectDependenciesReq(treeArray, files, requirementsTxtPath);
+            if (this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
+                dependencies = collectDependenciesReq(treeArray, files, requirementsTxtPath);
+            } else if (this.dependencyFileType == DependenciesFileType.SETUP_PY) {
+                // Take the last dependency because it is the parent of all the dependencies of the setup.py file
+                dependencies = collectDependenciesReq(treeArray.getJSONObject(treeArray.length() - 1).getJSONArray(DEPENDENCIES), files, requirementsTxtPath);
+            }
         } catch (IOException e) {
             logger.warn("Cannot read the hierarchy tree file");
         }
@@ -273,9 +296,16 @@ public class PythonDependencyCollector extends DependencyCollector {
 
     private String[] getFullCmdInstallation(String requirementsTxtPath) {
         // execute all the command with and between them in order to save the virtualenv shell
-        String[] windowsCommand = new String[]{this.tempDirVirtualenv + SCRIPTS_ACTIVATE, AND, pipPath, INSTALL, R_PARAMETER,
-                requirementsTxtPath, F, this.tempDirPackages, AND, pipPath, INSTALL, PIPDEPTREE, AND, PIPDEPTREE,
-                JSON_TREE, ">", this.tempDirVirtualenv + HIERARCHY_TREE_TXT};
+        String[] windowsCommand = null;
+        if (this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
+            windowsCommand = new String[]{this.tempDirVirtualenv + SCRIPTS_ACTIVATE, AND, pipPath, INSTALL, R_PARAMETER,
+                    requirementsTxtPath, F, this.tempDirPackages, AND, pipPath, INSTALL, PIPDEPTREE, AND, PIPDEPTREE,
+                    JSON_TREE, ARROW, this.tempDirVirtualenv + HIERARCHY_TREE_TXT};
+        } else if (this.dependencyFileType == DependenciesFileType.SETUP_PY) {
+            windowsCommand = new String[]{this.tempDirVirtualenv + SCRIPTS_ACTIVATE, AND, pipPath, INSTALL,
+                    requirementsTxtPath, F, this.tempDirPackages, AND, pipPath, INSTALL, PIPDEPTREE, AND, PIPDEPTREE,
+                    JSON_TREE, ARROW, this.tempDirVirtualenv + HIERARCHY_TREE_TXT};
+        }
         return windowsCommand;
     }
 
@@ -352,12 +382,17 @@ public class PythonDependencyCollector extends DependencyCollector {
                 bufferedWriter.newLine();
                 bufferedWriter.write(SOURCE + Constants.WHITESPACE + this.tempDirVirtualenv + BIN_ACTIVATE);
                 bufferedWriter.newLine();
-                bufferedWriter.write(pipPath + Constants.WHITESPACE + INSTALL + Constants.WHITESPACE + R_PARAMETER +
-                        Constants.WHITESPACE + requirementsTxtPath + Constants.WHITESPACE + F + Constants.WHITESPACE + this.tempDirPackages);
+                if (this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
+                    bufferedWriter.write(pipPath + Constants.WHITESPACE + INSTALL + Constants.WHITESPACE + R_PARAMETER +
+                            Constants.WHITESPACE + requirementsTxtPath + Constants.WHITESPACE + F + Constants.WHITESPACE + this.tempDirPackages);
+                } else if (this.dependencyFileType == DependenciesFileType.SETUP_PY) {
+                    bufferedWriter.write(pipPath + Constants.WHITESPACE + INSTALL + Constants.WHITESPACE +
+                            Constants.WHITESPACE + requirementsTxtPath + Constants.WHITESPACE + F + Constants.WHITESPACE + this.tempDirPackages);
+                }
                 bufferedWriter.newLine();
                 bufferedWriter.write(pipPath + Constants.WHITESPACE + INSTALL + Constants.WHITESPACE + PIPDEPTREE);
                 bufferedWriter.newLine();
-                bufferedWriter.write(PIPDEPTREE + Constants.WHITESPACE + JSON_TREE + Constants.WHITESPACE + ">" + Constants.WHITESPACE + this.tempDirVirtualenv + HIERARCHY_TREE_TXT);
+                bufferedWriter.write(PIPDEPTREE + Constants.WHITESPACE + JSON_TREE + Constants.WHITESPACE + ARROW + Constants.WHITESPACE + this.tempDirVirtualenv + HIERARCHY_TREE_TXT);
                 bufferedWriter.close();
                 fos.close();
                 file.setExecutable(true);

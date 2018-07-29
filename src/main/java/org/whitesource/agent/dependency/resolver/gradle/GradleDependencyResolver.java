@@ -11,6 +11,7 @@ import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -22,6 +23,8 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     private static final List<String> GRADLE_SCRIPT_EXTENSION = Arrays.asList(".gradle",".groovy", ".java", ".jar", ".war", ".ear", ".car", ".class");
     private static final String JAR_EXTENSION = ".jar";
     private static final String SETTINGS_GRADLE = "settings.gradle";
+    protected static final String COMMENT_START = "/*";
+    protected static final String COMMENT_END = "*/";
 
     private GradleLinesParser gradleLinesParser;
     private GradleCli gradleCli;
@@ -44,16 +47,18 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         // each bom-file ( = build.gradle) represents a module - identify its folder and scan it using 'gradle dependencies'
         Collection<AgentProjectInfo> projects = new ArrayList<>();
-        List<String> modules = new LinkedList<>();
-        if (bomFiles.size() > 1){ // reading the 'settings.gradle' to extract a list of modules
-            modules = getModules(topLevelFolder);
+        String settingsFileContent = null;
+        ArrayList<Integer[]> commentBlocks = null;
+        if (bomFiles.size() > 1){
+            settingsFileContent = readSettingsFile(topLevelFolder);
+            commentBlocks = findCommentBlocksInSettingsFile(settingsFileContent);
         }
         for (String bomFile : bomFiles){
             String bomFileFolder = new File(bomFile).getParent();
             File bomFolder = new File(new File(bomFile).getParent());
             String moduleName = bomFolder.getName();
-            // making sure the module's folder is found in the modules' list taken from the settings.gradle
-            if (modules.size() > 0 && !modules.contains(moduleName)){
+            // making sure the module's folder is found inside the settings.gradle file
+            if (settingsFileContent != null && !validateModule(moduleName, settingsFileContent, commentBlocks)){
                 continue;
             }
             List<DependencyInfo> dependencies = collectDependencies(bomFileFolder);
@@ -121,73 +126,73 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         return null;
     }
 
-    private List<String> getModules(String folder){
-        List<String> modules = new LinkedList<>();
+    private String readSettingsFile(String folder){
+        String content = "";
         File settingsFile = new File(folder + fileSeparator + SETTINGS_GRADLE);
         if (settingsFile.isFile()){
-            FileReader fileReader = null;
             try {
-                fileReader = new FileReader(settingsFile);
-                BufferedReader bufferedReader = new BufferedReader(fileReader);
-                String currLine;
-                while ((currLine = bufferedReader.readLine()) != null){
-                    if (currLine.startsWith("include")){
-                        if (currLine.contains(Constants.COMMA)){
-                            String[] lineModules = currLine.split(Constants.COMMA);
-                            for (String lineModule : lineModules){
-                                modules.add(getModuleName(lineModule));
-                            }
-                        } else {
-                            modules.add(getModuleName(currLine));
-                        }
-                    }
-                }
-            } catch (FileNotFoundException e) {
-                logger.warn("Could not find settings.gradle {}", e.getMessage());
-                logger.debug("stacktrace {}", e.getStackTrace());
+                content = new String(Files.readAllBytes(Paths.get(settingsFile.getPath())));
             } catch (IOException e) {
-                logger.warn("Could not parse settings.gradle {}", e.getMessage());
+                logger.warn("could not read settings file {} - {}", settingsFile.getPath(), e.getMessage());
                 logger.debug("stacktrace {}", e.getStackTrace());
-            } finally {
-                try {
-                    fileReader.close();
-                } catch (Exception e) {
-                    logger.warn("Can't close settings.gradle {}", e.getMessage());
-                    logger.debug("stacktrace {}", e.getStackTrace());
-                }
             }
         }
-        return modules;
+        return content;
     }
 
-    private String getModuleName(String module){
-        // Module can include single or double quotation, like:
-        // include "java-app" or include "libraries:common"
-        // include ':app'
-        // include 'blue', 'krill'
-        // include 'api', 'services:task'
-        // include ':app',
-        //    ':feature:my-first-feature',
-        //    ':feature:my-second-feature',
-        // include ':app', ':feature:my-first-feature', ':feature:my-second-feature',
-
-        // This change was only added to prevent exceptions in my Gradle tests, a full solution should be added that
-        // fixes the above cases ...
-
-        String separator = null;
-        if(module.indexOf(Constants.APOSTROPHE) > 0) {
-            separator = Constants.APOSTROPHE;
-        } else if (module.indexOf(Constants.QUOTATION_MARK) > 0) {
-            separator = Constants.QUOTATION_MARK;
+    private ArrayList<Integer[]> findCommentBlocksInSettingsFile(String content){
+        ArrayList<Integer[]> commentBlock = new ArrayList<>();
+        int startIndex = content.indexOf(COMMENT_START);
+        int endIndex;
+        while (startIndex > -1){
+            endIndex = content.indexOf(COMMENT_END, startIndex);
+            commentBlock.add(new Integer[]{startIndex, endIndex});
+            startIndex = content.indexOf(COMMENT_START, endIndex);
         }
-        if (separator != null) {
-            module = module.substring(module.indexOf(separator) + 1, module.lastIndexOf(separator));
-            if (module.indexOf(Constants.COLON) > -1){
-                module = module.substring(module.indexOf(Constants.COLON) + 1);
+        return commentBlock;
+    }
+
+    /* valid modules are proceeded by ' or " or :, and followed by ' or ", and also not proceeded (in the same line) by =
+       also - making sure the line isn't commented out
+
+       //include 'echoserver'
+        include 'client'
+        rootProject.name = 'multi-project-gradle'
+
+        only the second line is valid
+        also - making sure the module isn't inside comment block
+     */
+    private boolean validateModule(String moduleName, String settings, ArrayList<Integer[]> commentBlocks){
+        if (settings != null && settings.contains(moduleName)){
+            int startIndex = settings.indexOf(moduleName);
+            char proceedingChar = settings.charAt(startIndex - 1);
+            if (proceedingChar == Constants.QUOTATION_MARK.charAt(0) || proceedingChar == Constants.APOSTROPHE.charAt(0) || proceedingChar == Constants.COLON.charAt(0)){
+                int endIndex = startIndex + moduleName.length();
+                char followingChar = settings.charAt(endIndex);
+                if (followingChar == Constants.QUOTATION_MARK.charAt(0) || followingChar == Constants.APOSTROPHE.charAt(0)){
+                    while (settings.charAt(startIndex) != '\r' && startIndex > 0){
+                        startIndex--;
+                        if (settings.charAt(startIndex) == Constants.EQUALS_CHAR){
+                            return false;
+                        }
+                        // making sure there are no // before the module nams
+                        if (settings.charAt(startIndex) == Constants.FORWARD_SLASH.charAt(0) && startIndex > 0 && settings.charAt(startIndex-1) == Constants.FORWARD_SLASH.charAt(0)){
+                            return false;
+                        }
+                    }
+                    // making sure the module isn't inside comment block
+                    if (commentBlocks != null) {
+                        for (Integer[] commentBlock : commentBlocks) {
+                            if (settings.indexOf(moduleName) > commentBlock[0] && endIndex < commentBlock[1]) {
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                }
             }
         }
-
-        return module;
+        return false;
     }
 
     private List<DependencyInfo> collectDependencies(String rootDirectory) {
