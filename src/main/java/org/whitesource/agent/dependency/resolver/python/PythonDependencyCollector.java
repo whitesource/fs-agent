@@ -77,6 +77,7 @@ public class PythonDependencyCollector extends DependencyCollector {
     private static final String SCRIPT_SH = "/script.sh";
     private static final String BIN_BASH = "#!/bin/bash";
     private static final String ARROW = ">";
+    private static final String[] DEFAULT_PACKAGES_IN_PIPDEPTREE = new String[] {"pipdeptree", "setuptools", "wheel"};
 
     /* --- Constructors --- */
 
@@ -172,13 +173,29 @@ public class PythonDependencyCollector extends DependencyCollector {
             if (this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
                 dependencies = collectDependenciesReq(treeArray, files, requirementsTxtPath);
             } else if (this.dependencyFileType == DependenciesFileType.SETUP_PY) {
-                // Take the last dependency because it is the parent of all the dependencies of the setup.py file
-                dependencies = collectDependenciesReq(treeArray.getJSONObject(treeArray.length() - 1).getJSONArray(DEPENDENCIES), files, requirementsTxtPath);
+                dependencies = collectDependenciesReq(treeArray.getJSONObject(findIndexInArrayOfPipdeptree(treeArray)).getJSONArray(DEPENDENCIES), files, requirementsTxtPath);
             }
         } catch (IOException e) {
             logger.warn("Cannot read the hierarchy tree file");
         }
         return dependencies;
+    }
+
+    private int findIndexInArrayOfPipdeptree(JSONArray treeArray) {
+        for (int i = 0; i < treeArray.length(); i++) {
+            boolean findDefault = false;
+            String packageName = treeArray.getJSONObject(i).getString(PACKAGE_NAME);
+            for (String defaultPackage : DEFAULT_PACKAGES_IN_PIPDEPTREE) {
+                if (defaultPackage.equals(packageName)) {
+                    findDefault = true;
+                    break;
+                }
+            }
+            if (!findDefault) {
+                return i;
+            }
+        }
+        return treeArray.length() - 1;
     }
 
     private List<DependencyInfo> collectDependenciesReq(JSONArray dependenciesArray, File[] files, String requirementsTxtPath) {
