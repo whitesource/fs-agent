@@ -15,6 +15,7 @@
  */
 package org.whitesource.fs;
 
+import ch.qos.logback.classic.Level;
 import com.beust.jcommander.JCommander;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -68,6 +69,8 @@ public class Main {
 
         // read configuration senderConfig
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
+        setLogLevel(fsaConfiguration.getLogLevel());
+
         boolean isStandalone = commandLineArgs.web.equals(Constants.FALSE);
         logger.info(fsaConfiguration.toString());
         if (isStandalone) {
@@ -98,6 +101,14 @@ public class Main {
                     .setWorker(true);
             vertx.deployVerticle(FsaVerticle.class.getName(), options);
         }
+    }
+
+    private static void setLogLevel(String logLevel) {
+        // read log level from configuration file
+        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        ch.qos.logback.classic.Logger mapLog = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.MAP_LOG_NAME);
+        root.setLevel(Level.toLevel(logLevel, Level.INFO));
+        //((LogMapAppender) mapLog.getAppender(Constants.MAP_APPENDER_NAME)).setRootLevel(root.getLevel());
     }
 
     public ProjectsDetails scanAndSend(FSAConfiguration fsaConfiguration, boolean shouldSend) {
