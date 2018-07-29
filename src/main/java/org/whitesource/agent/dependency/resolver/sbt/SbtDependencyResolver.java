@@ -40,6 +40,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     private static final String SUCCESS = "success";
     private static final String PROJECT = "project";
     private static final String COMPILE_XML = "-compile.xml";
+    public static final String SBT_TARGET_FOLDER = "sbt.targetFolder";
 
     /* --- Private Members --- */
 
@@ -81,16 +82,23 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
             if (Files.exists(path)) {
                 xmlFiles = findXmlReport(sbtTargetFolder, xmlFiles, new String[]{Constants.PATTERN + COMPILE_XML}, excludes);
             } else {
-                logger.warn("The target folder path doesn't exist in this {} path", sbtTargetFolder);
+                logger.warn("The target folder path {} doesn't exist", sbtTargetFolder);
             }
         } else {
-            xmlFiles = findXmlReport(topLevelFolder, xmlFiles, includes, excludes);
+            Collection<String> targetFolders = findTargetFolders(topLevelFolder);
+            if (!targetFolders.isEmpty()) {
+                for (String targetPath : targetFolders) {
+                    xmlFiles = findXmlReport(targetPath, xmlFiles, new String[]{Constants.PATTERN + COMPILE_XML}, excludes);
+                }
+            } else {
+                logger.debug("Didn't find any target folder in {}", topLevelFolder);
+            }
         }
 
         // if the system didn't find compile.xml files and the user didn't turn on the sbt.runPreStepFlag
         // the system print warning message to the user and ask him to turn on the flag.
         if (xmlFiles.isEmpty() && !sbtRunPreStep) {
-            logger.warn("Didn't find compile.xml please try to turn on the flag");
+            logger.warn("Didn't find compile.xml please try to turn on the flag {}", SBT_TARGET_FOLDER);
         }
         for (File xmlFile : xmlFiles) {
             projects.add(parseXmlReport(xmlFile));
@@ -190,6 +198,31 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         if (!success) {
             logger.warn("Can't run '{} {}'", SBT, COMPILE);
         }
+    }
+
+    // Trying to get all the paths of target folders
+    private Collection<String> findTargetFolders(String folderPath) {
+        Cli cli = new Cli();
+        List<String> lines;
+        List<String> targetFolders = new LinkedList<>();
+        lines = cli.runCmd(folderPath, cli.getCommandParams(SBT, TARGET));
+        if (!lines.isEmpty()) {
+            for (String line : lines) {
+                if (line.endsWith(TARGET) && line.contains(fileSeparator)) {
+                    String[] split = line.split(".*\\s");
+                    targetFolders.add(split[1]);
+                }
+            }
+        }
+        for (int i = 0; i < targetFolders.size(); i++) {
+            String targetFolder = targetFolders.get(i);
+            Path path = Paths.get(targetFolder);
+            if (!Files.exists(path)) {
+                targetFolders.remove(targetFolder);
+                logger.warn("The target folder {} path doesn't exist", sbtTargetFolder);
+            }
+        }
+        return targetFolders;
     }
 
     private AgentProjectInfo parseXmlReport(File xmlReportFile) {
