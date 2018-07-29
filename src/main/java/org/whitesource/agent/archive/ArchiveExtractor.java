@@ -449,14 +449,15 @@ public class ArchiveExtractor {
                 unArchiver = new TarBZip2UnArchiver();
             } else if (fileName.endsWith(XZ_SUFFIX)) {
                 String destFileUrl = destDir.getCanonicalPath() + Constants.BACK_SLASH + XZ_UN_ARCHIVER_FILE_NAME;
-                File destFile = new File(destFileUrl);
-                unXz(destFile, XZ_UN_ARCHIVER_FILE_NAME);
+                success = unXz(new File(archiveFile), destFileUrl);
                 archiveFile = destFileUrl;
             }
-            unArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
-            unArchiver.setSourceFile(new File(archiveFile));
-            unArchiver.setDestDirectory(destDir);
-            unArchiver.extract();
+            if (success) {
+                unArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
+                unArchiver.setSourceFile(new File(archiveFile));
+                unArchiver.setDestDirectory(destDir);
+                unArchiver.extract();
+            }
         } catch (Exception e) {
             success = false;
             logger.warn("Error extracting file {}: {}", fileName, e.getMessage());
@@ -465,17 +466,19 @@ public class ArchiveExtractor {
     }
 
     // extract xz files
-    public void unXz(File archiveFile, String filename) {
+    public boolean unXz(File srcFileToArchive, String destFilePath) {
+        boolean success = true;
         try {
             XZUnArchiver XZUnArchiver = new XZUnArchiver();
             XZUnArchiver.enableLogging(new ConsoleLogger(ConsoleLogger.LEVEL_DISABLED, UN_ARCHIVER_LOGGER));
-            XZUnArchiver.setSourceFile(new File(archiveFile.getPath()));
-            File destFile = new File(archiveFile.getParent() + filename);
-            XZUnArchiver.setDestFile(destFile);
+            XZUnArchiver.setSourceFile(srcFileToArchive);
+            XZUnArchiver.setDestFile(new File(destFilePath));
             XZUnArchiver.extract();
         } catch (Exception e) {
-            logger.warn("Failed to extract Xz file : {} - {}", archiveFile.getPath(), e.getMessage());
+            success = false;
+            logger.warn("Failed to extract Xz file : {} - {}", srcFileToArchive.getPath(), e.getMessage());
         }
+        return success;
     }
 
     // Open and extract data from rpm files
