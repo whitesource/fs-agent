@@ -271,7 +271,7 @@ public class DockerResolver {
     }
 
     private File getPackagesLogFile(File file, ArchiveExtractor archiveExtractor) {
-        archiveExtractor.unXz(file, File.separator + PACKAGE_LOG_TXT);
+        archiveExtractor.unXz(file, file.getParent() + File.separator + PACKAGE_LOG_TXT);
         return new File(file.getParent() + File.separator + PACKAGE_LOG_TXT);
     }
 
