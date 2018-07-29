@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration debug="false">
+	<!-- setting this property here removed the logback's own status messages from the start of the log on the console -->
+	<statusListener class="ch.qos.logback.core.status.NopStatusListener" />
 
 	<define name="collectLoggerName" class="org.whitesource.fs.LogMapDefiner" >
 		<propertyLookupKey>loggerName</propertyLookupKey>
