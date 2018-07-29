@@ -52,6 +52,7 @@ public class Main {
     /* --- Private Members --- */
 
     ProjectsCalculator projectsCalculator = new ProjectsCalculator();
+    public static final String HELP_CONTENT_FILE_NAME = "helpContent.txt";
 
     /* --- Main --- */
 

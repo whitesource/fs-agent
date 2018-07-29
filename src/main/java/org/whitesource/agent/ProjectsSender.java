@@ -15,6 +15,8 @@
  */
 package org.whitesource.agent;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.beust.jcommander.internal.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +31,6 @@ import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.contracts.PluginInfo;
-import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.LogMapAppender;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
@@ -42,7 +43,10 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
