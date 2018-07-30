@@ -11,7 +11,6 @@ public enum GoDependencyManager {
 
 
     private final String type;
-    private final static Logger logger = LoggerFactory.getLogger(GoDependencyManager.class);
 
     GoDependencyManager(String type){
         this.type = type;

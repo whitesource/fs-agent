@@ -44,6 +44,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     //private static final String PYTHON_BOM = "requirements.txt";
     private static final String PY_EXT = ".py";
     public static final String WHITESOURCE_PYTHON_TEMP_FOLDER = "Whitesource_python_resolver";
+    public static final String DIRECT = "_direct";
 
     /* --- Constructors --- */
 
@@ -66,12 +67,13 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
             FilesUtils filesUtils = new FilesUtils();
             String tempDirVirtualEnv = filesUtils.createTmpFolder(true, WHITESOURCE_PYTHON_TEMP_FOLDER);
             String tempDirPackages = filesUtils.createTmpFolder(false, WHITESOURCE_PYTHON_TEMP_FOLDER);
+            String tempDirDirectPackages = filesUtils.createTmpFolder(false, WHITESOURCE_PYTHON_TEMP_FOLDER + DIRECT);
 
             Collection<DependencyInfo> dependencies = new LinkedList<>();
             PythonDependencyCollector pythonDependencyCollector;
             if (tempDirVirtualEnv != null && tempDirPackages != null) {
                 pythonDependencyCollector = new PythonDependencyCollector(this.pythonPath, this.pipPath, this.installVirutalenv, this.resolveHierarchyTree, this.ignorePipInstallErrors,
-                        dependencyFile, tempDirPackages, tempDirVirtualEnv);
+                        dependencyFile, tempDirPackages, tempDirVirtualEnv, tempDirDirectPackages);
                 String currentTopLevelFolder = dependencyFile.substring(0, dependencyFile.replaceAll("\\\\",
                         Constants.FORWARD_SLASH).lastIndexOf(Constants.FORWARD_SLASH));
                 Collection<AgentProjectInfo> projects = pythonDependencyCollector.collectDependencies(currentTopLevelFolder);
@@ -79,6 +81,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
                 // delete tmp folders
                 FilesUtils.deleteDirectory(new File(tempDirVirtualEnv));
                 FilesUtils.deleteDirectory(new File(tempDirPackages));
+                FilesUtils.deleteDirectory(new File(tempDirDirectPackages));
             }
             resultDependencies.addAll(dependencies);
         }

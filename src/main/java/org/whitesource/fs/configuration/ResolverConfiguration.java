@@ -557,7 +557,8 @@ public class ResolverConfiguration {
                 ", pythonResolveDependencies=" + pythonResolveDependencies +
                 ", pythonIgnorePipInstallErrors=" + pythonIgnorePipInstallErrors +
                 ", pythonInstallVirtualenv=" + pythonInstallVirtualenv +
-                ", pythonResolveHierarchyTree=" + pythonResolveHierarchyTree + '\n' +
+                ", pythonResolveHierarchyTree=" + pythonResolveHierarchyTree +
+                ", python.resolveSetupPyFiles=" + pythonResolveSetupPyFiles + '\n' +
                 ", pythonRequirementsFileIncludes=" + Arrays.toString(pythonRequirementsFileIncludes) + '\n' +
                 ", gradleResolveDependencies=" + gradleResolveDependencies +
                 ", gradleRunAssembleCommand=" + gradleRunAssembleCommand + '\n' +
