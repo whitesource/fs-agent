@@ -1,5 +1,6 @@
 package org.whitesource.fs;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.archive.ArchiveExtractor;
 import org.whitesource.agent.dependency.resolver.docker.DockerImage;
@@ -27,7 +28,7 @@ public class DockerTest {
     private static final String REPOSITORY = "REPOSITORY";
     private static final String SPACES_REGEX = "\\s+";
 
-
+    @Ignore
     @Test
     public void getDockerImages() {
         String line = null;
@@ -53,6 +54,7 @@ public class DockerTest {
         }
     }
 
+    @Ignore
     @Test
     public void saveImages() {
         //ProcessBuilder pb = new ProcessBuilder("C:/Tests/testDocketAgent/test.bat");
@@ -66,6 +68,7 @@ public class DockerTest {
         extractFolder();
     }
 
+    @Ignore
     @Test
     public void extractFolder() {
 

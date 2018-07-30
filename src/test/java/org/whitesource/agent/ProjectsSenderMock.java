@@ -27,7 +27,7 @@ public class ProjectsSenderMock extends ProjectsSender {
     public ProjectsSenderMock(SenderConfiguration senderConfig, OfflineConfiguration offlineConfig, RequestConfiguration requestConfig, PluginInfo pluginInfo) {
         super(senderConfig, offlineConfig, requestConfig, pluginInfo);
         whitesourceService = new WhitesourceServiceMock(pluginInfo.getAgentType(), pluginInfo.getAgentVersion(), pluginInfo.getPluginVersion(),
-                senderConfig.getServiceUrl(), false, 1, senderConfig.isIgnoreCertificateCheck());
+                senderConfig.getServiceUrl(), false, 60, senderConfig.isIgnoreCertificateCheck());
     }
 
     /* --- Inner Class --- */
@@ -46,8 +46,9 @@ public class ProjectsSenderMock extends ProjectsSender {
         }
 
         @Override
-        public UpdateInventoryResult update(String orgToken, String requesterEmail, UpdateType updateType, String product, String productVersion, Collection<AgentProjectInfo> projectInfos, String userKey) throws WssServiceException {
-            json = new Gson().toJson(this.getRequestFactory().newUpdateInventoryRequest(orgToken, updateType, requesterEmail, product, productVersion, projectInfos, userKey, ""));
+        public UpdateInventoryResult update(String orgToken, String requesterEmail, UpdateType updateType, String product,
+                                            String productVersion, Collection<AgentProjectInfo> projectInfos, String userKey) throws WssServiceException {
+            json = new Gson().toJson(this.getRequestFactory().newUpdateInventoryRequest(orgToken, updateType, requesterEmail, product, productVersion, projectInfos, userKey, Constants.EMPTY_STRING));
             return new UpdateInventoryResult("via-test", true);
         }
 

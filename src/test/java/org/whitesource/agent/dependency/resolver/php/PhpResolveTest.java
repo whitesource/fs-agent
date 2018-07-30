@@ -2,6 +2,7 @@ package org.whitesource.agent.dependency.resolver.php;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
@@ -22,6 +23,7 @@ public class PhpResolveTest {
         phpDependencyResolver = new PhpDependencyResolver(false, true);
     }
 
+    @Ignore
     @Test
     public void resolveDependencies() throws FileNotFoundException {
         String folderPath = Paths.get(Constants.DOT).toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\php\\");

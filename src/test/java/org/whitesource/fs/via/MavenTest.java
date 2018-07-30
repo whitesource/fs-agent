@@ -1,6 +1,7 @@
 package org.whitesource.fs.via;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.ProjectsSender;
@@ -44,6 +45,7 @@ public class MavenTest {
 
     }
 
+    @Ignore
     @Test
     public void viaWithMaven() {
         projectsDetails.setProjectToViaComponents(projectToViaComponents);

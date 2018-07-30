@@ -2,6 +2,7 @@ package org.whitesource.agent.dependency.resolver.sbt;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -23,6 +24,7 @@ public class SbtDependencyResolverTest {
         sbtDependencyResolver = new SbtDependencyResolver(true, true, true , "");
     }
 
+    @Ignore
     @Test
     public void resolveDependencies() {
         File buildSbtFile = TestHelper.getFileFromResources("resolver/sbt/build.sbt");

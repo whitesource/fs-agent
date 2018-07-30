@@ -1,6 +1,7 @@
 package org.whitesource.agent.dependency.resolver.nuget;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
@@ -24,6 +25,7 @@ public class NugetPackagesConfigXmlParserTest {
 
     /* --- Tests --- */
 
+    @Ignore
     @Test
     public void parseNugetDependenciesFromXml() throws JAXBException {
         File xmlFile = TestHelper.getFileFromResources("resolver/nuget/project-name.config");

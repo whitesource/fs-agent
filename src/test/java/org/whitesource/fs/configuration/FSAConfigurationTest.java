@@ -1,6 +1,7 @@
 package org.whitesource.fs.configuration;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.fs.FSAConfiguration;
@@ -16,6 +17,7 @@ public class FSAConfigurationTest {
 
     final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
 
+    @Ignore
     @Test
     public void shouldLoadSave() throws IOException {
         ConfigurationSerializer configurationSerializer = new ConfigurationSerializer();
