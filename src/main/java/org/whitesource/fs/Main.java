@@ -76,6 +76,12 @@ public class Main {
 
         boolean isStandalone = commandLineArgs.web.equals(Constants.FALSE);
         logger.info(fsaConfiguration.toString());
+        if (fsaConfiguration.getSender().isSendLogsToWss()){
+            logger.info("-----------------------------------------------------------------------------\r\n" +
+                        "\t\t'sendLogsToWss' parameter is enabled\r\n" +
+                        "\t\tData of your scan will be sent to WhiteSource for diagnostic purposes\r\n" +
+                        "-----------------------------------------------------------------------------");
+        }
         if (isStandalone) {
             try {
                 if (fsaConfiguration.getErrors() == null || fsaConfiguration.getErrors().size() > 0) {
@@ -115,7 +121,7 @@ public class Main {
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         ch.qos.logback.classic.Logger mapLog = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.MAP_LOG_NAME);
         root.setLevel(Level.toLevel(logLevel, Level.INFO));
-        //((LogMapAppender) mapLog.getAppender(Constants.MAP_APPENDER_NAME)).setRootLevel(root.getLevel());
+        ((LogMapAppender) mapLog.getAppender(Constants.MAP_APPENDER_NAME)).setRootLevel(root.getLevel());
     }
 
     public ProjectsDetails scanAndSend(FSAConfiguration fsaConfiguration, boolean shouldSend) {
