@@ -11,6 +11,7 @@ import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
+import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.Cli;
@@ -22,6 +23,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class SbtDependencyResolver extends AbstractDependencyResolver {
@@ -40,7 +43,9 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     private static final String SUCCESS = "success";
     private static final String PROJECT = "project";
     private static final String COMPILE_XML = "-compile.xml";
-    public static final String SBT_TARGET_FOLDER = "sbt.targetFolder";
+    private static final String SBT_TARGET_FOLDER = "sbt.targetFolder";
+    private static final Pattern linuxPattern = Pattern.compile("\\/.*\\/target");
+    private static final String windowsPattern = ".*\\s";
 
     /* --- Private Members --- */
 
@@ -208,18 +213,27 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         lines = cli.runCmd(folderPath, cli.getCommandParams(SBT, TARGET));
         if (!lines.isEmpty()) {
             for (String line : lines) {
-                if (line.endsWith(TARGET) && line.contains(fileSeparator)) {
-                    String[] split = line.split(".*\\s");
-                    targetFolders.add(split[1]);
+                if (DependencyCollector.isWindows()) {
+                    if (line.endsWith(TARGET) && line.contains(fileSeparator)) {
+                        String[] split = line.split(windowsPattern);
+                        targetFolders.add(split[1]);
+                    }
+                } else {
+                    if (line.contains(TARGET) && line.contains(fileSeparator)) {
+                        Matcher matcher = linuxPattern.matcher(line);
+                        if (matcher.find()) {
+                            targetFolders.add(matcher.group(0));
+                        }
+                    }
                 }
             }
-        }
-        for (int i = 0; i < targetFolders.size(); i++) {
-            String targetFolder = targetFolders.get(i);
-            Path path = Paths.get(targetFolder);
-            if (!Files.exists(path)) {
-                targetFolders.remove(targetFolder);
-                logger.warn("The target folder {} path doesn't exist", sbtTargetFolder);
+            for (int i = 0; i < targetFolders.size(); i++) {
+                String targetFolder = targetFolders.get(i);
+                Path path = Paths.get(targetFolder);
+                if (!Files.exists(path)) {
+                    targetFolders.remove(targetFolder);
+                    logger.warn("The target folder {} path doesn't exist", sbtTargetFolder);
+                }
             }
         }
         return targetFolders;
