@@ -77,10 +77,10 @@ public class Main {
         boolean isStandalone = commandLineArgs.web.equals(Constants.FALSE);
         logger.info(fsaConfiguration.toString());
         if (fsaConfiguration.getSender().isSendLogsToWss()){
-            logger.info("-----------------------------------------------------------------------------\r\n" +
-                        "\t\t'sendLogsToWss' parameter is enabled\r\n" +
-                        "\t\tData of your scan will be sent to WhiteSource for diagnostic purposes\r\n" +
-                        "-----------------------------------------------------------------------------");
+            logger.info("-----------------------------------------------------------------------------");
+            logger.info("'sendLogsToWss' parameter is enabled");
+            logger.info("Data of your scan will be sent to WhiteSource for diagnostic purposes");
+            logger.info("-----------------------------------------------------------------------------");
         }
         if (isStandalone) {
             try {
