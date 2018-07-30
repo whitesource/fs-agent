@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false">
+	<!-- setting this property here removed the logback's own status messages from the start of the log on the console -->
+	<statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+	<define name="collectLoggerName" class="org.whitesource.fs.LogMapDefiner" >
+		<propertyLookupKey>loggerName</propertyLookupKey>
+	</define>
+
+	<define name="collectAppenderName" class="org.whitesource.fs.LogMapDefiner" >
+		<propertyLookupKey>appenderName</propertyLookupKey>
+	</define>
+
+	<contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+    	<resetJUL>true</resetJUL>
+  	</contextListener>
+
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender" >
+		<encoder>
+			<pattern>[%level] %d{"HH:mm:ss"} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="${collectAppenderName}" class="org.whitesource.fs.LogMapAppender">
+		<append>false</append>
+		<encoder>
+			<pattern>[%level] %d{"HH:mm:ss"} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="com.wss" level="debug"/>
+	<logger name="org.apache.maven" level="debug"/>
+
+	<logger name="httpclient" level="error"/>
+	<logger name="java" level="error"/>
+	<logger name="org.apache" level="error"/>
+	<logger name="com.aragost.javahg.log.JULLogger" level="error"/>
+	<logger name="org.redline_rpm" level="error"/>
+
+	<logger name="${collectLoggerName}" level="trace">
+		<appender-ref ref="${collectAppenderName}"/>
+	</logger>
+
+	<root>
+		<appender-ref ref="console" />
+	</root>
+</configuration>

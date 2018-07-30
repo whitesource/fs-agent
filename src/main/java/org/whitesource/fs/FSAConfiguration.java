@@ -332,7 +332,14 @@ public class FSAConfiguration {
         boolean pythonIgnorePipInstallErrors = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_IGNORE_PIP_INSTALL_ERRORS, false);
         boolean pythonInstallVirtualenv = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_INSTALL_VIRTUALENV, false);
         boolean pythonResolveHierarchyTree = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_RESOLVE_HIERARCHY_TREE, true);
-        String[] pythonRequirementsFileIncludes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, new String[]{Constants.PYTHON_REQUIREMENTS});
+        boolean pythonResolveSetupPyFiles = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_RESOLVE_SETUP_PY_FILES, false);
+        String[] bomPatternForPython;
+        if (pythonResolveSetupPyFiles) {
+            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.SETUP_PY};
+        } else {
+            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS};
+        }
+        String[] pythonRequirementsFileIncludes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, bomPatternForPython);
 
         boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
@@ -369,7 +376,7 @@ public class FSAConfiguration {
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
-                pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes,
+                pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles,
                 dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, paketResolveDependencies,
                 paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall,
@@ -418,10 +425,12 @@ public class FSAConfiguration {
         String proxyUser = config.getProperty(ConfigPropertyKeys.PROXY_USER_PROPERTY_KEY);
         String proxyPassword = config.getProperty(ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY);
         boolean ignoreCertificateCheck = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.IGNORE_CERTIFICATE_CHECK, false);
+        boolean isSendLogsToWss = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SEND_LOGS_TO_WSS, false);
 
         return new SenderConfiguration(checkPolicies, serviceUrl, connectionTimeOut,
                 proxyHost, proxyPort, proxyUser, proxyPassword,
-                forceCheckAllDependencies, forceUpdate, forceUpdateBuildFailed, updateTypeValue, enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals);
+                forceCheckAllDependencies, forceUpdate, forceUpdateBuildFailed, updateTypeValue,
+                enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals, isSendLogsToWss);
     }
 
     private OfflineConfiguration getOffline(Properties config) {
