@@ -212,6 +212,7 @@ public class Main {
     }
 
     private static void printHelpContent() {
+        logger = LoggerFactory.getLogger(Main.class);
         InputStream inputStream = null;
         BufferedReader bufferedReader = null;
         try {
