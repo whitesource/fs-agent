@@ -57,6 +57,12 @@ public class Main {
     /* --- Main --- */
 
     public static void main(String[] args) {
+        int exitCode = mainScan(args);
+        setExitCode(exitCode);
+        System.exit(exitCode);
+    }
+
+    private static int mainScan(String[] args) {
         CommandLineArgs commandLineArgs = new CommandLineArgs();
 
         if (isHelpArg(args)) {
@@ -90,7 +96,8 @@ public class Main {
                 processExitCode = StatusCode.ERROR;
             }
             logger.info("Process finished with exit code {} ({})", processExitCode.name(), processExitCode.getValue());
-            System.exit(processExitCode.getValue());
+            exitCode = getValue(processExitCode);
+
         } else {
             //this is a work around
             vertx = Vertx.vertx(new VertxOptions()
@@ -103,7 +110,11 @@ public class Main {
                     .setWorker(true);
             vertx.deployVerticle(FsaVerticle.class.getName(), options);
         }
-        setExitCode(exitCode);
+        return exitCode;
+    }
+
+    private static int getValue(StatusCode processExitCode) {
+        return processExitCode.getValue();
     }
 
     private static void setLogLevel(String logLevel) {
@@ -180,7 +191,6 @@ public class Main {
         return projectsSender;
     }
 
-
     private Pair<String, StatusCode> sendProjects(ProjectsSender projectsSender, ProjectsDetails projectsDetails) {
         Collection<AgentProjectInfo> projects = projectsDetails.getProjects();
         Iterator<AgentProjectInfo> iterator = projects.iterator();
@@ -254,16 +264,11 @@ public class Main {
     // end to end integration projectSenderExist
     protected static void endToEndIntegration(String[] args, ProjectsSender testProjectsSender) {
         projectsSender = testProjectsSender;
-        main(args);
-        int exitCode = getExitCode();
-        System.exit(exitCode);
+        mainScan(args);
+
     }
 
     /* --- Getters / Setters --- */
-
-    public static int getExitCode() {
-        return exitCode;
-    }
 
     public static void setExitCode(int exitCode) {
         Main.exitCode = exitCode;
