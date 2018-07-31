@@ -16,6 +16,7 @@
 package org.whitesource.fs;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.util.ContextInitializer;
 import com.beust.jcommander.JCommander;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -41,15 +42,16 @@ import java.util.stream.Collectors;
  * Author: Itai Marko
  */
 public class Main {
+    protected static final String LOGBACK_FSA_XML = "logback-FSA.xml";
 
     /* --- Static members --- */
 
-    public static final Logger logger = LoggerFactory.getLogger(Main.class);
+    public static Logger logger; // don't initialize the logger here, only after setting the
+                                 // ContextInitializer.CONFIG_FILE_PROPERTY property (set inside setLoggerConfiguration method)
     public static final long MAX_TIMEOUT = 1000 * 60 * 60;
     private static ProjectsSender projectsSender = null;
     private static Vertx vertx;
     public static int exitCode = 0;
-
 
     ProjectsCalculator projectsCalculator = new ProjectsCalculator();
     public static final String HELP_CONTENT_FILE_NAME = "helpContent.txt";
@@ -58,7 +60,6 @@ public class Main {
 
     public static void main(String[] args) {
         int exitCode = mainScan(args);
-        setExitCode(exitCode);
         System.exit(exitCode);
     }
 
@@ -71,16 +72,22 @@ public class Main {
         }
 
         new JCommander(commandLineArgs, args);
-
         StatusCode processExitCode;
 
         // read configuration senderConfig
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
-        setLogLevel(fsaConfiguration.getLogLevel());
+        // don't make any reference to the logger before calling this method
+
+        setLoggerConfiguration(fsaConfiguration.getLogLevel());
 
         boolean isStandalone = commandLineArgs.web.equals(Constants.FALSE);
         logger.info(fsaConfiguration.toString());
-        int exitCode = 0;
+        if (fsaConfiguration.getSender().isSendLogsToWss()){
+            logger.info("-----------------------------------------------------------------------------");
+            logger.info("'sendLogsToWss' parameter is enabled");
+            logger.info("Data of your scan will be sent to WhiteSource for diagnostic purposes");
+            logger.info("-----------------------------------------------------------------------------");
+        }
         if (isStandalone) {
             try {
                 if (fsaConfiguration.getErrors() == null || fsaConfiguration.getErrors().size() > 0) {
@@ -97,7 +104,6 @@ public class Main {
             }
             logger.info("Process finished with exit code {} ({})", processExitCode.name(), processExitCode.getValue());
             exitCode = getValue(processExitCode);
-
         } else {
             //this is a work around
             vertx = Vertx.vertx(new VertxOptions()
@@ -117,12 +123,16 @@ public class Main {
         return processExitCode.getValue();
     }
 
-    private static void setLogLevel(String logLevel) {
+    private static void setLoggerConfiguration(String logLevel) {
+        // setting the logback name manually, to override the default logback.xml which is originated from the jar of wss-agent-api-client.
+        // making sure this is done before initializing the logger object, for otherwise this overriding will fail
+        System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, LOGBACK_FSA_XML);
+        logger = LoggerFactory.getLogger(Main.class);
         // read log level from configuration file
         ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         ch.qos.logback.classic.Logger mapLog = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.MAP_LOG_NAME);
         root.setLevel(Level.toLevel(logLevel, Level.INFO));
-        //((LogMapAppender) mapLog.getAppender(Constants.MAP_APPENDER_NAME)).setRootLevel(root.getLevel());
+        ((LogMapAppender) mapLog.getAppender(Constants.MAP_APPENDER_NAME)).setRootLevel(root.getLevel());
     }
 
     public ProjectsDetails scanAndSend(FSAConfiguration fsaConfiguration, boolean shouldSend) {
@@ -229,6 +239,7 @@ public class Main {
     }
 
     private static void printHelpContent() {
+        logger = LoggerFactory.getLogger(Main.class);
         InputStream inputStream = null;
         BufferedReader bufferedReader = null;
         try {
@@ -265,12 +276,5 @@ public class Main {
     protected static void endToEndIntegration(String[] args, ProjectsSender testProjectsSender) {
         projectsSender = testProjectsSender;
         mainScan(args);
-
-    }
-
-    /* --- Getters / Setters --- */
-
-    public static void setExitCode(int exitCode) {
-        Main.exitCode = exitCode;
     }
 }

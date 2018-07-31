@@ -1,5 +1,6 @@
 package org.whitesource.fs;
 
+import ch.qos.logback.classic.util.ContextInitializer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,6 +16,8 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+import static org.whitesource.fs.Main.LOGBACK_FSA_XML;
+
 /**
  * @author chen.luigi
  */
@@ -22,7 +25,7 @@ public class ViaTest {
 
     /* --- Static members --- */
 
-    private static final Logger logger = LoggerFactory.getLogger(ViaTest.class);
+    private static Logger logger = null;
     private static final String inputDir = File.separator + "test_input" + File.separator;
     private static final String INPUT_DIR = Paths.get(Constants.DOT).toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath(inputDir);
     private static final String CONFIG_PATH = inputDir + File.separator + "whitesource-fs-agent.ksa.config";
@@ -40,6 +43,8 @@ public class ViaTest {
     public void setUp() throws IOException {
         config = new Properties();
         config.load(new FileInputStream(CONFIG));
+        System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, LOGBACK_FSA_XML);
+        logger = LoggerFactory.getLogger(ViaTest.class);
         fsaConfiguration = new FSAConfiguration(config);
     }
 
@@ -47,6 +52,7 @@ public class ViaTest {
 
     @Test
     public void testKsa() {
+        logger.info("**** Starting Via Maven Test ****");
         String proj = INPUT_DIR + "ksa" + File.separator + "ksa-web-core" + File.separator;
         String configFile = INPUT_DIR + File.separator + "whitesource-fs-agent.ksa.config";
         String args[] = {"-appPath", proj + "target" + File.separator + "ksa-web-core-3.9.0.jar", "-d", proj, "-c", configFile};
@@ -58,8 +64,6 @@ public class ViaTest {
 
         } catch (Exception e) {
             logger.error("Failed to send test request {}", e.getMessage());
-        }finally {
-            int i=0;
         }
         String jsonResult = projectsSender.getJson();
         Assert.assertTrue(jsonResult.contains("com.ksa.web.struts2.views.freemarker.ShiroFreemarkerManager:forTest"));

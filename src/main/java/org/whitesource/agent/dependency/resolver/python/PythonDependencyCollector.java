@@ -44,6 +44,7 @@ public class PythonDependencyCollector extends DependencyCollector {
     private String topLevelFolder;
     private AtomicInteger counterFolders = new AtomicInteger(0);
     private DependenciesFileType dependencyFileType;
+    private String tempDirDirectPackages;
 
     private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver.class);
 
@@ -77,11 +78,14 @@ public class PythonDependencyCollector extends DependencyCollector {
     private static final String SCRIPT_SH = "/script.sh";
     private static final String BIN_BASH = "#!/bin/bash";
     private static final String ARROW = ">";
+    private static final String NO_DEPS = "--no-deps";
+    private static final String[] DEFAULT_PACKAGES_IN_PIPDEPTREE = new String[] {"pipdeptree", "setuptools", "wheel"};
+    private static final String APOSTROPHE = "'";
 
     /* --- Constructors --- */
 
     public PythonDependencyCollector(String pythonPath, String pipPath, boolean installVirtualEnv, boolean resolveHierarchyTree, boolean ignorePipInstallErrors,
-                                     String requirementsTxtOrSetupPyPath, String tempDirPackages, String tempDirVirtualEnv) {
+                                     String requirementsTxtOrSetupPyPath, String tempDirPackages, String tempDirVirtualEnv, String tempDirDirectPackages) {
         super();
         this.pythonPath = pythonPath;
         this.pipPath = pipPath;
@@ -96,6 +100,7 @@ public class PythonDependencyCollector extends DependencyCollector {
         this.requirementsTxtOrSetupPyPath = requirementsTxtOrSetupPyPath;
         this.tempDirPackages = tempDirPackages;
         this.tempDirVirtualenv = tempDirVirtualEnv;
+        this.tempDirDirectPackages = tempDirDirectPackages;
         this.ignorePipInstallErrors = ignorePipInstallErrors;
     }
 
@@ -126,9 +131,9 @@ public class PythonDependencyCollector extends DependencyCollector {
                 if (failed) {
                     String error = null;
                     if (this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
-                        error = "Fail to run 'pip install -r " + this.requirementsTxtOrSetupPyPath + "'";
+                        error = "Fail to run 'pip install -r " + this.requirementsTxtOrSetupPyPath + APOSTROPHE;
                     } else if (this.dependencyFileType == DependenciesFileType.SETUP_PY) {
-                        error = "Fail to run 'pip install " + this.requirementsTxtOrSetupPyPath + "'";
+                        error = "Fail to run 'pip install " + this.requirementsTxtOrSetupPyPath + APOSTROPHE;
                     }
                     logger.warn(error + ". To see the full error, re-run the plugin with this parameter in the config file: log.level=debug");
                 } else if (!failed && !this.resolveHierarchyTree) {
@@ -137,6 +142,11 @@ public class PythonDependencyCollector extends DependencyCollector {
                     failedGetTree = getTree(this.requirementsTxtOrSetupPyPath);
                     if (!failedGetTree) {
                         dependencies = collectDependenciesWithTree(this.tempDirVirtualenv + HIERARCHY_TREE_TXT, requirementsTxtOrSetupPyPath);
+                        // the library pipdeptree removes the direct dependencies if those dependencies are transitive dependencies in other dependencies. fixDependencies() returns the direct dependencies
+                        // This issue is not relevant to setup.py dependency file type
+                        if (this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
+                            fixDependencies(dependencies);
+                        }
                     } else {
                         // collect flat list if hierarchy tree failed
                         dependencies = collectDependencies(new File(tempDirPackages), this.requirementsTxtOrSetupPyPath);
@@ -162,6 +172,64 @@ public class PythonDependencyCollector extends DependencyCollector {
         return getSingleProjectList(dependencies);
     }
 
+    private void fixDependencies(Collection<DependencyInfo> dependencies) {
+        logger.debug("Trying to get all the direct dependencies.");
+        boolean failed = false;
+        try {
+            // get direct dependencies
+            if (this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
+                failed = processCommand(new String[]{pipPath, DOWNLOAD, R_PARAMETER, this.requirementsTxtOrSetupPyPath, NO_DEPS, D_PARAMETER, tempDirDirectPackages}, true);
+            }
+            if (!failed) {
+                findDirectDependencies(dependencies);
+            } else {
+                logger.debug("Cannot download direct dependencies.");
+            }
+        } catch (IOException e) {
+            logger.debug("Cannot download direct dependencies.");
+        }
+    }
+
+    private void findDirectDependencies(Collection<DependencyInfo> dependencies) {
+        File directDependenciesFolder = new File(this.tempDirDirectPackages);
+        File[] directDependenciesFiles = directDependenciesFolder.listFiles();
+        if (directDependenciesFiles.length > dependencies.size()) {
+            int missingDirectDependencies = directDependenciesFiles.length - dependencies.size();
+            logger.debug("There are " + missingDirectDependencies + "missing direct dependencies");
+            int i = 0;
+            while (missingDirectDependencies > 0) {
+                boolean found = false;
+                File directDependencyToCheck = directDependenciesFiles[i];
+                for (DependencyInfo dependency : dependencies) {
+                    if (dependency.getArtifactId().equals(directDependencyToCheck.getName())) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    logger.debug("Trying to find the direct dependency of: {}", directDependencyToCheck.getName());
+                    dependencies.add(findDirectDependencyInTree(dependencies, directDependencyToCheck));
+                    missingDirectDependencies--;
+                }
+                i++;
+            }
+        }
+    }
+
+    private DependencyInfo findDirectDependencyInTree(Collection<DependencyInfo> dependencies, File directDependencyToCheck) {
+        for (DependencyInfo dependency : dependencies) {
+            if (dependency.getArtifactId().equals(directDependencyToCheck.getName())) {
+                return dependency;
+            } else {
+                DependencyInfo child = findDirectDependencyInTree(dependency.getChildren(), directDependencyToCheck);
+                if (child != null) {
+                    return child;
+                }
+            }
+        }
+        return null;
+    }
+
     private List<DependencyInfo> collectDependenciesWithTree(String treeFile, String requirementsTxtPath) {
         List<DependencyInfo> dependencies = new LinkedList<>();
         try {
@@ -172,13 +240,29 @@ public class PythonDependencyCollector extends DependencyCollector {
             if (this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
                 dependencies = collectDependenciesReq(treeArray, files, requirementsTxtPath);
             } else if (this.dependencyFileType == DependenciesFileType.SETUP_PY) {
-                // Take the last dependency because it is the parent of all the dependencies of the setup.py file
-                dependencies = collectDependenciesReq(treeArray.getJSONObject(treeArray.length() - 1).getJSONArray(DEPENDENCIES), files, requirementsTxtPath);
+                dependencies = collectDependenciesReq(treeArray.getJSONObject(findIndexInArrayOfPipdeptree(treeArray)).getJSONArray(DEPENDENCIES), files, requirementsTxtPath);
             }
         } catch (IOException e) {
             logger.warn("Cannot read the hierarchy tree file");
         }
         return dependencies;
+    }
+
+    private int findIndexInArrayOfPipdeptree(JSONArray treeArray) {
+        for (int i = 0; i < treeArray.length(); i++) {
+            boolean findDefault = false;
+            String packageName = treeArray.getJSONObject(i).getString(PACKAGE_NAME);
+            for (String defaultPackage : DEFAULT_PACKAGES_IN_PIPDEPTREE) {
+                if (defaultPackage.equals(packageName)) {
+                    findDefault = true;
+                    break;
+                }
+            }
+            if (!findDefault) {
+                return i;
+            }
+        }
+        return treeArray.length() - 1;
     }
 
     private List<DependencyInfo> collectDependenciesReq(JSONArray dependenciesArray, File[] files, String requirementsTxtPath) {

@@ -15,6 +15,7 @@
  */
 package org.whitesource.agent;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.beust.jcommander.internal.Lists;
 import org.apache.commons.lang.StringUtils;
@@ -43,11 +44,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.stream.Collectors;
 
 /**
  * Class for sending projects for all WhiteSource command line agents.
@@ -62,6 +61,7 @@ public class ProjectsSender {
 
     private static final String DATE_FORMAT = "HH:mm:ss";
     public static final String PROJECT_URL_PREFIX = "Wss/WSS.html#!project;id=";
+    protected static final int MAX_LOG_EVENTS = 1000;
 
     /* --- Members --- */
 
@@ -408,11 +408,13 @@ public class ProjectsSender {
         ConcurrentSkipListMap<Long, ILoggingEvent> collectToSet = ((LogMapAppender) setLog.getAppender(Constants.MAP_APPENDER_NAME)).getLogEvents();
         // going over all the collected events, filtering out the empty ones, and writing them to a long string
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
-        for (ILoggingEvent event : collectToSet.values()) {
-            if (!event.getMessage().isEmpty() && !event.getMessage().equals(Constants.NEW_LINE)) {
-                logs = logs.concat("[" + event.getLevel() + "] " + simpleDateFormat.format(new Date(event.getTimeStamp()))
-                        + " - " + event.getFormattedMessage()).concat(Constants.NEW_LINE);
-            }
+        List<ILoggingEvent> events = collectToSet.values().stream().filter(iLoggingEvent -> !iLoggingEvent.getMessage().isEmpty() && !iLoggingEvent.getMessage().equals(Constants.NEW_LINE)).collect(Collectors.toList());
+        if (events.size() > MAX_LOG_EVENTS){
+            events = events.stream().filter(iLoggingEvent -> iLoggingEvent.getLevel().levelInt >= Level.INFO.levelInt).collect(Collectors.toList());
+        }
+        for (ILoggingEvent event : events) {
+            logs = logs.concat("[" + event.getLevel() + "] " + simpleDateFormat.format(new Date(event.getTimeStamp()))
+                    + " - " + event.getFormattedMessage()).concat(Constants.NEW_LINE);
         }
         return logs;
     }
