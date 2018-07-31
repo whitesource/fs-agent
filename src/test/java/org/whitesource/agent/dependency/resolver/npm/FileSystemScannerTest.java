@@ -1,6 +1,7 @@
 package org.whitesource.agent.dependency.resolver.npm;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.Constants;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class FileSystemScannerTest {
     private static String FOLDER_TO_TEST = TestHelper.getFirstFolder(TestHelper.FOLDER_WITH_NPN_PROJECTS);
 
+    @Ignore
     @Test
     public void shouldRemoveJsFilesFromNpmFolders() {
         FilesScanner f = new FilesScanner();

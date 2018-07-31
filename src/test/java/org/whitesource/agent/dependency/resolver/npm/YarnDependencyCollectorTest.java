@@ -2,6 +2,7 @@ package org.whitesource.agent.dependency.resolver.npm;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
@@ -19,6 +20,7 @@ public class YarnDependencyCollectorTest {
         yarnDependencyCollector = new YarnDependencyCollector(true, 10000, true, true);
     }
 
+    @Ignore
     @Test
     public void collectDependencies() {
         String folderPath = Paths.get(Constants.DOT).toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\yarn\\");

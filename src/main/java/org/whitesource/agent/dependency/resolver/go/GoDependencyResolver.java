@@ -13,6 +13,7 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.Cli;
+import org.whitesource.agent.utils.CommandLineProcess;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -168,12 +169,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         File goPkgLock = new File(rootDirectory + fileSeparator + GOPKG_LOCK);
         String error = Constants.EMPTY_STRING;
         if (goPkgLock.isFile()){
-            if (cli.runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.DEP.getType(), GO_ENSURE)) == null) {
+            if (runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.DEP.getType(), GO_ENSURE)) == false) {
                 logger.warn("Can't run 'dep ensure' command, output might be outdated.  Run the 'dep ensure' command manually.");
             }
             dependencyInfos.addAll(parseGopckLock(goPkgLock));
         } else if (collectDependenciesAtRuntime) {
-            if (cli.runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.DEP.getType(), GO_INIT))!= null) {
+            if (runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.DEP.getType(), GO_INIT))) {
                 dependencyInfos.addAll(parseGopckLock(goPkgLock));
             } else {
                 error = "Can't run 'dep init' command.  Make sure dep is installed and run the 'dep init' command manually.";
@@ -279,7 +280,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private void collectGoDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'godep'");
         File goDepJson = new File(rootDirectory + fileSeparator + "Godeps" + fileSeparator +  GODEPS_JSON);
-        if (goDepJson.isFile() || (collectDependenciesAtRuntime && cli.runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GO_DEP.getType(), GO_SAVE)) != null)){
+        if (goDepJson.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GO_DEP.getType(), GO_SAVE)))){
             dependencyInfos.addAll(parseGoDeps(goDepJson));
         } else {
             throw new Exception("Can't find " + GODEPS_JSON + " file.  Please make sure 'godep' is installed and run 'godep save' command");
@@ -338,8 +339,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'vndr'");
         File vndrConf = new File(rootDirectory + fileSeparator + VNDR_CONF);
-        if (vndrConf.isFile() || (collectDependenciesAtRuntime && cli.runCmd(rootDirectory,
-                cli.getCommandParams(GoDependencyManager.VNDR.getType(), GO_INIT)) != null)) {
+        if (vndrConf.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory,
+                cli.getCommandParams(GoDependencyManager.VNDR.getType(), GO_INIT)))) {
             dependencyInfos.addAll(parseVendorConf(vndrConf));
         } else {
             throw new Exception("Can't find " + VNDR_CONF + " file.  Please make sure 'vndr' is installed and run 'vndr init' command");
@@ -371,6 +372,20 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             fileReader.close();
         }
         return dependencyInfos;
+    }
+
+    public boolean runCmd(String rootDirectory, String[] params){
+        try {
+            CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, params);
+            commandLineProcess.executeProcessWithErrorOutput();
+            if (!commandLineProcess.isErrorInProcess()) {
+                return true;
+            }
+        } catch (IOException e) {
+            logger.warn("Error getting dependencies after running {} on {}, {}" , params , rootDirectory, e.getMessage());
+            logger.debug("Error: {}", e.getStackTrace());
+        }
+        return false;
     }
 
     // when running the dependency manager at run time different files (and folders) are created.  removing them according to their creatin time

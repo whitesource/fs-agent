@@ -2,16 +2,17 @@ package org.whitesource.agent.dependency.resolver.maven;
 
 import fr.dutra.tools.maven.deptree.core.Node;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 
 import java.io.*;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MavenLinesParserTest {
 
+    @Ignore
     @Test
     public void shouldParseLinesWithWarnings(){
         File file = TestHelper.getFileFromResources("resolver/maven/lines.txt");

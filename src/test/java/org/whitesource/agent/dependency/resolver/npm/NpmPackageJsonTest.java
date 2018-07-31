@@ -1,16 +1,16 @@
 package org.whitesource.agent.dependency.resolver.npm;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.BomFile;
-
-import java.nio.file.Paths;
 
 /**
  *@author eugen.horovitz
  */
 public class NpmPackageJsonTest {
 
+    @Ignore
     @Test
     public void shouldLoadOptionalDependencies() {
         String path = TestHelper.SUBFOLDER_WITH_OPTIONAL_DEPENDENCIES.getAbsolutePath();

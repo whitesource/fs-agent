@@ -1,6 +1,7 @@
 package org.whitesource.fs.configuration;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
@@ -10,6 +11,7 @@ import java.util.Collection;
 
 public class ScmRepositoriesParserTest {
 
+    @Ignore
     @Test
     public void shouldParse() {
         String repos = TestHelper.getFileFromResources("repos.json").getAbsolutePath();
