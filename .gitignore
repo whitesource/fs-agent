@@ -3,3 +3,8 @@ target/
 .idea/
 /whitesource-fs-agent.config
 /whitesource/
+dots/
+out.txt
+out/
+src/test/resources/resolver/npm/sample/node_modules/
+src/test/resources/resolver/npm/sample/package-lock.json

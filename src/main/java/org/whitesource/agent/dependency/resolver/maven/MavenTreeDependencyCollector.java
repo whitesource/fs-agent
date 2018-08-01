@@ -57,6 +57,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String REPOSITORY = "repository";
     private static final String ALL = "All";
     private static final String POM = "pom";
+    private static final String B_PARAMETER = "-B";
     public static final String TEST_JAR = "test-jar";
     public static final String JAR = "jar";
 
@@ -97,8 +98,13 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
         Collection<AgentProjectInfo> projects = new ArrayList<>();
         try {
-            CommandLineProcess mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParams());
+            CommandLineProcess mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParamsBatchMode());
             List<String> lines = mvnDependencies.executeProcess();
+            if (mvnDependencies.isErrorInProcess()) {
+                logger.debug("Failed to execute the command {}", getLsCommandParamsBatchMode());
+                mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParams());
+                lines = mvnDependencies.executeProcess();
+            }
             if (!mvnDependencies.isErrorInProcess()) {
                 List<Node> nodes = mavenLinesParser.parseLines(lines);
 
@@ -193,6 +199,16 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         } else {
             return new String[] {MVN_COMMAND, MVN_PARAMS_TREE};
         }
+    }
+
+    private String[] getLsCommandParamsBatchMode() {
+        String[] commandParams = getLsCommandParams();
+        String[] result = new String[commandParams.length + 1];
+        for (int i = 0; i < commandParams.length; i++) {
+            result[i] = commandParams[i];
+        }
+        result[result.length - 1] = B_PARAMETER;
+        return result;
     }
 
     protected String getMavenM2Path(String rootDirectory) {

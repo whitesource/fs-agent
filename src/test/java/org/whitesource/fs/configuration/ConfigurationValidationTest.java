@@ -1,6 +1,7 @@
 package org.whitesource.fs.configuration;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.fs.FSAConfiguration;
@@ -10,6 +11,7 @@ import java.util.Properties;
 
 public class ConfigurationValidationTest {
 
+    @Ignore
     @Test
     public void shouldWorkWithProjectPerFolder() {
 
@@ -22,6 +24,7 @@ public class ConfigurationValidationTest {
         Assert.assertNotNull(configProperties);
     }
 
+    @Ignore
     @Test
     public void shouldNotOverrideParametersFromCommandArgs() {
         // arrange

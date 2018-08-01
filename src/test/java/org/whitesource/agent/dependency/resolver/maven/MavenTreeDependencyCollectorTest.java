@@ -1,6 +1,7 @@
 package org.whitesource.agent.dependency.resolver.maven;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.AgentProjectInfo;
@@ -22,6 +23,7 @@ public class MavenTreeDependencyCollectorTest {
 
     public static final String POM = ".pom";
 
+    @Ignore
     @Test
     public void shouldParseOutput() {
         String currentDirectory = System.getProperty("user.dir");
@@ -50,6 +52,7 @@ public class MavenTreeDependencyCollectorTest {
         return deps;
     }
 
+    @Ignore
     @Test
     public void shouldFindPomDependencies() {
         String folderParent = TestHelper.FOLDER_WITH_MVN_PROJECTS;

@@ -4,6 +4,7 @@ import com.aragost.javahg.log.Logger;
 import com.aragost.javahg.log.LoggerFactory;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang.StringUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
@@ -34,6 +35,7 @@ public class PackageManagerTest {
     private static final String NEW_LINE = "\\r?\\n";
     private static final String RPM_PACKAGE_PATTERN = "{0}.rpm";
 
+    @Ignore
     @Test()
     public void createProjects() throws IOException {
 
