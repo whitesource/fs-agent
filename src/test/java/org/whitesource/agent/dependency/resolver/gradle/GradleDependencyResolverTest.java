@@ -17,11 +17,13 @@ public class GradleDependencyResolverTest {
 
     GradleDependencyResolver gradleDependencyResolver;
 
+    @Ignore
     @Before
     public void setUp() throws Exception {
         gradleDependencyResolver = new GradleDependencyResolver(true, true, true);
     }
 
+    @Ignore
     @Test
     public void resolveDependencies() {
         String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath(

@@ -35,7 +35,7 @@ public class ComponentScan {
     /* --- Methods --- */
 
     public String scan() {
-        logger.info("Starting Analysis - component scan has started");
+        logger.info("Starting analysis - component scan has started");
         String directory = config.getProperty(Constants.DIRECTORY);
         String[] directories = directory.split(Constants.COMMA);
         List<String> scannerBaseDirs = new ArrayList<>(Arrays.asList(directories));

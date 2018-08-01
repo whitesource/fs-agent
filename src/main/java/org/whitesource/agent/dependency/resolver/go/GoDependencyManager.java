@@ -1,9 +1,5 @@
 package org.whitesource.agent.dependency.resolver.go;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.whitesource.fs.configuration.ResolverConfiguration;
-
 public enum GoDependencyManager {
     DEP("dep"),
     GO_DEP("godep"),
@@ -11,7 +7,6 @@ public enum GoDependencyManager {
 
 
     private final String type;
-    private final static Logger logger = LoggerFactory.getLogger(GoDependencyManager.class);
 
     GoDependencyManager(String type){
         this.type = type;

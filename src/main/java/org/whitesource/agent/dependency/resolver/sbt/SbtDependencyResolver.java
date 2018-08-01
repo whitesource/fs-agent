@@ -1,5 +1,6 @@
 package org.whitesource.agent.dependency.resolver.sbt;
 
+import org.apache.commons.lang.StringUtils;
 import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.core.Persister;
 import org.slf4j.Logger;
@@ -10,6 +11,7 @@ import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
+import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.Cli;
@@ -17,12 +19,17 @@ import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.FilesUtils;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class SbtDependencyResolver extends AbstractDependencyResolver {
+
+    /* --- Static members --- */
 
     private static final String BUILD_SBT = "build.sbt";
     private static final String SCALA = "scala";
@@ -30,33 +37,76 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     private static final String SCALA_EXTENSION = Constants.DOT + SCALA;
     private static final List<String> SCALA_SCRIPT_EXTENSION = Arrays.asList(SCALA_EXTENSION, Constants.DOT + SBT);
     private static final String COMPILE = "compile";
-    protected static final String TARGET = "target";
-    protected static final String RESOLUTION_CACHE = "resolution-cache";
-    protected static final String REPORTS = "reports";
-    protected static final String SUCCESS = "success";
+    private static final String TARGET = "target";
+    private static final String RESOLUTION_CACHE = "resolution-cache";
+    private static final String REPORTS = "reports";
+    private static final String SUCCESS = "success";
+    private static final String PROJECT = "project";
+    private static final String COMPILE_XML = "-compile.xml";
+    private static final String SBT_TARGET_FOLDER = "sbt.targetFolder";
+    private static final Pattern linuxPattern = Pattern.compile("\\/.*\\/target");
+    private static final String windowsPattern = ".*\\s";
+
+    /* --- Private Members --- */
 
     private boolean sbtAggregateModules;
     private boolean dependenciesOnly;
-
+    private boolean sbtRunPreStep;
+    private String sbtTargetFolder;
+    private String[] includes = {"**" + fileSeparator + TARGET + fileSeparator + "**" + fileSeparator + Constants.EMPTY_STRING + RESOLUTION_CACHE + fileSeparator + REPORTS + fileSeparator + "*" + COMPILE_XML};
+    private String[] excludes = {"**" + fileSeparator + PROJECT + fileSeparator + "**"};
     private final Logger logger = LoggerFactory.getLogger(SbtDependencyResolver.class);
 
-    public SbtDependencyResolver(boolean sbtAggregateModules, boolean dependenciesOnly){
+    /* --- Constructors --- */
+
+    public SbtDependencyResolver(boolean sbtAggregateModules, boolean dependenciesOnly, boolean sbtRunPreStep, String sbtTargetFolder) {
         this.sbtAggregateModules = sbtAggregateModules;
         this.dependenciesOnly = dependenciesOnly;
         this.bomParser = new SbtBomParser();
+        this.sbtRunPreStep = sbtRunPreStep;
+        this.sbtTargetFolder = sbtTargetFolder;
     }
+
+    /* --- Overridden methods --- */
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         Collection<AgentProjectInfo> projects = new ArrayList<>();
-        List<File> xmlFiles = findXmlReport(topLevelFolder);
-        if (xmlFiles.size()== 0){
-            xmlFiles = loadXmlReport(topLevelFolder);
+        List<File> xmlFiles = new LinkedList<>();
+
+        // run sbt compile if the user turn on the sbt.runPreStep flag
+        if (sbtRunPreStep) {
+            runPreStep(topLevelFolder);
         }
-        if (xmlFiles != null){
-            for (File xmlFile :xmlFiles){
-                projects.add(parseXmlReport(xmlFile));
+
+        // check if sbt.targetFolder is not blank.
+        // if not the system trying to search for compile.xml files under the the specific location
+        // if yes the system trying to search for compile.xml files under the root of the project
+        if (StringUtils.isNotBlank(sbtTargetFolder)) {
+            Path path = Paths.get(sbtTargetFolder);
+            if (Files.exists(path)) {
+                xmlFiles = findXmlReport(sbtTargetFolder, xmlFiles, new String[]{Constants.PATTERN + COMPILE_XML}, excludes);
+            } else {
+                logger.warn("The target folder path {} doesn't exist", sbtTargetFolder);
             }
+        } else {
+            Collection<String> targetFolders = findTargetFolders(topLevelFolder);
+            if (!targetFolders.isEmpty()) {
+                for (String targetPath : targetFolders) {
+                    xmlFiles = findXmlReport(targetPath, xmlFiles, new String[]{Constants.PATTERN + COMPILE_XML}, excludes);
+                }
+            } else {
+                logger.debug("Didn't find any target folder in {}", topLevelFolder);
+            }
+        }
+
+        // if the system didn't find compile.xml files and the user didn't turn on the sbt.runPreStepFlag
+        // the system print warning message to the user and ask him to turn on the flag.
+        if (xmlFiles.isEmpty() && !sbtRunPreStep) {
+            logger.warn("Didn't find compile.xml please try to turn on the flag {}", SBT_TARGET_FOLDER);
+        }
+        for (File xmlFile : xmlFiles) {
+            projects.add(parseXmlReport(xmlFile));
         }
         Set<String> excludes = new HashSet<>();
         Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
@@ -76,31 +126,64 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         return resolutionResult;
     }
 
+    @Override
+    protected Collection<String> getExcludes() {
+        Set<String> excludes = new HashSet<>();
+        excludes.add(Constants.PATTERN + SCALA_EXTENSION);
+        excludes.add("**" + fileSeparator + "project" + fileSeparator + "**");
+        return excludes;
+    }
+
+    @Override
+    public Collection<String> getSourceFileExtensions() {
+        return SCALA_SCRIPT_EXTENSION;
+    }
+
+    @Override
+    protected DependencyType getDependencyType() {
+        return DependencyType.MAVEN; // TEMP - we should add SBT
+    }
+
+    @Override
+    protected String getDependencyTypeName() {
+        return SBT.toUpperCase();
+    }
+
+    @Override
+    protected String[] getBomPattern() {
+        return new String[]{"**" + fileSeparator + BUILD_SBT};
+    }
+
+    @Override
+    protected Collection<String> getLanguageExcludes() {
+        return null;
+    }
+
+    /* --- Private methods --- */
+
     /* looking for an xml file ending with '-compile.xml', which should be either in 'target/scala-{version number}/resolution-cache/reports'
      or 'target/scala-{version number}/sbt-{version-number}/resolution-cache/reports'.
      There are some cases where 2 files inside that folder end with '-compile.xml'.  in such case, the way to find the relevant is if its name
      contains the scala-version (which is part of the scala folder name), and that's relevant only if the xml file isn't inside 'sbt-{}' folder.
      */
-    private List<File> findXmlReport(String folderPath){
+    private List<File> findXmlReport(String folderPath, List<File> files, String[] includes, String[] excludes) {
         FilesScanner filesScanner = new FilesScanner();
-        String[] includes = {"**" + fileSeparator + "target" + fileSeparator + "**" + fileSeparator + "" + RESOLUTION_CACHE + fileSeparator + REPORTS + fileSeparator + "*-compile.xml"};
-        String[] excludes = {"**" + fileSeparator + "project" + fileSeparator + "**"};
+        logger.debug("Trying to find *" + COMPILE_XML + " file under target folder in {}", folderPath);
         String[] directoryContent = filesScanner.getDirectoryContent(folderPath, includes, excludes, false, false);
-        List<File> files = new LinkedList<>();
-        for (String filePath : directoryContent){
+        for (String filePath : directoryContent) {
             boolean add = true;
             File reportFile = new File(folderPath + fileSeparator + filePath);
-            for (File file : files){
-                if (file.getParent().equals(reportFile.getParent())){
+            for (File file : files) {
+                if (file.getParent().equals(reportFile.getParent())) {
                     add = false;
-                    if (reportFile.getName().length() < file.getName().length()){
+                    if (reportFile.getName().length() < file.getName().length()) {
                         files.remove(file);
                         files.add(reportFile);
                         break;
                     }
                 }
             }
-            if (add){
+            if (add) {
                 files.add(reportFile);
             }
         }
@@ -108,19 +191,55 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     }
 
     // creating the xml report using 'sbt "compile"' command
-    private List<File> loadXmlReport(String folderPath){
+    private void runPreStep(String folderPath) {
         Cli cli = new Cli();
+        boolean success = false;
         List<String> compileOutput = cli.runCmd(folderPath, cli.getCommandParams(SBT, COMPILE));
-        if (compileOutput != null){
-            if (compileOutput.get(compileOutput.size()-1).contains(SUCCESS)){
-                return findXmlReport(folderPath);
+        if (compileOutput != null) {
+            if (compileOutput.get(compileOutput.size() - 1).contains(SUCCESS)) {
+                success = true;
             }
         }
-        logger.warn("Can't run '{} {}'", SBT, COMPILE);
-        return new LinkedList<>();
+        if (!success) {
+            logger.warn("Can't run '{} {}'", SBT, COMPILE);
+        }
     }
 
-    private AgentProjectInfo parseXmlReport(File xmlReportFile){
+    // Trying to get all the paths of target folders
+    private Collection<String> findTargetFolders(String folderPath) {
+        Cli cli = new Cli();
+        List<String> lines;
+        List<String> targetFolders = new LinkedList<>();
+        lines = cli.runCmd(folderPath, cli.getCommandParams(SBT, TARGET));
+        if (!lines.isEmpty()) {
+            for (String line : lines) {
+                if (DependencyCollector.isWindows()) {
+                    if (line.endsWith(TARGET) && line.contains(fileSeparator)) {
+                        String[] split = line.split(windowsPattern);
+                        targetFolders.add(split[1]);
+                    }
+                } else {
+                    if (line.contains(TARGET) && line.contains(fileSeparator)) {
+                        Matcher matcher = linuxPattern.matcher(line);
+                        if (matcher.find()) {
+                            targetFolders.add(matcher.group(0));
+                        }
+                    }
+                }
+            }
+            for (int i = 0; i < targetFolders.size(); i++) {
+                String targetFolder = targetFolders.get(i);
+                Path path = Paths.get(targetFolder);
+                if (!Files.exists(path)) {
+                    targetFolders.remove(targetFolder);
+                    logger.warn("The target folder {} path doesn't exist", sbtTargetFolder);
+                }
+            }
+        }
+        return targetFolders;
+    }
+
+    private AgentProjectInfo parseXmlReport(File xmlReportFile) {
         AgentProjectInfo agentProjectInfo = new AgentProjectInfo();
         Serializer serializer = new Persister();
         Map<String, DependencyInfo> parentsMap = new HashMap<>();
@@ -206,9 +325,9 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     }
 
     // preventing circular dependencies by making sure the dependency is not a descendant of its own
-    private boolean isDescendant(DependencyInfo ancestor, DependencyInfo descendant){
-        for (DependencyInfo child : ancestor.getChildren()){
-            if (child.equals(descendant)){
+    private boolean isDescendant(DependencyInfo ancestor, DependencyInfo descendant) {
+        for (DependencyInfo child : ancestor.getChildren()) {
+            if (child.equals(descendant)) {
                 return true;
             }
             return isDescendant(child, descendant);
@@ -216,36 +335,4 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         return false;
     }
 
-    @Override
-    protected Collection<String> getExcludes() {
-        Set<String> excludes = new HashSet<>();
-        excludes.add(Constants.PATTERN + SCALA_EXTENSION);
-        excludes.add("**" + fileSeparator + "project" + fileSeparator + "**");
-        return excludes;
-    }
-
-    @Override
-    public Collection<String> getSourceFileExtensions() {
-        return SCALA_SCRIPT_EXTENSION;
-    }
-
-    @Override
-    protected DependencyType getDependencyType() {
-        return DependencyType.MAVEN; // TEMP - we should add SBT
-    }
-
-    @Override
-    protected String getDependencyTypeName() {
-        return SBT.toUpperCase();
-    }
-
-    @Override
-    protected String[] getBomPattern() {
-        return new String[]{"**" + fileSeparator + BUILD_SBT};
-    }
-
-    @Override
-    protected Collection<String> getLanguageExcludes() {
-        return null;
-    }
 }

@@ -3,6 +3,7 @@ package org.whitesource.fs;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
@@ -21,6 +22,7 @@ import static org.whitesource.agent.ConfigPropertyKeys.PROJECT_PER_SUBFOLDER;
 
 public class MainTest {
 
+    @Ignore
     @Test
     public void shouldRunMixedMainOnFolder() {
         File directory = new File(TestHelper.FOLDER_WITH_MIX_FOLDERS);
@@ -36,6 +38,7 @@ public class MainTest {
         });
     }
 
+    @Ignore
     @Test
     public void shouldLoadOfflineRequest() {
         File file = TestHelper.getFileFromResources("update-request.txt");
@@ -45,6 +48,7 @@ public class MainTest {
         Assert.assertTrue(projects.size() > 0);
     }
 
+    @Ignore
     @Test
     public void shouldSaveAndLoadOffline() {
         File directory = new File(TestHelper.FOLDER_WITH_MIX_FOLDERS);
@@ -78,6 +82,7 @@ public class MainTest {
         });
     }
 
+    @Ignore
     @Test
     public void shouldRunMavenWithoutName() {
         File dir = new File(TestHelper.FOLDER_WITH_MVN_PROJECTS);
@@ -97,6 +102,7 @@ public class MainTest {
         Assert.assertEquals(nameActual, projectName);
     }
 
+    @Ignore
     @Test
     public void shouldWorkWithProjectPerFolder() throws IOException {
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
@@ -112,6 +118,7 @@ public class MainTest {
         Assert.assertEquals(projects.getProjects().size() , resolverFolder.listFiles().length);
     }
 
+    @Ignore
     @Test
     public void shouldRunNpmInstallAsPreStep() throws IOException {
         // arrange

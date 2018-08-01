@@ -1,6 +1,7 @@
 package org.whitesource.agent.dependency.resolver.npm;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -18,26 +19,32 @@ import java.util.Properties;
  * @author eugen.horovitz
  */
 public class DependencyResolversTest {
+
+    @Ignore
     @Test
     public void shouldReturnDependenciesBower() {
         testBowerResolve(false);
     }
 
+    @Ignore
     @Test
     public void shouldReturnDependenciesTreeBower() {
         testBowerResolve(true);
     }
 
+    @Ignore
     @Test
     public void shouldReturnDependenciesNpm() {
         testNpmResolve(false);
     }
 
+    @Ignore
     @Test
     public void shouldReturnDependenciesTreeNpm() {
         testNpmResolve(true);
     }
 
+    @Ignore
     @Test
     public void shouldResolvePackageJson() {
         String folderParent = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\npm\\");

@@ -35,10 +35,6 @@ public class ProjectsCalculator {
     /* --- Public methods --- */
 
     public ProjectsDetails getAllProjects(FSAConfiguration fsaConfiguration) {
-        // read log level from configuration file
-        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-        String logLevel = fsaConfiguration.getLogLevel();
-        root.setLevel(Level.toLevel(logLevel, Level.INFO));
 
         // read directories and files from list-file
         List<String> files = new ArrayList<>();

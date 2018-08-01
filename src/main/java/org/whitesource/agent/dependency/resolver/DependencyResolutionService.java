@@ -114,6 +114,8 @@ public class DependencyResolutionService {
 
         final boolean sbtResolveDependencies = config.isSbtResolveDependencies();
         final boolean sbtAggregateModules = config.isSbtAggregateModules();
+        final boolean sbtRunPreStep = config.isSbtRunPreStep();
+        final String sbtTargetFolder = config.getSbtTargetFolder();
 
         final boolean htmlResolveDependencies = config.isHtmlResolveDependencies();
 
@@ -167,7 +169,7 @@ public class DependencyResolutionService {
         }
 
         if (sbtResolveDependencies) {
-            dependencyResolvers.add(new SbtDependencyResolver(sbtAggregateModules, dependenciesOnly));
+            dependencyResolvers.add(new SbtDependencyResolver(sbtAggregateModules, dependenciesOnly, sbtRunPreStep, sbtTargetFolder));
             this.sbtAggregateModules = sbtAggregateModules;
         }
 

@@ -1,10 +1,12 @@
 package org.whitesource.agent.utils;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class MemoryUsageTest {
 
+    @Ignore
     @Test
     public void shouldReturnMemoryUsage() {
         MemoryUsageHelper.SystemStats result = MemoryUsageHelper.getMemoryUsage();

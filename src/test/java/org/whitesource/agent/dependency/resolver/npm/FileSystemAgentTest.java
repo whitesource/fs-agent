@@ -5,6 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.whitesource.agent.ConfigPropertyKeys;
@@ -35,6 +36,7 @@ public class FileSystemAgentTest {
 
     /* --- Tests --- */
 
+    @Ignore
     @Test
     public void shouldEnrichAllDependenciesWithSha1() {
         Properties props = TestHelper.getPropertiesFromFile();
@@ -47,6 +49,7 @@ public class FileSystemAgentTest {
         Assert.assertEquals(dependenciesWithSha1.size(), dependencies.size());
     }
 
+    @Ignore
     @Test
     public void shouldBeTheSameResultsAsNpmLs() {
         Properties props = TestHelper.getPropertiesFromFile();
@@ -69,6 +72,7 @@ public class FileSystemAgentTest {
         });
     }
 
+    @Ignore
     @Test
     public void testPackageJsonOnly() {
         File dir10 = new File(TestHelper.FOLDER_WITH_NPN_PROJECTS);
@@ -81,6 +85,7 @@ public class FileSystemAgentTest {
         });
     }
 
+    @Ignore
     @Test
     public void shouldReturnTheSameNumberOfDependenciesAsBowerPlugin() {
         File directory = new File(TestHelper.FOLDER_WITH_BOWER_PROJECTS);
@@ -102,6 +107,7 @@ public class FileSystemAgentTest {
         });
     }
 
+    @Ignore
     @Test
     public void shouldReturnTheSameNumberOfDependenciesAsNpmPlugin() {
         File directory = new File(TestHelper.FOLDER_WITH_NPN_PROJECTS);
