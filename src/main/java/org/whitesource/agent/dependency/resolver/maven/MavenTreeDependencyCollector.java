@@ -95,7 +95,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             this.M2Path = getMavenM2Path(Constants.DOT);
         }
 
-        Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
         Collection<AgentProjectInfo> projects = new ArrayList<>();
         try {
             CommandLineProcess mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParams());
@@ -109,7 +108,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 projects = nodes.stream()
                         .filter(node -> !this.ignorePomModules || (ignorePomModules && !node.getPackaging().equals(POM)))
                         .map(tree -> {
-
+                    Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
                     List<DependencyInfo> dependencies = new LinkedList<>();
                     Stream<Node> nodeStream = tree.getChildNodes().stream().filter(node -> !mavenIgnoredScopes.contains(node.getScope()));
                     dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
