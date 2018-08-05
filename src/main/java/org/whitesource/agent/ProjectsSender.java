@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 package org.whitesource.agent;
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.beust.jcommander.internal.Lists;
+import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.api.dispatch.CheckPolicyComplianceResult;
-import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
-import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
-import org.whitesource.agent.api.dispatch.UpdateType;
+import org.whitesource.agent.api.dispatch.*;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
@@ -39,10 +36,14 @@ import org.whitesource.fs.configuration.OfflineConfiguration;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.fs.configuration.SenderConfiguration;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -56,15 +57,11 @@ import java.util.stream.Collectors;
  * @author anna.rozin
  */
 public class ProjectsSender {
-
     /* --- Static members --- */
-
     private static final String DATE_FORMAT = "HH:mm:ss";
     public static final String PROJECT_URL_PREFIX = "Wss/WSS.html#!project;id=";
     protected static final int MAX_LOG_EVENTS = 1000;
-
     /* --- Members --- */
-
     private final Logger logger = LoggerFactory.getLogger(ProjectsSender.class);
     private final SenderConfiguration senderConfig;
     private final OfflineConfiguration offlineConfig;
@@ -102,16 +99,13 @@ public class ProjectsSender {
                 logger.info("Invalid value {} for updateType, defaulting to {}", updateTypeValue, UpdateType.OVERRIDE);
             }
             logger.info("UpdateType set to {} ", updateTypeValue);
-
             checkDependenciesUpbound(projects);
             StatusCode statusCode = StatusCode.SUCCESS;
-
             if (senderConfig.isEnableImpactAnalysis()) {
                 runViaAnalysis(projectsDetails, service);
             } else if (!senderConfig.isEnableImpactAnalysis()) {
                 //todo return logs when needed would be enabled for all WSE-342
             }
-
             int retries = senderConfig.getConnectionRetries();
             while (retries-- > -1) {
                 try {
@@ -140,7 +134,6 @@ public class ProjectsSender {
                             logger.error("Failed to sleep while retrying to connect to server " + e1.getMessage(), e1);
                         }
                     }
-
                     String requestToken = e.getRequestToken();
                     if (StringUtils.isNotBlank(requestToken)) {
                         resultInfo += Constants.NEW_LINE + "Support token: " + requestToken;
@@ -194,7 +187,6 @@ public class ProjectsSender {
                             Method runAnalysis = vulnerabilitiesAnalysisClass.getDeclaredMethod("runAnalysis", serverClass, String.class, Collection.class, Boolean.class);
                             runAnalysis.invoke(vulnerabilitiesAnalysis, server, appPath, project.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
                             logger.info("Got impact analysis result from server");
-
                         }
                     } catch (InvocationTargetException e) {
                         logger.error("Failed to run VIA impact analysis {}", e.getTargetException().getMessage());
@@ -260,16 +252,13 @@ public class ProjectsSender {
             } else {
                 logger.info("All dependencies conform with open source policies.");
             }
-
             String requestToken = checkPoliciesResult.getRequestToken();
             if (StringUtils.isNotBlank(requestToken)) {
                 logger.info("Check Policies Support Token: {}", requestToken);
             }
-
             try {
                 // generate report
                 PolicyCheckReport report = new PolicyCheckReport(checkPoliciesResult);
-
                 File outputDir = new File(offlineConfig.getWhiteSourceFolderPath());
                 report.generate(outputDir, false);
                 report.generateJson(outputDir);
@@ -284,26 +273,44 @@ public class ProjectsSender {
     protected String update(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         logger.info("Sending Update");
         UpdateInventoryResult updateResult;
+        //--------------------------------
+        if (requestConfig.getViaDebug().equals("SAVE")) {
+            saveRequestToFile(projects);
+        }
+        //--------------------------------
         if (senderConfig.isSendLogsToWss()) {
             String logData = getLogData();
             updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
                     requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), logData);
-
         } else {
             updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
                     requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
         }
         String resultInfo = logResult(updateResult);
-
         // remove line separators
         resultInfo = resultInfo.replace(System.lineSeparator(), Constants.EMPTY_STRING);
         return resultInfo;
     }
 
+    private void saveRequestToFile(Collection<AgentProjectInfo> projects) {
+        String fileName = "jsonOut" + Constants.DASH + requestConfig.getProductName() + Constants.DASH +
+                requestConfig.getProjectName() + ".json";
+        RequestFactory requestFactory = new RequestFactory(pluginInfo.getAgentType(), pluginInfo.getAgentVersion(), pluginInfo.getPluginVersion());
+        String updateJson = new Gson().toJson(requestFactory.newUpdateInventoryRequest(requestConfig.getApiToken(),
+                UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getRequesterEmail(),
+                requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects,
+                requestConfig.getUserKey(), (String) null));
+        Path path = Paths.get(fileName);
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+            writer.write(updateJson);
+        } catch (Exception e) {
+            logger.debug("couldn't create via debug file {}", e.getMessage());
+        }
+    }
+
     private String offlineUpdate(WhitesourceService service, Collection<AgentProjectInfo> projects) {
         String resultInfo = Constants.EMPTY_STRING;
         logger.info("Generating offline update request");
-
         // generate offline request
         UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(),
                 requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
@@ -313,9 +320,7 @@ public class ProjectsSender {
         updateRequest.setRequesterEmail(requestConfig.getRequesterEmail());
         try {
             OfflineUpdateRequest offlineUpdateRequest = new OfflineUpdateRequest(updateRequest);
-
             UpdateType updateTypeFinal;
-
             // if the update type was forced by command or config -> set it
             if (StringUtils.isNotBlank(senderConfig.getUpdateTypeValue())) {
                 try {
@@ -328,17 +333,13 @@ public class ProjectsSender {
                 // Otherwise use the parameter in the file
                 updateTypeFinal = updateRequest.getUpdateType();
             }
-
             logger.info("UpdateType offline set to {} ", updateTypeFinal);
             updateRequest.setUpdateType(updateTypeFinal);
-
             File outputDir = new File(offlineConfig.getWhiteSourceFolderPath()).getAbsoluteFile();
             if (!outputDir.exists() && !outputDir.mkdir()) {
                 throw new IOException("Unable to make output directory: " + outputDir);
             }
-
             File file = offlineUpdateRequest.generate(outputDir, offlineConfig.isZip(), offlineConfig.isPrettyJson());
-
             resultInfo = "Offline request generated successfully at " + file.getPath();
             logger.info(resultInfo);
         } catch (IOException e) {
@@ -368,7 +369,6 @@ public class ProjectsSender {
                 resultLogMsg.append(projectName).append(Constants.NEW_LINE);
             }
         }
-
         // updated projects
         Collection<String> updatedProjects = updateResult.getUpdatedProjects();
         if (updatedProjects.isEmpty()) {
@@ -392,7 +392,6 @@ public class ProjectsSender {
                 resultLogMsg.append(Constants.NEW_LINE).append("Project name: ").append(projectName).append(", project URL:").append(projectsUrl);
             }
         }
-
         // support token
         String requestToken = updateResult.getRequestToken();
         if (StringUtils.isNotBlank(requestToken)) {
@@ -402,14 +401,14 @@ public class ProjectsSender {
         return resultLogMsg.toString();
     }
 
-    private String getLogData(){
+    private String getLogData() {
         String logs = Constants.EMPTY_STRING;
         ch.qos.logback.classic.Logger setLog = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.MAP_LOG_NAME);
         ConcurrentSkipListMap<Long, ILoggingEvent> collectToSet = ((LogMapAppender) setLog.getAppender(Constants.MAP_APPENDER_NAME)).getLogEvents();
         // going over all the collected events, filtering out the empty ones, and writing them to a long string
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
         List<ILoggingEvent> events = collectToSet.values().stream().filter(iLoggingEvent -> !iLoggingEvent.getMessage().isEmpty() && !iLoggingEvent.getMessage().equals(Constants.NEW_LINE)).collect(Collectors.toList());
-        if (events.size() > MAX_LOG_EVENTS){
+        if (events.size() > MAX_LOG_EVENTS) {
             events = events.stream().filter(iLoggingEvent -> iLoggingEvent.getLevel().levelInt >= Level.INFO.levelInt).collect(Collectors.toList());
         }
         for (ILoggingEvent event : events) {
