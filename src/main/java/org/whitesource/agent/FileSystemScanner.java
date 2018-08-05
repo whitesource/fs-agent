@@ -180,8 +180,9 @@ public class FileSystemScanner {
 
         // create dependencies from files - first project is always the default one
         logger.info("Starting analysis");
-        Map<AgentProjectInfo, Path> allProjects = new HashMap<>();
-        Map<AgentProjectInfo, LinkedList<ViaComponents>> allProjectsToViaComponents = new HashMap<>();
+        // Create LinkedHashMap in order to save the order of the projects. In this way the first project will be always the main project.
+        Map<AgentProjectInfo, Path> allProjects = new LinkedHashMap<>();
+        Map<AgentProjectInfo, LinkedList<ViaComponents>> allProjectsToViaComponents = new LinkedHashMap<>();
         AgentProjectInfo mainProject = new AgentProjectInfo();
         allProjects.put(mainProject, null);
         allProjectsToViaComponents.put(mainProject, new LinkedList<>());
@@ -348,12 +349,17 @@ public class FileSystemScanner {
                                 } else {
                                     subProject = allProjects.entrySet().stream().findFirst().get().getKey();
                                 }
-                                subProject.setDependencies(projectDependencies);
+                                subProject.getDependencies().addAll(filesDependencies);
                                 filesDependencies.removeAll(projectDependencies);
                             }
                         }
                     });
                 });
+                // Add the rest of the files dependencies to the main project
+                if (!filesDependencies.isEmpty()) {
+                    AgentProjectInfo subProject = allProjects.entrySet().stream().findFirst().get().getKey();
+                    subProject.getDependencies().addAll(filesDependencies);
+                }
             }
         }
 
@@ -397,6 +403,8 @@ public class FileSystemScanner {
         return allProjectsToViaComponents;
     }
 
+    /* --- Private methods --- */
+
     private String[] createResolversIncludesPattern(Collection<AbstractDependencyResolver> dependencyResolvers) {
         Collection<String> resultIncludes = new ArrayList<>();
         for (AbstractDependencyResolver dependencyResolver : dependencyResolvers) {
@@ -408,8 +416,6 @@ public class FileSystemScanner {
         resultIncludes.toArray(resultArray);
         return resultArray;
     }
-
-    /* --- Private methods --- */
 
     private Map<String, Set<String>> convertListDirsToMap(List<String> scannerBaseDirs) {
         Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();

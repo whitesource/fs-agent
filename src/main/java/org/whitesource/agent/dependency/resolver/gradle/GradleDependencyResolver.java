@@ -10,7 +10,8 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -76,10 +77,27 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         topLevelFoldersNames.add(topLevelFolder.substring(topLevelFolder.lastIndexOf(fileSeparator) + 1));
         Collection<String> excludes = getExcludes();
         Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
-            if (dependenciesOnly) {
-                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, GRADLE_SCRIPT_EXTENSION, null));
+            // try to find the topFolderFolder for each module in the project
+            File topFolderFound = null;
+            for (String bomFile : bomFiles) {
+                File file = new File(bomFile);
+                file = file.getParentFile();
+                if (file.getName().equals(projectInfo.getCoordinates().getArtifactId())) {
+                    topFolderFound = file;
+                    break;
+                }
             }
-            return Paths.get(topLevelFolder);
+            if (topFolderFound != null && topFolderFound.isDirectory() && topFolderFound.exists()) {
+                if (dependenciesOnly) {
+                    excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), GRADLE_SCRIPT_EXTENSION, null));
+                }
+                return topFolderFound.toPath();
+            } else {
+                if (dependenciesOnly) {
+                    excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, GRADLE_SCRIPT_EXTENSION, null));
+                }
+                return Paths.get(topLevelFolder);
+            }
         }));
 
         ResolutionResult resolutionResult;
