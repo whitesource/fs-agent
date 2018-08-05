@@ -11,7 +11,7 @@ import org.whitesource.agent.utils.CommandLineProcess;
 import java.io.IOException;
 import java.util.List;
 
-class GradleCli extends Cli {
+public class GradleCli extends Cli {
     private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.gradle.GradleCli.class);
 
     protected static final String GRADLE_ASSEMBLE = "assemble";
@@ -61,15 +61,9 @@ class GradleCli extends Cli {
         }
     }
 
-    protected String[] getGradleCommandParams(MvnCommand command) {
+    public String[] getGradleCommandParams(MvnCommand command) {
         return super.getCommandParams(GRADLE_COMMAND, command.name());
     }
 }
 
-enum MvnCommand {
-    DEPENDENCIES(Constants.DEPENDENCIES),
-    ASSEMBLE(GradleCli.GRADLE_ASSEMBLE);
 
-    MvnCommand(String value) {
-    }
-}

@@ -12,6 +12,8 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
+import org.whitesource.agent.dependency.resolver.gradle.GradleCli;
+import org.whitesource.agent.dependency.resolver.gradle.MvnCommand;
 import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.CommandLineProcess;
 
@@ -20,12 +22,13 @@ import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private final Logger logger = LoggerFactory.getLogger(GoDependencyResolver.class);
 
-    private static final String PROJECTS =      "[[projects]]";
+    private static final String PROJECTS        = "[[projects]]";
     private static final String DEPS            = "Deps";
     private static final String REV             = "Rev";
     private static final String COMMENT         = "Comment";
@@ -35,15 +38,18 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final String REVISION        = "revision = ";
     private static final String PACKAGES        = "packages = ";
     private static final String BRACKET         = "]";
-    private static final String DOT =           ".";
+    private static final String DOT             = ".";
+    private static final String ASTERIX         = "(*)";
+    private static final String SLASH           = "\\---";
     private static final String GOPKG_LOCK      = "Gopkg.lock";
     private static final String GODEPS_JSON     = "Godeps.json";
     private static final String VNDR_CONF       = "vendor.conf";
-    private static final String GO_EXTENTION    = ".go";
+    private static final String GOGRADLE_LOCK   = "gogradle.lock";
+    private static final String GO_EXTENSION    = ".go";
     private static final String GO_ENSURE       = "ensure";
     private static final String GO_INIT         = "init";
     private static final String GO_SAVE         = "save";
-    private static final List<String> GO_SCRIPT_EXTENSION = Arrays.asList(".lock", ".json", GO_EXTENTION);
+    private static final List<String> GO_SCRIPT_EXTENSION = Arrays.asList(".lock", ".json", GO_EXTENSION);
 
     private Cli cli;
     private GoDependencyManager goDependencyManager;
@@ -68,7 +74,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
         if (!collectDependenciesAtRuntime && goDependencyManager != null && isDependenciesOnly){
-            excludes.add(Constants.PATTERN + GO_EXTENTION);
+            excludes.add(Constants.PATTERN + GO_EXTENSION);
         }
         return excludes;
     }
@@ -91,7 +97,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected String[] getBomPattern() {
         if (collectDependenciesAtRuntime || goDependencyManager == null) {
-            return new String[]{Constants.PATTERN + GO_EXTENTION};
+            return new String[]{Constants.PATTERN + GO_EXTENSION};
         }
         if (goDependencyManager != null) {
             switch (goDependencyManager) {
@@ -126,6 +132,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         break;
                     case VNDR:
                         collectVndrDependencies(rootDirectory, dependencyInfos);
+                        break;
+                    case GO_GRADLE:
+                        collectGoGradleDependencies(rootDirectory, dependencyInfos);
                         break;
                     default:
                         error = "The selected dependency manager - " + goDependencyManager.getType() + " - is not supported.";
@@ -372,6 +381,38 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             fileReader.close();
         }
         return dependencyInfos;
+    }
+
+    private void collectGoGradleDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) {
+        logger.debug("collecting dependencies using 'GoGradle'");
+        GradleCli gradleCli = new GradleCli();
+        List<String> lines = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(MvnCommand.DEPENDENCIES));
+        if (lines != null) {
+            parseGoGradleDependencies(lines, dependencyInfos);
+        }
+
+        File groGradleLock = new File(rootDirectory + fileSeparator + GOGRADLE_LOCK);
+
+    }
+
+    private void parseGoGradleDependencies(List<String> lines, List<DependencyInfo> dependencyInfos){
+        List<String> filteredLines = lines.stream()
+                .filter(line->(line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))
+                .collect(Collectors.toList());
+        DependencyInfo dependencyInfo;
+        for (String currentLine : filteredLines){
+            String[] strings = currentLine.split(Constants.COLON);
+            String name = strings[0];
+            int lastSpace = name.lastIndexOf(Constants.WHITESPACE);
+            name = name.substring(lastSpace + 1);
+            if (currentLine.charAt(1) == Constants.WHITESPACE_CHAR || strings[1].contains(Constants.POUND)){
+                // same as in dep - dependencyInfo should be flat
+            } else {
+                dependencyInfo = new DependencyInfo();
+                dependencyInfo.setGroupId(getGroupId(name));
+                dependencyInfo.setArtifactId(name);
+            }
+        }
     }
 
     public boolean runCmd(String rootDirectory, String[] params){
