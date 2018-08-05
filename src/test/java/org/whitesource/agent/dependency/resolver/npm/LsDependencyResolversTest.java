@@ -1,6 +1,7 @@
 package org.whitesource.agent.dependency.resolver.npm;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 public class LsDependencyResolversTest {
     private static String FOLDER_TO_TEST = TestHelper.getFirstFolder(TestHelper.FOLDER_WITH_NPN_PROJECTS);
 
+    @Ignore
     @Test
     public void shouldReturnDependenciesTreeNpm() {
         AgentProjectInfo projectInfo = new NpmLsJsonDependencyCollector(false,
@@ -27,6 +29,7 @@ public class LsDependencyResolversTest {
         Assert.assertTrue(dependencyInformation.size() > 0);
     }
 
+    @Ignore
     @Test
     public void shouldReturnDependenciesTreeBower() {
         String firstFolder = TestHelper.getFirstFolder(TestHelper.FOLDER_WITH_BOWER_PROJECTS);

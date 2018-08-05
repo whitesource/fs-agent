@@ -81,6 +81,7 @@ public final class Constants {
     public static final String YUM = "yum";
     public static final String PYTHON_REQUIREMENTS = "requirements.txt";
     public static final String TXT_EXTENSION = ".txt";
+    public static final String SETUP_PY = "setup.py";
 
     public static final char QUESTION_MARK = '?';
     public static final char WHITESPACE_CHAR = ' ';
@@ -90,5 +91,8 @@ public final class Constants {
 
     public static final int MAX_NUMBER_OF_DEPENDENCIES = 1000000;
 
-
+    public static final String MAP_LOG_NAME = "org.whitesource";
+    public static final String MAP_APPENDER_NAME = "collectToMap";
+    public static final String HELP_ARG1 = "-help";
+    public static final String HELP_ARG2 = "-h";
 }

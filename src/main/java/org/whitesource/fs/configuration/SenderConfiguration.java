@@ -32,11 +32,13 @@ public class SenderConfiguration {
     private final String proxyPassword;
     private final boolean forceCheckAllDependencies;
     private final boolean forceUpdate;
+    private final boolean forceUpdateFailBuildOnPolicyViolation;
     private final String updateTypeValue;
     private final boolean enableImpactAnalysis;
     private final boolean ignoreCertificateCheck;
     private final int connectionRetries;
     private final int connectionRetriesIntervals;
+    private final boolean sendLogsToWss;
 
     public SenderConfiguration(
             @JsonProperty(CHECK_POLICIES_PROPERTY_KEY) boolean checkPolicies,
@@ -50,11 +52,13 @@ public class SenderConfiguration {
 
             @JsonProperty(FORCE_CHECK_ALL_DEPENDENCIES) boolean forceCheckAllDependencies,
             @JsonProperty(FORCE_UPDATE) boolean forceUpdate,
+            @JsonProperty(FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION) boolean forceUpdateFailBuildOnPolicyViolation,
             @JsonProperty(UPDATE_TYPE) String updateTypeValue,
             @JsonProperty(ENABLE_IMPACT_ANALYSIS) boolean enableImpactAnalysis,
             @JsonProperty(IGNORE_CERTIFICATE_CHECK) boolean ignoreCertificateCheck,
             @JsonProperty(CONNECTION_RETRIES) int connectionRetries,
-            @JsonProperty(CONNECTION_RETRIES_INTERVALS) int connectionRetriesIntervals){
+            @JsonProperty(CONNECTION_RETRIES_INTERVALS) int connectionRetriesIntervals,
+            @JsonProperty(SEND_LOGS_TO_WSS) boolean sendLogsToWss){
         this.checkPolicies = checkPolicies;
         this.serviceUrl = serviceUrl;
         this.proxyHost = proxyHost;
@@ -64,11 +68,13 @@ public class SenderConfiguration {
         this.proxyPassword = proxyPassword;
         this.forceCheckAllDependencies = forceCheckAllDependencies;
         this.forceUpdate = forceUpdate;
+        this.forceUpdateFailBuildOnPolicyViolation = forceUpdateFailBuildOnPolicyViolation;
         this.updateTypeValue = updateTypeValue;
         this.enableImpactAnalysis = enableImpactAnalysis;
         this.ignoreCertificateCheck = ignoreCertificateCheck;
         this.connectionRetries = connectionRetries;
         this.connectionRetriesIntervals = connectionRetriesIntervals;
+        this.sendLogsToWss = sendLogsToWss;
     }
 
     @JsonProperty(SERVICE_URL_KEYWORD)
@@ -131,6 +137,11 @@ public class SenderConfiguration {
         return forceUpdate;
     }
 
+    @JsonProperty(FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION)
+    public boolean isForceUpdateFailBuildOnPolicyViolation() {
+        return forceUpdateFailBuildOnPolicyViolation;
+    }
+
     @JsonProperty(ENABLE_IMPACT_ANALYSIS)
     public boolean isEnableImpactAnalysis() {
         return enableImpactAnalysis;
@@ -141,12 +152,16 @@ public class SenderConfiguration {
         return ignoreCertificateCheck;
     }
 
+    @JsonProperty(SEND_LOGS_TO_WSS)
+    public boolean isSendLogsToWss(){ return sendLogsToWss; }
+
     @Override
     public String toString() {
         return  ", serviceUrl='" + serviceUrl + "'\n" +
                 ", checkPolicies=" + checkPolicies + '\n' +
                 ", forceCheckAllDependencies=" + forceCheckAllDependencies + '\n' +
                 ", forceUpdate=" + forceUpdate + '\n' +
+                ", forceUpdate.failBuildOnPolicyViolation=" + forceUpdateFailBuildOnPolicyViolation + '\n' +
                 ", updateTypeValue='" + updateTypeValue + "'";
 //                ", enableImpactAnalysis=" + enableImpactAnalysis;
     }

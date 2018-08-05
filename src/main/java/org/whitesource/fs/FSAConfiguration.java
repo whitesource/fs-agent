@@ -332,7 +332,14 @@ public class FSAConfiguration {
         boolean pythonIgnorePipInstallErrors = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_IGNORE_PIP_INSTALL_ERRORS, false);
         boolean pythonInstallVirtualenv = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_INSTALL_VIRTUALENV, false);
         boolean pythonResolveHierarchyTree = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_RESOLVE_HIERARCHY_TREE, true);
-        String[] pythonRequirementsFileIncludes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, new String[]{Constants.PYTHON_REQUIREMENTS});
+        boolean pythonResolveSetupPyFiles = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_RESOLVE_SETUP_PY_FILES, false);
+        String[] bomPatternForPython;
+        if (pythonResolveSetupPyFiles) {
+            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.SETUP_PY};
+        } else {
+            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS};
+        }
+        String[] pythonRequirementsFileIncludes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, bomPatternForPython);
 
         boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
@@ -359,6 +366,8 @@ public class FSAConfiguration {
 
         boolean sbtResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_RESOLVE_DEPENDENCIES, true);
         boolean sbtAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_AGGREGATE_MODULES, false);
+        boolean sbtRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_RUN_PRE_STEP, false);
+        String sbtTargetFolder = config.getProperty(ConfigPropertyKeys.SBT_TARGET_FOLDER, Constants.EMPTY_STRING);
 
         boolean htmlResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
 
@@ -367,12 +376,12 @@ public class FSAConfiguration {
                 bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
-                pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes,
+                pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles,
                 dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, paketResolveDependencies,
                 paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall,
                 rubyOverwriteGemFile, rubyInstallMissingGems,
-                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, htmlResolveDependencies);
+                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, htmlResolveDependencies);
     }
 
     private RequestConfiguration getRequest(Properties config, String apiToken, String userKey, String projectName, String projectToken) {
@@ -396,6 +405,7 @@ public class FSAConfiguration {
         boolean checkPolicies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.CHECK_POLICIES_PROPERTY_KEY, false);
         boolean forceCheckAllDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.FORCE_CHECK_ALL_DEPENDENCIES, false);
         boolean forceUpdate = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.FORCE_UPDATE, false);
+        boolean forceUpdateBuildFailed = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION, false);
         boolean enableImpactAnalysis = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false);
         String serviceUrl = config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
         String proxyHost = config.getProperty(ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY);
@@ -415,10 +425,12 @@ public class FSAConfiguration {
         String proxyUser = config.getProperty(ConfigPropertyKeys.PROXY_USER_PROPERTY_KEY);
         String proxyPassword = config.getProperty(ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY);
         boolean ignoreCertificateCheck = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.IGNORE_CERTIFICATE_CHECK, false);
+        boolean isSendLogsToWss = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SEND_LOGS_TO_WSS, false);
 
         return new SenderConfiguration(checkPolicies, serviceUrl, connectionTimeOut,
                 proxyHost, proxyPort, proxyUser, proxyPassword,
-                forceCheckAllDependencies, forceUpdate, updateTypeValue, enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals);
+                forceCheckAllDependencies, forceUpdate, forceUpdateBuildFailed, updateTypeValue,
+                enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals, isSendLogsToWss);
     }
 
     private OfflineConfiguration getOffline(Properties config) {

@@ -2,13 +2,14 @@ package org.whitesource.agent.dependency.resolver.gradle;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.agent.utils.CommandLineProcess;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ public class GradleLinesParserTest {
         gradleLinesParser = new GradleLinesParser(false);
     }
 
+    @Ignore
     @Test
     public void parseLines() throws IOException {
         String[] params = new String[] {Constants.CMD, "/c", "gradle", Constants.DEPENDENCIES};
@@ -31,6 +33,31 @@ public class GradleLinesParserTest {
         gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
     }
 
+    @Ignore
+    @Test
+    public void parseLineFromFile(){
+        File file = TestHelper.getFileFromResources("resolver/gradle/dependencies.log");
+        List<String> lines = readFileAsList(file.getAbsolutePath());
+        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
+    }
+
+    private List<String> readFileAsList(String fileName) {
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                // process the line.
+                lines.add(line);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return lines;
+    }
+
+    @Ignore
     @Test
     public void parseLinesFromString(){
         List<String> lines = new ArrayList<>();
@@ -48,6 +75,7 @@ public class GradleLinesParserTest {
         gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
     }
 
+    @Ignore
     @Test
     public void parseLinesFromString2() {
         List<String> lines = new ArrayList<>();
@@ -84,6 +112,7 @@ public class GradleLinesParserTest {
         Assert.assertTrue(dependencyInfos.get(4).getVersion().equals("2.5"));
     }
 
+    @Ignore
     @Test
     public void parseLinesFromString3(){
         List<String> lines = new ArrayList<>();

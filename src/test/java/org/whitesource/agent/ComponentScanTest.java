@@ -1,6 +1,7 @@
 package org.whitesource.agent;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.fs.CommandLineArgs;
@@ -8,7 +9,6 @@ import org.whitesource.fs.ComponentScan;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Properties;
 
 /**
@@ -16,6 +16,7 @@ import java.util.Properties;
  */
 public class ComponentScanTest {
 
+    @Ignore
     @Test
     public void shouldScanComponents() {
 
@@ -35,6 +36,7 @@ public class ComponentScanTest {
         System.out.printf(scanResult);
     }
 
+    @Ignore
     @Test
     public void testAcceptExtensionsList() {
         Properties props = TestHelper.getPropertiesFromFile();

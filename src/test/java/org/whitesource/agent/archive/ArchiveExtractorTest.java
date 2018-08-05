@@ -46,6 +46,7 @@ public class ArchiveExtractorTest {
         Assert.assertEquals(filesAll.length, filesClass.length + filesFiltered.length);
     }
 
+    @Ignore
     @Test
     public void shouldWorkWithSingleFile() {
         String[] archiveIncludes = new String[]{"**/*.zip"};
@@ -64,6 +65,7 @@ public class ArchiveExtractorTest {
         }
     }
 
+    @Ignore
     @Test
     public void shouldCreateTheSameZipStructure() {
         String unzipFolder = getUnzippedFolderFromTest();
@@ -78,6 +80,7 @@ public class ArchiveExtractorTest {
         }
     }
 
+    @Ignore
     @Test
     public void shouldCreateTheSameZipStructureMultiThreading() {
         int numberOfThreads = Runtime.getRuntime().availableProcessors();

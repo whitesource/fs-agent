@@ -3,16 +3,14 @@ package org.whitesource.agent.utils;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -30,6 +28,7 @@ public class CommandLineProcess {
     private long timeoutProcessMinutes;
     private boolean errorInProcess = false;
     private Process processStart = null;
+    private File errorLog = new File("error.log");
 
     /* --- Statics Members --- */
     private static final long DEFAULT_TIMEOUT_READLINE_SECONDS = 300;
@@ -58,7 +57,9 @@ public class CommandLineProcess {
         pb.directory(new File(rootDirectory));
         // redirect the error output to avoid output of npm ls by operating system
         String redirectErrorOutput = DependencyCollector.isWindows() ? "nul" : "/dev/null";
-        if (!includeErrorLines) {
+        if (includeErrorLines) {
+            pb.redirectError(errorLog);
+        } else {
             pb.redirectError(new File(redirectErrorOutput));
         }
         if (!includeOutput || includeErrorLines) {
@@ -86,11 +87,45 @@ public class CommandLineProcess {
             this.errorInProcess = true;
             logger.error("'{}' was interrupted {}", args, e);
         }
-        if (this.processStart.exitValue() != 0) {
-            logger.debug("error in execute command {}", this.processStart.exitValue());
+        if (this.processStart.isAlive() && errorInProcess) {
+            logger.debug("error executing command destroying process");
+            this.processStart.destroy();
+            return linesOutput;
+        }
+        if (this.getExitStatus() != 0) {
+            logger.debug("error in execute command {}", this.getExitStatus());
             this.errorInProcess = true;
         }
+        printErrors();
         return linesOutput;
+    }
+
+    // using this technique to print to the log the Process's errors as it the easiest way i found to do so -
+    // ues a file to redirect the errors to, read from it and then delete it.
+    // if you find a better way - go ahead and replace it
+    private void printErrors(){
+        if (errorLog.isFile()){
+            FileReader fileReader;
+            try {
+                fileReader = new FileReader(errorLog);
+                BufferedReader bufferedReader = new BufferedReader(fileReader);
+                String currLine;
+                while ((currLine = bufferedReader.readLine()) != null){
+                    logger.debug(currLine);
+                }
+                fileReader.close();
+            } catch (Exception e) {
+                logger.warn("Error printing cmd command errors {} " , e.getMessage());
+                logger.debug("Error: {}", e.getStackTrace());
+            } finally {
+                try {
+                    FileUtils.forceDelete(errorLog);
+                } catch (IOException e) {
+                    logger.warn("Error closing cmd command errors file {} " , e.getMessage());
+                    logger.debug("Error: {}", e.getStackTrace());
+                }
+            }
+        }
     }
 
     //get windows short path
@@ -115,11 +150,14 @@ public class CommandLineProcess {
     }
 
     private String getWindowsShortPath(String path) {
-        char[] result = new char[256];
+        if (path.length() >= 256){
+            char[] result = new char[256];
 
-        //Call CKernel32 interface to execute GetShortPathNameA method
-        Kernel32.INSTANCE.GetShortPathName(path, result, result.length);
-        return Native.toString(result);
+            //Call CKernel32 interface to execute GetShortPathNameA method
+            Kernel32.INSTANCE.GetShortPathName(path, result, result.length);
+            return Native.toString(result);
+        }
+        return path;
     }
 
     private boolean readBlock(InputStreamReader inputStreamReader, BufferedReader reader, ExecutorService executorService, List<String> lines, boolean includeErrorLines) {
@@ -173,7 +211,7 @@ public class CommandLineProcess {
     }
 
     public List<String> executeProcessWithErrorOutput() throws IOException {
-        return executeProcess(true, true);
+        return executeProcess(false, true);
     }
 
     public void setTimeoutReadLineSeconds(long timeoutReadLineSeconds) {
