@@ -47,7 +47,8 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         // each bom-file ( = build.gradle) represents a module - identify its folder and scan it using 'gradle dependencies'
-        Collection<AgentProjectInfo> projects = new ArrayList<>();
+        Map<AgentProjectInfo, Path> projectInfoPathMap = new HashMap<>();
+        Collection<String> excludes = new HashSet<>();
         String settingsFileContent = null;
         ArrayList<Integer[]> commentBlocks = null;
         if (bomFiles.size() > 1){
@@ -71,35 +72,14 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
                     coordinates.setArtifactId(moduleName);
                     agentProjectInfo.setCoordinates(coordinates);
                 }
-                projects.add(agentProjectInfo);
-            }
-        }
-        topLevelFoldersNames.add(topLevelFolder.substring(topLevelFolder.lastIndexOf(fileSeparator) + 1));
-        Collection<String> excludes = getExcludes();
-        Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
-            // try to find the topFolderFolder for each module in the project
-            File topFolderFound = null;
-            for (String bomFile : bomFiles) {
-                File file = new File(bomFile);
-                file = file.getParentFile();
-                if (file.getName().equals(projectInfo.getCoordinates().getArtifactId())) {
-                    topFolderFound = file;
-                    break;
-                }
-            }
-            if (topFolderFound != null && topFolderFound.isDirectory() && topFolderFound.exists()) {
-                if (dependenciesOnly) {
-                    excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), GRADLE_SCRIPT_EXTENSION, null));
-                }
-                return topFolderFound.toPath();
-            } else {
+                projectInfoPathMap.put(agentProjectInfo, bomFolder.toPath());
                 if (dependenciesOnly) {
                     excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, GRADLE_SCRIPT_EXTENSION, null));
                 }
-                return Paths.get(topLevelFolder);
             }
-        }));
-
+        }
+        topLevelFoldersNames.add(topLevelFolder.substring(topLevelFolder.lastIndexOf(fileSeparator) + 1));
+        excludes.addAll(getExcludes());
         ResolutionResult resolutionResult;
         if (!gradleAggregateModules) {
             resolutionResult = new ResolutionResult(projectInfoPathMap, excludes, getDependencyType(), topLevelFolder);
