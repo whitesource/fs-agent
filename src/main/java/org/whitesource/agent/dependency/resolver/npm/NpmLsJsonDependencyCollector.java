@@ -31,6 +31,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
@@ -153,7 +154,12 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
                     } else {
                         // it can be only if was an error in 'npm ls'
                         if (dependencyJsonObject.has(REQUIRED)) {
-                            currentLineNumber = getDependencies(dependencyJsonObject.getJSONObject(REQUIRED), linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
+                            Object requiredObject = dependencyJsonObject.get(REQUIRED);
+                            if (requiredObject instanceof JSONObject) {
+                                currentLineNumber = getDependencies((JSONObject) requiredObject, linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
+                            } else {
+                                currentLineNumber++;
+                            }
                         } else {
                             currentLineNumber++;
                         }

@@ -45,6 +45,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private String fileSeparator;
     private String dotGradlePath;
     private String rootDirectory;
+    private String prevRootDirectory;
     private boolean runAssembleCommand;
     private boolean dependenciesDownloadAttemptPerformed;
     private GradleCli gradleCli;
@@ -178,7 +179,10 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             dependencyFile = getSha1FromM2(dependencyInfo);
             if (dependencyFile == null || dependencyFile.getSha1().equals(Constants.EMPTY_STRING)){
                 // if dependency not found in .m2 cache - running 'gradel assemble' command which should download the dependency to .grade cache
-                // making sure the download attempt is performed only once, otherwise there might be an infinite loop
+                // making sure the download attempt is performed only once for a directory, otherwise there might be an infinite loop
+                if(!rootDirectory.equals(prevRootDirectory)){
+                    dependenciesDownloadAttemptPerformed = false;
+                }
                 if (!dependenciesDownloadAttemptPerformed && downloadDependencies()){
                     dependencyFile = getDependencySha1(dependencyInfo);
                 } else {
@@ -254,6 +258,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
 
     private boolean downloadDependencies() {
         dependenciesDownloadAttemptPerformed = true;
+        prevRootDirectory=rootDirectory;
         if (runAssembleCommand) {
             try {
                 logger.info("running 'gradle assemble' command");
