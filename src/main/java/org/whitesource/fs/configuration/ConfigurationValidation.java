@@ -33,7 +33,7 @@ public class ConfigurationValidation {
     private static final int MAX_EXTRACTION_DEPTH = 7;
 
     public List<String> getConfigurationErrors(boolean projectPerFolder, String configProjectToken, String configProjectName, String configApiToken, String configFilePath,
-                                               int archiveDepth, String[] includes, String[] projectPerFolderIncludes, String[] pythonIncludes) {
+                                               int archiveDepth, String[] includes, String[] projectPerFolderIncludes, String[] pythonIncludes,String scanComment) {
         List<String> errors = new ArrayList<>();
         String[] requirements = pythonIncludes[0].split(Constants.WHITESPACE);
         if (StringUtils.isBlank(configApiToken)) {
@@ -68,7 +68,11 @@ public class ConfigurationValidation {
                 }
             }
         }
-
+        if (!StringUtils.isBlank(scanComment)) {
+            if (scanComment.length() > 1000) {
+                errors.add("Error: scanComment parameters is longer than 1000 characters");
+            }
+        }
         return errors;
     }
 }

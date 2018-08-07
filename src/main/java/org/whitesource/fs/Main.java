@@ -173,7 +173,7 @@ public class Main {
             UpdateInventoryRequest offLineReq = updateInventoryRequests.stream().findFirst().get();
             req = new RequestConfiguration(req.getApiToken(), req.getUserKey(), req.getRequesterEmail(), req.isProjectPerSubFolder(), req.getProjectName(),
                     req.getProjectToken(), req.getProjectVersion(), offLineReq.product(), null, offLineReq.productVersion(),
-                    req.getAppPaths(), req.getViaDebug(), req.getViaAnalysisLevel(), req.getIaLanguage());
+                    req.getAppPaths(), req.getViaDebug(), req.getViaAnalysisLevel(), req.getIaLanguage(),req.getScanComment());
         }
 
         if (!result.getStatusCode().equals(StatusCode.SUCCESS)) {
