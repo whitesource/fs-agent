@@ -72,8 +72,11 @@ public class FSAConfiguration {
                 resolver.toString() + '\n' +
                 ", dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
                 request.toString() + '\n' +
-                ", requirementsFileIncludes=" + Arrays.asList(requirementsFileIncludes) + '\n' +
                 ", scanPackageManager=" + scanPackageManager + '\n' +
+                ", offline=" + offline.isEnabled() + '\n' +
+                ", projectPerFolder=" + projectPerFolder+ '\n' +
+                ", wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
+                 ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", scanDockerImages=" + scanDockerImages + '\n' +
                 ", requirementsFileIncludes=" + Arrays.asList(requirementsFileIncludes) + '\n' +
                 getAgent().toString() + '\n' +
@@ -87,6 +90,12 @@ public class FSAConfiguration {
     public static final int DEFAULT_PORT = 443;
     public static final boolean DEFAULT_SSL = true;
     private static final boolean DEFAULT_ENABLED = false;
+
+    private boolean projectPerFolder;
+    private int connectionTimeOut;
+    private boolean npmYarnProject;
+    private boolean gradleAggregateModules;
+    private String paketPath;
 
     /* --- Private fields --- */
 
@@ -218,7 +227,7 @@ public class FSAConfiguration {
         // validate config
         String projectToken = config.getProperty(ConfigPropertyKeys.PROJECT_TOKEN_PROPERTY_KEY);
         String projectNameFinal = !StringUtils.isBlank(projectName) ? projectName : config.getProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY);
-        boolean projectPerFolder = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, false);
+        projectPerFolder = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, false);
         String apiToken = config.getProperty(ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY);
         String userKey = config.getProperty(ConfigPropertyKeys.USER_KEY_PROPERTY_KEY);
         int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(config);
@@ -312,7 +321,7 @@ public class FSAConfiguration {
         long npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, ConfigPropertyKeys.NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
         boolean npmIgnoreNpmLsErrors = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_IGNORE_NPM_LS_ERRORS, false);
         String npmAccessToken = config.getProperty(ConfigPropertyKeys.NPM_ACCESS_TOKEN);
-        boolean npmYarnProject = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_YARN_PROJECT, false);
+        npmYarnProject = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_YARN_PROJECT, false);
 
         boolean bowerResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.BOWER_RESOLVE_DEPENDENCIES, true);
         boolean bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.BOWER_RUN_PRE_STEP, false);
@@ -348,13 +357,13 @@ public class FSAConfiguration {
 
         boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
-        boolean gradleAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
+        gradleAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
 
         boolean paketResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PAKET_RESOLVE_DEPENDENCIES, true);
         String[] paketIgnoredScopes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.PAKET_IGNORED_GROUPS, null);
         boolean paketIgnoreFiles = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PAKET_IGNORE_FILES, true);
         boolean paketRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PAKET_RUN_PRE_STEP, false);
-        String paketPath = config.getProperty(ConfigPropertyKeys.PAKET_EXE_PATH, null);
+        paketPath = config.getProperty(ConfigPropertyKeys.PAKET_EXE_PATH, null);
 
         boolean goResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GO_RESOLVE_DEPENDENCIES, true);
         String goDependencyManager = config.getProperty(ConfigPropertyKeys.GO_DEPENDENCY_MANAGER, Constants.EMPTY_STRING);
@@ -413,7 +422,7 @@ public class FSAConfiguration {
         boolean enableImpactAnalysis = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false);
         String serviceUrl = config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
         String proxyHost = config.getProperty(ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY);
-        int connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
+        connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
                 String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
         int connectionRetries = FSAConfiguration.getIntProperty(config, ConfigPropertyKeys.CONNECTION_RETRIES, 1);
         int connectionRetriesIntervals = FSAConfiguration.getIntProperty(config, ConfigPropertyKeys.CONNECTION_RETRIES_INTERVALS, 3000);
