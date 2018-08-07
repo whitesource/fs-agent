@@ -281,10 +281,10 @@ public class ProjectsSender {
         if (senderConfig.isSendLogsToWss()) {
             String logData = getLogData();
             updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
-                    requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), logData);
+                    requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), logData, requestConfig.getScanComment());
         } else {
             updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
-                    requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
+                    requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(),null, requestConfig.getScanComment());
         }
         String resultInfo = logResult(updateResult);
         // remove line separators
