@@ -70,7 +70,6 @@ public class Main {
             printHelpContent();
             System.exit(StatusCode.SUCCESS.getValue());
         }
-
         new JCommander(commandLineArgs, args);
         StatusCode processExitCode;
 
