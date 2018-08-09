@@ -24,6 +24,7 @@ import org.whitesource.agent.Constants;
 import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
+import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.*;
 
@@ -261,6 +262,11 @@ public class FSAConfiguration {
         sender = getSender(config);
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
+
+        if (sender.isEnableImpactAnalysis() && !appPaths.isEmpty()) {
+            resolver.setMavenIgnoredScopes(new String[]{MavenTreeDependencyCollector.ALL});
+        }
+
     }
 
     private void initializeDependencyDirs(String[] argsForAppPathAndDirs, Properties config) {
