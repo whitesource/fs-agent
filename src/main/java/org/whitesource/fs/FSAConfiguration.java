@@ -263,7 +263,7 @@ public class FSAConfiguration {
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
 
-        if (sender.isEnableImpactAnalysis() && !appPaths.isEmpty()) {
+        if (sender.isEnableImpactAnalysis() && !appPathsToDependencyDirs.isEmpty()) {
             resolver.setMavenIgnoredScopes(new String[]{MavenTreeDependencyCollector.ALL});
         }
 
