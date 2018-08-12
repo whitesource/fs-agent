@@ -82,6 +82,7 @@ public final class Constants {
     public static final String PYTHON_REQUIREMENTS = "requirements.txt";
     public static final String TXT_EXTENSION = ".txt";
     public static final String SETUP_PY = "setup.py";
+    public static final String BUILD_GRADLE = "**/*build.gradle";
 
     public static final char QUESTION_MARK = '?';
     public static final char WHITESPACE_CHAR = ' ';

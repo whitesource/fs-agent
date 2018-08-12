@@ -81,7 +81,7 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
                     excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), JAVA_EXTENSIONS, null));
                 }
                 return topFolderFound.toPath();
-            }else {
+            } else {
                 if (dependenciesOnly) {
                     excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder.toString(), JAVA_EXTENSIONS, null));
                 }

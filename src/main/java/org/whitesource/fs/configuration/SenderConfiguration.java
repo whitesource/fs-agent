@@ -155,6 +155,7 @@ public class SenderConfiguration {
     @JsonProperty(SEND_LOGS_TO_WSS)
     public boolean isSendLogsToWss(){ return sendLogsToWss; }
 
+
     @Override
     public String toString() {
         return  ", serviceUrl='" + serviceUrl + "'\n" +

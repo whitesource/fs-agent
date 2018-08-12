@@ -113,7 +113,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 case VNDR:
                     return new String[]{Constants.PATTERN + VNDR_CONF};
                 case GO_GRADLE:
-                    return new String[]{GradleDependencyResolver.BUILD_GRADLE};
+                    return new String[]{Constants.BUILD_GRADLE};
             }
         }
         return new String[]{Constants.EMPTY_STRING};
