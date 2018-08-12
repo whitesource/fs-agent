@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 public class GradleDependencyResolver extends AbstractDependencyResolver {
 
-    private static final String BUILD_GRADLE = "**/*build.gradle";
+    public static final String BUILD_GRADLE = "**/*build.gradle";
     private static final List<String> GRADLE_SCRIPT_EXTENSION = Arrays.asList(".gradle",".groovy", ".java", ".jar", ".war", ".ear", ".car", ".class");
     private static final String JAR_EXTENSION = ".jar";
     private static final String SETTINGS_GRADLE = "settings.gradle";
@@ -197,7 +197,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private List<DependencyInfo> collectDependencies(String rootDirectory) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
-        List<String> lines = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(MvnCommand.DEPENDENCIES));
+        List<String> lines = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES));
         if (lines != null) {
             dependencyInfos.addAll(gradleLinesParser.parseLines(lines, rootDirectory));
         }

@@ -2,10 +2,11 @@ package org.whitesource.agent.dependency.resolver.gradle;
 
 import org.whitesource.agent.Constants;
 
-public enum MvnCommand {
+public enum GradleMvnCommand {
     DEPENDENCIES(Constants.DEPENDENCIES),
-    ASSEMBLE(GradleCli.GRADLE_ASSEMBLE);
+    ASSEMBLE(GradleCli.GRADLE_ASSEMBLE),
+    LOCK(GradleCli.GRADLE_LOCK);
 
-    MvnCommand(String value) {
+    GradleMvnCommand(String value) {
     }
 }

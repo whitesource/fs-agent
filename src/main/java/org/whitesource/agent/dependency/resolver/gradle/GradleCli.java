@@ -3,7 +3,6 @@ package org.whitesource.agent.dependency.resolver.gradle;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.CommandLineProcess;
@@ -15,6 +14,7 @@ public class GradleCli extends Cli {
     private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.gradle.GradleCli.class);
 
     protected static final String GRADLE_ASSEMBLE = "assemble";
+    protected static final String GRADLE_LOCK = "lock";
     private final String GRADLE_COMMAND = "gradle";
     private final String GRADLE_COMMAND_W_WINDOWS = "gradlew";
     private final String GRADLE_COMMAND_W_LINUX = "./gradlew";
@@ -61,7 +61,7 @@ public class GradleCli extends Cli {
         }
     }
 
-    public String[] getGradleCommandParams(MvnCommand command) {
+    public String[] getGradleCommandParams(GradleMvnCommand command) {
         return super.getCommandParams(GRADLE_COMMAND, command.name());
     }
 }

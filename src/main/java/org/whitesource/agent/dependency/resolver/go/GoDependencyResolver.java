@@ -13,15 +13,19 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.gradle.GradleCli;
-import org.whitesource.agent.dependency.resolver.gradle.MvnCommand;
+import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
+import org.whitesource.agent.dependency.resolver.gradle.GradleMvnCommand;
 import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.CommandLineProcess;
 
+import javax.lang.model.element.Name;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class GoDependencyResolver extends AbstractDependencyResolver {
@@ -33,14 +37,15 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final String REV             = "Rev";
     private static final String COMMENT         = "Comment";
     private static final String IMPORT_PATH     = "ImportPath";
-    private static final String NAME            = "name = ";
+    private static final String NAME            = "name";
+    private static final String COMMIT          = "commit: ";
     private static final String VERSION         = "version = ";
     private static final String REVISION        = "revision = ";
     private static final String PACKAGES        = "packages = ";
     private static final String BRACKET         = "]";
     private static final String DOT             = ".";
     private static final String ASTERIX         = "(*)";
-    private static final String SLASH           = "\\---";
+    private static final String SLASH           = "\\--";
     private static final String GOPKG_LOCK      = "Gopkg.lock";
     private static final String GODEPS_JSON     = "Godeps.json";
     private static final String VNDR_CONF       = "vendor.conf";
@@ -107,6 +112,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     return new String[]{Constants.PATTERN + GODEPS_JSON};
                 case VNDR:
                     return new String[]{Constants.PATTERN + VNDR_CONF};
+                case GO_GRADLE:
+                    return new String[]{GradleDependencyResolver.BUILD_GRADLE};
             }
         }
         return new String[]{Constants.EMPTY_STRING};
@@ -239,7 +246,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                                     repositoryPackages.add(getValue(currLine));
                                 }
                             }
-                        } else if (currLine.contains(NAME)){
+                        } else if (currLine.contains(NAME + Constants.WHITESPACE + Constants.EQUALS_CHAR + Constants.WHITESPACE)){
                             String name = getValue(currLine);
                             dependencyInfo.setGroupId(getGroupId(name));
                             dependencyInfo.setArtifactId(name);
@@ -386,13 +393,19 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private void collectGoGradleDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) {
         logger.debug("collecting dependencies using 'GoGradle'");
         GradleCli gradleCli = new GradleCli();
-        List<String> lines = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(MvnCommand.DEPENDENCIES));
+        List<String> lines = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES));
         if (lines != null) {
             parseGoGradleDependencies(lines, dependencyInfos);
+            File goGradleLock = new File(rootDirectory + fileSeparator + GOGRADLE_LOCK);
+            if (goGradleLock.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.LOCK)))){
+                HashMap<String, String> gradleLockFile = parseGoGradleLockFile(goGradleLock);
+                dependencyInfos.stream().forEach(dependencyInfo -> dependencyInfo.setCommit(gradleLockFile.get(dependencyInfo.getArtifactId())));
+            } else {
+                logger.warn("Can't find {} and verify dependencies commit-ids; make sure 'collectDependenciesAtRuntime' is set to true or run 'gradlew lock' manually", goGradleLock.getPath());
+            }
+        } else {
+            logger.warn("running `gradle dependencies` command failed");
         }
-
-        File groGradleLock = new File(rootDirectory + fileSeparator + GOGRADLE_LOCK);
-
     }
 
     private void parseGoGradleDependencies(List<String> lines, List<DependencyInfo> dependencyInfos){
@@ -400,22 +413,98 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 .filter(line->(line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))
                 .collect(Collectors.toList());
         DependencyInfo dependencyInfo;
+        Pattern shortIdPattern = Pattern.compile("\\([a-z0-9]{7}\\)");
         for (String currentLine : filteredLines){
-            String[] strings = currentLine.split(Constants.COLON);
-            String name = strings[0];
-            int lastSpace = name.lastIndexOf(Constants.WHITESPACE);
-            name = name.substring(lastSpace + 1);
-            if (currentLine.charAt(1) == Constants.WHITESPACE_CHAR || strings[1].contains(Constants.POUND)){
-                // same as in dep - dependencyInfo should be flat
-            } else {
+            /* possible lines:
+                |-- github.com/astaxie/beego:053a075
+                |-- golang.org/x/crypto:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/golang.org/x/crypto
+                |   \-- gopkg.in/yaml.v2:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/gopkg.in/yaml.v2 -> v2.2.1(5420a8b)
+                |-- github.com/eRez-ws/go-stringUtil:v1.0.4(99cfd8b)
+
+               splitting them using : - the first part contains the name, the second part might contain the version and short-commit-id
+            */
+            try {
                 dependencyInfo = new DependencyInfo();
+                String[] dependencyLineSplit = currentLine.split(Constants.COLON);
+                // extracting the group and artifact id from the first part of the line
+                String name = dependencyLineSplit[0];
+                int lastSpace = name.lastIndexOf(Constants.WHITESPACE);
+                name = name.substring(lastSpace + 1);
                 dependencyInfo.setGroupId(getGroupId(name));
                 dependencyInfo.setArtifactId(name);
+                dependencyInfo.setDependencyType(DependencyType.GO);
+                if (dependencyLineSplit.length > 1) { // extracting the version from the second part
+                    String versionPart = dependencyLineSplit[1];
+                    Matcher matcher = shortIdPattern.matcher(versionPart);
+                    if (matcher.find()) {
+                        int index = matcher.start();
+                        String version;
+                        if (versionPart.contains(Constants.WHITESPACE) && versionPart.lastIndexOf(Constants.WHITESPACE) < index) {
+                            version = versionPart.substring(versionPart.lastIndexOf(Constants.WHITESPACE), index);
+                        } else {
+                            version = versionPart.substring(0, index);
+                        }
+                        dependencyInfo.setVersion(version);
+                    }
+                }
+                dependencyInfos.add(dependencyInfo);
+            } catch (Exception e){
+                logger.warn("Error parsing line {}, exception: {}", currentLine, e.getMessage());
+                logger.debug("Exception: {}", e.getStackTrace());
             }
         }
     }
 
-    public boolean runCmd(String rootDirectory, String[] params){
+    private HashMap<String, String> parseGoGradleLockFile(File file){
+        HashMap<String, String> dependenciesCommits = new HashMap<>();
+        if (file.isFile()){
+            FileReader fileReader = null;
+            try {
+                fileReader = new FileReader(file);
+                BufferedReader bufferedReader = new BufferedReader(fileReader);
+                String currLine;
+                String name = null;
+                String commit = null;
+                while ((currLine = bufferedReader.readLine()) != null) {
+                    if (currLine.startsWith(Constants.WHITESPACE + Constants.WHITESPACE) == false)
+                        continue;
+                    if (currLine.startsWith(Constants.WHITESPACE + Constants.WHITESPACE + Constants.DASH + Constants.WHITESPACE)) {
+                        if (name != null && commit != null){
+                            dependenciesCommits.put(name, commit);
+                        }
+                        name = null;
+                        commit = null;
+                    }
+                    if (currLine.contains(NAME + Constants.COLON + Constants.WHITESPACE)) {
+                        name = currLine.substring(currLine.indexOf(Constants.QUOTATION_MARK) + 1);
+                        name = name.replace(Constants.QUOTATION_MARK, Constants.EMPTY_STRING);
+                    } else if (currLine.contains(COMMIT)) {
+                        commit = currLine.substring(currLine.indexOf(Constants.QUOTATION_MARK) + 1);
+                        commit = commit.replace(Constants.QUOTATION_MARK, Constants.EMPTY_STRING);
+                    }
+                }
+                if (name != null && commit != null){
+                    dependenciesCommits.put(name, commit);
+                }
+            } catch (FileNotFoundException e) {
+                logger.warn("Error finding {}, exception: {}", file.getPath(), e.getMessage());
+                logger.debug("Error: {}", e.getStackTrace());
+            } catch (IOException e) {
+                logger.warn("Error parsing {}, exception: {}", file.getName(), e.getMessage());
+                logger.debug("Exception: {}", e.getStackTrace());
+            } finally {
+                try {
+                    fileReader.close();
+                } catch (IOException e) {
+                    logger.warn("Can't close {}, exception: {}", file.getName(), e.getMessage());
+                    logger.debug("Exception: {}", e.getStackTrace());
+                }
+            }
+        }
+        return dependenciesCommits;
+    }
+
+    private boolean runCmd(String rootDirectory, String[] params){
         try {
             CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, params);
             commandLineProcess.executeProcessWithErrorOutput();
