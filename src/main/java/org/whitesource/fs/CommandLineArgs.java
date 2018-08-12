@@ -115,6 +115,9 @@ public class CommandLineArgs {
     @Parameter(names = "-userKey", description = "user key uniquely identifying the account at white source")
     String userKey = null;
 
+    @Parameter(names = "-sendLogsToWss", description = "whether to send logs to WhiteSource or not")
+    String sendLogsToWss = null;
+
     @Parameter(names = "-projectToken", description = "API token to match an existing WhiteSource project")
     String projectToken = null;
 
