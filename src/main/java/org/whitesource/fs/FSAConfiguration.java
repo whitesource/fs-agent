@@ -263,10 +263,26 @@ public class FSAConfiguration {
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
 
-        if (sender.isEnableImpactAnalysis() && !appPathsToDependencyDirs.isEmpty()) {
-            resolver.setMavenIgnoredScopes(new String[]{MavenTreeDependencyCollector.ALL});
+        if (sender.isEnableImpactAnalysis()) {
+            boolean isViaAppPath = checkAppPathsForVia(appPathsToDependencyDirs.keySet());
+            if (isViaAppPath) {
+                if (resolver.getMavenIgnoredScopes() != null && !Arrays.asList(resolver.getMavenIgnoredScopes()).contains(resolver.getMavenIgnoredScopes())) {
+                    errors.add("Effective Usage Analysis cannot run. Make sure you set an empty value for the maven.ignoredScopes parameter");
+                    sender.setEnableImpactAnalysis(false);
+                } else {
+                    resolver.setMavenIgnoredScopes(new String[]{MavenTreeDependencyCollector.ALL});
+                }
+            }
         }
+    }
 
+    private boolean checkAppPathsForVia(Set<String> keySet) {
+        for (String key : keySet) {
+            if (!key.equals("defaultKey")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void initializeDependencyDirs(String[] argsForAppPathAndDirs, Properties config) {
@@ -390,7 +406,8 @@ public class FSAConfiguration {
                 phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, htmlResolveDependencies);
     }
 
-    private RequestConfiguration getRequest(Properties config, String apiToken, String userKey, String projectName, String projectToken) {
+    private RequestConfiguration getRequest(Properties config, String apiToken, String userKey, String
+            projectName, String projectToken) {
         String productToken = config.getProperty(ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY);
         String productName = config.getProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY);
         String productVersion = config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
