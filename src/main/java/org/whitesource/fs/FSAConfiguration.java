@@ -52,7 +52,7 @@ public class FSAConfiguration {
             ConfigPropertyKeys.ENDPOINT_ENABLED, ConfigPropertyKeys.ENDPOINT_PORT, ConfigPropertyKeys.ENDPOINT_CERTIFICATE, ConfigPropertyKeys.ENDPOINT_PASS, ConfigPropertyKeys.ENDPOINT_SSL_ENABLED, ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, ConfigPropertyKeys.OFFLINE_ZIP_PROPERTY_KEY,
             ConfigPropertyKeys.OFFLINE_PRETTY_JSON_KEY, ConfigPropertyKeys.WHITESOURCE_CONFIGURATION, ConfigPropertyKeys.SCANNED_FOLDERS);
 
-    public static final int VIA_DEFAULT_ANALYSIS_LEVEL = 1;
+    public static final int VIA_DEFAULT_ANALYSIS_LEVEL = 2;
     public static final String DEFAULT_KEY = "defaultKey";
     public static final String APP_PATH = "-appPath";
     private static final String FALSE = "false";
