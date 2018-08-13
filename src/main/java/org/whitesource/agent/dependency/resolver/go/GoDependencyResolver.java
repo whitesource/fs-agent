@@ -399,7 +399,10 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             File goGradleLock = new File(rootDirectory + fileSeparator + GOGRADLE_LOCK);
             if (goGradleLock.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.LOCK)))){
                 HashMap<String, String> gradleLockFile = parseGoGradleLockFile(goGradleLock);
+                // for each dependency - matching its full commit id
                 dependencyInfos.stream().forEach(dependencyInfo -> dependencyInfo.setCommit(gradleLockFile.get(dependencyInfo.getArtifactId())));
+                // removing dependencies without commit-id and version
+                dependencyInfos.removeIf(dependencyInfo -> dependencyInfo.getCommit() == null && dependencyInfo.getVersion() == null);
             } else {
                 logger.warn("Can't find {} and verify dependencies commit-ids; make sure 'collectDependenciesAtRuntime' is set to true or run 'gradlew lock' manually", goGradleLock.getPath());
             }
@@ -413,7 +416,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 .filter(line->(line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))
                 .collect(Collectors.toList());
         DependencyInfo dependencyInfo;
-        Pattern shortIdPattern = Pattern.compile("\\([a-z0-9]{7}\\)");
+        Pattern shortIdInBracketsPattern = Pattern.compile("\\([a-z0-9]{7}\\)");
+        Pattern shortIdPattern = Pattern.compile("[a-z0-9]{7}");
         for (String currentLine : filteredLines){
             /* possible lines:
                 |-- github.com/astaxie/beego:053a075
@@ -431,12 +435,10 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 int lastSpace = name.lastIndexOf(Constants.WHITESPACE);
                 name = name.substring(lastSpace + 1);
                 dependencyInfo.setGroupId(getGroupId(name));
-                dependencyInfo.setArtifactId(name);
-                dependencyInfo.setDependencyType(DependencyType.GO);
                 if (dependencyLineSplit.length > 1) { // extracting the version from the second part
                     String versionPart = dependencyLineSplit[1];
-                    Matcher matcher = shortIdPattern.matcher(versionPart);
-                    if (matcher.find()) {
+                    Matcher matcher = shortIdInBracketsPattern.matcher(versionPart);
+                    if (matcher.find()) { // extracting version (if found)
                         int index = matcher.start();
                         String version;
                         if (versionPart.contains(Constants.WHITESPACE) && versionPart.lastIndexOf(Constants.WHITESPACE) < index) {
@@ -445,8 +447,19 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             version = versionPart.substring(0, index);
                         }
                         dependencyInfo.setVersion(version);
+                    } else {
+                        matcher = shortIdPattern.matcher(versionPart);
+                        if (matcher.find()){ // extracting short commit id (if found)
+                            int index = matcher.start();
+                            if (index == 0) {
+                                String shortCommit = versionPart.substring(0,7);
+                                dependencyInfo.setCommit(shortCommit);
+                            }
+                        }
                     }
                 }
+                dependencyInfo.setArtifactId(name);
+                dependencyInfo.setDependencyType(DependencyType.GO);
                 dependencyInfos.add(dependencyInfo);
             } catch (Exception e){
                 logger.warn("Error parsing line {}, exception: {}", currentLine, e.getMessage());
