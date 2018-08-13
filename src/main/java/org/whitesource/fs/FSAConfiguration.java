@@ -516,6 +516,16 @@ public class FSAConfiguration {
             try (FileInputStream inputStream = new FileInputStream(configFilePath)) {
                 try {
                     configProps.load(inputStream);
+                    // Remove extra spaces from the values
+                    Set<String> keys = configProps.stringPropertyNames();
+                    for (String key : keys) {
+                        String value = configProps.getProperty(key);
+                        if (value != null) {
+                            value = value.trim();
+                        }
+                        configProps.put(key, value);
+                    }
+
                 } catch (FileNotFoundException e) {
                     errors.add("Failed to open " + configFilePath + " for reading " + e);
                 } catch (IOException e) {
