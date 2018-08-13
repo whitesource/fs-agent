@@ -78,7 +78,6 @@ public class FSAConfiguration {
                 ", wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
                  ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", scanDockerImages=" + scanDockerImages + '\n' +
-                ", requirementsFileIncludes=" + Arrays.asList(requirementsFileIncludes) + '\n' +
                 getAgent().toString() + '\n' +
                 '}';
     }
