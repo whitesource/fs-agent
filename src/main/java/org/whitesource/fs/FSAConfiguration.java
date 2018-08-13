@@ -591,6 +591,15 @@ public class FSAConfiguration {
                 try {
 //                    configProps.load(inputStream); replaced by the below
                     configProps.load(new InputStreamReader(inputStream,StandardCharsets.UTF_8));
+                    // Remove extra spaces from the values
+                    Set<String> keys = configProps.stringPropertyNames();
+                    for (String key : keys) {
+                        String value = configProps.getProperty(key);
+                        if (value != null) {
+                            value = value.trim();
+                        }
+                        configProps.put(key, value);
+                    }
                 } catch (FileNotFoundException e) {
                     errors.add("Failed to open " + configFilePath + " for reading " + e.getMessage());
                 } catch (IOException e) {
