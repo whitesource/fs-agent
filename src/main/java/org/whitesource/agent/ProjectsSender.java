@@ -274,7 +274,7 @@ public class ProjectsSender {
         logger.info("Sending Update");
         UpdateInventoryResult updateResult;
         //--------------------------------
-        if (requestConfig.getViaDebug().equals("SAVE")) {
+        if (requestConfig.getViaDebug().equals("SAVE") || Boolean.valueOf(requestConfig.getViaDebug())) {
             saveRequestToFile(projects);
         }
         //--------------------------------
