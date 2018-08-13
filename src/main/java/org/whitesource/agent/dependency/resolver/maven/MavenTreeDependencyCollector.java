@@ -55,11 +55,11 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String USER_HOME = "user.home";
     private static final String M2 = ".m2";
     private static final String REPOSITORY = "repository";
-    private static final String ALL = "All";
+    public static final String ALL = "All";
     private static final String POM = "pom";
     private static final String B_PARAMETER = "-B";
-    public static final String TEST_JAR = "test-jar";
-    public static final String JAR = "jar";
+    private static final String TEST_JAR = "test-jar";
+    private static final String JAR = "jar";
 
     /* --- Members --- */
 

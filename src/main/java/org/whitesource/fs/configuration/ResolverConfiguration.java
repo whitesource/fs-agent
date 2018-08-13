@@ -470,10 +470,14 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(SBT_RUN_PRE_STEP)
-    public boolean isSbtRunPreStep() { return sbtRunPreStep; }
+    public boolean isSbtRunPreStep() {
+        return sbtRunPreStep;
+    }
 
     @JsonProperty(SBT_TARGET_FOLDER)
-    public String getSbtTargetFolder() { return sbtTargetFolder; }
+    public String getSbtTargetFolder() {
+        return sbtTargetFolder;
+    }
 
     @JsonProperty(HTML_RESOLVE_DEPENDENCIES)
     public boolean isHtmlResolveDependencies() {
@@ -494,6 +498,10 @@ public class ResolverConfiguration {
 
     public void setMavenResolveDependencies(boolean mavenResolveDependencies) {
         this.mavenResolveDependencies = mavenResolveDependencies;
+    }
+
+    public void setMavenIgnoredScopes(String[] mavenIgnoredScopes) {
+        this.mavenIgnoredScopes = mavenIgnoredScopes;
     }
 
     public void setPythonResolveDependencies(boolean pythonResolveDependencies) {

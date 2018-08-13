@@ -17,7 +17,7 @@ package org.whitesource.fs;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.CommaParameterSplitter;
-import org.whitesource.agent.Constants;
+ import org.whitesource.agent.Constants;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -104,7 +104,7 @@ public class CommandLineArgs {
     String viaDebug = null;
 
     @Parameter(names = "-viaLevel", description = "Impact Analysis level")
-    String viaLevel = "1";
+    String viaLevel = "2";
 
     @Parameter(names = "-enableImpactAnalysis", description = "Whether or not to enable impact analysis")
     String enableImpactAnalysis = null;
