@@ -34,7 +34,7 @@ public class SenderConfiguration {
     private final boolean forceUpdate;
     private final boolean forceUpdateFailBuildOnPolicyViolation;
     private final String updateTypeValue;
-    private final boolean enableImpactAnalysis;
+    private boolean enableImpactAnalysis;
     private final boolean ignoreCertificateCheck;
     private final int connectionRetries;
     private final int connectionRetriesIntervals;
@@ -154,6 +154,8 @@ public class SenderConfiguration {
 
     @JsonProperty(SEND_LOGS_TO_WSS)
     public boolean isSendLogsToWss(){ return sendLogsToWss; }
+
+    public void setEnableImpactAnalysis(boolean enableImpactAnalysis) { this.enableImpactAnalysis = enableImpactAnalysis; }
 
     @Override
     public String toString() {

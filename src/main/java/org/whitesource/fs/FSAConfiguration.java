@@ -24,6 +24,7 @@ import org.whitesource.agent.Constants;
 import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
+import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.*;
 
@@ -52,7 +53,7 @@ public class FSAConfiguration {
             ConfigPropertyKeys.ENDPOINT_ENABLED, ConfigPropertyKeys.ENDPOINT_PORT, ConfigPropertyKeys.ENDPOINT_CERTIFICATE, ConfigPropertyKeys.ENDPOINT_PASS, ConfigPropertyKeys.ENDPOINT_SSL_ENABLED, ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, ConfigPropertyKeys.OFFLINE_ZIP_PROPERTY_KEY,
             ConfigPropertyKeys.OFFLINE_PRETTY_JSON_KEY, ConfigPropertyKeys.WHITESOURCE_CONFIGURATION, ConfigPropertyKeys.SCANNED_FOLDERS);
 
-    public static final int VIA_DEFAULT_ANALYSIS_LEVEL = 1;
+    public static final int VIA_DEFAULT_ANALYSIS_LEVEL = 2;
     public static final String DEFAULT_KEY = "defaultKey";
     public static final String APP_PATH = "-appPath";
     private static final String FALSE = "false";
@@ -275,6 +276,27 @@ public class FSAConfiguration {
         sender = getSender(config);
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
+
+        if (sender.isEnableImpactAnalysis()) {
+            boolean isViaAppPath = checkAppPathsForVia(appPathsToDependencyDirs.keySet());
+            if (isViaAppPath) {
+                if (resolver.getMavenIgnoredScopes() != null && !Arrays.asList(resolver.getMavenIgnoredScopes()).contains(resolver.getMavenIgnoredScopes())) {
+                    errors.add("Effective Usage Analysis cannot run. Make sure you set an empty value for the maven.ignoredScopes parameter");
+                    sender.setEnableImpactAnalysis(false);
+                } else {
+                    resolver.setMavenIgnoredScopes(new String[]{MavenTreeDependencyCollector.ALL});
+                }
+            }
+        }
+    }
+
+    private boolean checkAppPathsForVia(Set<String> keySet) {
+        for (String key : keySet) {
+            if (!key.equals("defaultKey")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void initializeDependencyDirs(String[] argsForAppPathAndDirs, Properties config) {
