@@ -93,9 +93,7 @@ public class FSAConfiguration {
 
     private boolean projectPerFolder;
     private int connectionTimeOut;
-    private boolean npmYarnProject;
-    private boolean gradleAggregateModules;
-    private String paketPath;
+
 
     /* --- Private fields --- */
 
@@ -155,7 +153,6 @@ public class FSAConfiguration {
             // TODO add usage command
             CommandLineArgs commandLineArgs = new CommandLineArgs();
             new JCommander(commandLineArgs, args);
-
 
             if (config == null) {
                 Pair<Properties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath);
@@ -261,7 +258,6 @@ public class FSAConfiguration {
             }
         }
 
-
         // todo: check possibility to get the errors only in the end
         errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal,
                 apiToken, configFilePath, archiveExtractionDepth, includes, projectPerFolderIncludes, pythonRequirementsFileIncludes, scanComment));
@@ -321,7 +317,7 @@ public class FSAConfiguration {
         long npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, ConfigPropertyKeys.NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
         boolean npmIgnoreNpmLsErrors = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_IGNORE_NPM_LS_ERRORS, false);
         String npmAccessToken = config.getProperty(ConfigPropertyKeys.NPM_ACCESS_TOKEN);
-        npmYarnProject = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_YARN_PROJECT, false);
+        boolean npmYarnProject = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_YARN_PROJECT, false);
 
         boolean bowerResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.BOWER_RESOLVE_DEPENDENCIES, true);
         boolean bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.BOWER_RUN_PRE_STEP, false);
@@ -357,13 +353,13 @@ public class FSAConfiguration {
 
         boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
-        gradleAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
+        boolean gradleAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
 
         boolean paketResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PAKET_RESOLVE_DEPENDENCIES, true);
         String[] paketIgnoredScopes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.PAKET_IGNORED_GROUPS, null);
         boolean paketIgnoreFiles = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PAKET_IGNORE_FILES, true);
         boolean paketRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PAKET_RUN_PRE_STEP, false);
-        paketPath = config.getProperty(ConfigPropertyKeys.PAKET_EXE_PATH, null);
+        String paketPath = config.getProperty(ConfigPropertyKeys.PAKET_EXE_PATH, null);
 
         boolean goResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GO_RESOLVE_DEPENDENCIES, true);
         String goDependencyManager = config.getProperty(ConfigPropertyKeys.GO_DEPENDENCY_MANAGER, Constants.EMPTY_STRING);
