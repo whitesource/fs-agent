@@ -55,8 +55,8 @@ public class RequestConfiguration {
                                 @JsonProperty(APP_PATH) List<String> appPaths,
                                 @JsonProperty(VIA_DEBUG) String viaDebug,
                                 @JsonProperty(VIA_ANALYSIS_LEVEL) int viaAnalysisLevel,
-                                @JsonProperty(IA_LANGUAGE) String  iaLanguage,
-                                @JsonProperty(SCAN_COMMENT) String  scanComment) {
+                                @JsonProperty(IA_LANGUAGE) String iaLanguage,
+                                @JsonProperty(SCAN_COMMENT) String scanComment) {
         this.apiToken = apiToken;
         this.userKey = userKey;
         this.requesterEmail = requesterEmail;
@@ -69,9 +69,9 @@ public class RequestConfiguration {
         this.productVersion = productVersion;
         this.viaAnalysisLevel = viaAnalysisLevel;
         this.appPaths = appPaths;
-        this.viaDebug=viaDebug;
-        this.iaLanguage=iaLanguage;
-        this.scanComment=scanComment;
+        this.viaDebug = viaDebug;
+        this.iaLanguage = iaLanguage;
+        this.scanComment = scanComment;
     }
 
     @JsonProperty(PROJECT_NAME_PROPERTY_KEY)
@@ -142,6 +142,11 @@ public class RequestConfiguration {
         return iaLanguage;
     }
 
+    @JsonProperty(SCAN_COMMENT)
+    public String getScanComment() {
+        return scanComment;
+    }
+
     public String getProductNameOrToken() {
         if (StringUtils.isBlank(getProductToken())) {
             return getProductName();
@@ -149,10 +154,6 @@ public class RequestConfiguration {
         return getProductToken();
     }
 
-    @JsonProperty(SCAN_COMMENT)
-    public String getScanComment() {
-        return scanComment;
-    }
 
     @Override
     public String toString() {
