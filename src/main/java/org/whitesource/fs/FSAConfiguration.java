@@ -575,13 +575,13 @@ public class FSAConfiguration {
 //                    configProps.load(inputStream); replaced by the below
                     configProps.load(new InputStreamReader(inputStream,StandardCharsets.UTF_8));
                 } catch (FileNotFoundException e) {
-                    errors.add("Failed to open " + configFilePath + " for reading " + e);
+                    errors.add("Failed to open " + configFilePath + " for reading " + e.getMessage());
                 } catch (IOException e) {
-                    errors.add("Error occurred when reading from " + configFilePath + e);
+                    errors.add("Error occurred when reading from " + configFilePath + e.getMessage());
                 }
             }
         } catch (IOException e) {
-            errors.add("Error occurred when reading from " + configFilePath + " - " + e);
+            errors.add("Error occurred when reading from " + configFilePath + " - " + e.getMessage());
         }
         return new Pair<>(configProps, errors);
     }
