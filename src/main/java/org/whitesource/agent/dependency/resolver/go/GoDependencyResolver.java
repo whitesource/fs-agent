@@ -13,12 +13,10 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.gradle.GradleCli;
-import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
 import org.whitesource.agent.dependency.resolver.gradle.GradleMvnCommand;
 import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.CommandLineProcess;
 
-import javax.lang.model.element.Name;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -395,7 +393,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         GradleCli gradleCli = new GradleCli();
         List<String> lines = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES));
         if (lines != null) {
-            parseGoGradleDependencies(lines, dependencyInfos);
+            parseGoGradleDependencies(lines, dependencyInfos, rootDirectory);
             File goGradleLock = new File(rootDirectory + fileSeparator + GOGRADLE_LOCK);
             if (goGradleLock.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.LOCK)))){
                 HashMap<String, String> gradleLockFile = parseGoGradleLockFile(goGradleLock);
@@ -411,7 +409,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         }
     }
 
-    private void parseGoGradleDependencies(List<String> lines, List<DependencyInfo> dependencyInfos){
+    private void parseGoGradleDependencies(List<String> lines, List<DependencyInfo> dependencyInfos, String rootDirectory){
         List<String> filteredLines = lines.stream()
                 .filter(line->(line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))
                 .collect(Collectors.toList());
@@ -460,6 +458,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
                 dependencyInfo.setArtifactId(name);
                 dependencyInfo.setDependencyType(DependencyType.GO);
+                dependencyInfo.setSystemPath(rootDirectory + fileSeparator + "build.gradle");
                 dependencyInfos.add(dependencyInfo);
             } catch (Exception e){
                 logger.warn("Error parsing line {}, exception: {}", currentLine, e.getMessage());
