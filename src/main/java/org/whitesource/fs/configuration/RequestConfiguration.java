@@ -40,6 +40,7 @@ public class RequestConfiguration {
     private final String viaDebug;
     private final int viaAnalysisLevel;
     private final String iaLanguage;
+    private final String scanComment;
 
     public RequestConfiguration(@JsonProperty(ORG_TOKEN_PROPERTY_KEY) String apiToken,
                                 @JsonProperty(USER_KEY_PROPERTY_KEY) String userKey,
@@ -54,7 +55,8 @@ public class RequestConfiguration {
                                 @JsonProperty(APP_PATH) List<String> appPaths,
                                 @JsonProperty(VIA_DEBUG) String viaDebug,
                                 @JsonProperty(VIA_ANALYSIS_LEVEL) int viaAnalysisLevel,
-                                @JsonProperty(IA_LANGUAGE) String  iaLanguage) {
+                                @JsonProperty(IA_LANGUAGE) String iaLanguage,
+                                @JsonProperty(SCAN_COMMENT) String scanComment) {
         this.apiToken = apiToken;
         this.userKey = userKey;
         this.requesterEmail = requesterEmail;
@@ -67,8 +69,9 @@ public class RequestConfiguration {
         this.productVersion = productVersion;
         this.viaAnalysisLevel = viaAnalysisLevel;
         this.appPaths = appPaths;
-        this.viaDebug=viaDebug;
-        this.iaLanguage=iaLanguage;
+        this.viaDebug = viaDebug;
+        this.iaLanguage = iaLanguage;
+        this.scanComment = scanComment;
     }
 
     @JsonProperty(PROJECT_NAME_PROPERTY_KEY)
@@ -139,12 +142,18 @@ public class RequestConfiguration {
         return iaLanguage;
     }
 
+    @JsonProperty(SCAN_COMMENT)
+    public String getScanComment() {
+        return scanComment;
+    }
+
     public String getProductNameOrToken() {
         if (StringUtils.isBlank(getProductToken())) {
             return getProductName();
         }
         return getProductToken();
     }
+
 
     @Override
     public String toString() {
@@ -157,6 +166,7 @@ public class RequestConfiguration {
                 ", productToken='" + productToken + '\n' +
                 ", productName='" + productName + '\n' +
                 ", productVersion='" + productVersion + '\n' +
-                ", projectName='" + projectName;
+                ", projectName='" + projectName + '\n' +
+                ", scanComment ='" + scanComment;
     }
 }
