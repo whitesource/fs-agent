@@ -16,7 +16,6 @@
 package org.whitesource.agent;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.beust.jcommander.internal.Lists;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -173,7 +172,7 @@ public class ProjectsSender {
                         }
                         if (vulnerabilitiesAnalysis != null) {
                             AgentProjectInfo projectToServer = new AgentProjectInfo();
-                            projectToServer.setDependencies(Lists.newArrayList(project.getDependencies()));
+                            projectToServer.setDependencies(viaComponents.getDependencies());
                             projectToServer.setProjectSetupDescription(project.getProjectSetupDescription());
                             projectToServer.setCoordinates(project.getCoordinates());
                             projectToServer.setProjectToken(project.getProjectToken());
@@ -185,7 +184,7 @@ public class ProjectsSender {
                             logger.info("Starting analysis for: {}", appPath);
                             Class<?> serverClass = Class.forName("whitesource.analysis.server.Server");
                             Method runAnalysis = vulnerabilitiesAnalysisClass.getDeclaredMethod("runAnalysis", serverClass, String.class, Collection.class, Boolean.class);
-                            runAnalysis.invoke(vulnerabilitiesAnalysis, server, appPath, project.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
+                            runAnalysis.invoke(vulnerabilitiesAnalysis, server, appPath, viaComponents.getDependencies(), Boolean.valueOf(requestConfig.getViaDebug()));
                             logger.info("Got impact analysis result from server");
                         }
                     } catch (InvocationTargetException e) {
