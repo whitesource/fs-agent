@@ -82,7 +82,10 @@ public final class Constants {
     public static final String PYTHON_REQUIREMENTS = "requirements.txt";
     public static final String TXT_EXTENSION = ".txt";
     public static final String SETUP_PY = "setup.py";
-
+    public static final int MAX_EXTRACTION_DEPTH = 7;
+    public static final int COMMENT_MAX_LENGTH = 1000;
+    public static final int ZERO = 0;
+    public static final int ONE = 1;
     public static final char QUESTION_MARK = '?';
     public static final char WHITESPACE_CHAR = ' ';
     public static final char OPEN_BRACKET = '(';

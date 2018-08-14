@@ -17,7 +17,7 @@ package org.whitesource.fs;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.CommaParameterSplitter;
-import org.whitesource.agent.Constants;
+ import org.whitesource.agent.Constants;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -104,7 +104,7 @@ public class CommandLineArgs {
     String viaDebug = null;
 
     @Parameter(names = "-viaLevel", description = "Impact Analysis level")
-    String viaLevel = "1";
+    String viaLevel = "2";
 
     @Parameter(names = "-enableImpactAnalysis", description = "Whether or not to enable impact analysis")
     String enableImpactAnalysis = null;
@@ -118,6 +118,10 @@ public class CommandLineArgs {
     @Parameter(names = "-sendLogsToWss", description = "whether to send logs to WhiteSource or not")
     String sendLogsToWss = null;
 
+    @Parameter(names = "-scanComment", description = "scan comment")
+    String scanComment = null;
+
+
     @Parameter(names = "-projectToken", description = "API token to match an existing WhiteSource project")
     String projectToken = null;
 
@@ -129,6 +133,7 @@ public class CommandLineArgs {
 
     @Parameter(names = "-requirementsFileIncludes", description = "List of dependency files split by comma")
     List<String> requirementsFileIncludes = new LinkedList<>();
+
 
     /* --- Public methods --- */
 
