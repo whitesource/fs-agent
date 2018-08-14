@@ -313,7 +313,7 @@ public class ProjectsSender {
         logger.info("Generating offline update request");
         // generate offline request
         UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(),
-                requestConfig.getProductVersion(), projects, requestConfig.getUserKey(),requestConfig.getScanComment());
+                requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), requestConfig.getScanComment());
         if (senderConfig.isSendLogsToWss()) {
             updateRequest.setLogData(getLogData());
         }
