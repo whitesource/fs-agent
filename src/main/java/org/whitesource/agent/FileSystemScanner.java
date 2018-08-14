@@ -318,6 +318,18 @@ public class FileSystemScanner {
         if (allProjects.size() == 1) {
             AgentProjectInfo project = allProjects.keySet().stream().findFirst().get();
             project.getDependencies().addAll(filesDependencies);
+            /// TODO: 8/14/2018 support multi module project with via
+          /*  if (enableImpactAnalysis) {
+                for (LinkedList<ViaComponents> viaComponentsList : allProjectsToViaComponents.values()) {
+                    for (ViaComponents viaComponents : viaComponentsList) {
+                        for (DependencyInfo dependencyInfo : filesDependencies) {
+                            if (dependencyInfo.getSystemPath().equals(viaComponents.getAppPath())) {
+                                viaComponents.getDependencies().add(dependencyInfo);
+                            }
+                        }
+                    }
+                }
+            }*/
         } else {
             // remove files from handled projects
             allProjects.entrySet().forEach(project -> {
