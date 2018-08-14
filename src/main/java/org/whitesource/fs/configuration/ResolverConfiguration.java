@@ -470,10 +470,14 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(SBT_RUN_PRE_STEP)
-    public boolean isSbtRunPreStep() { return sbtRunPreStep; }
+    public boolean isSbtRunPreStep() {
+        return sbtRunPreStep;
+    }
 
     @JsonProperty(SBT_TARGET_FOLDER)
-    public String getSbtTargetFolder() { return sbtTargetFolder; }
+    public String getSbtTargetFolder() {
+        return sbtTargetFolder;
+    }
 
     @JsonProperty(HTML_RESOLVE_DEPENDENCIES)
     public boolean isHtmlResolveDependencies() {
@@ -494,6 +498,10 @@ public class ResolverConfiguration {
 
     public void setMavenResolveDependencies(boolean mavenResolveDependencies) {
         this.mavenResolveDependencies = mavenResolveDependencies;
+    }
+
+    public void setMavenIgnoredScopes(String[] mavenIgnoredScopes) {
+        this.mavenIgnoredScopes = mavenIgnoredScopes;
     }
 
     public void setPythonResolveDependencies(boolean pythonResolveDependencies) {
@@ -546,7 +554,8 @@ public class ResolverConfiguration {
                 ", npmIncludeDevDependencies=" + npmIncludeDevDependencies +
                 ", npmIgnoreJavaScriptFiles=" + npmIgnoreJavaScriptFiles +
                 ", npmTimeoutDependenciesCollector=" + npmTimeoutDependenciesCollector +
-                ", npmIgnoreNpmLsErrors=" + npmIgnoreNpmLsErrors + '\n' +
+                ", npmIgnoreNpmLsErrors=" + npmIgnoreNpmLsErrors +
+                ", npm.yarnProject=" + npmYarnProject + '\n' +
                 ", bowerResolveDependencies=" + bowerResolveDependencies +
                 ", bowerRunPreStep=" + bowerRunPreStep + '\n' +
                 ", nugetResolveDependencies=" + nugetResolveDependencies +
@@ -561,11 +570,13 @@ public class ResolverConfiguration {
                 ", python.resolveSetupPyFiles=" + pythonResolveSetupPyFiles + '\n' +
                 ", pythonRequirementsFileIncludes=" + Arrays.toString(pythonRequirementsFileIncludes) + '\n' +
                 ", gradleResolveDependencies=" + gradleResolveDependencies +
-                ", gradleRunAssembleCommand=" + gradleRunAssembleCommand + '\n' +
+                ", gradleRunAssembleCommand=" + gradleRunAssembleCommand +
+                ", gradle.aggregateModules=" + gradleAggregateModules + '\n' +
                 ", paketResolveDependencies=" + paketResolveDependencies +
                 ", paketIgnoredScopes=" + Arrays.toString(paketIgnoredScopes) +
                 ", paketIgnoreFiles=" + paketIgnoreFiles +
-                ", paketRunPreStep=" + paketRunPreStep + '\n' +
+                ", paketRunPreStep=" + paketRunPreStep +
+                ", paket.exePath=" +paketPath + '\n' +
                 ", goResolveDependencies=" + goResolveDependencies +
                 ", goDependencyManager=" + goDependencyManager +
                 ", goCollectDependenciesAtRuntime=" + goCollectDependenciesAtRuntime + '\n' +
@@ -582,6 +593,9 @@ public class ResolverConfiguration {
                 ", sbtTargetFolder=" + sbtTargetFolder + '\n' +
                 ", htmlResolveDependencies=" + htmlResolveDependencies;
     }
+
+
+
 
 
 }

@@ -263,7 +263,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             try {
                 logger.info("running 'gradle assemble' command");
                 validateJavaFileExistence();
-                List<String> lines = gradleCli.runCmd(rootDirectory, gradleCli.getGradleCommandParams(MvnCommand.ASSEMBLE));
+                List<String> lines = gradleCli.runCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.ASSEMBLE));
                 removeTempJavaFolder();
                 if (lines != null) {
                     for (String line : lines) {
