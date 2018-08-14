@@ -55,6 +55,13 @@ public class DependencyResolversTest {
         Assert.assertNotNull(dependencyInfo.getArtifactId());
     }
 
+    @Test
+    public void testRegexInNpmResolver() {
+        String problematicLine = " ├── UNMET PEER DEPENDENCY watchify@>=3 <4";
+        NpmLsJsonDependencyCollector npmLsJsonDependencyCollector = new NpmLsJsonDependencyCollector(false, 60, false, false);
+        Assert.assertEquals("watchify", npmLsJsonDependencyCollector.getTheNextPackageNameFromNpmLs(problematicLine));
+    }
+
     private void testNpmResolve(boolean checkChildren) {
         String folderParent = TestHelper.FOLDER_WITH_NPN_PROJECTS;
 
