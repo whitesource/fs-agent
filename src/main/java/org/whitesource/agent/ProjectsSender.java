@@ -16,7 +16,7 @@
 package org.whitesource.agent;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.beust.jcommander.internal.Lists;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -281,10 +281,10 @@ public class ProjectsSender {
         if (senderConfig.isSendLogsToWss()) {
             String logData = getLogData();
             updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
-                    requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), logData);
+                    requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), logData, requestConfig.getScanComment());
         } else {
             updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
-                    requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
+                    requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), null, requestConfig.getScanComment());
         }
         String resultInfo = logResult(updateResult);
         // remove line separators
@@ -313,7 +313,7 @@ public class ProjectsSender {
         logger.info("Generating offline update request");
         // generate offline request
         UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(),
-                requestConfig.getProductVersion(), projects, requestConfig.getUserKey());
+                requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), requestConfig.getScanComment());
         if (senderConfig.isSendLogsToWss()) {
             updateRequest.setLogData(getLogData());
         }

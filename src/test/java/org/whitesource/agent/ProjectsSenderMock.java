@@ -5,7 +5,6 @@ import org.whitesource.agent.api.dispatch.UpdateInventoryResult;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.client.WhitesourceService;
-import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.contracts.PluginInfo;
 import org.whitesource.fs.configuration.OfflineConfiguration;
 import org.whitesource.fs.configuration.RequestConfiguration;
@@ -47,8 +46,8 @@ public class ProjectsSenderMock extends ProjectsSender {
 
         @Override
         public UpdateInventoryResult update(String orgToken, String requesterEmail, UpdateType updateType, String product,
-                                            String productVersion, Collection<AgentProjectInfo> projectInfos, String userKey) throws WssServiceException {
-            json = new Gson().toJson(this.getRequestFactory().newUpdateInventoryRequest(orgToken, updateType, requesterEmail, product, productVersion, projectInfos, userKey, Constants.EMPTY_STRING));
+                                            String productVersion, Collection<AgentProjectInfo> projectInfos, String userKey,String logData, String scanComment) {
+            json = new Gson().toJson(this.getRequestFactory().newUpdateInventoryRequest(orgToken, updateType, requesterEmail, product, productVersion, projectInfos, userKey, Constants.EMPTY_STRING, Constants.EMPTY_STRING));
             return new UpdateInventoryResult("via-test", true);
         }
 

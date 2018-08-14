@@ -31,6 +31,7 @@ import org.whitesource.fs.configuration.*;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -72,10 +73,12 @@ public class FSAConfiguration {
                 resolver.toString() + '\n' +
                 ", dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
                 request.toString() + '\n' +
-                ", requirementsFileIncludes=" + Arrays.asList(requirementsFileIncludes) + '\n' +
                 ", scanPackageManager=" + scanPackageManager + '\n' +
+                ", offline=" + offline.isEnabled() + '\n' +
+                ", projectPerFolder=" + projectPerFolder+ '\n' +
+                ", wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
+                 ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", scanDockerImages=" + scanDockerImages + '\n' +
-                ", requirementsFileIncludes=" + Arrays.asList(requirementsFileIncludes) + '\n' +
                 getAgent().toString() + '\n' +
                 '}';
     }
@@ -87,6 +90,10 @@ public class FSAConfiguration {
     public static final int DEFAULT_PORT = 443;
     public static final boolean DEFAULT_SSL = true;
     private static final boolean DEFAULT_ENABLED = false;
+
+    private boolean projectPerFolder;
+    private int connectionTimeOut;
+
 
     /* --- Private fields --- */
 
@@ -217,7 +224,7 @@ public class FSAConfiguration {
         // validate config
         String projectToken = config.getProperty(ConfigPropertyKeys.PROJECT_TOKEN_PROPERTY_KEY);
         String projectNameFinal = !StringUtils.isBlank(projectName) ? projectName : config.getProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY);
-        boolean projectPerFolder = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, false);
+        projectPerFolder = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, false);
         String apiToken = config.getProperty(ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY);
         String userKey = config.getProperty(ConfigPropertyKeys.USER_KEY_PROPERTY_KEY);
         int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(config);
@@ -229,6 +236,8 @@ public class FSAConfiguration {
             argsForAppPathAndDirs = dependencyDirs.toArray(new String[0]);
         }
         initializeDependencyDirs(argsForAppPathAndDirs, config);
+        String scanComment=config.getProperty(ConfigPropertyKeys.SCAN_COMMENT);
+
 
         // validate iaLanguage
         String iaLanguage = config.getProperty(ConfigPropertyKeys.IA_LANGUAGE);
@@ -251,11 +260,11 @@ public class FSAConfiguration {
 
         // todo: check possibility to get the errors only in the end
         errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal,
-                apiToken, configFilePath, archiveExtractionDepth, includes, projectPerFolderIncludes, pythonRequirementsFileIncludes));
+                apiToken, configFilePath, archiveExtractionDepth, includes, projectPerFolderIncludes, pythonRequirementsFileIncludes, scanComment));
 
         logLevel = config.getProperty(ConfigPropertyKeys.LOG_LEVEL_KEY, INFO);
 
-        request = getRequest(config, apiToken, userKey, projectName, projectToken);
+        request = getRequest(config, apiToken, userKey, projectName, projectToken, scanComment);
         scm = getScm(config);
         agent = getAgent(config);
         offline = getOffline(config);
@@ -263,10 +272,26 @@ public class FSAConfiguration {
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
 
-        if (sender.isEnableImpactAnalysis() && !appPathsToDependencyDirs.isEmpty()) {
-            resolver.setMavenIgnoredScopes(new String[]{MavenTreeDependencyCollector.ALL});
+        if (sender.isEnableImpactAnalysis()) {
+            boolean isViaAppPath = checkAppPathsForVia(appPathsToDependencyDirs.keySet());
+            if (isViaAppPath) {
+                if (resolver.getMavenIgnoredScopes() != null && !Arrays.asList(resolver.getMavenIgnoredScopes()).contains(resolver.getMavenIgnoredScopes())) {
+                    errors.add("Effective Usage Analysis cannot run. Make sure you set an empty value for the maven.ignoredScopes parameter");
+                    sender.setEnableImpactAnalysis(false);
+                } else {
+                    resolver.setMavenIgnoredScopes(new String[]{MavenTreeDependencyCollector.ALL});
+                }
+            }
         }
+    }
 
+    private boolean checkAppPathsForVia(Set<String> keySet) {
+        for (String key : keySet) {
+            if (!key.equals("defaultKey")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void initializeDependencyDirs(String[] argsForAppPathAndDirs, Properties config) {
@@ -390,7 +415,7 @@ public class FSAConfiguration {
                 phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, htmlResolveDependencies);
     }
 
-    private RequestConfiguration getRequest(Properties config, String apiToken, String userKey, String projectName, String projectToken) {
+    private RequestConfiguration getRequest(Properties config, String apiToken, String userKey, String projectName, String projectToken, String scanComment) {
         String productToken = config.getProperty(ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY);
         String productName = config.getProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY);
         String productVersion = config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
@@ -402,7 +427,7 @@ public class FSAConfiguration {
         String requesterEmail = config.getProperty(ConfigPropertyKeys.REQUESTER_EMAIL);
         int viaAnalysis = getIntProperty(config, ConfigPropertyKeys.VIA_ANALYSIS_LEVEL, VIA_DEFAULT_ANALYSIS_LEVEL);
         return new RequestConfiguration(apiToken, userKey, requesterEmail, projectPerSubFolder, projectName, projectToken,
-                projectVersion, productName, productToken, productVersion, appPath, viaDebug, viaAnalysis, iaLanguage);
+                projectVersion, productName, productToken, productVersion, appPath, viaDebug, viaAnalysis, iaLanguage, scanComment);
     }
 
     private SenderConfiguration getSender(Properties config) {
@@ -414,7 +439,7 @@ public class FSAConfiguration {
         boolean enableImpactAnalysis = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false);
         String serviceUrl = config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
         String proxyHost = config.getProperty(ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY);
-        int connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
+        connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
                 String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
         int connectionRetries = FSAConfiguration.getIntProperty(config, ConfigPropertyKeys.CONNECTION_RETRIES, 1);
         int connectionRetriesIntervals = FSAConfiguration.getIntProperty(config, ConfigPropertyKeys.CONNECTION_RETRIES_INTERVALS, 3000);
@@ -564,15 +589,25 @@ public class FSAConfiguration {
         try {
             try (FileInputStream inputStream = new FileInputStream(configFilePath)) {
                 try {
-                    configProps.load(inputStream);
+//                    configProps.load(inputStream); replaced by the below
+                    configProps.load(new InputStreamReader(inputStream,StandardCharsets.UTF_8));
+                    // Remove extra spaces from the values
+                    Set<String> keys = configProps.stringPropertyNames();
+                    for (String key : keys) {
+                        String value = configProps.getProperty(key);
+                        if (value != null) {
+                            value = value.trim();
+                        }
+                        configProps.put(key, value);
+                    }
                 } catch (FileNotFoundException e) {
-                    errors.add("Failed to open " + configFilePath + " for reading " + e);
+                    errors.add("Failed to open " + configFilePath + " for reading " + e.getMessage());
                 } catch (IOException e) {
-                    errors.add("Error occurred when reading from " + configFilePath + e);
+                    errors.add("Error occurred when reading from " + configFilePath + e.getMessage());
                 }
             }
         } catch (IOException e) {
-            errors.add("Error occurred when reading from " + configFilePath + " - " + e);
+            errors.add("Error occurred when reading from " + configFilePath + " - " + e.getMessage());
         }
         return new Pair<>(configProps, errors);
     }
@@ -758,7 +793,6 @@ public class FSAConfiguration {
     private List<String> updateProperties(Properties configProps, CommandLineArgs commandLineArgs) {
         // Check whether the user inserted api key, project OR/AND product via command line
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY, commandLineArgs.apiKey);
-        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SEND_LOGS_TO_WSS, commandLineArgs.sendLogsToWss);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.UPDATE_TYPE, commandLineArgs.updateType);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, commandLineArgs.product);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY, commandLineArgs.productVersion);
@@ -767,6 +801,8 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROJECT_TOKEN_PROPERTY_KEY, commandLineArgs.projectToken);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY, commandLineArgs.productToken);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.LOG_LEVEL_KEY, commandLineArgs.logLevel);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SEND_LOGS_TO_WSS, commandLineArgs.sendLogsToWss);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_COMMENT, commandLineArgs.scanComment);
         // request file
         List<String> offlineRequestFiles = new LinkedList<>();
         offlineRequestFiles.addAll(commandLineArgs.requestFiles);
@@ -820,6 +856,6 @@ public class FSAConfiguration {
         getErrors().clear();
         errors.addAll(configurationValidation.getConfigurationErrors(getRequest().isProjectPerSubFolder(), getRequest().getProjectToken(),
                 getRequest().getProjectName(), getRequest().getApiToken(), configFilePath, getAgent().getArchiveExtractionDepth(),
-                getAgent().getIncludes(), getAgent().getProjectPerFolderIncludes(), getAgent().getPythonRequirementsFileIncludes()));
+                getAgent().getIncludes(), getAgent().getProjectPerFolderIncludes(), getAgent().getPythonRequirementsFileIncludes(), getRequest().getScanComment()));
     }
 }

@@ -118,6 +118,10 @@ public class CommandLineArgs {
     @Parameter(names = "-sendLogsToWss", description = "whether to send logs to WhiteSource or not")
     String sendLogsToWss = null;
 
+    @Parameter(names = "-scanComment", description = "scan comment")
+    String scanComment = null;
+
+
     @Parameter(names = "-projectToken", description = "API token to match an existing WhiteSource project")
     String projectToken = null;
 
@@ -129,6 +133,7 @@ public class CommandLineArgs {
 
     @Parameter(names = "-requirementsFileIncludes", description = "List of dependency files split by comma")
     List<String> requirementsFileIncludes = new LinkedList<>();
+
 
     /* --- Public methods --- */
 
