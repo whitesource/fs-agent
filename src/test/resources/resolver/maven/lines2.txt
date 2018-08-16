@@ -1,0 +1,222 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO]
+[INFO] module_1
+[INFO] module_2
+[INFO] module_3
+[INFO] module_4
+[INFO] module_5
+[INFO] module_6
+[INFO] module_7
+[INFO] module_8
+[INFO] module_9
+[INFO] Maven-Project
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building module_1 1.0.1
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ module_1 ---
+[INFO] maven-test-project:module_1:pom:1.0.1
+[INFO] +- org.apache.logging.log4j:log4j-core:jar:2.9.1:compile
+[INFO] | \- org.apache.logging.log4j:log4j-api:jar:2.9.1:compile
+[INFO] +- org.apache.httpcomponents:httpclient:jar:4.5.5:compile
+[INFO] | +- org.apache.httpcomponents:httpcore:jar:4.4.9:compile
+[INFO] | +- commons-logging:commons-logging:jar:1.2:compile
+[INFO] | \- commons-codec:commons-codec:jar:1.10:compile
+[INFO] +- com.google.code.gson:gson:jar:2.8.0:compile
+[INFO] +- com.fasterxml.jackson.core:jackson-core:jar:2.8.6:compile
+[INFO] +- com.fasterxml.jackson.core:jackson-databind:jar:2.8.6:compile
+[INFO] | \- com.fasterxml.jackson.core:jackson-annotations:jar:2.8.0:compile
+[INFO] +- org.apache.poi:poi:jar:3.11:compile
+[INFO] +- org.apache.poi:poi-ooxml:jar:3.11:compile
+[INFO] | \- org.apache.poi:poi-ooxml-schemas:jar:3.11:compile
+[INFO] | \- org.apache.xmlbeans:xmlbeans:jar:2.6.0:compile
+[INFO] | \- stax:stax-api:jar:1.0.1:compile
+[INFO] +- com.googlecode.json-simple:json-simple:jar:1.1.1:compile
+[INFO] | \- junit:junit:jar:4.10:compile
+[INFO] | \- org.hamcrest:hamcrest-core:jar:1.1:compile
+[INFO] \- commons-cli:commons-cli:jar:1.3.1:compile
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building module_2 1.0.2
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ module_2 ---
+[INFO] maven-test-project:module_2:pom:1.0.2
+[INFO] +- org.apache.logging.log4j:log4j-core:jar:2.9.1:compile
+[INFO] | \- org.apache.logging.log4j:log4j-api:jar:2.9.1:compile
+[INFO] +- org.apache.httpcomponents:httpclient:jar:4.5.5:compile
+[INFO] | +- org.apache.httpcomponents:httpcore:jar:4.4.9:compile
+[INFO] | +- commons-logging:commons-logging:jar:1.2:compile
+[INFO] | \- commons-codec:commons-codec:jar:1.10:compile
+[INFO] +- com.google.code.gson:gson:jar:2.8.0:compile
+[INFO] +- com.fasterxml.jackson.core:jackson-core:jar:2.8.6:compile
+[INFO] +- com.fasterxml.jackson.core:jackson-databind:jar:2.8.6:compile
+[INFO] | \- com.fasterxml.jackson.core:jackson-annotations:jar:2.8.0:compile
+[INFO] +- com.googlecode.json-simple:json-simple:jar:1.1.1:compile
+[INFO] | \- junit:junit:jar:4.10:compile
+[INFO] | \- org.hamcrest:hamcrest-core:jar:1.1:compile
+[INFO] \- commons-cli:commons-cli:jar:1.3.1:compile
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building module_3 1.0.3
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ module_3 ---
+[INFO] maven-test-project:module_3:pom:1.0.3
+[INFO] +- org.apache.logging.log4j:log4j-core:jar:2.8:compile
+[INFO] | \- org.apache.logging.log4j:log4j-api:jar:2.8:compile
+[INFO] +- org.apache.activemq:activemq-core:jar:5.3.0:compile
+[INFO] | +- commons-logging:commons-logging-api:jar:1.1:compile
+[INFO] | +- org.apache.geronimo.specs:geronimo-jms_1.1_spec:jar:1.1.1:compile
+[INFO] | +- org.apache.activemq:activeio-core:jar:3.1.2:compile
+[INFO] | | +- org.apache.geronimo.specs:geronimo-j2ee-management_1.1_spec:jar:1.0.1:compile
+[INFO] | | \- commons-logging:commons-logging:jar:1.1:compile
+[INFO] | | +- log4j:log4j:jar:1.2.12:compile
+[INFO] | | +- logkit:logkit:jar:1.0.1:compile
+[INFO] | | +- avalon-framework:avalon-framework:jar:4.1.3:compile
+[INFO] | | \- javax.servlet:servlet-api:jar:2.3:compile
+[INFO] | +- org.apache.activemq:kahadb:jar:5.3.0:compile
+[INFO] | +- org.apache.activemq.protobuf:activemq-protobuf:jar:1.0:compile
+[INFO] | +- org.apache.geronimo.specs:geronimo-j2ee-management_1.0_spec:jar:1.0:compile
+[INFO] | +- org.springframework:spring-context:jar:2.5.6:compile
+[INFO] | | +- aopalliance:aopalliance:jar:1.0:compile
+[INFO] | | +- org.springframework:spring-beans:jar:2.5.6:compile
+[INFO] | | \- org.springframework:spring-core:jar:2.5.6:compile
+[INFO] | \- commons-net:commons-net:jar:2.0:compile
+[INFO] +- org.apache.poi:poi:jar:3.10.1:compile
+[INFO] | \- commons-codec:commons-codec:jar:1.5:compile
+[INFO] \- org.apache.poi:poi-ooxml:jar:3.10.1:compile
+[INFO] +- org.apache.poi:poi-ooxml-schemas:jar:3.10.1:compile
+[INFO] | \- org.apache.xmlbeans:xmlbeans:jar:2.6.0:compile
+[INFO] | \- stax:stax-api:jar:1.0.1:compile
+[INFO] \- dom4j:dom4j:jar:1.6.1:compile
+[INFO] \- xml-apis:xml-apis:jar:1.0.b2:compile
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building module_4 1.0.4
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ module_4 ---
+[INFO] maven-test-project:module_4:pom:1.0.4
+[INFO] \- org.apache.logging.log4j:log4j-core:jar:2.9.1:compile
+[INFO] \- org.apache.logging.log4j:log4j-api:jar:2.9.1:compile
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building module_5 1.0.5
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ module_5 ---
+[INFO] maven-test-project:module_5:pom:1.0.5
+[INFO] +- org.apache.logging.log4j:log4j-core:jar:2.9.1:compile
+[INFO] | \- org.apache.logging.log4j:log4j-api:jar:2.9.1:compile
+[INFO] \- org.apache.activemq:activemq-core:jar:5.4.3:compile
+[INFO] +- commons-logging:commons-logging-api:jar:1.1:compile
+[INFO] +- org.apache.geronimo.specs:geronimo-jms_1.1_spec:jar:1.1.1:compile
+[INFO] +- org.apache.activemq:activeio-core:jar:3.1.2:compile
+[INFO] | \- commons-logging:commons-logging:jar:1.1:compile
+[INFO] | +- log4j:log4j:jar:1.2.12:compile
+[INFO] | +- logkit:logkit:jar:1.0.1:compile
+[INFO] | +- avalon-framework:avalon-framework:jar:4.1.3:compile
+[INFO] | \- javax.servlet:servlet-api:jar:2.3:compile
+[INFO] +- org.apache.activemq:kahadb:jar:5.4.3:compile
+[INFO] +- org.apache.activemq.protobuf:activemq-protobuf:jar:1.1:compile
+[INFO] +- org.osgi:org.osgi.core:jar:4.1.0:compile
+[INFO] +- org.apache.geronimo.specs:geronimo-j2ee-management_1.1_spec:jar:1.0.1:compile
+[INFO] +- org.springframework:spring-context:jar:3.0.3.RELEASE:compile
+[INFO] | +- org.springframework:spring-aop:jar:3.0.3.RELEASE:compile
+[INFO] | | \- aopalliance:aopalliance:jar:1.0:compile
+[INFO] | +- org.springframework:spring-beans:jar:3.0.3.RELEASE:compile
+[INFO] | +- org.springframework:spring-core:jar:3.0.3.RELEASE:compile
+[INFO] | +- org.springframework:spring-expression:jar:3.0.3.RELEASE:compile
+[INFO] | \- org.springframework:spring-asm:jar:3.0.3.RELEASE:compile
+[INFO] +- commons-net:commons-net:jar:2.0:compile
+[INFO] +- org.jasypt:jasypt:jar:1.6:compile
+[INFO] | +- commons-lang:commons-lang:jar:2.1:compile
+[INFO] | \- commons-codec:commons-codec:jar:1.1:compile
+[INFO] \- com.ibm.icu:icu4j:jar:4.0.1:compile
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building module_6 1.0.6
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ module_6 ---
+[INFO] maven-test-project:module_6:pom:1.0.6
+[INFO] \- org.apache.logging.log4j:log4j-core:jar:2.9.1:compile
+[INFO] \- org.apache.logging.log4j:log4j-api:jar:2.9.1:compile
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building module_7 1.0.7
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ module_7 ---
+[INFO] maven-test-project:module_7:pom:1.0.7
+[INFO] \- org.apache.logging.log4j:log4j-core:jar:2.7:compile
+[INFO] \- org.apache.logging.log4j:log4j-api:jar:2.7:compile
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building module_8 1.0.8
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ module_8 ---
+[INFO] maven-test-project:module_8:pom:1.0.8
+[INFO] +- org.apache.logging.log4j:log4j-core:jar:2.9.1:compile
+[INFO] | \- org.apache.logging.log4j:log4j-api:jar:2.9.1:compile
+[INFO] \- org.apache.activemq:activemq-core:jar:5.3.0:compile
+[INFO] +- commons-logging:commons-logging-api:jar:1.1:compile
+[INFO] +- org.apache.geronimo.specs:geronimo-jms_1.1_spec:jar:1.1.1:compile
+[INFO] +- org.apache.activemq:activeio-core:jar:3.1.2:compile
+[INFO] | +- org.apache.geronimo.specs:geronimo-j2ee-management_1.1_spec:jar:1.0.1:compile
+[INFO] | \- commons-logging:commons-logging:jar:1.1:compile
+[INFO] | +- log4j:log4j:jar:1.2.12:compile
+[INFO] | +- logkit:logkit:jar:1.0.1:compile
+[INFO] | +- avalon-framework:avalon-framework:jar:4.1.3:compile
+[INFO] | \- javax.servlet:servlet-api:jar:2.3:compile
+[INFO] +- org.apache.activemq:kahadb:jar:5.3.0:compile
+[INFO] +- org.apache.activemq.protobuf:activemq-protobuf:jar:1.0:compile
+[INFO] +- org.apache.geronimo.specs:geronimo-j2ee-management_1.0_spec:jar:1.0:compile
+[INFO] +- org.springframework:spring-context:jar:2.5.6:compile
+[INFO] | +- aopalliance:aopalliance:jar:1.0:compile
+[INFO] | +- org.springframework:spring-beans:jar:2.5.6:compile
+[INFO] | \- org.springframework:spring-core:jar:2.5.6:compile
+[INFO] \- commons-net:commons-net:jar:2.0:compile
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building module_9 1.0.9
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ module_9 ---
+[INFO] maven-test-project:module_9:pom:1.0.9
+[INFO] \- org.apache.logging.log4j:log4j-core:jar:2.9.1:compile
+[INFO] \- org.apache.logging.log4j:log4j-api:jar:2.9.1:compile
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building Maven-Project 2.11.7
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ Maven-Project ---
+[INFO] maven-test-project:Maven-Project:pom:2.11.7
+[INFO] \- org.apache.logging.log4j:log4j-core:jar:2.9.1:compile
+[INFO] \- org.apache.logging.log4j:log4j-api:jar:2.9.1:compile
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary:
+[INFO]
+[INFO] module_1 ........................................... SUCCESS [ 1.813 s]
+[INFO] module_2 ........................................... SUCCESS [ 0.063 s]
+[INFO] module_3 ........................................... SUCCESS [ 0.265 s]
+[INFO] module_4 ........................................... SUCCESS [ 0.016 s]
+[INFO] module_5 ........................................... SUCCESS [ 0.156 s]
+[INFO] module_6 ........................................... SUCCESS [ 0.016 s]
+[INFO] module_7 ........................................... SUCCESS [ 0.031 s]
+[INFO] module_8 ........................................... SUCCESS [ 0.063 s]
+[INFO] module_9 ........................................... SUCCESS [ 0.015 s]
+[INFO] Maven-Project ...................................... SUCCESS [ 0.016 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 2.922 s
+[INFO] Finished at: 2018-07-04T09:49:10+02:00
+[INFO] Final Memory: 14M/307M
+[INFO] ------------------------------------------------------------------------

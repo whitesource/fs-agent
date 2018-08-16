@@ -48,23 +48,34 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final String GODEPS_JSON     = "Godeps.json";
     private static final String VNDR_CONF       = "vendor.conf";
     private static final String GOGRADLE_LOCK   = "gogradle.lock";
+    private static final String GLIDE_LOCK      = "glide.lock";
     private static final String GO_EXTENSION    = ".go";
     private static final String GO_ENSURE       = "ensure";
     private static final String GO_INIT         = "init";
     private static final String GO_SAVE         = "save";
     private static final List<String> GO_SCRIPT_EXTENSION = Arrays.asList(".lock", ".json", GO_EXTENSION);
+    private static final String IMPORTS = "imports";
+    private static final String NAME_GLIDE = "- name: ";
+    private static final String VERSION_GLIDE = "  version: ";
+    private static final String SUBPACKAGES_GLIDE = "  subpackages";
+    private static final String PREFIX_SUBPACKAGES_SECTION = "  - ";
+    private static final String TEST_IMPORTS = "testImports";
+    private static final String GLIDE_YAML = "glide.yaml";
+    private static final String GO_UPDATE = "update";
 
     private Cli cli;
     private GoDependencyManager goDependencyManager;
     private boolean collectDependenciesAtRuntime;
     private boolean isDependenciesOnly;
+    private boolean ignoreTestPackages;
 
-    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean isDependenciesOnly){
+    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean isDependenciesOnly, boolean ignoreTestPackages){
         super();
         this.cli = new Cli();
         this.goDependencyManager = goDependencyManager;
         this.collectDependenciesAtRuntime = collectDependenciesAtRuntime;
         this.isDependenciesOnly = isDependenciesOnly;
+        this.ignoreTestPackages = ignoreTestPackages;
     }
 
     @Override
@@ -112,6 +123,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     return new String[]{Constants.PATTERN + VNDR_CONF};
                 case GO_GRADLE:
                     return new String[]{Constants.BUILD_GRADLE};
+                case GLIDE:
+                    return new String[]{Constants.PATTERN + GLIDE_LOCK, Constants.PATTERN + GLIDE_YAML};
             }
         }
         return new String[]{Constants.EMPTY_STRING};
@@ -140,6 +153,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         break;
                     case GO_GRADLE:
                         collectGoGradleDependencies(rootDirectory, dependencyInfos);
+                        break;
+                    case GLIDE:
+                        collectGlideDependencies(rootDirectory, dependencyInfos);
                         break;
                     default:
                         error = "The selected dependency manager - " + goDependencyManager.getType() + " - is not supported.";
@@ -171,7 +187,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 try {
                     collectVndrDependencies(rootDirectory, dependencyInfos);
                 } catch (Exception e2){
-                    error = "Couldn't collect dependencies - no dependency manager is installed";
+                    try {
+                        collectGlideDependencies(rootDirectory, dependencyInfos);
+                    } catch (Exception e3) {
+                        error = "Couldn't collect dependencies - no dependency manager is installed";
+                    }
                 }
             }
         }
@@ -514,6 +534,102 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             }
         }
         return dependenciesCommits;
+    }
+
+    private void collectGlideDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
+        logger.debug("collecting dependencies using 'Glide'");
+        File glideLock = new File(rootDirectory + fileSeparator + GLIDE_LOCK);
+        if (glideLock.isFile()) {
+            dependencyInfos.addAll(parseGlideLock(glideLock));
+        } else if (collectDependenciesAtRuntime) {
+            File glideYaml = new File(rootDirectory + fileSeparator + GLIDE_YAML);
+            if (glideYaml.isFile()) {
+                if (runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GLIDE.getType(), GO_UPDATE))) {
+                    if (glideLock.isFile()) {
+                        dependencyInfos.addAll(parseGlideLock(glideLock));
+                    }
+                } else {
+                    throw new Exception("Failed to execute the command 'glide update'");
+                }
+            } else {
+                throw new Exception("Can't find " + GLIDE_YAML + " file. Please make sure 'Glide' is installed and run 'Glide init' command");
+            }
+        } else {
+            throw new Exception("Can't find " + GLIDE_LOCK + " file. Please make sure 'Glide' is installed and run 'Glide update' command");
+        }
+    }
+
+    private Collection<DependencyInfo> parseGlideLock(File glideLock) {
+        Collection<DependencyInfo> dependencies = new LinkedList<>();
+        BufferedReader bufferedReader = null;
+        try {
+            bufferedReader = new BufferedReader(new FileReader(glideLock));
+            String currLine;
+            String name = null;
+            String commit = null;
+            // this flag indicates if we get to imports line
+            boolean resolveRepositoryPackages = false;
+            boolean resolveSubPackages = false;
+            while ((currLine = bufferedReader.readLine()) != null) {
+                /* possible lines:
+                    imports:
+                    - name: github.com/json-iterator/go
+                      version: 1624edc4454b8682399def8740d46db5e4362ba4
+                    - name: github.com/modern-go/concurrent
+                      version: bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94
+                */
+                if (!resolveRepositoryPackages && (currLine.startsWith(IMPORTS) || currLine.startsWith(TEST_IMPORTS))) {
+                    if (currLine.startsWith(TEST_IMPORTS) && this.ignoreTestPackages) {
+                        break;
+                    }
+                    resolveRepositoryPackages = true;
+                } else if (resolveRepositoryPackages) {
+                    if (currLine.startsWith(NAME_GLIDE)) {
+                        resolveSubPackages = false;
+                        name = currLine.substring(NAME_GLIDE.length());
+                        currLine = bufferedReader.readLine();
+                        if (currLine != null) {
+                            commit = currLine.substring(VERSION_GLIDE.length());
+                            dependencies.add(createGlideDependency(name, commit, glideLock.getAbsolutePath()));
+                        }
+                    } else if (currLine.startsWith(SUBPACKAGES_GLIDE)) {
+                        resolveSubPackages = true;
+                    } else if (resolveSubPackages && currLine.startsWith(PREFIX_SUBPACKAGES_SECTION)) {
+                        String subPackageName = currLine.substring(PREFIX_SUBPACKAGES_SECTION.length());
+                        dependencies.add(createGlideDependency(name + Constants.FORWARD_SLASH + subPackageName, commit, glideLock.getAbsolutePath()));
+                    } else if (currLine.startsWith(TEST_IMPORTS)) {
+                        resolveSubPackages = false;
+                        if (this.ignoreTestPackages) {
+                            break;
+                        }
+                    } else {
+                        resolveSubPackages = false;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            logger.warn("Error parsing {}, exception: {}", glideLock.getName(), e.getMessage());
+            logger.debug("Exception: {}", e.getStackTrace());
+        } finally {
+            try {
+                if (bufferedReader != null) {
+                    bufferedReader.close();
+                }
+            } catch (IOException e) {
+                logger.warn("Can't close {}, exception: {}", glideLock.getName(), e.getMessage());
+                logger.debug("Exception: {}", e.getStackTrace());
+            }
+        }
+        return dependencies;
+    }
+
+    private DependencyInfo createGlideDependency(String name, String commit, String systemPath) {
+        DependencyInfo dependency = new DependencyInfo();
+        dependency.setArtifactId(name);
+        dependency.setCommit(commit);
+        dependency.setDependencyType(DependencyType.GO);
+        dependency.setSystemPath(systemPath);
+        return dependency;
     }
 
     private boolean runCmd(String rootDirectory, String[] params){
