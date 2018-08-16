@@ -29,9 +29,11 @@ public class MavenLinesParser {
     private static final String MAVEN_DEPENDENCY_PLUGIN_TREE = "maven-dependency-plugin:"; // 2.8:tree";
     private static final String INFO = "[INFO] ";
     private static final String UTF_8 = "UTF-8";
+    private static final String DOWNLOAD = "Download";
 
     public List<Node> parseLines(List<String> lines) {
-        List<List<String>> projectsLines = lines.stream().filter(line -> line.contains(INFO))// && !line.contains(Character.toString(Constants.OPEN_BRACKET)) && !line.endsWith(Character.toString(Constants.CLOSE_BRACKET)))
+        // We remove here also lines like this: [INFO] Downloading from central: https://repo.maven.apache.org/maven2/com/google/code/findbugs/jsr305/2.0.1/jsr305-2.0.1.pom
+        List<List<String>> projectsLines = lines.stream().filter(line -> line.contains(INFO) && !line.startsWith(INFO + DOWNLOAD)) // && !line.contains(Character.toString(Constants.OPEN_BRACKET)) && !line.endsWith(Character.toString(Constants.CLOSE_BRACKET)))
                 .map(line -> line.replace(INFO, Constants.EMPTY_STRING))
                 .collect(splitBySeparator(formattedLines -> formattedLines.contains(MAVEN_DEPENDENCY_PLUGIN_TREE)));
 
