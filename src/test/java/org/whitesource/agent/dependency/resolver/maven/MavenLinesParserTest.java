@@ -62,4 +62,13 @@ public class MavenLinesParserTest {
         return lines;
     }
 
+    @Test
+    public void parseLinesWithDownloadLines(){
+        File file = TestHelper.getFileFromResources("resolver/maven/lines3.txt");
+        List<String> lines = readFileAsList(file.getAbsolutePath());
+        List<Node> nodes = mavenLinesParser.parseLines(lines);
+        Assert.assertEquals(nodes.size(), 1);
+        Assert.assertEquals("single-module-project", nodes.get(0).getArtifactId());
+        Assert.assertEquals("servlet-api", nodes.get(0).getChildNode(0).getArtifactId());
+    }
 }
