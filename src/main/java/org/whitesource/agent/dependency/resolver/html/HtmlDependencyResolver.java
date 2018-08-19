@@ -120,8 +120,10 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                     String fileName = scriptUrl.substring(scriptUrl.lastIndexOf(Constants.FORWARD_SLASH) + 1);
                     dependencyFileName = tempFolder + File.separator + fileName;
                     PrintWriter writer = new PrintWriter(dependencyFileName, Constants.UTF8);
-                    writer.println(body);
-                    writer.close();
+                    if (writer != null) {
+                        writer.println(body);
+                        writer.close();
+                    }
                     DependencyInfoFactory dependencyInfoFactory = new DependencyInfoFactory();
                     DependencyInfo dependencyInfo = dependencyInfoFactory.createDependencyInfo(tempFolderFile,fileName);
                     if (dependencyInfo != null) {
@@ -134,7 +136,10 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                     logger.debug("Failed creating uri of {}", scriptUrl);
                 } catch (IOException e) {
                     logger.debug("Failed writing to file {}", dependencyFileName);
+                }catch (Exception e){
+                    logger.debug("An exception occurred :{}" , e.getMessage());
                 }
+
             }
             FilesUtils.deleteDirectory(tempFolderFile);
         }
