@@ -49,6 +49,8 @@ public class MavenLinesParser {
                 singleProjectLines.removeIf(line -> line.contains(Constants.DASH + Constants.WHITESPACE + Constants.OPEN_BRACKET) && line.endsWith(Character.toString(Constants.CLOSE_BRACKET)));
                 // WSE-730 - removing lines without colon (which might cause an exception)
                 singleProjectLines.removeIf(line -> !line.contains(Constants.COLON));
+                // WSE-747 - removing lines such as '-----------------< com.wss.test:search-engine-client >------------------' which fails the parser
+                singleProjectLines.removeIf(line -> line.contains("-<") || line.contains(">-"));
                 String mvnLines = String.join(System.lineSeparator(), singleProjectLines);
                 try (InputStream is = new ByteArrayInputStream(mvnLines.getBytes(StandardCharsets.UTF_8.name()));
                      Reader lineReader = new InputStreamReader(is, UTF_8)) {
