@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * This class represents parser for Maven output lines
@@ -40,36 +41,40 @@ public class MavenLinesParser {
         logger.info("Start parsing pom files");
         List<Node> nodes = new ArrayList<>();
         projectsLines.forEach(singleProjectLines -> {
+            List<String> currentBlock = singleProjectLines.stream().filter(
+                    line -> (line.trim().startsWith("+-") || line.trim().startsWith("\\-") || line.trim().startsWith(Constants.PIPE) || line.split(":").length == 4)
+            ).collect(Collectors.toList());
             // for cases such as the output_log.txt in WSE-600, where the first line of the block of output can't be parsed
             // or cases like WSE-730, where verbose=true and maven-dependency-plugin >= 3, where the first line of hte block of output can't be parsed
-            if (singleProjectLines.get(0).contains(Constants.COLON) || (singleProjectLines.get(1) != null && singleProjectLines.get(1).contains(Constants.COLON))) {
-                // WSE-730 - in case of maven-dependency-plugin <3 and verbose=true, there may be cases of such lines -
-                //  +- (commons-collections:commons-collections:jar:3.2.1:compile - omitted for conflict with 3.2.2)
-                // in such case - remove those lines
-                singleProjectLines.removeIf(line -> line.contains(Constants.DASH + Constants.WHITESPACE + Constants.OPEN_BRACKET) && line.endsWith(Character.toString(Constants.CLOSE_BRACKET)));
-                // WSE-730 - removing lines without colon (which might cause an exception)
-                singleProjectLines.removeIf(line -> !line.contains(Constants.COLON));
-                // WSE-747 - removing lines such as '-----------------< com.wss.test:search-engine-client >------------------' which fails the parser
-                singleProjectLines.removeIf(line -> line.contains("-<") || line.contains(">-"));
-                String mvnLines = String.join(System.lineSeparator(), singleProjectLines);
-                try (InputStream is = new ByteArrayInputStream(mvnLines.getBytes(StandardCharsets.UTF_8.name()));
-                     Reader lineReader = new InputStreamReader(is, UTF_8)) {
-                    Parser parser = InputType.TEXT.newParser();
-                    Node tree = parser.parse(lineReader);
-                    if (tree != null)
-                        nodes.add(tree);
-                } catch (UnsupportedEncodingException e) {
-                    logger.warn("unsupportedEncoding error parsing output : {}", e.getMessage());
-                    logger.debug("unsupportedEncoding error parsing output : {}", e.getStackTrace());
-                } catch (ParseException e) {
-                    logger.warn("error parsing output : {} ", e.getMessage());
-                    logger.debug("error parsing output : {} ", e.getStackTrace());
-                } catch (Exception e) {
-                    // this can happen often - some parts of the output are not parsable
-                    logger.warn("error parsing output : {}", e.getMessage());
-                    logger.debug("error parsing output : {} \n{}", e.getMessage(), mvnLines);
-                }
+            //if (singleProjectLines.get(0).contains(Constants.COLON) || (singleProjectLines.get(1) != null && singleProjectLines.get(1).contains(Constants.COLON))) {
+            // WSE-730 - in case of maven-dependency-plugin <3 and verbose=true, there may be cases of such lines -
+            //  +- (commons-collections:commons-collections:jar:3.2.1:compile - omitted for conflict with 3.2.2)
+            // in such case - remove those lines
+            //singleProjectLines.removeIf(line -> line.contains(Constants.DASH + Constants.WHITESPACE + Constants.OPEN_BRACKET) && line.endsWith(Character.toString(Constants.CLOSE_BRACKET)));
+            // WSE-730 - removing lines without colon (which might cause an exception)
+            //singleProjectLines.removeIf(line -> !line.contains(Constants.COLON));
+            // WSE-747 - removing lines such as '-----------------< com.wss.test:search-engine-client >------------------' which fails the parser
+            //singleProjectLines.removeIf(line -> line.contains("-<") || line.contains(">-"));
+
+            String mvnLines = String.join(System.lineSeparator(), currentBlock);
+            try (InputStream is = new ByteArrayInputStream(mvnLines.getBytes(StandardCharsets.UTF_8.name()));
+                 Reader lineReader = new InputStreamReader(is, UTF_8)) {
+                Parser parser = InputType.TEXT.newParser();
+                Node tree = parser.parse(lineReader);
+                if (tree != null)
+                    nodes.add(tree);
+            } catch (UnsupportedEncodingException e) {
+                logger.warn("unsupportedEncoding error parsing output : {}", e.getMessage());
+                logger.debug("unsupportedEncoding error parsing output : {}", e.getStackTrace());
+            } catch (ParseException e) {
+                logger.warn("error parsing output : {} ", e.getMessage());
+                logger.debug("error parsing output : {} ", e.getStackTrace());
+            } catch (Exception e) {
+                // this can happen often - some parts of the output are not parsable
+                logger.warn("error parsing output : {}", e.getMessage());
+                logger.debug("error parsing output : {} \n{}", e.getMessage(), mvnLines);
             }
+            //}
         });
         return nodes;
     }
