@@ -385,7 +385,7 @@ public class FSAConfiguration {
         boolean goResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GO_RESOLVE_DEPENDENCIES, true);
         String goDependencyManager = config.getProperty(ConfigPropertyKeys.GO_DEPENDENCY_MANAGER, Constants.EMPTY_STRING);
         boolean goCollectDependenciesAtRuntime = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GO_COLLECT_DEPENDENCIES_AT_RUNTIME, false);
-        boolean goIgnoreTestPackages = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GO_IGNORE_TEST_PACKAGES, true);
+        boolean goIgnoreTestPackages = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GO_GLIDE_IGNORE_TEST_PACKAGES, true);
 
         boolean rubyResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.RUBY_RESOLVE_DEPENDENCIES, true);
         boolean rubyRunBundleInstall = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.RUBY_RUN_BUNDLE_INSTALL, false);

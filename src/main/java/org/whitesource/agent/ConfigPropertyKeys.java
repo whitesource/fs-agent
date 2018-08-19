@@ -139,7 +139,7 @@ public final class ConfigPropertyKeys {
     public static final String GO_RESOLVE_DEPENDENCIES              = "go.resolveDependencies";
     public static final String GO_DEPENDENCY_MANAGER                = "go.dependencyManager";
     public static final String GO_COLLECT_DEPENDENCIES_AT_RUNTIME   = "go.collectDependenciesAtRuntime";
-    public static final String GO_IGNORE_TEST_PACKAGES              = "go.ignoreTestPackages";
+    public static final String GO_GLIDE_IGNORE_TEST_PACKAGES = "go.glide.ignoreTestPackages";
 
     public static final String RUBY_RESOLVE_DEPENDENCIES    = "ruby.resolveDependencies";
     public static final String RUBY_RUN_BUNDLE_INSTALL      = "ruby.runBundleInstall";
