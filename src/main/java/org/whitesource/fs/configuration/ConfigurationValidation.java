@@ -28,14 +28,11 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
  */
 public class ConfigurationValidation {
 
-    /* --- Static members --- */
-
-    private static final int MAX_EXTRACTION_DEPTH = 7;
-
+    // Check configuration errors
     public List<String> getConfigurationErrors(boolean projectPerFolder, String configProjectToken, String configProjectName, String configApiToken, String configFilePath,
-                                               int archiveDepth, String[] includes, String[] projectPerFolderIncludes, String[] pythonIncludes) {
+                                               int archiveDepth, String[] includes, String[] projectPerFolderIncludes, String[] pythonIncludes, String scanComment) {
         List<String> errors = new ArrayList<>();
-        String[] requirements = pythonIncludes[0].split(Constants.WHITESPACE);
+        String[] requirements = pythonIncludes[Constants.ZERO].split(Constants.WHITESPACE);
         if (StringUtils.isBlank(configApiToken)) {
             String error = "Could not retrieve " + ORG_TOKEN_PROPERTY_KEY + " property from " + configFilePath;
             errors.add(error);
@@ -50,17 +47,17 @@ public class ConfigurationValidation {
             String error = "Please choose just one of either " + PROJECT_NAME_PROPERTY_KEY + " or " + PROJECT_TOKEN_PROPERTY_KEY + " (and not both)";
             errors.add(error);
         }
-        if (archiveDepth < 0 || archiveDepth > MAX_EXTRACTION_DEPTH) {
-            errors.add("Error: archiveExtractionDepth value should be greater than 0 and less than " + MAX_EXTRACTION_DEPTH);
+        if (archiveDepth < Constants.ZERO || archiveDepth > Constants.MAX_EXTRACTION_DEPTH) {
+            errors.add("Error: archiveExtractionDepth value should be greater than 0 and less than " + Constants.MAX_EXTRACTION_DEPTH);
         }
-        if (includes.length < 1 || StringUtils.isBlank(includes[0])) {
+        if (includes.length < Constants.ONE || StringUtils.isBlank(includes[Constants.ZERO])) {
             errors.add("Error: includes parameter must have at list one scanning pattern");
         }
         if (projectPerFolder && projectPerFolderIncludes == null) {
             errors.add("projectPerFolderIncludes parameter is empty, specify folders to include or mark as comment to scan all folders");
         }
 
-        if (requirements.length > 0) {
+        if (requirements.length > Constants.ZERO) {
             for (String requirement : requirements) {
                 if (!requirement.endsWith(Constants.TXT_EXTENSION)) {
                     String error = "Invalid file name: " + requirement + Constants.WHITESPACE + "in property" + PYTHON_REQUIREMENTS_FILE_INCLUDES + "from " + configFilePath;
@@ -68,7 +65,12 @@ public class ConfigurationValidation {
                 }
             }
         }
-
+        // get user comment & check max valid size
+        if (!StringUtils.isBlank(scanComment)) {
+            if (scanComment.length() > Constants.COMMENT_MAX_LENGTH) {
+                errors.add("Error: scanComment parameters is longer than 1000 characters");
+            }
+        }
         return errors;
     }
 }

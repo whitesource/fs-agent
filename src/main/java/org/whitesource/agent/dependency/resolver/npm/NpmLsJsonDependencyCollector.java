@@ -58,14 +58,15 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     private static final String REQUIRED = "required";
     private static final String IGNORE_SCRIPTS = "--ignore-scripts";
     private static final String UNMET_DEPENDENCY = "+-- UNMET DEPENDENCY";
+    private final Pattern GENERAL_PACKAGE_NAME_PATTERN = Pattern.compile(".* (.*)@(\\^)?[0-9]+\\.[0-9]+");
+    private final Pattern SECOND_GENERAL_PACKAGE_PATTERN = Pattern.compile(".* (.*)@");
+
     /* --- Members --- */
 
     protected final boolean includeDevDependencies;
     protected final boolean ignoreNpmLsErrors;
-    private final Pattern patternOfNameOfPackageFromLine = Pattern.compile(".* (.*)@(\\^)?[0-9]+\\.[0-9]+");
-    private final Pattern patternOfNameOfPackageFromLineSecondChance = Pattern.compile(".* (.*)@");
     private boolean showNpmLsError;
-    protected boolean npmLsFailureStatus = false;
+    protected boolean npmLsFailureStatus;
     protected final long npmTimeoutDependenciesCollector;
     private final boolean ignoreScripts;
 
@@ -76,6 +77,7 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
         this.includeDevDependencies = includeDevDependencies;
         this.ignoreNpmLsErrors = ignoreNpmLsErrors;
         this.ignoreScripts = ignoreScripts;
+        this.npmLsFailureStatus = false;
     }
 
     /* --- Public methods --- */
@@ -153,7 +155,12 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
                     } else {
                         // it can be only if was an error in 'npm ls'
                         if (dependencyJsonObject.has(REQUIRED)) {
-                            currentLineNumber = getDependencies(dependencyJsonObject.getJSONObject(REQUIRED), linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
+                            Object requiredObject = dependencyJsonObject.get(REQUIRED);
+                            if (requiredObject instanceof JSONObject) {
+                                currentLineNumber = getDependencies((JSONObject) requiredObject, linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
+                            } else {
+                                currentLineNumber++;
+                            }
                         } else {
                             currentLineNumber++;
                         }
@@ -164,15 +171,18 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
         return currentLineNumber;
     }
 
-    private String getTheNextPackageNameFromNpmLs(String line) {
-        String result;
-        Matcher matcher = this.patternOfNameOfPackageFromLine.matcher(line);
-        matcher.find();
-        // take only the name of the package from the match
-        result = matcher.group(1);
-        if (result == null) {
-            matcher = this.patternOfNameOfPackageFromLineSecondChance.matcher(line);
+    protected String getTheNextPackageNameFromNpmLs(String line) {
+        String result = null;
+        Matcher matcher = this.GENERAL_PACKAGE_NAME_PATTERN.matcher(line);
+        if (matcher.find()) {
+            // take only the name of the package from the match
             result = matcher.group(1);
+        }
+        if (result == null) {
+            matcher = this.SECOND_GENERAL_PACKAGE_PATTERN.matcher(line);
+            if (matcher.find()) {
+                result = matcher.group(1);
+            }
         }
         return result;
     }

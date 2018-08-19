@@ -55,11 +55,11 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String USER_HOME = "user.home";
     private static final String M2 = ".m2";
     private static final String REPOSITORY = "repository";
-    private static final String ALL = "All";
+    public static final String ALL = "All";
     private static final String POM = "pom";
     private static final String B_PARAMETER = "-B";
-    public static final String TEST_JAR = "test-jar";
-    public static final String JAR = "jar";
+    private static final String TEST_JAR = "test-jar";
+    private static final String JAR = "jar";
 
     /* --- Members --- */
 
@@ -96,7 +96,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             this.M2Path = getMavenM2Path(Constants.DOT);
         }
 
-        Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
         Collection<AgentProjectInfo> projects = new ArrayList<>();
         try {
             CommandLineProcess mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParamsBatchMode());
@@ -115,7 +114,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 projects = nodes.stream()
                         .filter(node -> !this.ignorePomModules || (ignorePomModules && !node.getPackaging().equals(POM)))
                         .map(tree -> {
-
+                    Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
                     List<DependencyInfo> dependencies = new LinkedList<>();
                     Stream<Node> nodeStream = tree.getChildNodes().stream().filter(node -> !mavenIgnoredScopes.contains(node.getScope()));
                     dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
