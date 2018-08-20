@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.DependencyInfoFactory;
+import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
@@ -41,7 +42,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
             Constants.XHTML, Constants.JSP, Constants.ASP, Constants.DO, Constants.ASPX);
     public final String[] includesPattern = new String[htmlTypeExtensions.size()];
 
-    public static final String WHITESOURCE_HTML_RESOLVER = "whitesource-html-resolver";
+
     public static final String URL_PATH = "://";
     private final Pattern patternOfFirstLetter = Pattern.compile("[a-zA-Z].*");
     private final Pattern patternOfLegitSrcUrl = Pattern.compile("<%.*%>");
@@ -105,7 +106,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
 
     private List<DependencyInfo> collectJsFilesAndCalcHashes(List<String> scriptUrls, String htmlFilePath) {
         List<DependencyInfo> dependencies = new LinkedList<>();
-        String tempFolder = new FilesUtils().createTmpFolder(false, WHITESOURCE_HTML_RESOLVER);
+        String tempFolder = new FilesUtils().createTmpFolder(false, TempFolders.WHITESOURCE_HTML_RESOLVER);
         File tempFolderFile = new File(tempFolder);
         RestTemplate restTemplate = new RestTemplate();
         String dependencyFileName = null;

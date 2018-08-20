@@ -19,6 +19,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.Constants;
+import org.whitesource.agent.TempFolders;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +56,6 @@ public class FilesUtils {
         String creationDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
         String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + nameOfFolder + File.separator + creationDate :
                 JAVA_TEMP_DIR + File.separator + nameOfFolder + File.separator + creationDate;
-
         if (addCharToEndOfUrl) {
             tempFolder = tempFolder + "1";
         }

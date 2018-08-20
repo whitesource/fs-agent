@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.ProjectsSender;
+import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
@@ -101,6 +102,10 @@ public class Main {
                 logger.warn("Process encountered an error: {}" + e.getMessage(), e);
                 processExitCode = StatusCode.ERROR;
             }
+            finally{
+                TempFolders.deleteTempFolders();
+            }
+
             logger.info("Process finished with exit code {} ({})", processExitCode.name(), processExitCode.getValue());
             exitCode = getValue(processExitCode);
         } else {
