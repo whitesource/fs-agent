@@ -83,6 +83,7 @@ public class DependencyResolutionService {
 
         final boolean nugetResolveDependencies = config.isNugetResolveDependencies();
         final boolean nugetRestoreDependencies = config.isNugetRestoreDependencies();
+        final boolean nugetRunPreStep = config.isNugetRunPreStep();
 
         final boolean mavenResolveDependencies = config.isMavenResolveDependencies();
         final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
@@ -131,7 +132,7 @@ public class DependencyResolutionService {
         }
         if (nugetResolveDependencies) {
             String whitesourceConfiguration = config.getWhitesourceConfiguration();
-            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE));
+            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE, nugetRunPreStep));
             dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies));
         }
         if (mavenResolveDependencies) {
