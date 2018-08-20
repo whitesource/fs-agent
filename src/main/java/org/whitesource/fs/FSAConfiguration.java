@@ -28,13 +28,9 @@ import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollec
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.*;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -289,9 +285,13 @@ public class FSAConfiguration {
     private boolean checkAppPathsForVia(Set<String> keySet, List<String> errors) {
         for (String key : keySet) {
             if (!key.equals("defaultKey")) {
-                Path path = Paths.get(key);
-                if (!Files.exists(path)) {
+                File file = new File(key);
+                if(!file.exists()){
                     errors.add("The path " + key + " does not exist");
+                    return false;
+                }
+                else if (!file.isFile()) {
+                    errors.add("The path " + key + " is not file");
                     return false;
                 } else {
                     return true;
