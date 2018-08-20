@@ -40,7 +40,7 @@ public class MavenLinesParserTest {
     @Ignore
     @Test
     public void parseLines(){
-        File file = TestHelper.getFileFromResources("resolver/maven/lines2.txt");
+        File file = TestHelper.getFileFromResources("resolver/maven/WSE-747.txt");
         List<String> lines = readFileAsList(file.getAbsolutePath());
         List<Node> nodes = mavenLinesParser.parseLines(lines);
         Assert.assertTrue(nodes.size() > 0);

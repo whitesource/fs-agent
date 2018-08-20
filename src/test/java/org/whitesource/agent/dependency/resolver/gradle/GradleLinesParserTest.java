@@ -17,6 +17,7 @@ import java.util.List;
 public class GradleLinesParserTest {
 
     private GradleLinesParser gradleLinesParser;
+
     @Before
     public void setup(){
         gradleLinesParser = new GradleLinesParser(false);
@@ -36,7 +37,7 @@ public class GradleLinesParserTest {
     @Ignore
     @Test
     public void parseLineFromFile(){
-        File file = new File("C:\\Users\\ErezHuberman\\Documents\\jira-tickets\\WSE-643\\com.paysafe.bigdata_dependencies2.txt"); //TestHelper.getFileFromResources("resolver/gradle/dependencies.log");
+        File file = TestHelper.getFileFromResources("resolver/gradle/dependencies.log");
         List<String> lines = readFileAsList(file.getAbsolutePath());
         List<DependencyInfo> dependencyInfoList = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
         Assert.assertTrue(dependencyInfoList.size() > 0);
