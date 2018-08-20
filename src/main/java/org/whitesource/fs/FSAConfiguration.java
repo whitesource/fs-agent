@@ -345,6 +345,7 @@ public class FSAConfiguration {
 
         boolean nugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, true);
         boolean nugetRestoreDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NUGET_RESTORE_DEPENDENCIES, false);
+        boolean nugetRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NUGET_RUN_PRE_STEP, false);
 
         boolean mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
@@ -405,7 +406,7 @@ public class FSAConfiguration {
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles,
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
-                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
+                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles,
