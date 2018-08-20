@@ -41,20 +41,19 @@ public class MavenLinesParser {
         logger.info("Start parsing pom files");
         List<Node> nodes = new ArrayList<>();
         projectsLines.forEach(singleProjectLines -> {
+            /* WSE-730 + WSE-747: filtering out all lines not starting with either +-, \- or |, or those containing colons but not with 4 elements, or containing '- (' or ending with )
+               for example, those lines will be filtered out -
+                +- (commons-collections:commons-collections:jar:3.2.1:compile - omitted for conflict with 3.2.2)
+                ---------------------< com.wss.test:search-engine >---------------------
+            */
             List<String> currentBlock = singleProjectLines.stream().filter(
-                    line -> (line.trim().startsWith("+-") || line.trim().startsWith("\\-") || line.trim().startsWith(Constants.PIPE) || line.split(":").length == 4)
+                    line -> (line.trim().startsWith(Constants.PLUS + Constants.DASH) ||
+                             line.trim().startsWith(Constants.BACK_SLASH + Constants.DASH) ||
+                             line.trim().startsWith(Constants.PIPE) ||
+                             line.split(Constants.COLON).length == 4) &&
+                             !line.contains(Constants.DASH + Constants.WHITESPACE + Constants.OPEN_BRACKET) &&
+                             !line.endsWith(Character.toString(Constants.CLOSE_BRACKET))
             ).collect(Collectors.toList());
-            // for cases such as the output_log.txt in WSE-600, where the first line of the block of output can't be parsed
-            // or cases like WSE-730, where verbose=true and maven-dependency-plugin >= 3, where the first line of hte block of output can't be parsed
-            //if (singleProjectLines.get(0).contains(Constants.COLON) || (singleProjectLines.get(1) != null && singleProjectLines.get(1).contains(Constants.COLON))) {
-            // WSE-730 - in case of maven-dependency-plugin <3 and verbose=true, there may be cases of such lines -
-            //  +- (commons-collections:commons-collections:jar:3.2.1:compile - omitted for conflict with 3.2.2)
-            // in such case - remove those lines
-            //singleProjectLines.removeIf(line -> line.contains(Constants.DASH + Constants.WHITESPACE + Constants.OPEN_BRACKET) && line.endsWith(Character.toString(Constants.CLOSE_BRACKET)));
-            // WSE-730 - removing lines without colon (which might cause an exception)
-            //singleProjectLines.removeIf(line -> !line.contains(Constants.COLON));
-            // WSE-747 - removing lines such as '-----------------< com.wss.test:search-engine-client >------------------' which fails the parser
-            //singleProjectLines.removeIf(line -> line.contains("-<") || line.contains(">-"));
 
             String mvnLines = String.join(System.lineSeparator(), currentBlock);
             try (InputStream is = new ByteArrayInputStream(mvnLines.getBytes(StandardCharsets.UTF_8.name()));
@@ -74,7 +73,6 @@ public class MavenLinesParser {
                 logger.warn("error parsing output : {}", e.getMessage());
                 logger.debug("error parsing output : {} \n{}", e.getMessage(), mvnLines);
             }
-            //}
         });
         return nodes;
     }
