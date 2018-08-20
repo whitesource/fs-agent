@@ -16,7 +16,7 @@
 package org.whitesource.agent;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.beust.jcommander.internal.Lists;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -313,7 +313,7 @@ public class ProjectsSender {
         logger.info("Generating offline update request");
         // generate offline request
         UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(),
-                requestConfig.getProductVersion(), projects, requestConfig.getUserKey(),requestConfig.getScanComment());
+                requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), requestConfig.getScanComment());
         if (senderConfig.isSendLogsToWss()) {
             updateRequest.setLogData(getLogData());
         }

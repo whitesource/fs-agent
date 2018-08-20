@@ -17,6 +17,7 @@ import java.util.List;
 public class GradleLinesParserTest {
 
     private GradleLinesParser gradleLinesParser;
+
     @Before
     public void setup(){
         gradleLinesParser = new GradleLinesParser(false);
@@ -38,7 +39,8 @@ public class GradleLinesParserTest {
     public void parseLineFromFile(){
         File file = TestHelper.getFileFromResources("resolver/gradle/dependencies.log");
         List<String> lines = readFileAsList(file.getAbsolutePath());
-        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
+        List<DependencyInfo> dependencyInfoList = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
+        Assert.assertTrue(dependencyInfoList.size() > 0);
     }
 
     private List<String> readFileAsList(String fileName) {
@@ -170,6 +172,40 @@ public class GradleLinesParserTest {
 
         List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
         Assert.assertTrue(dependencyInfos.get(2).getChildren().iterator().next().getVersion().equals("4.1.6.RELEASE"));
+    }
+
+    @Ignore
+    @Test
+    public void parseLinesFromString4() {
+        List<String> lines = new ArrayList<>();
+        lines.add("Found go 1.10.3 in C:\\Go\\bin\\go.exe, use it.");
+        lines.add(":prepare");
+        lines.add("Found global GOPATH: C:\\Users\\ErezHuberman\\Documents\\Go.");
+        lines.add(":resolveBuildDependencies");
+        lines.add("Resolving github.com/astaxie/beego: commit='LATEST_COMMIT', urls=[https://github.com/astaxie/beego.git, git@github.com:astaxie/beego.git]");
+        lines.add("Resolving github.com/eRez-ws/go-stringUtil: commit='LATEST_COMMIT', urls=[https://github.com/eRez-ws/go-stringUtil.git, git@github.com:eRez-ws/go-stringUtil.git]");
+        lines.add("Resolving github.com/garyburd/redigo: commit='LATEST_COMMIT', urls=[https://github.com/garyburd/redigo.git, git@github.com:garyburd/redigo.git]");
+        lines.add("Resolving github.com/google/go-querystring: commit='LATEST_COMMIT', urls=[https://github.com/google/go-querystring.git, git@github.com:google/go-querystring.git]");
+        lines.add(":resolveTestDependencies");
+        lines.add(":dependencies");
+        lines.add("build:");
+        lines.add("hello");
+        lines.add("|-- github.com/astaxie/beego:053a075");
+        lines.add("|   |-- golang.org/x/crypto:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/golang.org/x/crypto");
+        lines.add("|   |-- golang.org/x/net:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/golang.org/x/net");
+        lines.add("|   |-- google.golang.org/appengine:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/google.golang.org/appengine");
+        lines.add("|   \\-- gopkg.in/yaml.v2:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/gopkg.in/yaml.v2");
+        lines.add("|-- github.com/eRez-ws/go-stringUtil:99cfd8b");
+        lines.add("|-- github.com/garyburd/redigo:569eae5");
+        lines.add("\\-- github.com/google/go-querystring:53e6ce1");
+        lines.add("");
+        lines.add("test:");
+        lines.add("hello");
+        lines.add("");
+        lines.add("BUILD SUCCESSFUL in 15s");
+        lines.add("4 actionable tasks: 4 executed");
+        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
+        //Assert.assertTrue(dependencyInfos.get(2).getChildren().iterator().next().getVersion().equals("4.1.6.RELEASE"));
     }
 
 }

@@ -152,7 +152,16 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
         logger.debug("Trying to collect dependencies via 'npm ls'");
         // try to collect dependencies via 'npm ls'
+        List<String> bomFilesNames = parsedBomFiles.stream().map(BomFile::getLocalFileName).filter(s -> s.contains(EXCLUDE_TOP_FOLDER) == false).collect(Collectors.toList());
         Collection<AgentProjectInfo> projects = getDependencyCollector().collectDependencies(topLevelFolder);
+        // in case there is more than one module (i.e. - many package.json files outside of node_modules folder) - collect their dependencies as well
+        bomFilesNames.stream().forEach(bomFilePath -> {
+            bomFilePath = bomFilePath.substring(0, bomFilePath.lastIndexOf(fileSeparator));
+            if (bomFilePath.equals(topLevelFolder) == false){
+                projects.addAll(getDependencyCollector().collectDependencies(bomFilePath));
+            }
+        });
+
         Collection<DependencyInfo> dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
 
         boolean lsSuccess = !getDependencyCollector().getNpmLsFailureStatus();

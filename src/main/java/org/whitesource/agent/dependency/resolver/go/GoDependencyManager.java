@@ -3,7 +3,9 @@ package org.whitesource.agent.dependency.resolver.go;
 public enum GoDependencyManager {
     DEP("dep"),
     GO_DEP("godep"),
-    VNDR("vndr");
+    VNDR("vndr"),
+    GO_GRADLE("gogradle"),
+    GLIDE("glide");
 
 
     private final String type;

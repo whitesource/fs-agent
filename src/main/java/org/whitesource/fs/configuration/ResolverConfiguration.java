@@ -78,6 +78,7 @@ public class ResolverConfiguration {
             @JsonProperty(GO_RESOLVE_DEPENDENCIES) boolean goResolveDependencies,
             @JsonProperty(GO_DEPENDENCY_MANAGER) String goDependencyManager,
             @JsonProperty(GO_COLLECT_DEPENDENCIES_AT_RUNTIME) boolean goCollectDependenciesAtRuntime,
+            @JsonProperty(GO_IGNORE_TEST_PACKAGES) boolean goIgnoreTestPackages,
 
             @JsonProperty(RUBY_RESOLVE_DEPENDENCIES) boolean rubyResolveDependencies,
             @JsonProperty(RUBY_RUN_BUNDLE_INSTALL) boolean rubyRunBundleInstall,
@@ -142,6 +143,7 @@ public class ResolverConfiguration {
             this.goDependencyManager = GoDependencyManager.getFromType(goDependencyManager);
         }
         this.goCollectDependenciesAtRuntime = goCollectDependenciesAtRuntime;
+        this.goIgnoreTestPackages = goIgnoreTestPackages;
 
         this.rubyResolveDependencies = rubyResolveDependencies;
         this.rubyRunBundleInstall = rubyRunBundleInstall;
@@ -206,6 +208,7 @@ public class ResolverConfiguration {
     private boolean goResolveDependencies;
     private GoDependencyManager goDependencyManager;
     private boolean goCollectDependenciesAtRuntime;
+    private boolean goIgnoreTestPackages;
 
     private boolean rubyResolveDependencies;
     private boolean rubyRunBundleInstall;
@@ -424,6 +427,11 @@ public class ResolverConfiguration {
         return goCollectDependenciesAtRuntime;
     }
 
+    @JsonProperty(GO_IGNORE_TEST_PACKAGES)
+    public boolean isGoIgnoreTestPackages() {
+        return goIgnoreTestPackages;
+    }
+
     @JsonProperty(RUBY_RESOLVE_DEPENDENCIES)
     public boolean isRubyResolveDependencies() {
         return rubyResolveDependencies;
@@ -579,7 +587,8 @@ public class ResolverConfiguration {
                 ", paket.exePath=" +paketPath + '\n' +
                 ", goResolveDependencies=" + goResolveDependencies +
                 ", goDependencyManager=" + goDependencyManager +
-                ", goCollectDependenciesAtRuntime=" + goCollectDependenciesAtRuntime + '\n' +
+                ", goCollectDependenciesAtRuntime=" + goCollectDependenciesAtRuntime  +
+                ", goIgnoreTestPackages=" + goIgnoreTestPackages + '\n' +
                 ", rubyResolveDependencies=" + rubyResolveDependencies +
                 ", rubyRunBundleInstall=" + rubyRunBundleInstall +
                 ", rubyOverwriteGemFile=" + rubyOverwriteGemFile +
@@ -593,9 +602,4 @@ public class ResolverConfiguration {
                 ", sbtTargetFolder=" + sbtTargetFolder + '\n' +
                 ", htmlResolveDependencies=" + htmlResolveDependencies;
     }
-
-
-
-
-
 }
