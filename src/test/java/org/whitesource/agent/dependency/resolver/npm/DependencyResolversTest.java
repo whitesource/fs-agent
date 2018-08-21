@@ -8,12 +8,12 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.fs.FSAConfiguration;
+import org.whitesource.fs.FSAConfigProperties;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * @author eugen.horovitz
@@ -71,7 +71,7 @@ public class DependencyResolversTest {
     }
 
     private List<ResolutionResult> getResolutionResults(List<String> pathsToScan) {
-        Properties props = new Properties();
+        FSAConfigProperties props = new FSAConfigProperties();
         props.setProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, "true");
         props.setProperty(ConfigPropertyKeys.NPM_INCLUDE_DEV_DEPENDENCIES, "false");
         props.setProperty(ConfigPropertyKeys.NPM_RUN_PRE_STEP, "true");
@@ -83,7 +83,7 @@ public class DependencyResolversTest {
 
     private void testBowerResolve(boolean checkChildren) {
         String folderParent = TestHelper.FOLDER_WITH_BOWER_PROJECTS;
-        Properties props = new Properties();
+        FSAConfigProperties props = new FSAConfigProperties();
         props.setProperty(ConfigPropertyKeys.BOWER_RESOLVE_DEPENDENCIES, "true");
         props.setProperty(ConfigPropertyKeys.BOWER_RUN_PRE_STEP, "true");
         props.setProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, "false");

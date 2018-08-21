@@ -15,6 +15,7 @@
  */
 package org.whitesource.fs;
 
+import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.CommaParameterSplitter;
  import org.whitesource.agent.Constants;
@@ -140,4 +141,12 @@ public class CommandLineArgs {
     public String getConfigFilePath() {
         return configFilePath;
     }
+
+    public void parseCommandLine(String[] args) {
+        JCommander jCommander = new JCommander();
+        jCommander.setCaseSensitiveOptions(false);
+        jCommander.addObject(this);
+        jCommander.parse(args);
+    }
+
 }

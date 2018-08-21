@@ -17,7 +17,6 @@ package org.whitesource.fs;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.util.ContextInitializer;
-import com.beust.jcommander.JCommander;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -64,13 +63,15 @@ public class Main {
     }
 
     private static int mainScan(String[] args) {
-        CommandLineArgs commandLineArgs = new CommandLineArgs();
 
         if (isHelpArg(args)) {
             printHelpContent();
             System.exit(StatusCode.SUCCESS.getValue());
         }
-        new JCommander(commandLineArgs, args);
+
+        CommandLineArgs commandLineArgs = new CommandLineArgs();
+        commandLineArgs.parseCommandLine(args);
+
         StatusCode processExitCode;
 
         // read configuration senderConfig

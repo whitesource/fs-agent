@@ -163,4 +163,5 @@ public final class ConfigPropertyKeys {
     public static final String SEND_LOGS_TO_WSS = "sendLogsToWss";
 
     public static final String SCAN_COMMENT="scanComment";
+
 }

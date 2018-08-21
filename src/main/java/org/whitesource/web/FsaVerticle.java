@@ -30,10 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.utils.CommandLineProcess;
-import org.whitesource.fs.FSAConfiguration;
-import org.whitesource.fs.Main;
-import org.whitesource.fs.ProjectsDetails;
-import org.whitesource.fs.StatusCode;
+import org.whitesource.fs.*;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 
 import java.io.IOException;
@@ -200,7 +197,7 @@ public class FsaVerticle extends AbstractVerticle {
 
         Properties propertiesLocal = ConfigurationSerializer.getAsProperties(baseFsaConfiguration);
 
-        Properties merged = new Properties();
+        FSAConfigProperties merged = new FSAConfigProperties();
         merged.putAll(propertiesLocal);
         merged.putAll(properties);
 
