@@ -5,6 +5,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.fs.FSAConfiguration;
+import org.whitesource.fs.FSAConfigProperties;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -23,7 +25,7 @@ public class FSAConfigurationTest {
         ConfigurationSerializer configurationSerializer = new ConfigurationSerializer();
 
         File file = TestHelper.getFileFromResources("whitesource-fs-agent.config");
-        Properties properties = new Properties();
+        FSAConfigProperties properties = new FSAConfigProperties();
 
         try (InputStream stream = new FileInputStream(file.toString())) {
             properties.load(stream);

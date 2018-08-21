@@ -11,12 +11,12 @@ import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.fs.FSAConfiguration;
+import org.whitesource.fs.FSAConfigProperties;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class MavenTreeDependencyCollectorTest {
@@ -56,7 +56,7 @@ public class MavenTreeDependencyCollectorTest {
     @Test
     public void shouldFindPomDependencies() {
         String folderParent = TestHelper.FOLDER_WITH_MVN_PROJECTS;
-        Properties props = new Properties();
+        FSAConfigProperties props = new FSAConfigProperties();
         props.setProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, "true");
         props.setProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, "false");
         props.setProperty(ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, "false");

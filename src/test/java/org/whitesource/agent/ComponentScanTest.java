@@ -6,10 +6,10 @@ import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.fs.CommandLineArgs;
 import org.whitesource.fs.ComponentScan;
+import org.whitesource.fs.FSAConfigProperties;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.Properties;
 
 /**
  * Created by anna.rozin
@@ -21,7 +21,7 @@ public class ComponentScanTest {
     public void shouldScanComponents() {
 
         // Arrange
-        Properties props = TestHelper.getPropertiesFromFile();
+        FSAConfigProperties props = TestHelper.getPropertiesFromFile();
         props.put("includes", "**/*.cs");
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
         String resolverFolder = Paths.get(config.getParent(), "resolver/nuget").toString();
@@ -39,7 +39,7 @@ public class ComponentScanTest {
     @Ignore
     @Test
     public void testAcceptExtensionsList() {
-        Properties props = TestHelper.getPropertiesFromFile();
+        FSAConfigProperties props = TestHelper.getPropertiesFromFile();
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
         String resolverFolder = Paths.get(config.getParent(), "resolver/npm").toString();
         props.put("d", resolverFolder);

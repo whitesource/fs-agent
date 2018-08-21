@@ -7,6 +7,7 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.fs.CommandLineArgs;
+import org.whitesource.fs.FSAConfigProperties;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -16,7 +17,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -154,8 +154,8 @@ public class TestHelper {
         return result;
     }
 
-    public static Properties getPropertiesFromFile() {
-        Properties p = new Properties();
+    public static FSAConfigProperties getPropertiesFromFile() {
+        FSAConfigProperties p = new FSAConfigProperties();
         try {
             File file = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
             InputStream input1 = new FileInputStream(file);
