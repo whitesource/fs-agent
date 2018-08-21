@@ -27,10 +27,7 @@ import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollec
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.*;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -74,9 +71,9 @@ public class FSAConfiguration {
                 request.toString() + '\n' +
                 ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", offline=" + offline.isEnabled() + '\n' +
-                ", projectPerFolder=" + projectPerFolder+ '\n' +
+                ", projectPerFolder=" + projectPerFolder + '\n' +
                 ", wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
-                 ", scanPackageManager=" + scanPackageManager + '\n' +
+                ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", scanDockerImages=" + scanDockerImages + '\n' +
                 getAgent().toString() + '\n' +
                 '}';
@@ -237,7 +234,7 @@ public class FSAConfiguration {
             argsForAppPathAndDirs = dependencyDirs.toArray(new String[0]);
         }
         initializeDependencyDirs(argsForAppPathAndDirs, config);
-        String scanComment=config.getProperty(ConfigPropertyKeys.SCAN_COMMENT);
+        String scanComment = config.getProperty(ConfigPropertyKeys.SCAN_COMMENT);
 
 
         // validate iaLanguage
@@ -274,7 +271,7 @@ public class FSAConfiguration {
         endpoint = getEndpoint(config);
 
         if (sender.isEnableImpactAnalysis()) {
-            boolean isViaAppPath = checkAppPathsForVia(appPathsToDependencyDirs.keySet());
+            boolean isViaAppPath = checkAppPathsForVia(appPathsToDependencyDirs.keySet(), errors);
             if (isViaAppPath) {
                 if (resolver.getMavenIgnoredScopes() != null && !Arrays.asList(resolver.getMavenIgnoredScopes()).contains(resolver.getMavenIgnoredScopes())) {
                     errors.add("Effective Usage Analysis cannot run. Make sure you set an empty value for the maven.ignoredScopes parameter");
@@ -286,10 +283,20 @@ public class FSAConfiguration {
         }
     }
 
-    private boolean checkAppPathsForVia(Set<String> keySet) {
+    private boolean checkAppPathsForVia(Set<String> keySet, List<String> errors) {
         for (String key : keySet) {
             if (!key.equals("defaultKey")) {
-                return true;
+                File file = new File(key);
+                if(!file.exists()){
+                    errors.add("The path " + key + " does not exist");
+                    return false;
+                }
+                else if (!file.isFile()) {
+                    errors.add("The path " + key + " is not file");
+                    return false;
+                } else {
+                    return true;
+                }
             }
         }
         return false;
@@ -346,6 +353,7 @@ public class FSAConfiguration {
 
         boolean nugetResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, true);
         boolean nugetRestoreDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESTORE_DEPENDENCIES, false);
+        boolean nugetRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RUN_PRE_STEP, false);
 
         boolean mavenResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = config.getListProperty(ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
@@ -385,8 +393,8 @@ public class FSAConfiguration {
 
         boolean goResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GO_RESOLVE_DEPENDENCIES, true);
         String goDependencyManager = config.getProperty(ConfigPropertyKeys.GO_DEPENDENCY_MANAGER, Constants.EMPTY_STRING);
-        boolean goCollectDependenciesAtRuntime = config.getBooleanProperty(ConfigPropertyKeys.GO_COLLECT_DEPENDENCIES_AT_RUNTIME, false);
-        boolean goIgnoreTestPackages = config.getBooleanProperty(ConfigPropertyKeys.GO_IGNORE_TEST_PACKAGES, true);
+        boolean goCollectDependenciesAtRuntime = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GO_COLLECT_DEPENDENCIES_AT_RUNTIME, false);
+        boolean goIgnoreTestPackages = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GO_IGNORE_TEST_PACKAGES, true);
 
         boolean rubyResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.RUBY_RESOLVE_DEPENDENCIES, true);
         boolean rubyRunBundleInstall = config.getBooleanProperty(ConfigPropertyKeys.RUBY_RUN_BUNDLE_INSTALL, false);
@@ -406,7 +414,7 @@ public class FSAConfiguration {
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles,
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
-                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
+                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles,
@@ -591,8 +599,8 @@ public class FSAConfiguration {
         try {
             try (FileInputStream inputStream = new FileInputStream(configFilePath)) {
                 try {
-//                    configProps.load(inputStream); replaced by the below
-                    configProps.load(new InputStreamReader(inputStream,StandardCharsets.UTF_8));
+                    //                    configProps.load(inputStream); replaced by the below
+                    configProps.load(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
                     // Remove extra spaces from the values
                     Set<String> keys = configProps.stringPropertyNames();
                     for (String key : keys) {

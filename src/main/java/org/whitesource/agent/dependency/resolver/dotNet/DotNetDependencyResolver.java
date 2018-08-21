@@ -24,7 +24,7 @@ public class DotNetDependencyResolver extends NugetDependencyResolver {
     /* --- Constructor --- */
 
     public DotNetDependencyResolver(String whitesourceConfiguration, NugetConfigFileType nugetConfigFileType, boolean nugetRestoreDependencies) {
-        super(whitesourceConfiguration, nugetConfigFileType);
+        super(whitesourceConfiguration, nugetConfigFileType, nugetRestoreDependencies);
         this.nugetRestoreDependencies = nugetRestoreDependencies;
         this.resolveCollector = new DotNetRestoreCollector();
     }
@@ -34,7 +34,7 @@ public class DotNetDependencyResolver extends NugetDependencyResolver {
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> csprojFiles) {
         if (this.nugetRestoreDependencies) {
-            this.resolveCollector.executeDotNetRestore(projectFolder, csprojFiles);
+            this.resolveCollector.executeRestore(projectFolder, csprojFiles);
             Collection<AgentProjectInfo> projects = this.resolveCollector.collectDependencies(projectFolder);
             Collection<DependencyInfo> dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
             dependencies.addAll(parseNugetPackageFiles(csprojFiles, true));

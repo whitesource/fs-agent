@@ -45,6 +45,7 @@ public class ResolverConfiguration {
 
             @JsonProperty(NUGET_RESOLVE_DEPENDENCIES) boolean nugetResolveDependencies,
             @JsonProperty(NUGET_RESTORE_DEPENDENCIES) boolean nugetRestoreDependencies,
+            @JsonProperty(NUGET_RUN_PRE_STEP) boolean nugetRunPreStep,
 
             @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES) boolean mavenResolveDependencies,
             @JsonProperty(MAVEN_IGNORED_SCOPES) String[] mavenIgnoredScopes,
@@ -78,7 +79,7 @@ public class ResolverConfiguration {
             @JsonProperty(GO_RESOLVE_DEPENDENCIES) boolean goResolveDependencies,
             @JsonProperty(GO_DEPENDENCY_MANAGER) String goDependencyManager,
             @JsonProperty(GO_COLLECT_DEPENDENCIES_AT_RUNTIME) boolean goCollectDependenciesAtRuntime,
-            @JsonProperty(GO_IGNORE_TEST_PACKAGES) boolean goIgnoreTestPackages,
+            @JsonProperty(GO_GLIDE_IGNORE_TEST_PACKAGES) boolean goIgnoreTestPackages,
 
             @JsonProperty(RUBY_RESOLVE_DEPENDENCIES) boolean rubyResolveDependencies,
             @JsonProperty(RUBY_RUN_BUNDLE_INSTALL) boolean rubyRunBundleInstall,
@@ -108,6 +109,7 @@ public class ResolverConfiguration {
 
         this.nugetResolveDependencies = nugetResolveDependencies;
         this.nugetRestoreDependencies = nugetRestoreDependencies;
+        this.nugetRunPreStep = nugetRunPreStep;
 
         this.mavenResolveDependencies = mavenResolveDependencies;
         this.mavenIgnoredScopes = mavenIgnoredScopes;
@@ -177,6 +179,7 @@ public class ResolverConfiguration {
     private boolean bowerRunPreStep;
     private boolean nugetResolveDependencies;
     private boolean nugetRestoreDependencies;
+    private boolean nugetRunPreStep;
     private boolean mavenResolveDependencies;
     private String[] mavenIgnoredScopes;
     private boolean mavenAggregateModules;
@@ -291,6 +294,11 @@ public class ResolverConfiguration {
     @JsonProperty(NUGET_RESTORE_DEPENDENCIES)
     public boolean isNugetRestoreDependencies() {
         return nugetRestoreDependencies;
+    }
+
+    @JsonProperty(NUGET_RUN_PRE_STEP)
+    public boolean isNugetRunPreStep() {
+        return nugetRunPreStep;
     }
 
     @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES)
@@ -427,7 +435,7 @@ public class ResolverConfiguration {
         return goCollectDependenciesAtRuntime;
     }
 
-    @JsonProperty(GO_IGNORE_TEST_PACKAGES)
+    @JsonProperty(GO_GLIDE_IGNORE_TEST_PACKAGES)
     public boolean isGoIgnoreTestPackages() {
         return goIgnoreTestPackages;
     }
