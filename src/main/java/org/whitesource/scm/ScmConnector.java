@@ -3,6 +3,7 @@ package org.whitesource.scm;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.utils.FilesUtils;
 
@@ -14,6 +15,7 @@ import java.io.File;
  * @author tom.shapira
  */
 public abstract class ScmConnector {
+
 
     /* --- Static members --- */
 
@@ -80,7 +82,8 @@ public abstract class ScmConnector {
      * @return The folder in which the specific branch/tag resides.
      */
     public File cloneRepository() {
-        cloneDirectory = new File(TempFolders.SCM_CONNECTOR_TMP_DIRECTORY, getType().toString().toLowerCase() + "_" + getUrlName() + "_" + getBranch());
+        cloneDirectory = new File(TempFolders.SCM_CONNECTOR_TMP_DIRECTORY, getType().toString().toLowerCase() + Constants.UNDERSCORE +
+                getUrlName() + Constants.UNDERSCORE + getBranch());
         FilesUtils.deleteDirectory(cloneDirectory); // delete just in case it's not empty
 
         logger.info("Cloning repository {} ...this may take a few minutes", getUrl());

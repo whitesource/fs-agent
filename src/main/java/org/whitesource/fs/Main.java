@@ -103,7 +103,7 @@ public class Main {
                 processExitCode = StatusCode.ERROR;
             }
             finally{
-                TempFolders.deleteTempFolders();
+                new TempFolders().deleteTempFolders();
             }
 
             logger.info("Process finished with exit code {} ({})", processExitCode.name(), processExitCode.getValue());

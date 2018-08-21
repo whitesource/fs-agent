@@ -148,9 +148,9 @@ public class ArchiveExtractor {
 
     private String getTempFolder(String scannerBaseDir) {
         String creationDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-        String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + TempFolders.WHITESOURCE_ARCHIVE_EXTRACTOR+ File.separator + creationDate :
+        String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + TempFolders.WHITESOURCE_ARCHIVE_EXTRACTOR + File.separator + creationDate :
                 JAVA_TEMP_DIR + File.separator + TempFolders.WHITESOURCE_ARCHIVE_EXTRACTOR + File.separator + creationDate;
-        String destDirectory = tempFolder + "_" + this.randomString;
+        String destDirectory = tempFolder + Constants.UNDERSCORE + this.randomString;
         int separatorIndex = scannerBaseDir.lastIndexOf(File.separator);
 
         if (separatorIndex != -1) {
