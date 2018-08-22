@@ -2,6 +2,8 @@ package org.whitesource.scm;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
+import org.whitesource.agent.Constants;
+import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.FilesUtils;
 
