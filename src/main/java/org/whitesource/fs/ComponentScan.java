@@ -24,11 +24,11 @@ public class ComponentScan {
 
     /* --- Members --- */
 
-    private Properties config;
+    private FSAConfigProperties config;
 
     /* --- Constructors --- */
 
-    public ComponentScan(Properties config) {
+    public ComponentScan(FSAConfigProperties config) {
         this.config = config;
     }
 

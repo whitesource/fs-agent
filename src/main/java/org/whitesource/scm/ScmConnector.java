@@ -6,7 +6,6 @@ import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.FilesUtils;
 
 import java.io.File;
-import java.nio.file.Paths;
 
 /**
  * This class holds all components for connecting to repositories using git/svm/mercurial protocol.
@@ -15,11 +14,10 @@ import java.nio.file.Paths;
  */
 public abstract class ScmConnector {
 
+
     /* --- Static members --- */
 
     private final Logger logger = LoggerFactory.getLogger(ScmConnector.class);
-
-    public static final String SCM_CONNECTOR_TMP_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir"), "WhiteSource-ScmConnector").toString();
 
     public static final String MASTER = "master";
 
@@ -82,7 +80,8 @@ public abstract class ScmConnector {
      * @return The folder in which the specific branch/tag resides.
      */
     public File cloneRepository() {
-        cloneDirectory = new File(SCM_CONNECTOR_TMP_DIRECTORY, getType().toString().toLowerCase() + "_" + getUrlName() + "_" + getBranch());
+        cloneDirectory = new File(TempFolders.SCM_CONNECTOR_TMP_DIRECTORY, getType().toString().toLowerCase() + Constants.UNDERSCORE +
+                getUrlName() + Constants.UNDERSCORE + getBranch());
         FilesUtils.deleteDirectory(cloneDirectory); // delete just in case it's not empty
 
         logger.info("Cloning repository {} ...this may take a few minutes", getUrl());

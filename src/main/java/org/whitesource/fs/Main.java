@@ -17,7 +17,6 @@ package org.whitesource.fs;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.util.ContextInitializer;
-import com.beust.jcommander.JCommander;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -26,6 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.ProjectsSender;
+import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
@@ -65,13 +65,15 @@ public class Main {
     }
 
     private static int mainScan(String[] args) {
-        CommandLineArgs commandLineArgs = new CommandLineArgs();
 
         if (isHelpArg(args)) {
             printHelpContent();
             System.exit(StatusCode.SUCCESS.getValue());
         }
-        new JCommander(commandLineArgs, args);
+
+        CommandLineArgs commandLineArgs = new CommandLineArgs();
+        commandLineArgs.parseCommandLine(args);
+
         StatusCode processExitCode;
 
         // read configuration senderConfig
@@ -102,6 +104,10 @@ public class Main {
                 logger.warn("Process encountered an error: {}" + e.getMessage(), e);
                 processExitCode = StatusCode.ERROR;
             }
+            finally{
+                new TempFolders().deleteTempFolders();
+            }
+
             logger.info("Process finished with exit code {} ({})", processExitCode.name(), processExitCode.getValue());
             exitCode = getValue(processExitCode);
         } else {

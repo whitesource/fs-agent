@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Properties;
 
 import static org.whitesource.fs.Main.LOGBACK_FSA_XML;
 
@@ -39,7 +38,7 @@ public class ViaTest {
 
     /* --- Private Members --- */
 
-    private Properties config;
+    private FSAConfigProperties config;
     private FSAConfiguration fsaConfiguration;
     private ProjectsSenderMock projectsSender;
 
@@ -47,7 +46,7 @@ public class ViaTest {
 
     @Before
     public void setUp() throws IOException {
-        config = new Properties();
+        config = new FSAConfigProperties();
         config.load(new FileInputStream(CONFIG));
         System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, LOGBACK_FSA_XML);
         logger = LoggerFactory.getLogger(ViaTest.class);

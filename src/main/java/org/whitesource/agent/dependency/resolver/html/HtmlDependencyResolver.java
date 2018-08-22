@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.DependencyInfoFactory;
+import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,8 +42,8 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     public static final List<String> htmlTypeExtensions = Arrays.asList(Constants.HTM, Constants.HTML, Constants.SHTML,
             Constants.XHTML, Constants.JSP, Constants.ASP, Constants.DO, Constants.ASPX);
     public final String[] includesPattern = new String[htmlTypeExtensions.size()];
-
     public static final String WHITESOURCE_HTML_RESOLVER = "whitesource-html-resolver";
+
     public static final String URL_PATH = "://";
     private final Pattern patternOfFirstLetter = Pattern.compile("[a-zA-Z].*");
     private final Pattern patternOfLegitSrcUrl = Pattern.compile("<%.*%>");
@@ -82,6 +84,13 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                 logger.debug("Cannot parse the html file: {}", htmlFile);
             }
         }
+
+       // delete parent folder of HTML Resolver
+       try {
+           new TempFolders().deleteTempFoldersHelper(Paths.get(System.getProperty("java.io.tmpdir"), WHITESOURCE_HTML_RESOLVER).toString());
+       } catch(Exception e) {
+           logger.debug("Failed to delete HTML Dependency Resolver Folder{}", e.getMessage());
+       }
         // check the type and excludes
         return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
     }
@@ -89,8 +98,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     private boolean isLegitSrcUrl(String srcUrl) {
         // Remove parameters if JS is called with parameters
         // For example: http://somexample.com/test.js?a=1&b=3
-        if(srcUrl.contains("?"))
-        {
+        if (srcUrl.contains("?")) {
             String[] srcURLSplit = srcUrl.split("\\?");
             srcUrl = srcURLSplit[0];
         }
@@ -120,10 +128,12 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                     String fileName = scriptUrl.substring(scriptUrl.lastIndexOf(Constants.FORWARD_SLASH) + 1);
                     dependencyFileName = tempFolder + File.separator + fileName;
                     PrintWriter writer = new PrintWriter(dependencyFileName, Constants.UTF8);
-                    writer.println(body);
-                    writer.close();
+                    if (writer != null) {
+                        writer.println(body);
+                        writer.close();
+                    }
                     DependencyInfoFactory dependencyInfoFactory = new DependencyInfoFactory();
-                    DependencyInfo dependencyInfo = dependencyInfoFactory.createDependencyInfo(tempFolderFile,fileName);
+                    DependencyInfo dependencyInfo = dependencyInfoFactory.createDependencyInfo(tempFolderFile, fileName);
                     if (dependencyInfo != null) {
                         dependencies.add(dependencyInfo);
                         dependencyInfo.setSystemPath(htmlFilePath);
@@ -134,7 +144,10 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                     logger.debug("Failed creating uri of {}", scriptUrl);
                 } catch (IOException e) {
                     logger.debug("Failed writing to file {}", dependencyFileName);
+                } catch (Exception e){
+                    logger.debug("An exception occurred :{}" , e.getMessage());
                 }
+
             }
             FilesUtils.deleteDirectory(tempFolderFile);
         }
