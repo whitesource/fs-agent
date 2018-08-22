@@ -410,7 +410,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoGradleDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) {
         logger.debug("collecting dependencies using 'GoGradle'");
-        GradleCli gradleCli = new GradleCli();
+        GradleCli gradleCli = new GradleCli(Constants.WRAPPER);
         List<String> lines = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES));
         if (lines != null) {
             parseGoGradleDependencies(lines, dependencyInfos, rootDirectory);

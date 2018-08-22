@@ -20,7 +20,7 @@ public class GradleLinesParserTest {
 
     @Before
     public void setup(){
-        gradleLinesParser = new GradleLinesParser(false);
+        gradleLinesParser = new GradleLinesParser(false, Constants.WRAPPER);
     }
 
     @Ignore

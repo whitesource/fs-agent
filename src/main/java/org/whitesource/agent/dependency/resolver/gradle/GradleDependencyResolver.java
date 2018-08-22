@@ -31,10 +31,10 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private final Logger logger = LoggerFactory.getLogger(GradleDependencyResolver.class);
 
-    public GradleDependencyResolver(boolean runAssembleCommand, boolean dependenciesOnly, boolean gradleAggregateModules) {
+    public GradleDependencyResolver(boolean runAssembleCommand, boolean dependenciesOnly, boolean gradleAggregateModules, String gradleDefaultEnvironment) {
         super();
-        gradleLinesParser = new GradleLinesParser(runAssembleCommand);
-        gradleCli = new GradleCli();
+        gradleLinesParser = new GradleLinesParser(runAssembleCommand, gradleDefaultEnvironment);
+        gradleCli = new GradleCli(gradleDefaultEnvironment);
         topLevelFoldersNames = new ArrayList<>();
         this.dependenciesOnly = dependenciesOnly;
         this.gradleAggregateModules = gradleAggregateModules;
@@ -47,7 +47,10 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         Collection<String> excludes = new HashSet<>();
 
         // Get the list of projects as paths
-        List<String> projectsList = collectProjects(topLevelFolder);
+        List<String> projectsList = null;
+        if (bomFiles.size() > 1 ) {
+            projectsList = collectProjects(topLevelFolder);
+        }
         if (projectsList == null) {
             logger.warn("Command \"gradle projects\" did not return a list of projects");
         }
