@@ -18,7 +18,7 @@ package org.whitesource.agent.dependency.resolver.maven;
 import fr.dutra.tools.maven.deptree.core.Node;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;

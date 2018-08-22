@@ -37,7 +37,7 @@ import org.redline_rpm.header.AbstractHeader;
 import org.redline_rpm.header.Format;
 import org.redline_rpm.header.Header;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.Pair;

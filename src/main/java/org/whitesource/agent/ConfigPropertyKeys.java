@@ -163,5 +163,7 @@ public final class ConfigPropertyKeys {
     public static final String SCANNED_FOLDERS = "d";
     public static final String SEND_LOGS_TO_WSS = "sendLogsToWss";
 
-    public static final String SCAN_COMMENT="scanComment";
+    public static final String SCAN_COMMENT = "scanComment";
+
+    public static final String LOG_CONTEXT = "logContext";
 }

@@ -118,6 +118,7 @@ public class FSAConfiguration {
     private final String scannedFolders;
 
     private String logLevel;
+    private String logContext;
     private boolean useCommandLineProductName;
     private boolean useCommandLineProjectName;
     private List<String> appPaths;
@@ -260,6 +261,7 @@ public class FSAConfiguration {
                 apiToken, configFilePath, archiveExtractionDepth, includes, projectPerFolderIncludes, pythonRequirementsFileIncludes, scanComment));
 
         logLevel = config.getProperty(ConfigPropertyKeys.LOG_LEVEL_KEY, INFO);
+        logContext = config.getProperty(ConfigPropertyKeys.LOG_CONTEXT);
 
         request = getRequest(config, apiToken, userKey, projectName, projectToken, scanComment);
         scm = getScm(config);
@@ -797,6 +799,10 @@ public class FSAConfiguration {
         return requirementsFileIncludes;
     }
 
+    public String getLogContext() {
+        return this.logContext;
+    }
+
     /* --- Private methods --- */
 
     private List<String> updateProperties(Properties configProps, CommandLineArgs commandLineArgs) {
@@ -812,6 +818,7 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.LOG_LEVEL_KEY, commandLineArgs.logLevel);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SEND_LOGS_TO_WSS, commandLineArgs.sendLogsToWss);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_COMMENT, commandLineArgs.scanComment);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.LOG_CONTEXT, commandLineArgs.logContext);
         // request file
         List<String> offlineRequestFiles = new LinkedList<>();
         offlineRequestFiles.addAll(commandLineArgs.requestFiles);
