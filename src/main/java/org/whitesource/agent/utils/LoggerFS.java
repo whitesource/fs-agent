@@ -9,6 +9,12 @@ import org.slf4j.Marker;
  */
 public class LoggerFS implements Logger {
 
+    /* --- Static Members --- */
+
+    private static final String OPENING_BRACKET = "[";
+    private static final String CLOSING_BRACKET = "] ";
+    private static final String CTX = "[CTX=";
+
     /* --- Members --- */
 
     private final org.slf4j.Logger logger;
@@ -348,7 +354,7 @@ public class LoggerFS implements Logger {
         if (this.contextId == null) {
             return msg;
         } else {
-            return this.contextId + " - " + msg;
+            return OPENING_BRACKET + this.logger.getName() + CLOSING_BRACKET + CTX + this.contextId  + CLOSING_BRACKET + "\t" + msg;
         }
     }
 }

@@ -24,6 +24,7 @@ import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.*;
 
@@ -263,6 +264,10 @@ public class FSAConfiguration {
 
         logLevel = config.getProperty(ConfigPropertyKeys.LOG_LEVEL_KEY, INFO);
         logContext = config.getProperty(ConfigPropertyKeys.LOG_CONTEXT);
+        // DO NOT CHANGE THE POSITION OF THE THREE LINES BELOW
+        if (StringUtils.isNotEmpty(logContext)) {
+            LoggerFactory.contextId = logContext;
+        }
 
         request = getRequest(config, apiToken, userKey, projectName, projectToken, scanComment);
         scm = getScm(config);
