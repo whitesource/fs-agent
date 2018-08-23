@@ -37,7 +37,7 @@ public class GradleLinesParserTest {
     @Ignore
     @Test
     public void parseLineFromFile(){
-        File file = TestHelper.getFileFromResources("resolver/gradle/dependencies.log");
+        File file = TestHelper.getFileFromResources("resolver/gradle/lines.txt");
         List<String> lines = readFileAsList(file.getAbsolutePath());
         List<DependencyInfo> dependencyInfoList = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
         Assert.assertTrue(dependencyInfoList.size() > 0);

@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
  */
 public class GradleLinesParser extends MavenTreeDependencyCollector {
     protected static final String ARROW = " -> ";
+    protected static final String PROJECT = "project :";
 
     /* --- Static members --- */
 
@@ -84,8 +85,28 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         List<String> sha1s = new ArrayList<>();
         int prevLineIndentation = 0;
         boolean duplicateDependency = false;
+        boolean insideProject = false;
         for (String line : projectsLines){
-            if (line.indexOf(Constants.COLON) == -1 || line.contains("project :")){
+            if (line.indexOf(Constants.COLON) == -1 || line.contains(PROJECT)){
+                if (line.contains(PROJECT)){
+                    /*
+                    * there may be such scenarios -
+                     \--- project :tapestry-ioc
+                            +--- project :tapestry-func
+                            +--- project :tapestry5-annotations
+                            +--- project :plastic
+                            |    \--- org.slf4j:slf4j-api:1.7.25
+                            +--- project :beanmodel
+                            |    +--- org.antlr:antlr:3.5.2
+                            |    |    +--- org.antlr:antlr-runtime:3.5.2
+                            |    |    \--- org.antlr:ST4:4.0.8
+                            |    |         \--- org.antlr:antlr-runtime:3.5.2
+                      in such case - ignore the lines starting with 'project' but collect their transitive dependencies
+                      and add them to the root of the dependencies' tree root
+                    * */
+                    prevLineIndentation = 0;
+                    insideProject = true;
+                }
                 continue;
             }
             String[] strings = line.split(Constants.COLON);
@@ -110,23 +131,24 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             // Create dependencyInfo & calculate SHA1
             DependencyInfo currentDependency = new DependencyInfo(groupId, artifactId, version);
             DependencyFile dependencyFile = getDependencySha1(currentDependency);
-            if (dependencyFile == null || dependencyFile.getSha1().equals(Constants.EMPTY_STRING) || sha1s.contains(dependencyFile.getSha1()))
-                continue;
-            sha1s.add(dependencyFile.getSha1());
-            currentDependency.setSha1(dependencyFile.getSha1());
-            currentDependency.setSystemPath(dependencyFile.getFilePath());
-            currentDependency.setFilename(dependencyFile.getFileName());
+            if (dependencyFile != null && !dependencyFile.getSha1().equals(Constants.EMPTY_STRING)) {
+                if (sha1s.contains(dependencyFile.getSha1()))
+                    continue;
+                sha1s.add(dependencyFile.getSha1());
+                currentDependency.setSha1(dependencyFile.getSha1());
+                currentDependency.setSystemPath(dependencyFile.getFilePath());
+                currentDependency.setFilename(dependencyFile.getFileName());
+                String extension = FilesUtils.getFileExtension(dependencyFile.getFilePath());
+                currentDependency.setType(extension);
+            }
             currentDependency.setDependencyType(DependencyType.GRADLE);
-
-            String extension = FilesUtils.getFileExtension(dependencyFile.getFilePath());
-            currentDependency.setType(extension);
 
             if (dependenciesList.contains(currentDependency)){
                 duplicateDependency = true;
                 continue;
             }
             // In case the dependency is transitive/child dependency
-            if (line.startsWith(Constants.WHITESPACE) || line.startsWith(Constants.PIPE)){
+            if ((line.startsWith(Constants.WHITESPACE) || line.startsWith(Constants.PIPE)) && !insideProject) {
                 if (duplicateDependency || parentDependencies.isEmpty()) {
                     continue;
                 }
@@ -146,11 +168,18 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                         prevLineIndentation -= INDENTETION_SPACE;
                     }
                 }
-                if(!parentDependencies.isEmpty())
+
+                if(!parentDependencies.isEmpty()) {
                     parentDependencies.peek().getChildren().add(currentDependency);
+                } else {
+                    // if - for some reason - this is a transitive dependency but the parent-dependencies stack is empty,
+                    // add this dependency to the root of the tree
+                    dependenciesList.add(currentDependency);
+                }
                 parentDependencies.push(currentDependency);
             } else {
                 duplicateDependency = false;
+                insideProject = false;
                 dependenciesList.add(currentDependency);
                 parentDependencies.clear();
                 parentDependencies.push(currentDependency);
