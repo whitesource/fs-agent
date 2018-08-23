@@ -23,7 +23,7 @@ public class GradleDependencyResolverTest {
     @Ignore
     @Before
     public void setUp() throws Exception {
-        gradleDependencyResolver = new GradleDependencyResolver(true, true, true, Constants.WRAPPER);
+        gradleDependencyResolver = new GradleDependencyResolver(true, true, true, Constants.GRADLE_WRAPPER);
     }
 
     @Ignore
