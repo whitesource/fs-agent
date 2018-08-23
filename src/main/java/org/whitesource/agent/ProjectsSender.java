@@ -20,7 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.api.dispatch.*;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.client.WhitesourceService;
@@ -403,7 +403,7 @@ public class ProjectsSender {
 
     private String getLogData() {
         String logs = Constants.EMPTY_STRING;
-        ch.qos.logback.classic.Logger setLog = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.MAP_LOG_NAME);
+        ch.qos.logback.classic.Logger setLog = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(Constants.MAP_LOG_NAME);
         ConcurrentSkipListMap<Long, ILoggingEvent> collectToSet = ((LogMapAppender) setLog.getAppender(Constants.MAP_APPENDER_NAME)).getLogEvents();
         // going over all the collected events, filtering out the empty ones, and writing them to a long string
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);

@@ -18,7 +18,7 @@ package org.whitesource.agent.dependency.resolver.npm;
 import org.eclipse.jgit.util.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
