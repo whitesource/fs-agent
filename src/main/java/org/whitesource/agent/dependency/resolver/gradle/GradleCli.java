@@ -15,9 +15,17 @@ public class GradleCli extends Cli {
 
     protected static final String GRADLE_ASSEMBLE = "assemble";
     protected static final String GRADLE_LOCK = "lock";
+    protected static final String GRADLE_PROJECTS = "projects";
     private final String GRADLE_COMMAND = "gradle";
     private final String GRADLE_COMMAND_W_WINDOWS = "gradlew";
     private final String GRADLE_COMMAND_W_LINUX = "./gradlew";
+
+    private String defaultEnvironment;
+
+    public GradleCli(String defaultEnvironment){
+        super();
+        this.defaultEnvironment = defaultEnvironment;
+    }
 
     public List<String> runGradleCmd(String rootDirectory, String[] params) {
         try {
@@ -40,18 +48,20 @@ public class GradleCli extends Cli {
                 setGradleCommandByEnv(params);
                 return runGradleCmd(rootDirectory, params);
             } else {
-                logger.warn("Error getting dependencies after running {} on {}, {}", params, rootDirectory, e.getMessage());
+                logger.warn("Error getting results after running Gradle command {} on {}, {}", params, rootDirectory, e.getMessage());
                 logger.debug("Error: {}", e.getStackTrace());
             }
         }
         return null;
     }
 
-    // check if params contains gradle command and change it to gradlew command
+    // WSE-753 - replace the params' default-environment to the other possibility
     private void setGradleCommandByEnv(String[] params) {
         for (int i = 0; i < params.length; i++) {
-            if (params[i].equals(GRADLE_COMMAND)) {
-                if (DependencyCollector.isWindows()) {
+            if (params[i].contains(GRADLE_COMMAND)) {
+                if (defaultEnvironment.equals(Constants.WRAPPER)){
+                    params[i] = GRADLE_COMMAND;
+                } else if (DependencyCollector.isWindows()) {
                     params[i] = GRADLE_COMMAND_W_WINDOWS;
                 } else {
                     params[i] = GRADLE_COMMAND_W_LINUX;
@@ -62,7 +72,14 @@ public class GradleCli extends Cli {
     }
 
     public String[] getGradleCommandParams(GradleMvnCommand command) {
-        return super.getCommandParams(GRADLE_COMMAND, command.name());
+        String gradleCommand;
+        // WSE-753 - use the default gradle environment, set from the config file
+        if (defaultEnvironment.equals(Constants.WRAPPER)){
+            gradleCommand = DependencyCollector.isWindows() ? GRADLE_COMMAND_W_WINDOWS : GRADLE_COMMAND_W_LINUX;
+        } else {
+            gradleCommand = GRADLE_COMMAND;
+        }
+        return super.getCommandParams(gradleCommand, command.name());
     }
 }
 
