@@ -46,6 +46,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private String fileSeparator;
     private String dotGradlePath;
     private String rootDirectory;
+    private String directoryName;
     private String prevRootDirectory;
     private boolean runAssembleCommand;
     private boolean dependenciesDownloadAttemptPerformed;
@@ -68,7 +69,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         javaDirPath = mainDirPath + fileSeparator+ JAVA;
     }
 
-    public List<DependencyInfo> parseLines(List<String> lines, String rootDirectory) {
+    public List<DependencyInfo> parseLines(List<String> lines, String rootDirectory, String directoryName) {
         if (StringUtils.isBlank(dotGradlePath)){
             this.dotGradlePath = getDotGradleFolderPath();
         }
@@ -76,7 +77,8 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             return new ArrayList<>();
         }
         this.rootDirectory = rootDirectory;
-        logger.info("Start parsing gradle dependencies of: {}", rootDirectory);
+        this.directoryName = directoryName;
+        logger.info("Start parsing gradle dependencies of: {}", rootDirectory + directoryName);
         List<String> projectsLines = lines.stream()
                 .filter(line->(line.contains(PLUS) || line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))
                 .collect(Collectors.toList());
@@ -209,7 +211,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             if (dependencyFile == null || dependencyFile.getSha1().equals(Constants.EMPTY_STRING)){
                 // if dependency not found in .m2 cache - running 'gradel assemble' command which should download the dependency to .grade cache
                 // making sure the download attempt is performed only once for a directory, otherwise there might be an infinite loop
-                if(!rootDirectory.equals(prevRootDirectory)){
+                if(!rootDirectory.concat(directoryName).equals(prevRootDirectory)){
                     dependenciesDownloadAttemptPerformed = false;
                 }
                 if (!dependenciesDownloadAttemptPerformed && downloadDependencies()){
@@ -287,12 +289,20 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
 
     private boolean downloadDependencies() {
         dependenciesDownloadAttemptPerformed = true;
-        prevRootDirectory=rootDirectory;
+        prevRootDirectory = rootDirectory.concat(directoryName);
         if (runAssembleCommand) {
             try {
                 logger.info("running 'gradle assemble' command");
                 validateJavaFileExistence();
-                List<String> lines = gradleCli.runCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.ASSEMBLE));
+                // running the gradle/gradlew command from the project's root folder, because when using gradlew the path must be
+                // kept (i.e. - the command 'gradlew' should only be called from the root's project).  In case of a multi-module
+                // project, adding the module's name before the 'assemble' command, so it'll know which folder to refer to
+                String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.ASSEMBLE);
+                if (directoryName.equals(fileSeparator) == false){
+                    int lastParamIndex = gradleCommandParams.length - 1;
+                    gradleCommandParams[lastParamIndex] = directoryName.substring(1) + Constants.COLON + gradleCommandParams[lastParamIndex];
+                }
+                List<String> lines = gradleCli.runCmd(rootDirectory, gradleCommandParams);
                 removeTempJavaFolder();
                 if (lines != null) {
                     for (String line : lines) {
@@ -314,16 +324,16 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private void validateJavaFileExistence() throws IOException{
         // the 'gradle assemble' command, existence of a java file (even empty) inside 'src/java/main' is required.
         // therefore, verifying the file and the path exist - if not creating it, and after running the assemble command removing the item that was added
-        String javaDirPath = rootDirectory + this.javaDirPath;
+        String javaDirPath = rootDirectory + directoryName + this.javaDirPath;
         File javaDir = new File(javaDirPath);
-        String srcDirPath = rootDirectory + this.srcDirPath;
+        String srcDirPath = rootDirectory + directoryName + this.srcDirPath;
         File srcDir = new File(srcDirPath);
         removeSrcDir = false;
         if (!srcDir.isDirectory()){ // src folder doesn't exist - create the whole tree
             FileUtils.forceMkdir(javaDir);
             removeSrcDir = true;
         } else {
-            String mainDirPath = rootDirectory + this.mainDirPath;
+            String mainDirPath = rootDirectory + directoryName + this.mainDirPath;
             File mainDir = new File(mainDirPath);
             removeMainDir = false;
             if (!mainDir.isDirectory()){ // main folder doesn't exist - create it with its sub-folder
@@ -338,7 +348,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             }
         }
         removeJavaFile = false;
-        if (!javaFileExists(rootDirectory + this.javaDirPath)){ // the java folder doesn't have any java file inside it - creating a temp file
+        if (!javaFileExists(rootDirectory + directoryName + this.javaDirPath)){ // the java folder doesn't have any java file inside it - creating a temp file
             File javaFile = new File(javaDirPath + fileSeparator + TMP_JAVA_FILE);
             removeJavaFile = javaFile.createNewFile();
         }
@@ -363,13 +373,13 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     // removing only the folders/ file that were created
     private void removeTempJavaFolder() throws IOException {
         if (removeJavaDir) {
-            FileUtils.forceDelete(new File(rootDirectory + this.javaDirPath));
+            FileUtils.forceDelete(new File(rootDirectory + directoryName + this.javaDirPath));
         } else if (removeMainDir) {
-            FileUtils.forceDelete(new File(rootDirectory + this.mainDirPath));
+            FileUtils.forceDelete(new File(rootDirectory + directoryName + this.mainDirPath));
         } else if (removeSrcDir){
-            FileUtils.forceDelete(new File(rootDirectory + this.srcDirPath));
+            FileUtils.forceDelete(new File(rootDirectory + directoryName + this.srcDirPath));
         } else if (removeJavaFile){
-            FileUtils.forceDelete(new File(rootDirectory + javaDirPath + fileSeparator + TMP_JAVA_FILE));
+            FileUtils.forceDelete(new File(rootDirectory + directoryName + javaDirPath + fileSeparator + TMP_JAVA_FILE));
         }
     }
 
