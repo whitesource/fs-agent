@@ -69,7 +69,7 @@ public class ResolverConfiguration {
             @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean gradleResolveDependencies,
             @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean gradleRunAssembleCommand,
             @JsonProperty(GRADLE_AGGREGATE_MODULES) boolean gradleAggregateModules,
-            @JsonProperty(GRADLE_DEFAULT_ENVIRONMENT) String gradleDefaultEnvironment,
+            @JsonProperty(GRADLE_PREFERRED_ENVIRONMENT) String gradlePreferredEnvironment,
 
             @JsonProperty(PAKET_RESOLVE_DEPENDENCIES) boolean paketResolveDependencies,
             @JsonProperty(PAKET_IGNORED_GROUPS) String[] paketIgnoredScopes,
@@ -134,7 +134,7 @@ public class ResolverConfiguration {
         this.gradleResolveDependencies  = gradleResolveDependencies;
         this.gradleAggregateModules     = gradleAggregateModules;
         this.gradleRunAssembleCommand   = gradleRunAssembleCommand;
-        this.gradleDefaultEnvironment   = gradleDefaultEnvironment;
+        this.gradlePreferredEnvironment = gradlePreferredEnvironment;
 
         this.paketResolveDependencies   = paketResolveDependencies;
         this.paketIgnoredScopes         = paketIgnoredScopes;
@@ -200,7 +200,7 @@ public class ResolverConfiguration {
     private boolean gradleResolveDependencies;
     private boolean gradleRunAssembleCommand;
     private boolean gradleAggregateModules;
-    private String gradleDefaultEnvironment;
+    private String gradlePreferredEnvironment;
 
     private final boolean pythonIsWssPluginInstalled;
     private final boolean pythonUninstallWssPlugin;
@@ -398,8 +398,8 @@ public class ResolverConfiguration {
         return gradleRunAssembleCommand;
     }
 
-    @JsonProperty(GRADLE_DEFAULT_ENVIRONMENT)
-    public String getGradleDefaultEnvironment() { return gradleDefaultEnvironment; }
+    @JsonProperty(GRADLE_PREFERRED_ENVIRONMENT)
+    public String getGradlePreferredEnvironment() { return gradlePreferredEnvironment; }
 
     @JsonProperty(PAKET_RESOLVE_DEPENDENCIES)
     public boolean isPaketResolveDependencies() {

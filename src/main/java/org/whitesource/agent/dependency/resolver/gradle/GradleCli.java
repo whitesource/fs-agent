@@ -21,11 +21,11 @@ public class GradleCli extends Cli {
     private final String GRADLE_COMMAND_W_WINDOWS = "gradlew";
     private final String GRADLE_COMMAND_W_LINUX = "./gradlew";
 
-    private String defaultEnvironment;
+    private String preferredEnvironment;
 
-    public GradleCli(String defaultEnvironment){
+    public GradleCli(String preferredEnvironment){
         super();
-        this.defaultEnvironment = defaultEnvironment;
+        this.preferredEnvironment = preferredEnvironment;
     }
 
     public List<String> runGradleCmd(String rootDirectory, String[] params) {
@@ -60,7 +60,7 @@ public class GradleCli extends Cli {
     private void setGradleCommandByEnv(String[] params) {
         for (int i = 0; i < params.length; i++) {
             if (params[i].contains(GRADLE_COMMAND)) {
-                if (defaultEnvironment.equals(Constants.GRADLE_WRAPPER)){
+                if (preferredEnvironment.equals(Constants.GRADLE_WRAPPER)){
                     params[i] = GRADLE_COMMAND;
                 } else if (DependencyCollector.isWindows()) {
                     params[i] = GRADLE_COMMAND_W_WINDOWS;
@@ -75,7 +75,7 @@ public class GradleCli extends Cli {
     public String[] getGradleCommandParams(GradleMvnCommand command) {
         String gradleCommand;
         // WSE-753 - use the default gradle environment, set from the config file
-        if (defaultEnvironment.equals(Constants.GRADLE_WRAPPER)){
+        if (preferredEnvironment.equals(Constants.GRADLE_WRAPPER)){
             gradleCommand = DependencyCollector.isWindows() ? GRADLE_COMMAND_W_WINDOWS : GRADLE_COMMAND_W_LINUX;
         } else {
             gradleCommand = GRADLE_COMMAND;

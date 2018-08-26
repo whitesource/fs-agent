@@ -58,10 +58,10 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private boolean removeSrcDir;
     private boolean removeJavaFile;
 
-    GradleLinesParser(boolean runAssembleCommand, String defaultEnvironment){
+    GradleLinesParser(boolean runAssembleCommand, String preferredEnvironment){
         super(null, true);
         this.runAssembleCommand = runAssembleCommand;
-        gradleCli = new GradleCli(defaultEnvironment);
+        gradleCli = new GradleCli(preferredEnvironment);
         fileSeparator = System.getProperty(Constants.FILE_SEPARATOR);
         srcDirPath = fileSeparator + Constants.SRC;
         mainDirPath = srcDirPath + fileSeparator + MAIN;

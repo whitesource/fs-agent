@@ -31,10 +31,10 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private final Logger logger = LoggerFactory.getLogger(GradleDependencyResolver.class);
 
-    public GradleDependencyResolver(boolean runAssembleCommand, boolean dependenciesOnly, boolean gradleAggregateModules, String gradleDefaultEnvironment) {
+    public GradleDependencyResolver(boolean runAssembleCommand, boolean dependenciesOnly, boolean gradleAggregateModules, String gradlePreferredEnvironment) {
         super();
-        gradleLinesParser = new GradleLinesParser(runAssembleCommand, gradleDefaultEnvironment);
-        gradleCli = new GradleCli(gradleDefaultEnvironment);
+        gradleLinesParser = new GradleLinesParser(runAssembleCommand, gradlePreferredEnvironment);
+        gradleCli = new GradleCli(gradlePreferredEnvironment);
         topLevelFoldersNames = new ArrayList<>();
         this.dependenciesOnly = dependenciesOnly;
         this.gradleAggregateModules = gradleAggregateModules;

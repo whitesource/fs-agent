@@ -145,7 +145,7 @@ public class DependencyResolutionService {
         }
 
         if (gradleResolveDependencies) {
-            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), dependenciesOnly, gradleAggregateModules, config.getGradleDefaultEnvironment()));
+            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), dependenciesOnly, gradleAggregateModules, config.getGradlePreferredEnvironment()));
             this.gradleAggregateModules = gradleAggregateModules;
         }
 

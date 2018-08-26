@@ -51,7 +51,7 @@ public final class Constants {
     public static final String ASPX                 = "aspx";
     public static final String WINDOWS              = "Windows";
     public static final String GRADLE_WRAPPER       = "wrapper";
-    public static final String INSTALLED_GRADLE     = "installedGradle";
+    public static final String GRADLE               = "gradle";
     public static final String DOT                  = ".";
     public static final String DIRECTORY            = "d";
     public static final String BACK_SLASH           = "\\";
