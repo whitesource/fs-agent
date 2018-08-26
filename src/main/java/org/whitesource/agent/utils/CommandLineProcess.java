@@ -6,7 +6,7 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 

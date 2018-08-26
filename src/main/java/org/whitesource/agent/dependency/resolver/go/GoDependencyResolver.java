@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -410,7 +410,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoGradleDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) {
         logger.debug("collecting dependencies using 'GoGradle'");
-        GradleCli gradleCli = new GradleCli();
+        GradleCli gradleCli = new GradleCli(Constants.GRADLE);
         List<String> lines = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES));
         if (lines != null) {
             parseGoGradleDependencies(lines, dependencyInfos, rootDirectory);

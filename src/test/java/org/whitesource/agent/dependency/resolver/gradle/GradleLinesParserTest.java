@@ -20,7 +20,7 @@ public class GradleLinesParserTest {
 
     @Before
     public void setup(){
-        gradleLinesParser = new GradleLinesParser(false);
+        gradleLinesParser = new GradleLinesParser(false, Constants.GRADLE_WRAPPER);
     }
 
     @Ignore
@@ -37,7 +37,7 @@ public class GradleLinesParserTest {
     @Ignore
     @Test
     public void parseLineFromFile(){
-        File file = TestHelper.getFileFromResources("resolver/gradle/dependencies.log");
+        File file = TestHelper.getFileFromResources("resolver/gradle/lines.txt");
         List<String> lines = readFileAsList(file.getAbsolutePath());
         List<DependencyInfo> dependencyInfoList = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING);
         Assert.assertTrue(dependencyInfoList.size() > 0);

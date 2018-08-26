@@ -69,6 +69,7 @@ public class ResolverConfiguration {
             @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean gradleResolveDependencies,
             @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean gradleRunAssembleCommand,
             @JsonProperty(GRADLE_AGGREGATE_MODULES) boolean gradleAggregateModules,
+            @JsonProperty(GRADLE_PREFERRED_ENVIRONMENT) String gradlePreferredEnvironment,
 
             @JsonProperty(PAKET_RESOLVE_DEPENDENCIES) boolean paketResolveDependencies,
             @JsonProperty(PAKET_IGNORED_GROUPS) String[] paketIgnoredScopes,
@@ -94,72 +95,73 @@ public class ResolverConfiguration {
             @JsonProperty(SBT_RUN_PRE_STEP) boolean sbtRunPreStep,
             @JsonProperty(SBT_TARGET_FOLDER) String sbtTargetFolder,
             @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies) {
-        this.npmRunPreStep = npmRunPreStep;
-        this.npmIgnoreScripts = npmIgnoreScripts;
-        this.npmResolveDependencies = npmResolveDependencies;
-        this.npmIncludeDevDependencies = npmIncludeDevDependencies;
-        this.npmIgnoreJavaScriptFiles = npmIgnoreJavaScriptFiles;
-        this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
-        this.npmAccessToken = npmAccessToken;
-        this.npmIgnoreNpmLsErrors = npmIgnoreNpmLsErrors;
-        this.npmYarnProject = npmYarnProject;
+        this.npmRunPreStep                      = npmRunPreStep;
+        this.npmIgnoreScripts                   = npmIgnoreScripts;
+        this.npmResolveDependencies             = npmResolveDependencies;
+        this.npmIncludeDevDependencies          = npmIncludeDevDependencies;
+        this.npmIgnoreJavaScriptFiles           = npmIgnoreJavaScriptFiles;
+        this.npmTimeoutDependenciesCollector    = npmTimeoutDependenciesCollector;
+        this.npmAccessToken                     = npmAccessToken;
+        this.npmIgnoreNpmLsErrors               = npmIgnoreNpmLsErrors;
+        this.npmYarnProject                     = npmYarnProject;
 
-        this.bowerResolveDependencies = bowerResolveDependencies;
-        this.bowerRunPreStep = bowerRunPreStep;
+        this.bowerResolveDependencies   = bowerResolveDependencies;
+        this.bowerRunPreStep            = bowerRunPreStep;
 
         this.nugetResolveDependencies = nugetResolveDependencies;
         this.nugetRestoreDependencies = nugetRestoreDependencies;
-        this.nugetRunPreStep = nugetRunPreStep;
+        this.nugetRunPreStep          = nugetRunPreStep;
 
-        this.mavenResolveDependencies = mavenResolveDependencies;
-        this.mavenIgnoredScopes = mavenIgnoredScopes;
-        this.mavenAggregateModules = mavenAggregateModules;
-        this.mavenIgnorePomModules = mavenIgnorePomModules;
+        this.mavenResolveDependencies   = mavenResolveDependencies;
+        this.mavenIgnoredScopes         = mavenIgnoredScopes;
+        this.mavenAggregateModules      = mavenAggregateModules;
+        this.mavenIgnorePomModules      = mavenIgnorePomModules;
 
-        this.pythonResolveDependencies = pythonResolveDependencies;
-        this.pipPath = pipPath;
-        this.pythonPath = pythonPath;
-        this.pythonIsWssPluginInstalled = pythonIsWssPluginInstalled;
-        this.pythonUninstallWssPlugin = pythonUninstallWssPlugin;
-        this.pythonIgnorePipInstallErrors = pythonIgnorePipInstallErrors;
-        this.pythonInstallVirtualenv = pythonInstallVirtualenv;
-        this.pythonResolveHierarchyTree = pythonResolveHierarchyTree;
+        this.pythonResolveDependencies      = pythonResolveDependencies;
+        this.pipPath                        = pipPath;
+        this.pythonPath                     = pythonPath;
+        this.pythonIsWssPluginInstalled     = pythonIsWssPluginInstalled;
+        this.pythonUninstallWssPlugin       = pythonUninstallWssPlugin;
+        this.pythonIgnorePipInstallErrors   = pythonIgnorePipInstallErrors;
+        this.pythonInstallVirtualenv        = pythonInstallVirtualenv;
+        this.pythonResolveHierarchyTree     = pythonResolveHierarchyTree;
         this.pythonRequirementsFileIncludes = pythonRequirementsFileIncludes;
-        this.pythonResolveSetupPyFiles = pythonResolveSetupPyFiles;
+        this.pythonResolveSetupPyFiles      = pythonResolveSetupPyFiles;
 
-        this.dependenciesOnly = dependenciesOnly;
-        this.whitesourceConfiguration = whitesourceConfiguration;
+        this.dependenciesOnly           = dependenciesOnly;
+        this.whitesourceConfiguration   = whitesourceConfiguration;
 
-        this.gradleResolveDependencies = gradleResolveDependencies;
-        this.gradleAggregateModules = gradleAggregateModules;
-        this.gradleRunAssembleCommand = gradleRunAssembleCommand;
+        this.gradleResolveDependencies  = gradleResolveDependencies;
+        this.gradleAggregateModules     = gradleAggregateModules;
+        this.gradleRunAssembleCommand   = gradleRunAssembleCommand;
+        this.gradlePreferredEnvironment = gradlePreferredEnvironment;
 
-        this.paketResolveDependencies = paketResolveDependencies;
-        this.paketIgnoredScopes = paketIgnoredScopes;
-        this.paketIgnoreFiles = paketIgnoreFiles;
-        this.paketRunPreStep = paketRunPreStep;
-        this.paketPath = paketPath;
+        this.paketResolveDependencies   = paketResolveDependencies;
+        this.paketIgnoredScopes         = paketIgnoredScopes;
+        this.paketIgnoreFiles           = paketIgnoreFiles;
+        this.paketRunPreStep            = paketRunPreStep;
+        this.paketPath                  = paketPath;
 
         this.goResolveDependencies = goResolveDependencies;
         if (goDependencyManager != null && !goDependencyManager.isEmpty()) {
             this.goDependencyManager = GoDependencyManager.getFromType(goDependencyManager);
         }
         this.goCollectDependenciesAtRuntime = goCollectDependenciesAtRuntime;
-        this.goIgnoreTestPackages = goIgnoreTestPackages;
+        this.goIgnoreTestPackages           = goIgnoreTestPackages;
 
-        this.rubyResolveDependencies = rubyResolveDependencies;
-        this.rubyRunBundleInstall = rubyRunBundleInstall;
-        this.rubyOverwriteGemFile = rubyOverwriteGemFile;
-        this.rubyInstallMissingGems = rubyInstallMissingGems;
+        this.rubyResolveDependencies    = rubyResolveDependencies;
+        this.rubyRunBundleInstall       = rubyRunBundleInstall;
+        this.rubyOverwriteGemFile       = rubyOverwriteGemFile;
+        this.rubyInstallMissingGems     = rubyInstallMissingGems;
 
-        this.phpResolveDependencies = phpResolveDependencies;
-        this.phpRunPreStep = phpRunPreStep;
-        this.phpIncludeDevDependencies = phpIncludeDevDependencies;
+        this.phpResolveDependencies     = phpResolveDependencies;
+        this.phpRunPreStep              = phpRunPreStep;
+        this.phpIncludeDevDependencies  = phpIncludeDevDependencies;
 
         this.sbtResolveDependencies = sbtResolveDependencies;
-        this.sbtAggregateModules = sbtAggregateModules;
-        this.sbtRunPreStep = sbtRunPreStep;
-        this.sbtTargetFolder = sbtTargetFolder;
+        this.sbtAggregateModules    = sbtAggregateModules;
+        this.sbtRunPreStep          = sbtRunPreStep;
+        this.sbtTargetFolder        = sbtTargetFolder;
 
         this.htmlResolveDependencies = htmlResolveDependencies;
     }
@@ -198,6 +200,7 @@ public class ResolverConfiguration {
     private boolean gradleResolveDependencies;
     private boolean gradleRunAssembleCommand;
     private boolean gradleAggregateModules;
+    private String gradlePreferredEnvironment;
 
     private final boolean pythonIsWssPluginInstalled;
     private final boolean pythonUninstallWssPlugin;
@@ -394,6 +397,9 @@ public class ResolverConfiguration {
     public boolean isGradleRunAssembleCommand() {
         return gradleRunAssembleCommand;
     }
+
+    @JsonProperty(GRADLE_PREFERRED_ENVIRONMENT)
+    public String getGradlePreferredEnvironment() { return gradlePreferredEnvironment; }
 
     @JsonProperty(PAKET_RESOLVE_DEPENDENCIES)
     public boolean isPaketResolveDependencies() {

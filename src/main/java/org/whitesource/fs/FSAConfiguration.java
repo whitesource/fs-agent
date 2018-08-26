@@ -24,6 +24,7 @@ import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.*;
 
@@ -117,6 +118,7 @@ public class FSAConfiguration {
     private final String scannedFolders;
 
     private String logLevel;
+    private String logContext;
     private boolean useCommandLineProductName;
     private boolean useCommandLineProjectName;
     private List<String> appPaths;
@@ -261,6 +263,11 @@ public class FSAConfiguration {
                 apiToken, configFilePath, archiveExtractionDepth, includes, projectPerFolderIncludes, pythonRequirementsFileIncludes, scanComment));
 
         logLevel = config.getProperty(ConfigPropertyKeys.LOG_LEVEL_KEY, INFO);
+        logContext = config.getProperty(ConfigPropertyKeys.LOG_CONTEXT);
+        // DO NOT CHANGE THE POSITION OF THE THREE LINES BELOW
+        if (StringUtils.isNotEmpty(logContext)) {
+            LoggerFactory.contextId = logContext;
+        }
 
         request = getRequest(config, apiToken, userKey, projectName, projectToken, scanComment);
         scm = getScm(config);
@@ -400,6 +407,10 @@ public class FSAConfiguration {
         boolean gradleResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
         boolean gradleAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
+        String gradlePreferredEnvironment = config.getProperty(ConfigPropertyKeys.GRADLE_PREFERRED_ENVIRONMENT, Constants.GRADLE);
+        if (gradlePreferredEnvironment.isEmpty()){
+            gradlePreferredEnvironment = Constants.GRADLE;
+        }
 
         boolean paketResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PAKET_RESOLVE_DEPENDENCIES, true);
         String[] paketIgnoredScopes = config.getListProperty(ConfigPropertyKeys.PAKET_IGNORED_GROUPS, null);
@@ -434,7 +445,7 @@ public class FSAConfiguration {
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles,
-                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, paketResolveDependencies,
+                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, paketResolveDependencies,
                 paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, goIgnoreTestPackages, rubyResolveDependencies, rubyRunBundleInstall,
                 rubyOverwriteGemFile, rubyInstallMissingGems,
@@ -719,6 +730,105 @@ public class FSAConfiguration {
         return logLevel;
     }
 
+
+    /* --- Public static methods--- */
+
+    public static int getIntProperty(Properties config, String propertyKey, int defaultValue) {
+        int value = defaultValue;
+        String propertyValue = config.getProperty(propertyKey);
+        if (StringUtils.isNotBlank(propertyValue)) {
+            try {
+                value = Integer.valueOf(propertyValue);
+            } catch (NumberFormatException e) {
+                // do nothing
+            }
+        }
+        return value;
+    }
+
+    public static boolean getBooleanProperty(Properties config, String propertyKey, boolean defaultValue) {
+        boolean property = defaultValue;
+        String propertyValue = config.getProperty(propertyKey);
+        if (StringUtils.isNotBlank(propertyValue)) {
+            property = Boolean.valueOf(propertyValue);
+        }
+        return property;
+    }
+
+    public static long getLongProperty(Properties config, String propertyKey, long defaultValue) {
+        long property = defaultValue;
+        String propertyValue = config.getProperty(propertyKey);
+        if (StringUtils.isNotBlank(propertyValue)) {
+            property = Long.parseLong(propertyValue);
+        }
+        return property;
+    }
+
+    public static String[] getListProperty(Properties config, String propertyName, String[] defaultValue) {
+        String property = config.getProperty(propertyName);
+        if (property == null) {
+            return defaultValue;
+        }
+        return property.split(Constants.WHITESPACE);
+    }
+
+    public static int getArchiveDepth(Properties configProps) {
+        return getIntProperty(configProps, ConfigPropertyKeys.ARCHIVE_EXTRACTION_DEPTH_KEY, FSAConfiguration.DEFAULT_ARCHIVE_DEPTH);
+    }
+
+    public static String[] getIncludes(Properties configProps) {
+        String includesString = configProps.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING);
+        if (StringUtils.isNotBlank(includesString)) {
+            return configProps.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        }
+        return new String[0];
+    }
+
+    private static String[] getPythonIncludes(Properties configProps) {
+        String includesString = configProps.getProperty(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, Constants.PYTHON_REQUIREMENTS);
+        if (StringUtils.isNotBlank(includesString)) {
+            return configProps.getProperty(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, Constants.PYTHON_REQUIREMENTS).split(Constants.WHITESPACE);
+        }
+        return new String[0];
+    }
+
+    public static String[] getProjectPerFolderIncludes(Properties configProps) {
+        String projectPerFolderIncludesString = configProps.getProperty(ConfigPropertyKeys.PROJECT_PER_FOLDER_INCLUDES, null);
+        if (StringUtils.isNotBlank(projectPerFolderIncludesString)) {
+            return configProps.getProperty(ConfigPropertyKeys.PROJECT_PER_FOLDER_INCLUDES, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        }
+        if (Constants.EMPTY_STRING.equals(projectPerFolderIncludesString)) {
+            return null;
+        }
+        String[] result = new String[1];
+        result[0] = "*";
+        return result;
+    }
+
+    public static String[] getProjectPerFolderExcludes(Properties configProps) {
+        String projectPerFolderExcludesString = configProps.getProperty(ConfigPropertyKeys.PROJECT_PER_FOLDER_EXCLUDES, Constants.EMPTY_STRING);
+        if (StringUtils.isNotBlank(projectPerFolderExcludesString)) {
+            return configProps.getProperty(ConfigPropertyKeys.PROJECT_PER_FOLDER_EXCLUDES, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        }
+        return new String[0];
+    }
+
+    public static String[] getDockerIncludes(Properties configProps) {
+        String includesString = configProps.getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING);
+        if (StringUtils.isNotBlank(includesString)) {
+            return configProps.getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        }
+        return new String[0];
+    }
+
+    public List<String> getRequirementsFileIncludes() {
+        return requirementsFileIncludes;
+    }
+
+    public String getLogContext() {
+        return this.logContext;
+    }
+
     /* --- Private methods --- */
 
     private List<String> updateProperties(FSAConfigProperties configProps, CommandLineArgs commandLineArgs) {
@@ -734,6 +844,7 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.LOG_LEVEL_KEY, commandLineArgs.logLevel);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SEND_LOGS_TO_WSS, commandLineArgs.sendLogsToWss);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_COMMENT, commandLineArgs.scanComment);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.LOG_CONTEXT, commandLineArgs.logContext);
         // request file
         List<String> offlineRequestFiles = new LinkedList<>();
         offlineRequestFiles.addAll(commandLineArgs.requestFiles);
