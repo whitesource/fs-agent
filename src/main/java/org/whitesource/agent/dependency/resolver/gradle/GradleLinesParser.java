@@ -89,104 +89,111 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         boolean duplicateDependency = false;
         boolean insideProject = false;
         for (String line : projectsLines){
-            if (line.indexOf(Constants.COLON) == -1 || line.contains(PROJECT)){
-                if (line.contains(PROJECT)){
-                    /*
-                    * there may be such scenarios -
-                     \--- project :tapestry-ioc
-                            +--- project :tapestry-func
-                            +--- project :tapestry5-annotations
-                            +--- project :plastic
-                            |    \--- org.slf4j:slf4j-api:1.7.25
-                            +--- project :beanmodel
-                            |    +--- org.antlr:antlr:3.5.2
-                            |    |    +--- org.antlr:antlr-runtime:3.5.2
-                            |    |    \--- org.antlr:ST4:4.0.8
-                            |    |         \--- org.antlr:antlr-runtime:3.5.2
-                      in such case - ignore the lines starting with 'project' but collect their transitive dependencies
-                      and add them to the root of the dependencies' tree root
-                    * */
-                    prevLineIndentation = 0;
-                    insideProject = true;
-                }
-                continue;
-            }
-            String[] strings = line.split(Constants.COLON);
-            String groupId = strings[0];
-            int lastSpace = groupId.lastIndexOf(Constants.WHITESPACE);
-            groupId = groupId.substring(lastSpace + 1);
-            String artifactId, version;
-            if (strings.length == 2){
-                artifactId = strings[1].split(ARROW)[0];
-                version = strings[1].split(ARROW)[1];
-            } else {
-                artifactId = strings[1];
-                version = strings[2];
-                if (version.contains(Constants.WHITESPACE)) {
-                    if (version.contains(ARROW)) {
-                        version = version.split(ARROW)[1];
-                    } else {
-                        version = version.split(Constants.WHITESPACE)[0];
+            try {
+                if (line.indexOf(Constants.COLON) == -1 || line.contains(PROJECT)){
+                    if (line.contains(PROJECT)){
+                        /*
+                        * there may be such scenarios -
+                         \--- project :tapestry-ioc
+                                +--- project :tapestry-func
+                                +--- project :tapestry5-annotations
+                                +--- project :plastic
+                                |    \--- org.slf4j:slf4j-api:1.7.25
+                                +--- project :beanmodel
+                                |    +--- org.antlr:antlr:3.5.2
+                                |    |    +--- org.antlr:antlr-runtime:3.5.2
+                                |    |    \--- org.antlr:ST4:4.0.8
+                                |    |         \--- org.antlr:antlr-runtime:3.5.2
+                          in such case - ignore the lines starting with 'project' but collect their transitive dependencies
+                          and add them to the root of the dependencies' tree root
+                        * */
+                        prevLineIndentation = 0;
+                        insideProject = true;
                     }
-                }
-            }
-            // Create dependencyInfo & calculate SHA1
-            DependencyInfo currentDependency = new DependencyInfo(groupId, artifactId, version);
-            DependencyFile dependencyFile = getDependencySha1(currentDependency);
-            if (dependencyFile != null && !dependencyFile.getSha1().equals(Constants.EMPTY_STRING)) {
-                if (sha1s.contains(dependencyFile.getSha1()))
-                    continue;
-                sha1s.add(dependencyFile.getSha1());
-                currentDependency.setSha1(dependencyFile.getSha1());
-                currentDependency.setSystemPath(dependencyFile.getFilePath());
-                currentDependency.setFilename(dependencyFile.getFileName());
-                String extension = FilesUtils.getFileExtension(dependencyFile.getFilePath());
-                currentDependency.setType(extension);
-            }
-            currentDependency.setDependencyType(DependencyType.GRADLE);
-
-            if (dependenciesList.contains(currentDependency)){
-                duplicateDependency = true;
-                continue;
-            }
-            // In case the dependency is transitive/child dependency
-            if ((line.startsWith(Constants.WHITESPACE) || line.startsWith(Constants.PIPE)) && !insideProject) {
-                if (duplicateDependency || parentDependencies.isEmpty()) {
                     continue;
                 }
-                // Check if 2 dependencies are siblings (under the hierarchy level)
-                if (lastSpace == prevLineIndentation){
-                    parentDependencies.pop();
 
-                } else if (lastSpace < prevLineIndentation) {
-                // Find father dependency of current node
-                /*+--- org.webjars.npm:isurl:1.0.0
-                  |    +--- org.webjars.npm:has-to-string-tag-x:[1.2.0,2) -> 1.4.1
-                  |    |    \--- org.webjars.npm:has-symbol-support-x:[1.4.1,2) -> 1.4.1
-                  |    \--- org.webjars.npm:is-object:[1.0.1,2) -> 1.0.1
-                */
-                    while (prevLineIndentation > lastSpace - INDENTETION_SPACE && !parentDependencies.isEmpty()){
-                        parentDependencies.pop();
-                        prevLineIndentation -= INDENTETION_SPACE;
-                    }
-                }
-
-                if(!parentDependencies.isEmpty()) {
-                    parentDependencies.peek().getChildren().add(currentDependency);
+                String[] strings = line.split(Constants.COLON);
+                String groupId = strings[0];
+                int lastSpace = groupId.lastIndexOf(Constants.WHITESPACE);
+                groupId = groupId.substring(lastSpace + 1);
+                String artifactId, version;
+                if (strings.length == 2) {
+                    artifactId = strings[1].split(ARROW)[0];
+                    version = strings[1].split(ARROW)[1];
                 } else {
-                    // if - for some reason - this is a transitive dependency but the parent-dependencies stack is empty,
-                    // add this dependency to the root of the tree
-                    dependenciesList.add(currentDependency);
+                    artifactId = strings[1];
+                    version = strings[2];
+                    if (version.contains(Constants.WHITESPACE)) {
+                        if (version.contains(ARROW)) {
+                            version = version.split(ARROW)[1];
+                        } else {
+                            version = version.split(Constants.WHITESPACE)[0];
+                        }
+                    }
                 }
-                parentDependencies.push(currentDependency);
-            } else {
-                duplicateDependency = false;
-                insideProject = false;
-                dependenciesList.add(currentDependency);
-                parentDependencies.clear();
-                parentDependencies.push(currentDependency);
+
+                // Create dependencyInfo & calculate SHA1
+                DependencyInfo currentDependency = new DependencyInfo(groupId, artifactId, version);
+                DependencyFile dependencyFile = getDependencySha1(currentDependency);
+                if (dependencyFile != null && !dependencyFile.getSha1().equals(Constants.EMPTY_STRING)) {
+                    if (sha1s.contains(dependencyFile.getSha1()))
+                        continue;
+                    sha1s.add(dependencyFile.getSha1());
+                    currentDependency.setSha1(dependencyFile.getSha1());
+                    currentDependency.setSystemPath(dependencyFile.getFilePath());
+                    currentDependency.setFilename(dependencyFile.getFileName());
+                    String extension = FilesUtils.getFileExtension(dependencyFile.getFilePath());
+                    currentDependency.setType(extension);
+                }
+                currentDependency.setDependencyType(DependencyType.GRADLE);
+
+                if (dependenciesList.contains(currentDependency)){
+                    duplicateDependency = true;
+                    continue;
+                }
+                // In case the dependency is transitive/child dependency
+                if ((line.startsWith(Constants.WHITESPACE) || line.startsWith(Constants.PIPE)) && !insideProject) {
+                    if (duplicateDependency || parentDependencies.isEmpty()) {
+                        continue;
+                    }
+                    // Check if 2 dependencies are siblings (under the hierarchy level)
+                    if (lastSpace == prevLineIndentation){
+                        parentDependencies.pop();
+
+                    } else if (lastSpace < prevLineIndentation) {
+                    // Find father dependency of current node
+                    /*+--- org.webjars.npm:isurl:1.0.0
+                      |    +--- org.webjars.npm:has-to-string-tag-x:[1.2.0,2) -> 1.4.1
+                      |    |    \--- org.webjars.npm:has-symbol-support-x:[1.4.1,2) -> 1.4.1
+                      |    \--- org.webjars.npm:is-object:[1.0.1,2) -> 1.0.1
+                    */
+                        while (prevLineIndentation > lastSpace - INDENTETION_SPACE && !parentDependencies.isEmpty()){
+                            parentDependencies.pop();
+                            prevLineIndentation -= INDENTETION_SPACE;
+                        }
+                    }
+
+                    if(!parentDependencies.isEmpty()) {
+                        parentDependencies.peek().getChildren().add(currentDependency);
+                    } else {
+                        // if - for some reason - this is a transitive dependency but the parent-dependencies stack is empty,
+                        // add this dependency to the root of the tree
+                        dependenciesList.add(currentDependency);
+                    }
+                    parentDependencies.push(currentDependency);
+                } else {
+                    duplicateDependency = false;
+                    insideProject = false;
+                    dependenciesList.add(currentDependency);
+                    parentDependencies.clear();
+                    parentDependencies.push(currentDependency);
+                }
+                prevLineIndentation = lastSpace;
+            } catch (Exception e){
+                logger.warn("Couldn't parse line {}, error: {} - {}",line, e.getClass().toString(), e.getMessage());
+                logger.debug("Exception: {}", e.getStackTrace());
             }
-            prevLineIndentation = lastSpace;
         }
 
         return dependenciesList;
