@@ -277,28 +277,44 @@ public class FSAConfiguration {
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
 
+        // check properties to ensure via is ready to run
+        checkPropertiesForVia(sender, resolver, appPathsToDependencyDirs, errors);
+    }
+
+    public void checkPropertiesForVia(SenderConfiguration sender, ResolverConfiguration resolver, Map<String, Set<String>> appPathsToDependencyDirs, List<String> errors) {
+        Set<String> viaAppPaths = appPathsToDependencyDirs.keySet();
         if (sender.isEnableImpactAnalysis()) {
-            boolean isViaAppPath = checkAppPathsForVia(appPathsToDependencyDirs.keySet(), errors);
-            if (isViaAppPath) {
-                if (resolver.getMavenIgnoredScopes() != null && !Arrays.asList(resolver.getMavenIgnoredScopes()).contains(resolver.getMavenIgnoredScopes())) {
-                    errors.add("Effective Usage Analysis cannot run. Make sure you set an empty value for the maven.ignoredScopes parameter");
-                    sender.setEnableImpactAnalysis(false);
-                } else {
-                    resolver.setMavenIgnoredScopes(new String[]{MavenTreeDependencyCollector.ALL});
+            // the default appPath size is one (defaultKey = -d property), this one check if the user set more then one appPath
+            if (viaAppPaths.size() > 2) {
+                errors.add("Effective Usage Analysis will not run if the command line parameter 'appPath' is specified more than once");
+            } else if (viaAppPaths.size() == 1) {
+                errors.add("Effective Usage Analysis will not run if the command line parameter 'appPath' is not specified");
+            } else {
+                boolean validViaAppPath = checkAppPathsForVia(viaAppPaths, errors);
+                if (validViaAppPath) {
+                    if (resolver.getMavenIgnoredScopes() == null || !Arrays.asList(resolver.getMavenIgnoredScopes()).contains(MavenTreeDependencyCollector.ALL)
+                            || !resolver.isMavenAggregateModules() || !resolver.isGradleAggregateModules()) {
+                        errors.add("Effective Usage Analysis will not run if the following configuration file settings are not made: maven.ignoredScopes=All, " +
+                                "maven.aggregateModules=true, gradle.aggregateModules=true");
+                    }
                 }
+            }
+        } else {
+            if (viaAppPaths.size() > 1) {
+                errors.add("Effective Usage Analysis will not run if the configuration file parameter enableImpactAnalysis is not set to 'true'");
             }
         }
     }
 
+    // check validation for appPath property, first check if the path is exist and then if this path is not a directory
     private boolean checkAppPathsForVia(Set<String> keySet, List<String> errors) {
         for (String key : keySet) {
             if (!key.equals("defaultKey")) {
                 File file = new File(key);
-                if(!file.exists()){
+                if (!file.exists()) {
                     errors.add("The path " + key + " does not exist");
                     return false;
-                }
-                else if (!file.isFile()) {
+                } else if (!file.isFile()) {
                     errors.add("The path " + key + " is not file");
                     return false;
                 } else {

@@ -73,7 +73,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
                 continue;
             }
 
-            List<DependencyInfo> dependencies = collectDependencies(bomFileFolder);
+            List<DependencyInfo> dependencies = collectDependencies(bomFileFolder, bomFileFolder.equals(topLevelFolder));
             if (dependencies.size() > 0) {
                 AgentProjectInfo agentProjectInfo = new AgentProjectInfo();
                 agentProjectInfo.getDependencies().addAll(dependencies);
@@ -134,11 +134,25 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         return null;
     }
 
-    private List<DependencyInfo> collectDependencies(String rootDirectory) {
+    private List<DependencyInfo> collectDependencies(String directory, boolean isParent) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
-        List<String> lines = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES));
+        // running the gradle/gradlew command from the project's root folder, because when using gradlew the path must be
+        // kept (i.e. - the command 'gradlew' should only be called from the root's project).  In case of a multi-module
+        // project, adding the module's name before the 'dependencies' command, so it'll know which folder to refer to
+        String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES);
+        String directoryName = "";
+        if (!isParent){
+            // TODO - test on linux
+            String[] directoryPath = directory.split(Pattern.quote(fileSeparator));
+            directoryName = directoryPath[directoryPath.length-1];
+            int lastParamIndex = gradleCommandParams.length - 1;
+            gradleCommandParams[lastParamIndex] = directoryName + Constants.COLON + gradleCommandParams[lastParamIndex];
+            directory = String.join(fileSeparator, Arrays.copyOfRange(directoryPath, 0, directoryPath.length - 1));
+        }
+        directoryName = fileSeparator.concat(directoryName);
+        List<String> lines = gradleCli.runGradleCmd(directory, gradleCommandParams);
         if (lines != null) {
-            dependencyInfos.addAll(gradleLinesParser.parseLines(lines, rootDirectory));
+            dependencyInfos.addAll(gradleLinesParser.parseLines(lines, directory, directoryName));
         }
         return dependencyInfos;
     }
