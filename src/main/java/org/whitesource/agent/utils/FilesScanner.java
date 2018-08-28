@@ -83,7 +83,7 @@ public class FilesScanner {
     /* --- Private methods --- */
 
     private Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String[] includesPattern, Collection<String> excludes) {
-        Map pathToIncludedFilesMap = new HashMap();
+        Map<String, String[]> pathToIncludedFilesMap = new HashMap<>();
         pathsToScan.stream().forEach(scanFolder -> {
             String[] includedFiles = getDirectoryContent(new File(scanFolder).getPath(), includesPattern,
                     excludes.toArray(new String[excludes.size()]), false, false);

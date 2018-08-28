@@ -248,8 +248,9 @@ public class DependencyResolutionService {
                 ResolutionResult result = null;
                 try {
                     result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
-                } catch (FileNotFoundException e) {
+                } catch (Exception e) {
                     logger.error(e.getMessage());
+                    logger.debug("{}" , e.getStackTrace());
                 }
                 resolutionResults.add(result);
 

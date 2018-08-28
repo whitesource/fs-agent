@@ -211,7 +211,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         List<String> lines;
         List<String> targetFolders = new LinkedList<>();
         lines = cli.runCmd(folderPath, cli.getCommandParams(SBT, TARGET));
-        if (!lines.isEmpty()) {
+        if (lines != null && !lines.isEmpty()) {
             for (String line : lines) {
                 if (DependencyCollector.isWindows()) {
                     if (line.endsWith(TARGET) && line.contains(fileSeparator)) {
