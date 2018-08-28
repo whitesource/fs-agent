@@ -5,7 +5,7 @@ import fr.dutra.tools.maven.deptree.core.Node;
 import fr.dutra.tools.maven.deptree.core.ParseException;
 import fr.dutra.tools.maven.deptree.core.Parser;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 
 import java.io.*;

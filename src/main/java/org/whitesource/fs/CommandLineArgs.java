@@ -135,6 +135,8 @@ public class CommandLineArgs {
     @Parameter(names = "-requirementsFileIncludes", description = "List of dependency files split by comma")
     List<String> requirementsFileIncludes = new LinkedList<>();
 
+    @Parameter(names = "-logContext", description = "Context id for logger")
+    String logContext = null;
 
     /* --- Public methods --- */
 

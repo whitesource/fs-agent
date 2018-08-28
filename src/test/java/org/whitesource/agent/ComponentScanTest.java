@@ -41,7 +41,7 @@ public class ComponentScanTest {
     public void testAcceptExtensionsList() {
         FSAConfigProperties props = TestHelper.getPropertiesFromFile();
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
-        String resolverFolder = Paths.get(config.getParent(), "resolver/npm").toString();
+        String resolverFolder = "C:\\Users\\RazNitzan\\git\\fs-agent\\target\\test-classes\\resolver\\maven";
         props.put("d", resolverFolder);
         props.put("archiveExtractionDepth", 4);
         props.put("includes", "**/**");
@@ -52,6 +52,7 @@ public class ComponentScanTest {
                 "tgz", "c", "cc", "cp", "cpp", "css", "c++", "h", "hh", "hpp", "hxx", "h++", "m", "mm", "pch", "c#", "cs", "csharp", "java",
                 "go", "goc", "js", "plx", "pm", "ph", "cgi", "fcgi", "psgi", "al", "perl", "t", "p6m", "p6l", "nqp", "6pl",
                 "6pm", "p6", "php", "py", "rb", "swift", "clj", "cljx", "cljs", "cljc"};
+//        props.put("logContext", "dasdad");
         props.put(ConfigPropertyKeys.ACCEPT_EXTENSIONS_LIST, acceptExtensions);
         ComponentScan componentScan = new ComponentScan(props);
         String scanResult = componentScan.scan();

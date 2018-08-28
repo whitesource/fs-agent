@@ -16,7 +16,7 @@
 package org.whitesource.agent.dependency.resolver;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -145,7 +145,7 @@ public class DependencyResolutionService {
         }
 
         if (gradleResolveDependencies) {
-            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), dependenciesOnly, gradleAggregateModules));
+            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), dependenciesOnly, gradleAggregateModules, config.getGradlePreferredEnvironment()));
             this.gradleAggregateModules = gradleAggregateModules;
         }
 

@@ -1,7 +1,7 @@
 package org.whitesource.agent.dependency.resolver.paket;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.springframework.util.StringUtils;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;

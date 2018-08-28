@@ -2,7 +2,8 @@ package org.whitesource.agent.dependency.resolver.gradle;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.Constants;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.CommandLineProcess;
@@ -19,6 +20,13 @@ public class GradleCli extends Cli {
     private final String GRADLE_COMMAND = "gradle";
     private final String GRADLE_COMMAND_W_WINDOWS = "gradlew";
     private final String GRADLE_COMMAND_W_LINUX = "./gradlew";
+
+    private String preferredEnvironment;
+
+    public GradleCli(String preferredEnvironment){
+        super();
+        this.preferredEnvironment = preferredEnvironment;
+    }
 
     public List<String> runGradleCmd(String rootDirectory, String[] params) {
         try {
@@ -48,11 +56,13 @@ public class GradleCli extends Cli {
         return null;
     }
 
-    // check if params contains gradle command and change it to gradlew command
+    // WSE-753 - replace the params' default-environment to the other possibility
     private void setGradleCommandByEnv(String[] params) {
         for (int i = 0; i < params.length; i++) {
-            if (params[i].equals(GRADLE_COMMAND)) {
-                if (DependencyCollector.isWindows()) {
+            if (params[i].contains(GRADLE_COMMAND)) {
+                if (preferredEnvironment.equals(Constants.GRADLE_WRAPPER)){
+                    params[i] = GRADLE_COMMAND;
+                } else if (DependencyCollector.isWindows()) {
                     params[i] = GRADLE_COMMAND_W_WINDOWS;
                 } else {
                     params[i] = GRADLE_COMMAND_W_LINUX;
@@ -63,7 +73,14 @@ public class GradleCli extends Cli {
     }
 
     public String[] getGradleCommandParams(GradleMvnCommand command) {
-        return super.getCommandParams(GRADLE_COMMAND, command.name());
+        String gradleCommand;
+        // WSE-753 - use the default gradle environment, set from the config file
+        if (preferredEnvironment.equals(Constants.GRADLE_WRAPPER)){
+            gradleCommand = DependencyCollector.isWindows() ? GRADLE_COMMAND_W_WINDOWS : GRADLE_COMMAND_W_LINUX;
+        } else {
+            gradleCommand = GRADLE_COMMAND;
+        }
+        return super.getCommandParams(gradleCommand, command.name());
     }
 }
 

@@ -27,7 +27,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.fs.*;
