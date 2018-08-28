@@ -312,10 +312,10 @@ public class FSAConfiguration {
             if (!key.equals("defaultKey")) {
                 File file = new File(key);
                 if (!file.exists()) {
-                    errors.add("The path " + key + " does not exist");
+                    errors.add("System could not locate a valid analysis target - Effective Usage Analysis was not run. Check that the -appPath parameter specifies a valid path");
                     return false;
                 } else if (!file.isFile()) {
-                    errors.add("The path " + key + " is not file");
+                    errors.add("System could not locate a valid analysis target - Effective Usage Analysis was not run. Check that the -appPath parameter specifies a valid path");
                     return false;
                 } else {
                     return true;

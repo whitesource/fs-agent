@@ -48,7 +48,7 @@ public class Main {
     /* --- Static members --- */
 
     public static Logger logger; // don't initialize the logger here, only after setting the
-                                 // ContextInitializer.CONFIG_FILE_PROPERTY property (set inside setLoggerConfiguration method)
+    // ContextInitializer.CONFIG_FILE_PROPERTY property (set inside setLoggerConfiguration method)
     public static final long MAX_TIMEOUT = 1000 * 60 * 60;
     private static ProjectsSender projectsSender = null;
     private static Vertx vertx;
@@ -61,7 +61,7 @@ public class Main {
 
     public static void main(String[] args) {
         int exitCode = mainScan(args);
-        System.exit(exitCode);
+        exit(exitCode);
     }
 
     private static int mainScan(String[] args) {
@@ -84,7 +84,7 @@ public class Main {
 
         boolean isStandalone = commandLineArgs.web.equals(Constants.FALSE);
         logger.info(fsaConfiguration.toString());
-        if (fsaConfiguration.getSender().isSendLogsToWss()){
+        if (fsaConfiguration.getSender().isSendLogsToWss()) {
             logger.info("-----------------------------------------------------------------------------");
             logger.info("'sendLogsToWss' parameter is enabled");
             logger.info("Data of your scan will be sent to WhiteSource for diagnostic purposes");
@@ -103,8 +103,7 @@ public class Main {
                 // catch any exception that may be thrown, return error code
                 logger.warn("Process encountered an error: {}" + e.getMessage(), e);
                 processExitCode = StatusCode.ERROR;
-            }
-            finally{
+            } finally {
                 new TempFolders().deleteTempFolders();
             }
 
@@ -275,6 +274,10 @@ public class Main {
         } catch (IOException e) {
             logger.warn("Could not close the help file");
         }
+    }
+
+    public static void exit(int statusCode) {
+        System.exit(statusCode);
     }
 
     private boolean projectSenderExist() {
