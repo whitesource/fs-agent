@@ -311,7 +311,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 }
                 List<String> lines = gradleCli.runCmd(rootDirectory, gradleCommandParams);
                 removeTempJavaFolder();
-                if (lines != null) {
+                if (!lines.isEmpty()) {
                     for (String line : lines) {
                         if (line.contains("BUILD SUCCESSFUL")) {
                             return true;

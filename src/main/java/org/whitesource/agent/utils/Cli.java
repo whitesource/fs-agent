@@ -6,6 +6,7 @@ import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 
 public class Cli {
@@ -22,7 +23,7 @@ public class Cli {
             logger.warn("Error getting dependencies after running {} on {}, {}" , params , rootDirectory, e.getMessage());
             logger.debug("Error: {}", e.getStackTrace());
         }
-        return null;
+        return new LinkedList<>();
     }
 
     public String[] getCommandParams(String command, String param){
