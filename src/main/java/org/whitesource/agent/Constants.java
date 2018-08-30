@@ -88,7 +88,7 @@ public final class Constants {
     public static final int COMMENT_MAX_LENGTH      = 1000;
     public static final int ZERO                    = 0;
     public static final int ONE                     = 1;
-    public static final String BUILD_GRADLE         = "**/*build.gradle";
+    public static final String BUILD_GRADLE         = "build.gradle";
     public static final String UNDERSCORE           = "_";
     public static final char QUESTION_MARK          = '?';
     public static final char WHITESPACE_CHAR        = ' ';
