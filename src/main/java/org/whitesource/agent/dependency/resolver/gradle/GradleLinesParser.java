@@ -3,7 +3,7 @@ package org.whitesource.agent.dependency.resolver.gradle;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
  */
 public class GradleLinesParser extends MavenTreeDependencyCollector {
     protected static final String ARROW = " -> ";
+    protected static final String PROJECT = "project :";
 
     /* --- Static members --- */
 
@@ -45,6 +46,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private String fileSeparator;
     private String dotGradlePath;
     private String rootDirectory;
+    private String directoryName;
     private String prevRootDirectory;
     private boolean runAssembleCommand;
     private boolean dependenciesDownloadAttemptPerformed;
@@ -57,17 +59,17 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private boolean removeSrcDir;
     private boolean removeJavaFile;
 
-    GradleLinesParser(boolean runAssembleCommand){
+    GradleLinesParser(boolean runAssembleCommand, String preferredEnvironment){
         super(null, true);
         this.runAssembleCommand = runAssembleCommand;
-        gradleCli = new GradleCli();
+        gradleCli = new GradleCli(preferredEnvironment);
         fileSeparator = System.getProperty(Constants.FILE_SEPARATOR);
         srcDirPath = fileSeparator + Constants.SRC;
         mainDirPath = srcDirPath + fileSeparator + MAIN;
         javaDirPath = mainDirPath + fileSeparator+ JAVA;
     }
 
-    public List<DependencyInfo> parseLines(List<String> lines, String rootDirectory) {
+    public List<DependencyInfo> parseLines(List<String> lines, String rootDirectory, String directoryName) {
         if (StringUtils.isBlank(dotGradlePath)){
             this.dotGradlePath = getDotGradleFolderPath();
         }
@@ -75,7 +77,8 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             return new ArrayList<>();
         }
         this.rootDirectory = rootDirectory;
-        logger.info("Start parsing gradle dependencies of: {}", rootDirectory);
+        this.directoryName = directoryName;
+        logger.info("Start parsing gradle dependencies of: {}", rootDirectory + directoryName);
         List<String> projectsLines = lines.stream()
                 .filter(line->(line.contains(PLUS) || line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))
                 .collect(Collectors.toList());
@@ -84,78 +87,113 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         List<String> sha1s = new ArrayList<>();
         int prevLineIndentation = 0;
         boolean duplicateDependency = false;
+        boolean insideProject = false;
         for (String line : projectsLines){
-            if (line.indexOf(Constants.COLON) == -1 || line.contains("project :")){
-                continue;
-            }
-            String[] strings = line.split(Constants.COLON);
-            String groupId = strings[0];
-            int lastSpace = groupId.lastIndexOf(Constants.WHITESPACE);
-            groupId = groupId.substring(lastSpace + 1);
-            String artifactId, version;
-            if (strings.length == 2){
-                artifactId = strings[1].split(ARROW)[0];
-                version = strings[1].split(ARROW)[1];
-            } else {
-                artifactId = strings[1];
-                version = strings[2];
-                if (version.contains(Constants.WHITESPACE)) {
-                    if (version.contains(ARROW)) {
-                        version = version.split(ARROW)[1];
-                    } else {
-                        version = version.split(Constants.WHITESPACE)[0];
+            try {
+                if (line.indexOf(Constants.COLON) == -1 || line.contains(PROJECT)){
+                    if (line.contains(PROJECT)){
+                        /*
+                        * there may be such scenarios -
+                         \--- project :tapestry-ioc
+                                +--- project :tapestry-func
+                                +--- project :tapestry5-annotations
+                                +--- project :plastic
+                                |    \--- org.slf4j:slf4j-api:1.7.25
+                                +--- project :beanmodel
+                                |    +--- org.antlr:antlr:3.5.2
+                                |    |    +--- org.antlr:antlr-runtime:3.5.2
+                                |    |    \--- org.antlr:ST4:4.0.8
+                                |    |         \--- org.antlr:antlr-runtime:3.5.2
+                          in such case - ignore the lines starting with 'project' but collect their transitive dependencies
+                          and add them to the root of the dependencies' tree root
+                        * */
+                        prevLineIndentation = 0;
+                        insideProject = true;
                     }
-                }
-            }
-            // Create dependencyInfo & calculate SHA1
-            DependencyInfo currentDependency = new DependencyInfo(groupId, artifactId, version);
-            DependencyFile dependencyFile = getDependencySha1(currentDependency);
-            if (dependencyFile == null || dependencyFile.getSha1().equals(Constants.EMPTY_STRING) || sha1s.contains(dependencyFile.getSha1()))
-                continue;
-            sha1s.add(dependencyFile.getSha1());
-            currentDependency.setSha1(dependencyFile.getSha1());
-            currentDependency.setSystemPath(dependencyFile.getFilePath());
-            currentDependency.setFilename(dependencyFile.getFileName());
-            currentDependency.setDependencyType(DependencyType.GRADLE);
-
-            String extension = FilesUtils.getFileExtension(dependencyFile.getFilePath());
-            currentDependency.setType(extension);
-
-            if (dependenciesList.contains(currentDependency)){
-                duplicateDependency = true;
-                continue;
-            }
-            // In case the dependency is transitive/child dependency
-            if (line.startsWith(Constants.WHITESPACE) || line.startsWith(Constants.PIPE)){
-                if (duplicateDependency || parentDependencies.isEmpty()) {
                     continue;
                 }
-                // Check if 2 dependencies are siblings (under the hierarchy level)
-                if (lastSpace == prevLineIndentation){
-                    parentDependencies.pop();
 
-                } else if (lastSpace < prevLineIndentation) {
-                // Find father dependency of current node
-                /*+--- org.webjars.npm:isurl:1.0.0
-                  |    +--- org.webjars.npm:has-to-string-tag-x:[1.2.0,2) -> 1.4.1
-                  |    |    \--- org.webjars.npm:has-symbol-support-x:[1.4.1,2) -> 1.4.1
-                  |    \--- org.webjars.npm:is-object:[1.0.1,2) -> 1.0.1
-                */
-                    while (prevLineIndentation > lastSpace - INDENTETION_SPACE && !parentDependencies.isEmpty()){
-                        parentDependencies.pop();
-                        prevLineIndentation -= INDENTETION_SPACE;
+                String[] strings = line.split(Constants.COLON);
+                String groupId = strings[0];
+                int lastSpace = groupId.lastIndexOf(Constants.WHITESPACE);
+                groupId = groupId.substring(lastSpace + 1);
+                String artifactId, version;
+                if (strings.length == 2) {
+                    artifactId = strings[1].split(ARROW)[0];
+                    version = strings[1].split(ARROW)[1];
+                } else {
+                    artifactId = strings[1];
+                    version = strings[2];
+                    if (version.contains(Constants.WHITESPACE)) {
+                        if (version.contains(ARROW)) {
+                            version = version.split(ARROW)[1];
+                        } else {
+                            version = version.split(Constants.WHITESPACE)[0];
+                        }
                     }
                 }
-                if(!parentDependencies.isEmpty())
-                    parentDependencies.peek().getChildren().add(currentDependency);
-                parentDependencies.push(currentDependency);
-            } else {
-                duplicateDependency = false;
-                dependenciesList.add(currentDependency);
-                parentDependencies.clear();
-                parentDependencies.push(currentDependency);
+
+                // Create dependencyInfo & calculate SHA1
+                DependencyInfo currentDependency = new DependencyInfo(groupId, artifactId, version);
+                DependencyFile dependencyFile = getDependencySha1(currentDependency);
+                if (dependencyFile != null && !dependencyFile.getSha1().equals(Constants.EMPTY_STRING)) {
+                    if (sha1s.contains(dependencyFile.getSha1()))
+                        continue;
+                    sha1s.add(dependencyFile.getSha1());
+                    currentDependency.setSha1(dependencyFile.getSha1());
+                    currentDependency.setSystemPath(dependencyFile.getFilePath());
+                    currentDependency.setFilename(dependencyFile.getFileName());
+                    String extension = FilesUtils.getFileExtension(dependencyFile.getFilePath());
+                    currentDependency.setType(extension);
+                }
+                currentDependency.setDependencyType(DependencyType.GRADLE);
+
+                if (dependenciesList.contains(currentDependency)){
+                    duplicateDependency = true;
+                    continue;
+                }
+                // In case the dependency is transitive/child dependency
+                if ((line.startsWith(Constants.WHITESPACE) || line.startsWith(Constants.PIPE)) && !insideProject) {
+                    if (duplicateDependency || parentDependencies.isEmpty()) {
+                        continue;
+                    }
+                    // Check if 2 dependencies are siblings (under the hierarchy level)
+                    if (lastSpace == prevLineIndentation){
+                        parentDependencies.pop();
+
+                    } else if (lastSpace < prevLineIndentation) {
+                    // Find father dependency of current node
+                    /*+--- org.webjars.npm:isurl:1.0.0
+                      |    +--- org.webjars.npm:has-to-string-tag-x:[1.2.0,2) -> 1.4.1
+                      |    |    \--- org.webjars.npm:has-symbol-support-x:[1.4.1,2) -> 1.4.1
+                      |    \--- org.webjars.npm:is-object:[1.0.1,2) -> 1.0.1
+                    */
+                        while (prevLineIndentation > lastSpace - INDENTETION_SPACE && !parentDependencies.isEmpty()){
+                            parentDependencies.pop();
+                            prevLineIndentation -= INDENTETION_SPACE;
+                        }
+                    }
+
+                    if(!parentDependencies.isEmpty()) {
+                        parentDependencies.peek().getChildren().add(currentDependency);
+                    } else {
+                        // if - for some reason - this is a transitive dependency but the parent-dependencies stack is empty,
+                        // add this dependency to the root of the tree
+                        dependenciesList.add(currentDependency);
+                    }
+                    parentDependencies.push(currentDependency);
+                } else {
+                    duplicateDependency = false;
+                    insideProject = false;
+                    dependenciesList.add(currentDependency);
+                    parentDependencies.clear();
+                    parentDependencies.push(currentDependency);
+                }
+                prevLineIndentation = lastSpace;
+            } catch (Exception e){
+                logger.warn("Couldn't parse line {}, error: {} - {}",line, e.getClass().toString(), e.getMessage());
+                logger.debug("Exception: {}", e.getStackTrace());
             }
-            prevLineIndentation = lastSpace;
         }
 
         return dependenciesList;
@@ -180,7 +218,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             if (dependencyFile == null || dependencyFile.getSha1().equals(Constants.EMPTY_STRING)){
                 // if dependency not found in .m2 cache - running 'gradel assemble' command which should download the dependency to .grade cache
                 // making sure the download attempt is performed only once for a directory, otherwise there might be an infinite loop
-                if(!rootDirectory.equals(prevRootDirectory)){
+                if(!rootDirectory.concat(directoryName).equals(prevRootDirectory)){
                     dependenciesDownloadAttemptPerformed = false;
                 }
                 if (!dependenciesDownloadAttemptPerformed && downloadDependencies()){
@@ -258,14 +296,22 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
 
     private boolean downloadDependencies() {
         dependenciesDownloadAttemptPerformed = true;
-        prevRootDirectory=rootDirectory;
+        prevRootDirectory = rootDirectory.concat(directoryName);
         if (runAssembleCommand) {
             try {
                 logger.info("running 'gradle assemble' command");
                 validateJavaFileExistence();
-                List<String> lines = gradleCli.runCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.ASSEMBLE));
+                // running the gradle/gradlew command from the project's root folder, because when using gradlew the path must be
+                // kept (i.e. - the command 'gradlew' should only be called from the root's project).  In case of a multi-module
+                // project, adding the module's name before the 'assemble' command, so it'll know which folder to refer to
+                String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.ASSEMBLE);
+                if (directoryName.equals(fileSeparator) == false){
+                    int lastParamIndex = gradleCommandParams.length - 1;
+                    gradleCommandParams[lastParamIndex] = directoryName.substring(1) + Constants.COLON + gradleCommandParams[lastParamIndex];
+                }
+                List<String> lines = gradleCli.runCmd(rootDirectory, gradleCommandParams);
                 removeTempJavaFolder();
-                if (lines != null) {
+                if (!lines.isEmpty()) {
                     for (String line : lines) {
                         if (line.contains("BUILD SUCCESSFUL")) {
                             return true;
@@ -285,16 +331,16 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private void validateJavaFileExistence() throws IOException{
         // the 'gradle assemble' command, existence of a java file (even empty) inside 'src/java/main' is required.
         // therefore, verifying the file and the path exist - if not creating it, and after running the assemble command removing the item that was added
-        String javaDirPath = rootDirectory + this.javaDirPath;
+        String javaDirPath = rootDirectory + directoryName + this.javaDirPath;
         File javaDir = new File(javaDirPath);
-        String srcDirPath = rootDirectory + this.srcDirPath;
+        String srcDirPath = rootDirectory + directoryName + this.srcDirPath;
         File srcDir = new File(srcDirPath);
         removeSrcDir = false;
         if (!srcDir.isDirectory()){ // src folder doesn't exist - create the whole tree
             FileUtils.forceMkdir(javaDir);
             removeSrcDir = true;
         } else {
-            String mainDirPath = rootDirectory + this.mainDirPath;
+            String mainDirPath = rootDirectory + directoryName + this.mainDirPath;
             File mainDir = new File(mainDirPath);
             removeMainDir = false;
             if (!mainDir.isDirectory()){ // main folder doesn't exist - create it with its sub-folder
@@ -309,7 +355,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             }
         }
         removeJavaFile = false;
-        if (!javaFileExists(rootDirectory + this.javaDirPath)){ // the java folder doesn't have any java file inside it - creating a temp file
+        if (!javaFileExists(rootDirectory + directoryName + this.javaDirPath)){ // the java folder doesn't have any java file inside it - creating a temp file
             File javaFile = new File(javaDirPath + fileSeparator + TMP_JAVA_FILE);
             removeJavaFile = javaFile.createNewFile();
         }
@@ -334,13 +380,13 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     // removing only the folders/ file that were created
     private void removeTempJavaFolder() throws IOException {
         if (removeJavaDir) {
-            FileUtils.forceDelete(new File(rootDirectory + this.javaDirPath));
+            FileUtils.forceDelete(new File(rootDirectory + directoryName + this.javaDirPath));
         } else if (removeMainDir) {
-            FileUtils.forceDelete(new File(rootDirectory + this.mainDirPath));
+            FileUtils.forceDelete(new File(rootDirectory + directoryName + this.mainDirPath));
         } else if (removeSrcDir){
-            FileUtils.forceDelete(new File(rootDirectory + this.srcDirPath));
+            FileUtils.forceDelete(new File(rootDirectory + directoryName + this.srcDirPath));
         } else if (removeJavaFile){
-            FileUtils.forceDelete(new File(rootDirectory + javaDirPath + fileSeparator + TMP_JAVA_FILE));
+            FileUtils.forceDelete(new File(rootDirectory + directoryName + javaDirPath + fileSeparator + TMP_JAVA_FILE));
         }
     }
 

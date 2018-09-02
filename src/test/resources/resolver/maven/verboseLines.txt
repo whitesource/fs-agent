@@ -1,0 +1,50 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO]
+[INFO] whitesource-project-sample
+[INFO] whitesource-project-sample-maven-dependency-plugin-2.10
+[INFO] whitesource-project-sample-maven-dependency-plugin-3.1.1
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building whitesource-project-sample 0.0.1-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ whitesource-project-sample ---
+[INFO] org.whitesource.test:whitesource-project-sample:pom:0.0.1-SNAPSHOT
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building whitesource-project-sample-maven-dependency-plugin-2.10 0.0.1-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.10:tree (default-cli) @ whitesource-project-sample-maven-dependency-plugin-2.10 ---
+[WARNING] Using Maven 2 dependency tree to get verbose output, which may be inconsistent with actual Maven 3 resolution
+[INFO] org.whitesource.test:whitesource-project-sample-maven-dependency-plugin-2.10:jar:0.0.1-SNAPSHOT
+[INFO] +- commons-collections:commons-collections:jar:3.2.2:compile
+[INFO] \- org.apache.velocity:velocity:jar:1.7:compile
+[INFO]    +- (commons-collections:commons-collections:jar:3.2.1:compile - omitted for conflict with 3.2.2)
+[INFO]    \- commons-lang:commons-lang:jar:2.4:compile
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building whitesource-project-sample-maven-dependency-plugin-3.1.1 0.0.1-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:3.1.1:tree (default-cli) @ whitesource-project-sample-maven-dependency-plugin-3.1.1 ---
+[INFO] Verbose not supported since maven-dependency-plugin 3.0
+[INFO] org.whitesource.test:whitesource-project-sample-maven-dependency-plugin-3.1.1:jar:0.0.1-SNAPSHOT
+[INFO] +- commons-collections:commons-collections:jar:3.2.2:compile
+[INFO] \- org.apache.velocity:velocity:jar:1.7:compile
+[INFO]    \- commons-lang:commons-lang:jar:2.4:compile
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary:
+[INFO]
+[INFO] whitesource-project-sample ......................... SUCCESS [  0.987 s]
+[INFO] whitesource-project-sample-maven-dependency-plugin-2.10 SUCCESS [  0.904 s]
+[INFO] whitesource-project-sample-maven-dependency-plugin-3.1.1 SUCCESS [  0.722 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 2.912 s
+[INFO] Finished at: 2018-08-19T16:55:45+03:00
+[INFO] Final Memory: 19M/240M
+[INFO] ------------------------------------------------------------------------

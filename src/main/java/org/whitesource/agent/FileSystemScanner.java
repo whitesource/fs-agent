@@ -17,7 +17,6 @@ package org.whitesource.agent;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -27,9 +26,12 @@ import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.FilesUtils;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.MemoryUsageHelper;
 import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.FileSystemAgent;
+import org.whitesource.fs.Main;
+import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.AgentConfiguration;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
@@ -136,7 +138,8 @@ public class FileSystemScanner {
     public Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean scmConnector,
                                                                            String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                                            String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
-                                                                           Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints, boolean calculateMd5, String[] pythonRequirementsFileIncludes) {
+                                                                           Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints,
+                                                                           boolean calculateMd5, String[] pythonRequirementsFileIncludes) {
 
         MemoryUsageHelper.SystemStats systemStats = MemoryUsageHelper.getMemoryUsage();
         logger.debug(systemStats.toString());
@@ -239,6 +242,12 @@ public class FileSystemScanner {
                                 impactAnalysisLanguage = ViaLanguage.JAVA;
                                 break;
                             default:
+                                if (enableImpactAnalysis) {
+                                    logger.error("Effective Usage Analysis will not run if the system cannot locate a valid dependency manager and the " +
+                                            "-iaLanguage parameter is not specified. In order to run Effective Usage Analysis without a dependency manager specify -iaLanguage java");
+                                    Main.exit(StatusCode.ERROR.getValue());
+                                    //// TODO: 8/28/2018 as a result of WSE-765 exit using function from main. function signature should be change to throw an exception
+                                }
                                 break;
                         }
                     }

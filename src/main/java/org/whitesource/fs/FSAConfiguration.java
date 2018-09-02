@@ -15,7 +15,6 @@
  */
 package org.whitesource.fs;
 
-import com.beust.jcommander.JCommander;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
@@ -25,13 +24,11 @@ import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.*;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -59,7 +56,7 @@ public class FSAConfiguration {
     private static final String FALSE = "false";
     private static final String INFO = "info";
     public static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
-    private static final int DEFAULT_ARCHIVE_DEPTH = 0;
+    public static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
 
     @Override
@@ -75,9 +72,9 @@ public class FSAConfiguration {
                 request.toString() + '\n' +
                 ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", offline=" + offline.isEnabled() + '\n' +
-                ", projectPerFolder=" + projectPerFolder+ '\n' +
+                ", projectPerFolder=" + projectPerFolder + '\n' +
                 ", wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
-                 ", scanPackageManager=" + scanPackageManager + '\n' +
+                ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", scanDockerImages=" + scanDockerImages + '\n' +
                 getAgent().toString() + '\n' +
                 '}';
@@ -121,6 +118,7 @@ public class FSAConfiguration {
     private final String scannedFolders;
 
     private String logLevel;
+    private String logContext;
     private boolean useCommandLineProductName;
     private boolean useCommandLineProjectName;
     private List<String> appPaths;
@@ -128,19 +126,19 @@ public class FSAConfiguration {
 
     /* --- Constructors --- */
 
-    public FSAConfiguration(Properties config) {
+    public FSAConfiguration(FSAConfigProperties config) {
         this(config, null);
     }
 
     public FSAConfiguration() {
-        this(new Properties(), null);
+        this(new FSAConfigProperties(), null);
     }
 
     public FSAConfiguration(String[] args) {
         this(null, args);
     }
 
-    public FSAConfiguration(Properties config, String[] args) {
+    public FSAConfiguration(FSAConfigProperties config, String[] args) {
         configurationValidation = new ConfigurationValidation();
         String projectName;
         errors = new ArrayList<>();
@@ -151,11 +149,13 @@ public class FSAConfiguration {
             // read command line args
             // validate args // TODO use jCommander validators
             // TODO add usage command
+
+
             CommandLineArgs commandLineArgs = new CommandLineArgs();
-            new JCommander(commandLineArgs, args);
+            commandLineArgs.parseCommandLine(args);
 
             if (config == null) {
-                Pair<Properties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath);
+                Pair<FSAConfigProperties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath);
                 errors.addAll(propertiesWithErrors.getValue());
                 config = propertiesWithErrors.getKey();
                 if (StringUtils.isNotEmpty(commandLineArgs.project)) {
@@ -210,8 +210,8 @@ public class FSAConfiguration {
             commandLineArgsOverride(null);
         }
 
-        scanPackageManager = getBooleanProperty(config, ConfigPropertyKeys.SCAN_PACKAGE_MANAGER, false);
-        scanDockerImages = getBooleanProperty(config, ConfigPropertyKeys.SCAN_DOCKER_IMAGES, false);
+        scanPackageManager = config.getBooleanProperty(ConfigPropertyKeys.SCAN_PACKAGE_MANAGER, false);
+        scanDockerImages = config.getBooleanProperty(ConfigPropertyKeys.SCAN_DOCKER_IMAGES, false);
 
         if (dependencyDirs == null)
             dependencyDirs = new ArrayList<>();
@@ -224,19 +224,19 @@ public class FSAConfiguration {
         // validate config
         String projectToken = config.getProperty(ConfigPropertyKeys.PROJECT_TOKEN_PROPERTY_KEY);
         String projectNameFinal = !StringUtils.isBlank(projectName) ? projectName : config.getProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY);
-        projectPerFolder = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, false);
+        projectPerFolder = config.getBooleanProperty(ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, false);
         String apiToken = config.getProperty(ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY);
         String userKey = config.getProperty(ConfigPropertyKeys.USER_KEY_PROPERTY_KEY);
-        int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(config);
-        String[] includes = FSAConfiguration.getIncludes(config);
-        String[] projectPerFolderIncludes = FSAConfiguration.getProjectPerFolderIncludes(config);
-        String[] pythonRequirementsFileIncludes = FSAConfiguration.getPythonIncludes(config);
+        int archiveExtractionDepth = config.getArchiveDepth();
+        String[] includes = config.getIncludes();
+        String[] projectPerFolderIncludes = config.getProjectPerFolderIncludes();
+        String[] pythonRequirementsFileIncludes = config.getPythonIncludes();
         String[] argsForAppPathAndDirs = args;
         if (argsForAppPathAndDirs != null && argsForAppPathAndDirs.length == 0 && !dependencyDirs.isEmpty()) {
             argsForAppPathAndDirs = dependencyDirs.toArray(new String[0]);
         }
         initializeDependencyDirs(argsForAppPathAndDirs, config);
-        String scanComment=config.getProperty(ConfigPropertyKeys.SCAN_COMMENT);
+        String scanComment = config.getProperty(ConfigPropertyKeys.SCAN_COMMENT);
 
 
         // validate iaLanguage
@@ -252,7 +252,7 @@ public class FSAConfiguration {
                 //todo move to debug mode after QA
                 errors.add("Error: VIA setting are not applicable parameters are not valid. exiting... ");
             }
-            if (iaLanguageValid && !getBooleanProperty(config, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false)) {
+            if (iaLanguageValid && !config.getBooleanProperty(ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false)) {
                 //todo move to debug mode after QA
                 errors.add("Error: VIA setting are not applicable parameters are not valid. exiting... ");
             }
@@ -263,6 +263,11 @@ public class FSAConfiguration {
                 apiToken, configFilePath, archiveExtractionDepth, includes, projectPerFolderIncludes, pythonRequirementsFileIncludes, scanComment));
 
         logLevel = config.getProperty(ConfigPropertyKeys.LOG_LEVEL_KEY, INFO);
+        logContext = config.getProperty(ConfigPropertyKeys.LOG_CONTEXT);
+        // DO NOT CHANGE THE POSITION OF THE THREE LINES BELOW
+        if (StringUtils.isNotEmpty(logContext)) {
+            LoggerFactory.contextId = logContext;
+        }
 
         request = getRequest(config, apiToken, userKey, projectName, projectToken, scanComment);
         scm = getScm(config);
@@ -272,29 +277,55 @@ public class FSAConfiguration {
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
 
+        // check properties to ensure via is ready to run
+        checkPropertiesForVia(sender, resolver, appPathsToDependencyDirs, errors);
+    }
+
+    public void checkPropertiesForVia(SenderConfiguration sender, ResolverConfiguration resolver, Map<String, Set<String>> appPathsToDependencyDirs, List<String> errors) {
+        Set<String> viaAppPaths = appPathsToDependencyDirs.keySet();
         if (sender.isEnableImpactAnalysis()) {
-            boolean isViaAppPath = checkAppPathsForVia(appPathsToDependencyDirs.keySet());
-            if (isViaAppPath) {
-                if (resolver.getMavenIgnoredScopes() != null && !Arrays.asList(resolver.getMavenIgnoredScopes()).contains(resolver.getMavenIgnoredScopes())) {
-                    errors.add("Effective Usage Analysis cannot run. Make sure you set an empty value for the maven.ignoredScopes parameter");
-                    sender.setEnableImpactAnalysis(false);
-                } else {
-                    resolver.setMavenIgnoredScopes(new String[]{MavenTreeDependencyCollector.ALL});
+            // the default appPath size is one (defaultKey = -d property), this one check if the user set more then one appPath
+            if (viaAppPaths.size() > 2) {
+                errors.add("Effective Usage Analysis will not run if the command line parameter 'appPath' is specified more than once");
+            } else if (viaAppPaths.size() == 1) {
+                errors.add("Effective Usage Analysis will not run if the command line parameter 'appPath' is not specified");
+            } else {
+                boolean validViaAppPath = checkAppPathsForVia(viaAppPaths, errors);
+                if (validViaAppPath) {
+                    if (resolver.getMavenIgnoredScopes() == null || !Arrays.asList(resolver.getMavenIgnoredScopes()).contains(MavenTreeDependencyCollector.ALL)
+                            || !resolver.isMavenAggregateModules() || !resolver.isGradleAggregateModules()) {
+                        errors.add("Effective Usage Analysis will not run if the following configuration file settings are not made: maven.ignoredScopes=All, " +
+                                "maven.aggregateModules=true, gradle.aggregateModules=true");
+                    }
                 }
+            }
+        } else {
+            if (viaAppPaths.size() > 1) {
+                errors.add("Effective Usage Analysis will not run if the configuration file parameter enableImpactAnalysis is not set to 'true'");
             }
         }
     }
 
-    private boolean checkAppPathsForVia(Set<String> keySet) {
+    // check validation for appPath property, first check if the path is exist and then if this path is not a directory
+    private boolean checkAppPathsForVia(Set<String> keySet, List<String> errors) {
         for (String key : keySet) {
             if (!key.equals("defaultKey")) {
-                return true;
+                File file = new File(key);
+                if (!file.exists()) {
+                    errors.add("System could not locate a valid analysis target - Effective Usage Analysis was not run. Check that the -appPath parameter specifies a valid path");
+                    return false;
+                } else if (!file.isFile()) {
+                    errors.add("System could not locate a valid analysis target - Effective Usage Analysis was not run. Check that the -appPath parameter specifies a valid path");
+                    return false;
+                } else {
+                    return true;
+                }
             }
         }
         return false;
     }
 
-    private void initializeDependencyDirs(String[] argsForAppPathAndDirs, Properties config) {
+    private void initializeDependencyDirs(String[] argsForAppPathAndDirs, FSAConfigProperties config) {
         if (StringUtils.isNotEmpty(config.getProperty(ConfigPropertyKeys.X_PATHS))) {
             try {
                 String textFromFile = new String(Files.readAllBytes(Paths.get(config.getProperty(ConfigPropertyKeys.X_PATHS))), StandardCharsets.UTF_8);
@@ -319,103 +350,109 @@ public class FSAConfiguration {
         }
     }
 
-    private EndPointConfiguration getEndpoint(Properties config) {
-        return new EndPointConfiguration(FSAConfiguration.getIntProperty(config, ConfigPropertyKeys.ENDPOINT_PORT, DEFAULT_PORT),
+    private EndPointConfiguration getEndpoint(FSAConfigProperties config) {
+        return new EndPointConfiguration(config.getIntProperty(ConfigPropertyKeys.ENDPOINT_PORT, DEFAULT_PORT),
                 config.getProperty(ConfigPropertyKeys.ENDPOINT_CERTIFICATE),
                 config.getProperty(ConfigPropertyKeys.ENDPOINT_PASS),
-                FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.ENDPOINT_ENABLED, DEFAULT_ENABLED),
-                FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.ENDPOINT_SSL_ENABLED, DEFAULT_SSL));
+                config.getBooleanProperty(ConfigPropertyKeys.ENDPOINT_ENABLED, DEFAULT_ENABLED),
+                config.getBooleanProperty(ConfigPropertyKeys.ENDPOINT_SSL_ENABLED, DEFAULT_SSL));
     }
 
-    private ResolverConfiguration getResolver(Properties config) {
+    private ResolverConfiguration getResolver(FSAConfigProperties config) {
 
         // todo split this in multiple configuration before release fsa as a service
-        boolean npmRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_RUN_PRE_STEP, false);
-        boolean npmIgnoreScripts = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_IGNORE_SCRIPTS, false);
-        boolean npmResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, true);
-        boolean npmIncludeDevDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_INCLUDE_DEV_DEPENDENCIES, false);
-        boolean npmIgnoreJavaScriptFiles = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_IGNORE_JAVA_SCRIPT_FILES, true);
-        long npmTimeoutDependenciesCollector = FSAConfiguration.getLongProperty(config, ConfigPropertyKeys.NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
-        boolean npmIgnoreNpmLsErrors = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_IGNORE_NPM_LS_ERRORS, false);
+        boolean npmRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.NPM_RUN_PRE_STEP, false);
+        boolean npmIgnoreScripts = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_SCRIPTS, false);
+        boolean npmResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, true);
+        boolean npmIncludeDevDependencies = config.getBooleanProperty(ConfigPropertyKeys.NPM_INCLUDE_DEV_DEPENDENCIES, false);
+        boolean npmIgnoreJavaScriptFiles = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_JAVA_SCRIPT_FILES, true);
+        long npmTimeoutDependenciesCollector = config.getLongProperty(ConfigPropertyKeys.NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
+        boolean npmIgnoreNpmLsErrors = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_NPM_LS_ERRORS, false);
         String npmAccessToken = config.getProperty(ConfigPropertyKeys.NPM_ACCESS_TOKEN);
-        boolean npmYarnProject = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NPM_YARN_PROJECT, false);
+        boolean npmYarnProject = config.getBooleanProperty(ConfigPropertyKeys.NPM_YARN_PROJECT, false);
 
-        boolean bowerResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.BOWER_RESOLVE_DEPENDENCIES, true);
-        boolean bowerRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.BOWER_RUN_PRE_STEP, false);
+        boolean bowerResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.BOWER_RESOLVE_DEPENDENCIES, true);
+        boolean bowerRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.BOWER_RUN_PRE_STEP, false);
 
-        boolean nugetResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, true);
-        boolean nugetRestoreDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.NUGET_RESTORE_DEPENDENCIES, false);
+        boolean nugetResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, true);
+        boolean nugetRestoreDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESTORE_DEPENDENCIES, false);
+        boolean nugetRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RUN_PRE_STEP, false);
 
-        boolean mavenResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
-        String[] mavenIgnoredScopes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
-        boolean mavenAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, false);
-        boolean mavenIgnoredPomModules = FSAConfiguration.getBooleanProperty(config, MAVEN_IGNORE_POM_MODULES, true);
+        boolean mavenResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
+        String[] mavenIgnoredScopes = config.getListProperty(ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
+        boolean mavenAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, false);
+        boolean mavenIgnoredPomModules = config.getBooleanProperty(MAVEN_IGNORE_POM_MODULES, true);
 
-        boolean dependenciesOnly = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.DEPENDENCIES_ONLY, false);
+        boolean dependenciesOnly = config.getBooleanProperty(ConfigPropertyKeys.DEPENDENCIES_ONLY, false);
 
         String whiteSourceConfiguration = config.getProperty(ConfigPropertyKeys.PROJECT_CONFIGURATION_PATH);
 
-        boolean pythonResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_RESOLVE_DEPENDENCIES, true);
+        boolean pythonResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RESOLVE_DEPENDENCIES, true);
         String pipPath = config.getProperty(ConfigPropertyKeys.PYTHON_PIP_PATH, PIP);
         String pythonPath = config.getProperty(ConfigPropertyKeys.PYTHON_PATH, PYTHON);
-        boolean pythonIsWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_IS_WSS_PLUGIN_INSTALLED, false);
-        boolean pythonUninstallWssPluginInstalled = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_UNINSTALL_WSS_PLUGIN, false);
-        boolean pythonIgnorePipInstallErrors = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_IGNORE_PIP_INSTALL_ERRORS, false);
-        boolean pythonInstallVirtualenv = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_INSTALL_VIRTUALENV, false);
-        boolean pythonResolveHierarchyTree = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_RESOLVE_HIERARCHY_TREE, true);
-        boolean pythonResolveSetupPyFiles = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PYTHON_RESOLVE_SETUP_PY_FILES, false);
+        boolean pythonIsWssPluginInstalled = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IS_WSS_PLUGIN_INSTALLED, false);
+        boolean pythonUninstallWssPluginInstalled = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_UNINSTALL_WSS_PLUGIN, false);
+        boolean pythonIgnorePipInstallErrors = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_PIP_INSTALL_ERRORS, false);
+        boolean pythonInstallVirtualenv = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_INSTALL_VIRTUALENV, false);
+        boolean pythonResolveHierarchyTree = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RESOLVE_HIERARCHY_TREE, true);
+        boolean pythonResolveSetupPyFiles = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RESOLVE_SETUP_PY_FILES, false);
         String[] bomPatternForPython;
         if (pythonResolveSetupPyFiles) {
             bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.SETUP_PY};
         } else {
             bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS};
         }
-        String[] pythonRequirementsFileIncludes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, bomPatternForPython);
+        String[] pythonRequirementsFileIncludes = config.getListProperty(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, bomPatternForPython);
 
-        boolean gradleResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
-        boolean gradleRunAssembleCommand = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
-        boolean gradleAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
+        boolean gradleResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
+        boolean gradleRunAssembleCommand = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
+        boolean gradleAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
+        String gradlePreferredEnvironment = config.getProperty(ConfigPropertyKeys.GRADLE_PREFERRED_ENVIRONMENT, Constants.GRADLE);
+        if (gradlePreferredEnvironment.isEmpty()){
+            gradlePreferredEnvironment = Constants.GRADLE;
+        }
 
-        boolean paketResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PAKET_RESOLVE_DEPENDENCIES, true);
-        String[] paketIgnoredScopes = FSAConfiguration.getListProperty(config, ConfigPropertyKeys.PAKET_IGNORED_GROUPS, null);
-        boolean paketIgnoreFiles = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PAKET_IGNORE_FILES, true);
-        boolean paketRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PAKET_RUN_PRE_STEP, false);
+        boolean paketResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PAKET_RESOLVE_DEPENDENCIES, true);
+        String[] paketIgnoredScopes = config.getListProperty(ConfigPropertyKeys.PAKET_IGNORED_GROUPS, null);
+        boolean paketIgnoreFiles = config.getBooleanProperty(ConfigPropertyKeys.PAKET_IGNORE_FILES, true);
+        boolean paketRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.PAKET_RUN_PRE_STEP, false);
         String paketPath = config.getProperty(ConfigPropertyKeys.PAKET_EXE_PATH, null);
 
-        boolean goResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GO_RESOLVE_DEPENDENCIES, true);
+        boolean goResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GO_RESOLVE_DEPENDENCIES, true);
         String goDependencyManager = config.getProperty(ConfigPropertyKeys.GO_DEPENDENCY_MANAGER, Constants.EMPTY_STRING);
-        boolean goCollectDependenciesAtRuntime = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.GO_COLLECT_DEPENDENCIES_AT_RUNTIME, false);
+        boolean goCollectDependenciesAtRuntime = config.getBooleanProperty(ConfigPropertyKeys.GO_COLLECT_DEPENDENCIES_AT_RUNTIME, false);
+        boolean goIgnoreTestPackages = config.getBooleanProperty(ConfigPropertyKeys.GO_GLIDE_IGNORE_TEST_PACKAGES, true);
 
-        boolean rubyResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.RUBY_RESOLVE_DEPENDENCIES, true);
-        boolean rubyRunBundleInstall = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.RUBY_RUN_BUNDLE_INSTALL, false);
-        boolean rubyOverwriteGemFile = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.RUBY_OVERWRITE_GEM_FILE, false);
-        boolean rubyInstallMissingGems = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.RUBY_INSTALL_MISSING_GEMS, false);
+        boolean rubyResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.RUBY_RESOLVE_DEPENDENCIES, true);
+        boolean rubyRunBundleInstall = config.getBooleanProperty(ConfigPropertyKeys.RUBY_RUN_BUNDLE_INSTALL, false);
+        boolean rubyOverwriteGemFile = config.getBooleanProperty(ConfigPropertyKeys.RUBY_OVERWRITE_GEM_FILE, false);
+        boolean rubyInstallMissingGems = config.getBooleanProperty(ConfigPropertyKeys.RUBY_INSTALL_MISSING_GEMS, false);
 
-        boolean phpResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PHP_RESOLVE_DEPENDENCIES, true);
-        boolean phpRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PHP_RUN_PRE_STEP, false);
-        boolean phpIncludeDevDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PHP_INCLUDE_DEV_DEPENDENCIES, false);
+        boolean phpResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PHP_RESOLVE_DEPENDENCIES, true);
+        boolean phpRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.PHP_RUN_PRE_STEP, false);
+        boolean phpIncludeDevDependencies = config.getBooleanProperty(ConfigPropertyKeys.PHP_INCLUDE_DEV_DEPENDENCIES, false);
 
-        boolean sbtResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_RESOLVE_DEPENDENCIES, true);
-        boolean sbtAggregateModules = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_AGGREGATE_MODULES, false);
-        boolean sbtRunPreStep = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SBT_RUN_PRE_STEP, false);
+        boolean sbtResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.SBT_RESOLVE_DEPENDENCIES, true);
+        boolean sbtAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.SBT_AGGREGATE_MODULES, false);
+        boolean sbtRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.SBT_RUN_PRE_STEP, false);
         String sbtTargetFolder = config.getProperty(ConfigPropertyKeys.SBT_TARGET_FOLDER, Constants.EMPTY_STRING);
 
-        boolean htmlResolveDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
+        boolean htmlResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles,
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
-                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies,
+                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles,
-                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, paketResolveDependencies,
+                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, paketResolveDependencies,
                 paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
-                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, rubyResolveDependencies, rubyRunBundleInstall,
+                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, goIgnoreTestPackages, rubyResolveDependencies, rubyRunBundleInstall,
                 rubyOverwriteGemFile, rubyInstallMissingGems,
                 phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, htmlResolveDependencies);
     }
 
-    private RequestConfiguration getRequest(Properties config, String apiToken, String userKey, String projectName, String projectToken, String scanComment) {
+    private RequestConfiguration getRequest(FSAConfigProperties config, String apiToken, String userKey, String projectName, String projectToken, String scanComment) {
         String productToken = config.getProperty(ConfigPropertyKeys.PRODUCT_TOKEN_PROPERTY_KEY);
         String productName = config.getProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY);
         String productVersion = config.getProperty(ConfigPropertyKeys.PRODUCT_VERSION_PROPERTY_KEY);
@@ -423,26 +460,26 @@ public class FSAConfiguration {
         List<String> appPath = (List<String>) config.get(ConfigPropertyKeys.APP_PATH);
         String iaLanguage = config.getProperty(ConfigPropertyKeys.IA_LANGUAGE, null);
         String viaDebug = config.getProperty(ConfigPropertyKeys.VIA_DEBUG, Constants.EMPTY_STRING);
-        boolean projectPerSubFolder = getBooleanProperty(config, ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, false);
+        boolean projectPerSubFolder = config.getBooleanProperty(ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(ConfigPropertyKeys.REQUESTER_EMAIL);
-        int viaAnalysis = getIntProperty(config, ConfigPropertyKeys.VIA_ANALYSIS_LEVEL, VIA_DEFAULT_ANALYSIS_LEVEL);
+        int viaAnalysis = config.getIntProperty(ConfigPropertyKeys.VIA_ANALYSIS_LEVEL, VIA_DEFAULT_ANALYSIS_LEVEL);
         return new RequestConfiguration(apiToken, userKey, requesterEmail, projectPerSubFolder, projectName, projectToken,
                 projectVersion, productName, productToken, productVersion, appPath, viaDebug, viaAnalysis, iaLanguage, scanComment);
     }
 
-    private SenderConfiguration getSender(Properties config) {
+    private SenderConfiguration getSender(FSAConfigProperties config) {
         String updateTypeValue = config.getProperty(ConfigPropertyKeys.UPDATE_TYPE, UpdateType.OVERRIDE.toString());
-        boolean checkPolicies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.CHECK_POLICIES_PROPERTY_KEY, false);
-        boolean forceCheckAllDependencies = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.FORCE_CHECK_ALL_DEPENDENCIES, false);
-        boolean forceUpdate = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.FORCE_UPDATE, false);
-        boolean forceUpdateBuildFailed = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION, false);
-        boolean enableImpactAnalysis = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false);
+        boolean checkPolicies = config.getBooleanProperty(ConfigPropertyKeys.CHECK_POLICIES_PROPERTY_KEY, false);
+        boolean forceCheckAllDependencies = config.getBooleanProperty(ConfigPropertyKeys.FORCE_CHECK_ALL_DEPENDENCIES, false);
+        boolean forceUpdate = config.getBooleanProperty(ConfigPropertyKeys.FORCE_UPDATE, false);
+        boolean forceUpdateBuildFailed = config.getBooleanProperty(ConfigPropertyKeys.FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION, false);
+        boolean enableImpactAnalysis = config.getBooleanProperty(ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false);
         String serviceUrl = config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
         String proxyHost = config.getProperty(ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY);
         connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
                 String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
-        int connectionRetries = FSAConfiguration.getIntProperty(config, ConfigPropertyKeys.CONNECTION_RETRIES, 1);
-        int connectionRetriesIntervals = FSAConfiguration.getIntProperty(config, ConfigPropertyKeys.CONNECTION_RETRIES_INTERVALS, 3000);
+        int connectionRetries = config.getIntProperty(ConfigPropertyKeys.CONNECTION_RETRIES, 1);
+        int connectionRetriesIntervals = config.getIntProperty(ConfigPropertyKeys.CONNECTION_RETRIES_INTERVALS, 3000);
         String senderPort = config.getProperty(ConfigPropertyKeys.PROXY_PORT_PROPERTY_KEY);
 
         int proxyPort;
@@ -454,8 +491,8 @@ public class FSAConfiguration {
 
         String proxyUser = config.getProperty(ConfigPropertyKeys.PROXY_USER_PROPERTY_KEY);
         String proxyPassword = config.getProperty(ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY);
-        boolean ignoreCertificateCheck = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.IGNORE_CERTIFICATE_CHECK, false);
-        boolean isSendLogsToWss = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SEND_LOGS_TO_WSS, false);
+        boolean ignoreCertificateCheck = config.getBooleanProperty(ConfigPropertyKeys.IGNORE_CERTIFICATE_CHECK, false);
+        boolean isSendLogsToWss = config.getBooleanProperty(ConfigPropertyKeys.SEND_LOGS_TO_WSS, false);
 
         return new SenderConfiguration(checkPolicies, serviceUrl, connectionTimeOut,
                 proxyHost, proxyPort, proxyUser, proxyPassword,
@@ -463,32 +500,32 @@ public class FSAConfiguration {
                 enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals, isSendLogsToWss);
     }
 
-    private OfflineConfiguration getOffline(Properties config) {
-        boolean enabled = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, false);
-        boolean zip = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.OFFLINE_ZIP_PROPERTY_KEY, false);
-        boolean prettyJson = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.OFFLINE_PRETTY_JSON_KEY, false);
+    private OfflineConfiguration getOffline(FSAConfigProperties config) {
+        boolean enabled = config.getBooleanProperty(ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, false);
+        boolean zip = config.getBooleanProperty(ConfigPropertyKeys.OFFLINE_ZIP_PROPERTY_KEY, false);
+        boolean prettyJson = config.getBooleanProperty(ConfigPropertyKeys.OFFLINE_PRETTY_JSON_KEY, false);
         String wsFolder = StringUtils.isBlank(config.getProperty(ConfigPropertyKeys.WHITESOURCE_FOLDER_PATH)) ? WHITE_SOURCE_DEFAULT_FOLDER_PATH : config.getProperty(ConfigPropertyKeys.WHITESOURCE_FOLDER_PATH);
         return new OfflineConfiguration(enabled, zip, prettyJson, wsFolder);
     }
 
-    private AgentConfiguration getAgent(Properties config) {
-        String[] includes = FSAConfiguration.getIncludes(config);
+    private AgentConfiguration getAgent(FSAConfigProperties config) {
+        String[] includes = config.getIncludes();
         String[] excludes = config.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        String[] dockerIncludes = FSAConfiguration.getDockerIncludes(config);
+        String[] dockerIncludes = config.getDockerIncludes();
         String[] dockerExcludes = config.getProperty(ConfigPropertyKeys.DOCKER_EXCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        String[] projectPerFolderIncludes = getProjectPerFolderIncludes(config);
-        String[] projectPerFolderExcludes = getProjectPerFolderExcludes(config);
-        int archiveExtractionDepth = FSAConfiguration.getArchiveDepth(config);
+        String[] projectPerFolderIncludes = config.getProjectPerFolderIncludes();
+        String[] projectPerFolderExcludes = config.getProjectPerFolderExcludes();
+        int archiveExtractionDepth = config.getArchiveDepth();
         String[] archiveIncludes = config.getProperty(ConfigPropertyKeys.ARCHIVE_INCLUDES_PATTERN_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         String[] archiveExcludes = config.getProperty(ConfigPropertyKeys.ARCHIVE_EXCLUDES_PATTERN_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        String[] pythonRequirementsFileIncludes = FSAConfiguration.getPythonIncludes(config);
-        boolean archiveFastUnpack = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.ARCHIVE_FAST_UNPACK_KEY, false);
-        boolean archiveFollowSymbolicLinks = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.FOLLOW_SYMBOLIC_LINKS, true);
-        boolean dockerScan = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SCAN_DOCKER_IMAGES, false);
-        boolean partialSha1Match = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.PARTIAL_SHA1_MATCH_KEY, false);
-        boolean calculateHints = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.CALCULATE_HINTS, false);
-        boolean calculateMd5 = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.CALCULATE_MD5, false);
-        boolean showProgress = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SHOW_PROGRESS_BAR, true);
+        String[] pythonRequirementsFileIncludes = config.getPythonIncludes();
+        boolean archiveFastUnpack = config.getBooleanProperty(ConfigPropertyKeys.ARCHIVE_FAST_UNPACK_KEY, false);
+        boolean archiveFollowSymbolicLinks = config.getBooleanProperty(ConfigPropertyKeys.FOLLOW_SYMBOLIC_LINKS, true);
+        boolean dockerScan = config.getBooleanProperty(ConfigPropertyKeys.SCAN_DOCKER_IMAGES, false);
+        boolean partialSha1Match = config.getBooleanProperty(ConfigPropertyKeys.PARTIAL_SHA1_MATCH_KEY, false);
+        boolean calculateHints = config.getBooleanProperty(ConfigPropertyKeys.CALCULATE_HINTS, false);
+        boolean calculateMd5 = config.getBooleanProperty(ConfigPropertyKeys.CALCULATE_MD5, false);
+        boolean showProgress = config.getBooleanProperty(ConfigPropertyKeys.SHOW_PROGRESS_BAR, true);
         Pair<Boolean, String> globalCaseSensitive = getGlobalCaseSensitive(config.getProperty(ConfigPropertyKeys.CASE_SENSITIVE_GLOB_PROPERTY_KEY));
 
         //key , val
@@ -526,7 +563,7 @@ public class FSAConfiguration {
         return new Pair<>(globCaseSensitive, error);
     }
 
-    private ScmConfiguration getScm(Properties config) {
+    private ScmConfiguration getScm(FSAConfigProperties config) {
         String type = config.getProperty(ConfigPropertyKeys.SCM_TYPE_PROPERTY_KEY);
         String url = config.getProperty(ConfigPropertyKeys.SCM_URL_PROPERTY_KEY);
         String user = config.getProperty(ConfigPropertyKeys.SCM_USER_PROPERTY_KEY);
@@ -537,8 +574,8 @@ public class FSAConfiguration {
 
         //defaults
         String repositoriesPath = config.getProperty(ConfigPropertyKeys.SCM_REPOSITORIES_FILE);
-        boolean npmInstall = FSAConfiguration.getBooleanProperty(config, ConfigPropertyKeys.SCM_NPM_INSTALL, true);
-        int npmInstallTimeoutMinutes = FSAConfiguration.getIntProperty(config, ConfigPropertyKeys.SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
+        boolean npmInstall = config.getBooleanProperty(ConfigPropertyKeys.SCM_NPM_INSTALL, true);
+        int npmInstallTimeoutMinutes = config.getIntProperty(ConfigPropertyKeys.SCM_NPM_INSTALL_TIMEOUT_MINUTES, 15);
 
         return new ScmConfiguration(type, user, pass, ppk, url, branch, tag, repositoriesPath, npmInstall, npmInstallTimeoutMinutes);
     }
@@ -583,14 +620,14 @@ public class FSAConfiguration {
         }
     }
 
-    public static Pair<Properties, List<String>> readWithError(String configFilePath) {
-        Properties configProps = new Properties();
+    public static Pair<FSAConfigProperties, List<String>> readWithError(String configFilePath) {
+        FSAConfigProperties configProps = new FSAConfigProperties();
         List<String> errors = new ArrayList<>();
         try {
             try (FileInputStream inputStream = new FileInputStream(configFilePath)) {
                 try {
-//                    configProps.load(inputStream); replaced by the below
-                    configProps.load(new InputStreamReader(inputStream,StandardCharsets.UTF_8));
+                    //                    configProps.load(inputStream); replaced by the below
+                    configProps.load(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
                     // Remove extra spaces from the values
                     Set<String> keys = configProps.stringPropertyNames();
                     for (String key : keys) {
@@ -788,9 +825,13 @@ public class FSAConfiguration {
         return requirementsFileIncludes;
     }
 
+    public String getLogContext() {
+        return this.logContext;
+    }
+
     /* --- Private methods --- */
 
-    private List<String> updateProperties(Properties configProps, CommandLineArgs commandLineArgs) {
+    private List<String> updateProperties(FSAConfigProperties configProps, CommandLineArgs commandLineArgs) {
         // Check whether the user inserted api key, project OR/AND product via command line
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY, commandLineArgs.apiKey);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.UPDATE_TYPE, commandLineArgs.updateType);
@@ -803,6 +844,7 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.LOG_LEVEL_KEY, commandLineArgs.logLevel);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SEND_LOGS_TO_WSS, commandLineArgs.sendLogsToWss);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_COMMENT, commandLineArgs.scanComment);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.LOG_CONTEXT, commandLineArgs.logContext);
         // request file
         List<String> offlineRequestFiles = new LinkedList<>();
         offlineRequestFiles.addAll(commandLineArgs.requestFiles);
@@ -835,13 +877,13 @@ public class FSAConfiguration {
         return offlineRequestFiles;
     }
 
-    private void readPropertyFromCommandLine(Properties configProps, String propertyKey, String propertyValue) {
+    private void readPropertyFromCommandLine(FSAConfigProperties configProps, String propertyKey, String propertyValue) {
         if (StringUtils.isNotBlank(propertyValue)) {
             configProps.put(propertyKey, propertyValue);
         }
     }
 
-    private void readListFromCommandLine(Properties configProps, String propertyKey, List<String> propertyValue) {
+    private void readListFromCommandLine(FSAConfigProperties configProps, String propertyKey, List<String> propertyValue) {
         if (!propertyValue.isEmpty()) {
             configProps.put(propertyKey, propertyValue);
         }

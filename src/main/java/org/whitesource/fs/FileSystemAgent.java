@@ -18,7 +18,7 @@ package org.whitesource.fs;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.ViaComponents;
@@ -255,7 +255,8 @@ public class FileSystemAgent {
                 }
             } catch (IOException e) {
                 npmInstallFailed = true;
-                logger.error("Failed to start 'npm install' {}", e);
+                logger.error("Failed to start 'npm install', Please make sure 'npm' is installed. {}", e.getMessage());
+                logger.debug("Failed to run 'npm install' command ", e);
             }
             if (npmInstallFailed) {
                 // In case of error in 'npm install', delete and clone the repository to prevent wrong output

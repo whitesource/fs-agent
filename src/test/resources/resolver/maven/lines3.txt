@@ -1,0 +1,63 @@
+[INFO] Scanning for projects...
+[WARNING]
+[WARNING] Some problems were encountered while building the effective model for com.example.maven-project:server:jar:1.0-SNAPSHOT
+[WARNING] Reporting configuration should be done in <reporting> section, not in maven-site-plugin <configuration> as reportPlugins parameter.
+[WARNING]
+[WARNING] Some problems were encountered while building the effective model for com.example.maven-project:webapp:war:1.0-SNAPSHOT
+[WARNING] Reporting configuration should be done in <reporting> section, not in maven-site-plugin <configuration> as reportPlugins parameter.
+[WARNING]
+[WARNING] Some problems were encountered while building the effective model for com.example.maven-project:maven-project:pom:1.0-SNAPSHOT
+[WARNING] Reporting configuration should be done in <reporting> section, not in maven-site-plugin <configuration> as reportPlugins parameter. @ line 51, column 24
+[WARNING]
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING]
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING]
+[WARNING] The project com.example.maven-project:maven-project:pom:1.0-SNAPSHOT uses prerequisites which is only intended for maven-plugin projects but not for non maven-plugin projects. For such purposes you should use the maven-enforcer-plugin. See https://maven.apache.org/enforcer/enforcer-rules/requireMavenVersion.html
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO]
+[INFO] Maven Project
+[INFO] Server
+[INFO] Webapp
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building Maven Project 1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ maven-project ---
+[INFO] com.example.maven-project:maven-project:pom:1.0-SNAPSHOT
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building Server 1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ server ---
+[INFO] com.example.maven-project:server:jar:1.0-SNAPSHOT
+[INFO] +- junit:junit-dep:jar:4.10:test
+[INFO] +- org.hamcrest:hamcrest-core:jar:1.2.1:test
+[INFO] +- org.hamcrest:hamcrest-library:jar:1.2.1:test
+[INFO] \- org.mockito:mockito-core:jar:1.8.5:test
+[INFO]    \- org.objenesis:objenesis:jar:1.0:test
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building Webapp 1.0-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO]
+[INFO] --- maven-dependency-plugin:2.8:tree (default-cli) @ webapp ---
+[INFO] com.example.maven-project:webapp:war:1.0-SNAPSHOT
+[INFO] +- javax.servlet:servlet-api:jar:2.5:provided
+[INFO] \- javax.servlet.jsp:jsp-api:jar:2.2:provided
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary:
+[INFO]
+[INFO] Maven Project ...................................... SUCCESS [  0.871 s]
+[INFO] Server ............................................. SUCCESS [  0.054 s]
+[INFO] Webapp ............................................. SUCCESS [  0.050 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 1.330 s
+[INFO] Finished at: 2018-08-20T14:05:58+03:00
+[INFO] Final Memory: 12M/230M
+[INFO] ------------------------------------------------------------------------

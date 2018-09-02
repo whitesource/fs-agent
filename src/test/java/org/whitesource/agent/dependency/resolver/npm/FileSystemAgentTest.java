@@ -16,6 +16,7 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.FilesScanner;
+import org.whitesource.fs.FSAConfigProperties;
 import org.whitesource.fs.FileSystemAgent;
 import org.whitesource.fs.FSAConfiguration;
 
@@ -39,7 +40,7 @@ public class FileSystemAgentTest {
     @Ignore
     @Test
     public void shouldEnrichAllDependenciesWithSha1() {
-        Properties props = TestHelper.getPropertiesFromFile();
+        FSAConfigProperties props = TestHelper.getPropertiesFromFile();
         List<String> dirs = Arrays.asList(TestHelper.FOLDER_WITH_NPN_PROJECTS);
 
         Stream<DependencyInfo> distinctDependencies = getDependenciesWithFilter(dirs, props);
@@ -52,7 +53,7 @@ public class FileSystemAgentTest {
     @Ignore
     @Test
     public void shouldBeTheSameResultsAsNpmLs() {
-        Properties props = TestHelper.getPropertiesFromFile();
+        FSAConfigProperties props = TestHelper.getPropertiesFromFile();
         File dir = new File(TestHelper.FOLDER_WITH_NPN_PROJECTS);
         Arrays.stream(dir.listFiles()).filter(child -> child.isDirectory()).forEach((startDirectory) ->
         {
@@ -89,7 +90,7 @@ public class FileSystemAgentTest {
     @Test
     public void shouldReturnTheSameNumberOfDependenciesAsBowerPlugin() {
         File directory = new File(TestHelper.FOLDER_WITH_BOWER_PROJECTS);
-        Properties props = TestHelper.getPropertiesFromFile();
+        FSAConfigProperties props = TestHelper.getPropertiesFromFile();
 
         Arrays.stream(directory.listFiles()).filter(dir -> dir.isDirectory()).forEach(dir -> {
             // send to server via fs-agent
@@ -111,7 +112,7 @@ public class FileSystemAgentTest {
     @Test
     public void shouldReturnTheSameNumberOfDependenciesAsNpmPlugin() {
         File directory = new File(TestHelper.FOLDER_WITH_NPN_PROJECTS);
-        Properties props = TestHelper.getPropertiesFromFile();
+        FSAConfigProperties props = TestHelper.getPropertiesFromFile();
 
         Arrays.stream(directory.listFiles()).filter(dir -> dir.isDirectory()).forEach(dir -> {
             // send to server via npm-plugin
@@ -124,7 +125,7 @@ public class FileSystemAgentTest {
         });
     }
 
-    private void testResults(Properties props, File dir, Collection<DependencyInfo> dependencyInfosNPMPLugin) {
+    private void testResults(FSAConfigProperties props, File dir, Collection<DependencyInfo> dependencyInfosNPMPLugin) {
         // collect number of dependencies via npm-fs-agent
         props.setProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, dir.getName());
         props.setProperty(ConfigPropertyKeys.PRODUCT_NAME_PROPERTY_KEY, "bower_plugin_01");
@@ -233,7 +234,7 @@ public class FileSystemAgentTest {
     /* --- Private methods --- */
 
 
-    private Stream<DependencyInfo> getDependenciesWithFilter(List<String> dirs, Properties props) {
+    private Stream<DependencyInfo> getDependenciesWithFilter(List<String> dirs, FSAConfigProperties props) {
         FSAConfiguration FSAConfiguration = new FSAConfiguration(props);
         FileSystemAgent f = new FileSystemAgent(FSAConfiguration, dirs);
 

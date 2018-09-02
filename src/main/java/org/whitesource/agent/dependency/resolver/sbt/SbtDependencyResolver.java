@@ -4,7 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.core.Persister;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
@@ -195,7 +195,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         Cli cli = new Cli();
         boolean success = false;
         List<String> compileOutput = cli.runCmd(folderPath, cli.getCommandParams(SBT, COMPILE));
-        if (compileOutput != null) {
+        if (!compileOutput.isEmpty()) {
             if (compileOutput.get(compileOutput.size() - 1).contains(SUCCESS)) {
                 success = true;
             }
@@ -207,6 +207,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
 
     // Trying to get all the paths of target folders
     private Collection<String> findTargetFolders(String folderPath) {
+        logger.debug("Scanning target folder {}", folderPath);
         Cli cli = new Cli();
         List<String> lines;
         List<String> targetFolders = new LinkedList<>();

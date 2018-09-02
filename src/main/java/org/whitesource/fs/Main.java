@@ -17,18 +17,19 @@ package org.whitesource.fs;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.util.ContextInitializer;
-import com.beust.jcommander.JCommander;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.ProjectsSender;
+import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.RequestConfiguration;
@@ -47,7 +48,7 @@ public class Main {
     /* --- Static members --- */
 
     public static Logger logger; // don't initialize the logger here, only after setting the
-                                 // ContextInitializer.CONFIG_FILE_PROPERTY property (set inside setLoggerConfiguration method)
+    // ContextInitializer.CONFIG_FILE_PROPERTY property (set inside setLoggerConfiguration method)
     public static final long MAX_TIMEOUT = 1000 * 60 * 60;
     private static ProjectsSender projectsSender = null;
     private static Vertx vertx;
@@ -60,28 +61,30 @@ public class Main {
 
     public static void main(String[] args) {
         int exitCode = mainScan(args);
-        System.exit(exitCode);
+        exit(exitCode);
     }
 
     private static int mainScan(String[] args) {
-        CommandLineArgs commandLineArgs = new CommandLineArgs();
 
         if (isHelpArg(args)) {
             printHelpContent();
             System.exit(StatusCode.SUCCESS.getValue());
         }
-        new JCommander(commandLineArgs, args);
+
+        CommandLineArgs commandLineArgs = new CommandLineArgs();
+        commandLineArgs.parseCommandLine(args);
+
         StatusCode processExitCode;
 
         // read configuration senderConfig
         FSAConfiguration fsaConfiguration = new FSAConfiguration(args);
         // don't make any reference to the logger before calling this method
 
-        setLoggerConfiguration(fsaConfiguration.getLogLevel());
+        setLoggerConfiguration(fsaConfiguration.getLogLevel(), fsaConfiguration.getLogContext());
 
         boolean isStandalone = commandLineArgs.web.equals(Constants.FALSE);
         logger.info(fsaConfiguration.toString());
-        if (fsaConfiguration.getSender().isSendLogsToWss()){
+        if (fsaConfiguration.getSender().isSendLogsToWss()) {
             logger.info("-----------------------------------------------------------------------------");
             logger.info("'sendLogsToWss' parameter is enabled");
             logger.info("Data of your scan will be sent to WhiteSource for diagnostic purposes");
@@ -100,7 +103,10 @@ public class Main {
                 // catch any exception that may be thrown, return error code
                 logger.warn("Process encountered an error: {}" + e.getMessage(), e);
                 processExitCode = StatusCode.ERROR;
+            } finally {
+                new TempFolders().deleteTempFolders();
             }
+
             logger.info("Process finished with exit code {} ({})", processExitCode.name(), processExitCode.getValue());
             exitCode = getValue(processExitCode);
         } else {
@@ -122,14 +128,17 @@ public class Main {
         return processExitCode.getValue();
     }
 
-    private static void setLoggerConfiguration(String logLevel) {
+    private static void setLoggerConfiguration(String logLevel, String logContext) {
         // setting the logback name manually, to override the default logback.xml which is originated from the jar of wss-agent-api-client.
         // making sure this is done before initializing the logger object, for otherwise this overriding will fail
         System.setProperty(ContextInitializer.CONFIG_FILE_PROPERTY, LOGBACK_FSA_XML);
+        if (StringUtils.isNotEmpty(logContext)) {
+            LoggerFactory.contextId = logContext;
+        }
         logger = LoggerFactory.getLogger(Main.class);
         // read log level from configuration file
-        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-        ch.qos.logback.classic.Logger mapLog = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.MAP_LOG_NAME);
+        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        ch.qos.logback.classic.Logger mapLog = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(Constants.MAP_LOG_NAME);
         root.setLevel(Level.toLevel(logLevel, Level.INFO));
         ((LogMapAppender) mapLog.getAppender(Constants.MAP_APPENDER_NAME)).setRootLevel(root.getLevel());
     }
@@ -265,6 +274,10 @@ public class Main {
         } catch (IOException e) {
             logger.warn("Could not close the help file");
         }
+    }
+
+    public static void exit(int statusCode) {
+        System.exit(statusCode);
     }
 
     private boolean projectSenderExist() {

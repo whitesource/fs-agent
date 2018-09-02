@@ -4,7 +4,8 @@ public enum GoDependencyManager {
     DEP("dep"),
     GO_DEP("godep"),
     VNDR("vndr"),
-    GO_GRADLE("gogradle");
+    GO_GRADLE("gogradle"),
+    GLIDE("glide");
 
 
     private final String type;

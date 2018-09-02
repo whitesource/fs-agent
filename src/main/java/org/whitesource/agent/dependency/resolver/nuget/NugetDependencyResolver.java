@@ -16,8 +16,9 @@
 package org.whitesource.agent.dependency.resolver.nuget;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
+import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
@@ -28,6 +29,7 @@ import org.whitesource.fs.CommandLineArgs;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yossi.weinberg
@@ -45,13 +47,15 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     private final String whitesourceConfiguration;
     private final String bomPattern;
     private final NugetConfigFileType nugetConfigFileType;
+    private boolean runPreStep;
 
     /* --- Constructor --- */
 
-    public NugetDependencyResolver(String whitesourceConfiguration, NugetConfigFileType nugetConfigFileType) {
+    public NugetDependencyResolver(String whitesourceConfiguration, NugetConfigFileType nugetConfigFileType, boolean runPreStep) {
         super();
         this.whitesourceConfiguration = whitesourceConfiguration;
         this.nugetConfigFileType = nugetConfigFileType;
+        this.runPreStep = runPreStep;
         if (this.nugetConfigFileType == NugetConfigFileType.CONFIG_FILE_TYPE) {
             bomPattern = Constants.PATTERN + CONFIG;
         } else {
@@ -63,7 +67,16 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> configFiles) {
-        return getResolutionResultFromParsing(topLevelFolder, configFiles, false);
+        if (this.nugetConfigFileType == NugetConfigFileType.CONFIG_FILE_TYPE && this.runPreStep) {
+            logger.debug("Trying to run pre step on packages.config files");
+            NugetRestoreCollector nugetRestoreCollector = new NugetRestoreCollector();
+            nugetRestoreCollector.executeRestore(projectFolder, configFiles);
+            Collection<AgentProjectInfo> projects = nugetRestoreCollector.collectDependencies(projectFolder);
+            Collection<DependencyInfo> dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
+            return new ResolutionResult(dependencies, new LinkedList<>(), getDependencyType(), topLevelFolder);
+        } else {
+            return getResolutionResultFromParsing(topLevelFolder, configFiles, false);
+        }
     }
 
     protected ResolutionResult getResolutionResultFromParsing(String topLevelFolder, Set<String> configFiles, boolean onlyDependenciesFromReferenceTag) {
@@ -114,7 +127,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
                 // check filename again (just in case)
                 if (!configFile.getName().equals(CommandLineArgs.CONFIG_FILE_NAME)) {
                     NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(configFile, this.nugetConfigFileType);
-                    Set<DependencyInfo> dependenciesFromSingleFile = parser.parsePackagesConfigFile(getDependenciesFromReferenceTag,configFilePath);
+                    Set<DependencyInfo> dependenciesFromSingleFile = parser.parsePackagesConfigFile(getDependenciesFromReferenceTag, configFilePath);
                     if (!dependenciesFromSingleFile.isEmpty()) {
                         dependencies.addAll(dependenciesFromSingleFile);
                     }

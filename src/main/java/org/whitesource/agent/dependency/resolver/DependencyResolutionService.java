@@ -16,7 +16,7 @@
 package org.whitesource.agent.dependency.resolver;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -83,6 +83,7 @@ public class DependencyResolutionService {
 
         final boolean nugetResolveDependencies = config.isNugetResolveDependencies();
         final boolean nugetRestoreDependencies = config.isNugetRestoreDependencies();
+        final boolean nugetRunPreStep = config.isNugetRunPreStep();
 
         final boolean mavenResolveDependencies = config.isMavenResolveDependencies();
         final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
@@ -131,7 +132,7 @@ public class DependencyResolutionService {
         }
         if (nugetResolveDependencies) {
             String whitesourceConfiguration = config.getWhitesourceConfiguration();
-            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE));
+            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE, nugetRunPreStep));
             dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies));
         }
         if (mavenResolveDependencies) {
@@ -144,7 +145,7 @@ public class DependencyResolutionService {
         }
 
         if (gradleResolveDependencies) {
-            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), dependenciesOnly, gradleAggregateModules));
+            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), dependenciesOnly, gradleAggregateModules, config.getGradlePreferredEnvironment()));
             this.gradleAggregateModules = gradleAggregateModules;
         }
 
@@ -153,7 +154,7 @@ public class DependencyResolutionService {
         }
 
         if (goResolveDependencies) {
-            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), config.isDependenciesOnly()));
+            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), config.isDependenciesOnly(), config.isGoIgnoreTestPackages()));
         }
 
         if (rubyResolveDependencies) {

@@ -18,7 +18,7 @@ package org.whitesource.agent.dependency.resolver.nuget.packagesConfig;
 import org.apache.commons.lang.StringUtils;
 import org.simpleframework.xml.core.Persister;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.DependencyInfoFactory;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;

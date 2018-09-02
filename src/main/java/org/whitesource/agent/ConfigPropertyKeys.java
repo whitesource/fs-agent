@@ -106,6 +106,7 @@ public final class ConfigPropertyKeys {
 
     public static final String NUGET_RESOLVE_DEPENDENCIES   = "nuget.resolveDependencies";
     public static final String NUGET_RESTORE_DEPENDENCIES   = "nuget.restoreDependencies";
+    public static final String NUGET_RUN_PRE_STEP           = "nuget.runPreStep";
     public static final String MAVEN_IGNORED_SCOPES         = "maven.ignoredScopes";
     public static final String MAVEN_RESOLVE_DEPENDENCIES   = "maven.resolveDependencies";
     public static final String MAVEN_AGGREGATE_MODULES      = "maven.aggregateModules";
@@ -129,6 +130,7 @@ public final class ConfigPropertyKeys {
     public static final String GRADLE_RESOLVE_DEPENDENCIES = "gradle.resolveDependencies";
     public static final String GRADLE_RUN_ASSEMBLE_COMMAND = "gradle.runAssembleCommand";
     public static final String GRADLE_AGGREGATE_MODULES    = "gradle.aggregateModules";
+    public static final String GRADLE_PREFERRED_ENVIRONMENT = "gradle.preferredEnvironment";
 
     public static final String PAKET_RESOLVE_DEPENDENCIES   = "paket.resolveDependencies";
     public static final String PAKET_IGNORED_GROUPS         = "paket.ignoredGroups";
@@ -139,6 +141,7 @@ public final class ConfigPropertyKeys {
     public static final String GO_RESOLVE_DEPENDENCIES              = "go.resolveDependencies";
     public static final String GO_DEPENDENCY_MANAGER                = "go.dependencyManager";
     public static final String GO_COLLECT_DEPENDENCIES_AT_RUNTIME   = "go.collectDependenciesAtRuntime";
+    public static final String GO_GLIDE_IGNORE_TEST_PACKAGES = "go.glide.ignoreTestPackages";
 
     public static final String RUBY_RESOLVE_DEPENDENCIES    = "ruby.resolveDependencies";
     public static final String RUBY_RUN_BUNDLE_INSTALL      = "ruby.runBundleInstall";
@@ -161,5 +164,7 @@ public final class ConfigPropertyKeys {
     public static final String SCANNED_FOLDERS = "d";
     public static final String SEND_LOGS_TO_WSS = "sendLogsToWss";
 
-    public static final String SCAN_COMMENT="scanComment";
+    public static final String SCAN_COMMENT = "scanComment";
+
+    public static final String LOG_CONTEXT = "logContext";
 }

@@ -15,7 +15,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <agent.api.version>2.7.9</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
-        <skipTests>true</skipTests>
+        <skipTests>false</skipTests>
     </properties>
 
     <organization>

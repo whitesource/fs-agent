@@ -45,6 +45,7 @@ public class ResolverConfiguration {
 
             @JsonProperty(NUGET_RESOLVE_DEPENDENCIES) boolean nugetResolveDependencies,
             @JsonProperty(NUGET_RESTORE_DEPENDENCIES) boolean nugetRestoreDependencies,
+            @JsonProperty(NUGET_RUN_PRE_STEP) boolean nugetRunPreStep,
 
             @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES) boolean mavenResolveDependencies,
             @JsonProperty(MAVEN_IGNORED_SCOPES) String[] mavenIgnoredScopes,
@@ -68,6 +69,7 @@ public class ResolverConfiguration {
             @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean gradleResolveDependencies,
             @JsonProperty(GRADLE_RUN_ASSEMBLE_COMMAND) boolean gradleRunAssembleCommand,
             @JsonProperty(GRADLE_AGGREGATE_MODULES) boolean gradleAggregateModules,
+            @JsonProperty(GRADLE_PREFERRED_ENVIRONMENT) String gradlePreferredEnvironment,
 
             @JsonProperty(PAKET_RESOLVE_DEPENDENCIES) boolean paketResolveDependencies,
             @JsonProperty(PAKET_IGNORED_GROUPS) String[] paketIgnoredScopes,
@@ -78,6 +80,7 @@ public class ResolverConfiguration {
             @JsonProperty(GO_RESOLVE_DEPENDENCIES) boolean goResolveDependencies,
             @JsonProperty(GO_DEPENDENCY_MANAGER) String goDependencyManager,
             @JsonProperty(GO_COLLECT_DEPENDENCIES_AT_RUNTIME) boolean goCollectDependenciesAtRuntime,
+            @JsonProperty(GO_GLIDE_IGNORE_TEST_PACKAGES) boolean goIgnoreTestPackages,
 
             @JsonProperty(RUBY_RESOLVE_DEPENDENCIES) boolean rubyResolveDependencies,
             @JsonProperty(RUBY_RUN_BUNDLE_INSTALL) boolean rubyRunBundleInstall,
@@ -92,70 +95,73 @@ public class ResolverConfiguration {
             @JsonProperty(SBT_RUN_PRE_STEP) boolean sbtRunPreStep,
             @JsonProperty(SBT_TARGET_FOLDER) String sbtTargetFolder,
             @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies) {
-        this.npmRunPreStep = npmRunPreStep;
-        this.npmIgnoreScripts = npmIgnoreScripts;
-        this.npmResolveDependencies = npmResolveDependencies;
-        this.npmIncludeDevDependencies = npmIncludeDevDependencies;
-        this.npmIgnoreJavaScriptFiles = npmIgnoreJavaScriptFiles;
-        this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
-        this.npmAccessToken = npmAccessToken;
-        this.npmIgnoreNpmLsErrors = npmIgnoreNpmLsErrors;
-        this.npmYarnProject = npmYarnProject;
+        this.npmRunPreStep                      = npmRunPreStep;
+        this.npmIgnoreScripts                   = npmIgnoreScripts;
+        this.npmResolveDependencies             = npmResolveDependencies;
+        this.npmIncludeDevDependencies          = npmIncludeDevDependencies;
+        this.npmIgnoreJavaScriptFiles           = npmIgnoreJavaScriptFiles;
+        this.npmTimeoutDependenciesCollector    = npmTimeoutDependenciesCollector;
+        this.npmAccessToken                     = npmAccessToken;
+        this.npmIgnoreNpmLsErrors               = npmIgnoreNpmLsErrors;
+        this.npmYarnProject                     = npmYarnProject;
 
-        this.bowerResolveDependencies = bowerResolveDependencies;
-        this.bowerRunPreStep = bowerRunPreStep;
+        this.bowerResolveDependencies   = bowerResolveDependencies;
+        this.bowerRunPreStep            = bowerRunPreStep;
 
         this.nugetResolveDependencies = nugetResolveDependencies;
         this.nugetRestoreDependencies = nugetRestoreDependencies;
+        this.nugetRunPreStep          = nugetRunPreStep;
 
-        this.mavenResolveDependencies = mavenResolveDependencies;
-        this.mavenIgnoredScopes = mavenIgnoredScopes;
-        this.mavenAggregateModules = mavenAggregateModules;
-        this.mavenIgnorePomModules = mavenIgnorePomModules;
+        this.mavenResolveDependencies   = mavenResolveDependencies;
+        this.mavenIgnoredScopes         = mavenIgnoredScopes;
+        this.mavenAggregateModules      = mavenAggregateModules;
+        this.mavenIgnorePomModules      = mavenIgnorePomModules;
 
-        this.pythonResolveDependencies = pythonResolveDependencies;
-        this.pipPath = pipPath;
-        this.pythonPath = pythonPath;
-        this.pythonIsWssPluginInstalled = pythonIsWssPluginInstalled;
-        this.pythonUninstallWssPlugin = pythonUninstallWssPlugin;
-        this.pythonIgnorePipInstallErrors = pythonIgnorePipInstallErrors;
-        this.pythonInstallVirtualenv = pythonInstallVirtualenv;
-        this.pythonResolveHierarchyTree = pythonResolveHierarchyTree;
+        this.pythonResolveDependencies      = pythonResolveDependencies;
+        this.pipPath                        = pipPath;
+        this.pythonPath                     = pythonPath;
+        this.pythonIsWssPluginInstalled     = pythonIsWssPluginInstalled;
+        this.pythonUninstallWssPlugin       = pythonUninstallWssPlugin;
+        this.pythonIgnorePipInstallErrors   = pythonIgnorePipInstallErrors;
+        this.pythonInstallVirtualenv        = pythonInstallVirtualenv;
+        this.pythonResolveHierarchyTree     = pythonResolveHierarchyTree;
         this.pythonRequirementsFileIncludes = pythonRequirementsFileIncludes;
-        this.pythonResolveSetupPyFiles = pythonResolveSetupPyFiles;
+        this.pythonResolveSetupPyFiles      = pythonResolveSetupPyFiles;
 
-        this.dependenciesOnly = dependenciesOnly;
-        this.whitesourceConfiguration = whitesourceConfiguration;
+        this.dependenciesOnly           = dependenciesOnly;
+        this.whitesourceConfiguration   = whitesourceConfiguration;
 
-        this.gradleResolveDependencies = gradleResolveDependencies;
-        this.gradleAggregateModules = gradleAggregateModules;
-        this.gradleRunAssembleCommand = gradleRunAssembleCommand;
+        this.gradleResolveDependencies  = gradleResolveDependencies;
+        this.gradleAggregateModules     = gradleAggregateModules;
+        this.gradleRunAssembleCommand   = gradleRunAssembleCommand;
+        this.gradlePreferredEnvironment = gradlePreferredEnvironment;
 
-        this.paketResolveDependencies = paketResolveDependencies;
-        this.paketIgnoredScopes = paketIgnoredScopes;
-        this.paketIgnoreFiles = paketIgnoreFiles;
-        this.paketRunPreStep = paketRunPreStep;
-        this.paketPath = paketPath;
+        this.paketResolveDependencies   = paketResolveDependencies;
+        this.paketIgnoredScopes         = paketIgnoredScopes;
+        this.paketIgnoreFiles           = paketIgnoreFiles;
+        this.paketRunPreStep            = paketRunPreStep;
+        this.paketPath                  = paketPath;
 
         this.goResolveDependencies = goResolveDependencies;
         if (goDependencyManager != null && !goDependencyManager.isEmpty()) {
             this.goDependencyManager = GoDependencyManager.getFromType(goDependencyManager);
         }
         this.goCollectDependenciesAtRuntime = goCollectDependenciesAtRuntime;
+        this.goIgnoreTestPackages           = goIgnoreTestPackages;
 
-        this.rubyResolveDependencies = rubyResolveDependencies;
-        this.rubyRunBundleInstall = rubyRunBundleInstall;
-        this.rubyOverwriteGemFile = rubyOverwriteGemFile;
-        this.rubyInstallMissingGems = rubyInstallMissingGems;
+        this.rubyResolveDependencies    = rubyResolveDependencies;
+        this.rubyRunBundleInstall       = rubyRunBundleInstall;
+        this.rubyOverwriteGemFile       = rubyOverwriteGemFile;
+        this.rubyInstallMissingGems     = rubyInstallMissingGems;
 
-        this.phpResolveDependencies = phpResolveDependencies;
-        this.phpRunPreStep = phpRunPreStep;
-        this.phpIncludeDevDependencies = phpIncludeDevDependencies;
+        this.phpResolveDependencies     = phpResolveDependencies;
+        this.phpRunPreStep              = phpRunPreStep;
+        this.phpIncludeDevDependencies  = phpIncludeDevDependencies;
 
         this.sbtResolveDependencies = sbtResolveDependencies;
-        this.sbtAggregateModules = sbtAggregateModules;
-        this.sbtRunPreStep = sbtRunPreStep;
-        this.sbtTargetFolder = sbtTargetFolder;
+        this.sbtAggregateModules    = sbtAggregateModules;
+        this.sbtRunPreStep          = sbtRunPreStep;
+        this.sbtTargetFolder        = sbtTargetFolder;
 
         this.htmlResolveDependencies = htmlResolveDependencies;
     }
@@ -175,6 +181,7 @@ public class ResolverConfiguration {
     private boolean bowerRunPreStep;
     private boolean nugetResolveDependencies;
     private boolean nugetRestoreDependencies;
+    private boolean nugetRunPreStep;
     private boolean mavenResolveDependencies;
     private String[] mavenIgnoredScopes;
     private boolean mavenAggregateModules;
@@ -193,6 +200,7 @@ public class ResolverConfiguration {
     private boolean gradleResolveDependencies;
     private boolean gradleRunAssembleCommand;
     private boolean gradleAggregateModules;
+    private String gradlePreferredEnvironment;
 
     private final boolean pythonIsWssPluginInstalled;
     private final boolean pythonUninstallWssPlugin;
@@ -206,6 +214,7 @@ public class ResolverConfiguration {
     private boolean goResolveDependencies;
     private GoDependencyManager goDependencyManager;
     private boolean goCollectDependenciesAtRuntime;
+    private boolean goIgnoreTestPackages;
 
     private boolean rubyResolveDependencies;
     private boolean rubyRunBundleInstall;
@@ -288,6 +297,11 @@ public class ResolverConfiguration {
     @JsonProperty(NUGET_RESTORE_DEPENDENCIES)
     public boolean isNugetRestoreDependencies() {
         return nugetRestoreDependencies;
+    }
+
+    @JsonProperty(NUGET_RUN_PRE_STEP)
+    public boolean isNugetRunPreStep() {
+        return nugetRunPreStep;
     }
 
     @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES)
@@ -384,6 +398,9 @@ public class ResolverConfiguration {
         return gradleRunAssembleCommand;
     }
 
+    @JsonProperty(GRADLE_PREFERRED_ENVIRONMENT)
+    public String getGradlePreferredEnvironment() { return gradlePreferredEnvironment; }
+
     @JsonProperty(PAKET_RESOLVE_DEPENDENCIES)
     public boolean isPaketResolveDependencies() {
         return paketResolveDependencies;
@@ -422,6 +439,11 @@ public class ResolverConfiguration {
     @JsonProperty(GO_COLLECT_DEPENDENCIES_AT_RUNTIME)
     public boolean isGoCollectDependenciesAtRuntime() {
         return goCollectDependenciesAtRuntime;
+    }
+
+    @JsonProperty(GO_GLIDE_IGNORE_TEST_PACKAGES)
+    public boolean isGoIgnoreTestPackages() {
+        return goIgnoreTestPackages;
     }
 
     @JsonProperty(RUBY_RESOLVE_DEPENDENCIES)
@@ -579,7 +601,8 @@ public class ResolverConfiguration {
                 ", paket.exePath=" +paketPath + '\n' +
                 ", goResolveDependencies=" + goResolveDependencies +
                 ", goDependencyManager=" + goDependencyManager +
-                ", goCollectDependenciesAtRuntime=" + goCollectDependenciesAtRuntime + '\n' +
+                ", goCollectDependenciesAtRuntime=" + goCollectDependenciesAtRuntime  +
+                ", goIgnoreTestPackages=" + goIgnoreTestPackages + '\n' +
                 ", rubyResolveDependencies=" + rubyResolveDependencies +
                 ", rubyRunBundleInstall=" + rubyRunBundleInstall +
                 ", rubyOverwriteGemFile=" + rubyOverwriteGemFile +
@@ -593,9 +616,4 @@ public class ResolverConfiguration {
                 ", sbtTargetFolder=" + sbtTargetFolder + '\n' +
                 ", htmlResolveDependencies=" + htmlResolveDependencies;
     }
-
-
-
-
-
 }
