@@ -15,7 +15,6 @@
  */
 package org.whitesource.agent.dependency.resolver;
 
-import org.apache.bcel.classfile.ConstantString;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyType;
