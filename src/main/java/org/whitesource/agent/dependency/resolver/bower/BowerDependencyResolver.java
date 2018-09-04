@@ -36,8 +36,8 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
     /* --- Static Members --- */
 
     private static final String BOWER_JSON = "bower.json";
-    public static final String WS_BOWER_FILE2 = "**/*" + "ws_bower.json";
-    public static final String WS_BOWER_FILE1 = "**/*" + "ws-log-response-bower.json";
+    public static final String WS_BOWER_FILE2 = Constants.PATTERN + "ws_bower.json";
+    public static final String WS_BOWER_FILE1 = Constants.PATTERN  + "ws-log-response-bower.json";
 
     /* --- Members --- */
 
@@ -46,8 +46,8 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
 
     /* --- Constructor --- */
 
-    public BowerDependencyResolver(long npmTimeoutDependenciesCollector, boolean runPreStep) {
-        super(runPreStep, null);
+    public BowerDependencyResolver(long npmTimeoutDependenciesCollector, boolean runPreStep, boolean ignoreSourceFiles) {
+        super(runPreStep, null, ignoreSourceFiles);
         bomParser = new BowerBomParser();
         bomCollector = new BowerLsJsonDependencyCollector(npmTimeoutDependenciesCollector);
     }

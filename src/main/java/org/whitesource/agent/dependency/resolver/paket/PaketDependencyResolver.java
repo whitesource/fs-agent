@@ -31,22 +31,22 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
     private static final String PAKET_EXE = "paket.exe";
     private static final String PAKET = "paket";
     private final String PAKET_LOCK = "paket.lock";
-
+    private List<String> PAKET_EXTENSIONS = Arrays.asList(Constants.NUPKG, Constants.DLL, Constants.EXE, Constants.CS, Constants.JS_EXTENSION);
     /* --- Members --- */
 
     private final Logger logger = LoggerFactory.getLogger(PaketDependencyResolver.class);
-    private final boolean paketIgnoreFiles;
+    private final boolean ignoreSourceFiles;
     private final boolean paketRunPreStep;
     private String[] paketIgnoredGroups;
     private String paketPath;
 
     /* --- Constructor --- */
 
-    public PaketDependencyResolver(String[] paketIgnoredGroups, boolean paketIgnoreFiles, boolean paketRunPreStep, String paketPath) {
+    public PaketDependencyResolver(String[] paketIgnoredGroups, boolean ignoreSourceFiles, boolean paketRunPreStep, String paketPath) {
         super();
         changePaketIgnoredScopesToLowerCase(paketIgnoredGroups);
         this.paketIgnoredGroups = paketIgnoredGroups;
-        this.paketIgnoreFiles = paketIgnoreFiles;
+        this.ignoreSourceFiles = ignoreSourceFiles;
         this.paketRunPreStep = paketRunPreStep;
         this.paketPath = paketPath;
     }
@@ -91,14 +91,10 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
 
                 // ignore all the nupkg files in order to not scan them again
                 if (!dependencies.isEmpty()) {
-                    if (this.paketIgnoreFiles) {
-                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(Constants.PATTERN +
-                                        Constants.NUPKG, Constants.PATTERN + Constants.DLL, Constants.PATTERN + Constants.EXE,
-                                Constants.PATTERN + Constants.CS, Constants.PATTERN + Constants.JS_EXTENSION), null));
+                    if (this.ignoreSourceFiles) {
+                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder,extensionPattern(PAKET_EXTENSIONS) , null));
                     } else {
-                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(Constants.PATTERN +
-                                        Constants.NUPKG, Constants.PATTERN + Constants.DLL, Constants.PATTERN + Constants.EXE,
-                                Constants.PATTERN + Constants.CS, Constants.PATTERN + Constants.JS_EXTENSION), Constants.PACKAGES));
+                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, extensionPattern(PAKET_EXTENSIONS), Constants.PACKAGES));
                     }
                 }
             } else {

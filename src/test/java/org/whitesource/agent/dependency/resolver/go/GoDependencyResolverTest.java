@@ -1,4 +1,4 @@
-package org.whitesource.agent.dependency.resolver.gradle;
+package org.whitesource.agent.dependency.resolver.go;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -15,26 +15,27 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
-public class GradleDependencyResolverTest {
+public class GoDependencyResolverTest {
 
     //    @Ignore
     @Test
-    public void gradleIgnoreSourceFilesTest() {
-        String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\gradle\\");
+    public void goIgnoreSourceFilesTest() {
+        String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\go\\");
         List<ResolutionResult> results = getResolutionResults(Arrays.asList(folderPath), "false");
         List<ResolutionResult> resultsISF = getResolutionResults(Arrays.asList(folderPath), "true");
-        List<List> bothExcludes = TestHelper.getExcludesFromDependencyResult(results, resultsISF, DependencyType.GRADLE);
-        String[] includes = new String[]{"**/*.jar", "**/*.java"};
-        Assert.assertFalse(TestHelper.checkResultOfScanFiles(folderPath, bothExcludes.get(0), bothExcludes.get(1), includes, DependencyType.GRADLE));
+        List<List> bothExcludes = TestHelper.getExcludesFromDependencyResult(results, resultsISF, DependencyType.GO);
+        String[] includes = new String[]{"**/*.go"};
+        Assert.assertFalse(TestHelper.checkResultOfScanFiles(folderPath, bothExcludes.get(0), bothExcludes.get(1), includes, DependencyType.GO));
     }
 
     private List<ResolutionResult> getResolutionResults(List<String> pathsToScan,String isIgnoreSourceFiles) {
         FSAConfigProperties props = new FSAConfigProperties();
-        props.setProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, "true");
-        props.setProperty(ConfigPropertyKeys.GRADLE_IGNORE_SOURCE_FILES, isIgnoreSourceFiles );
+        props.setProperty(ConfigPropertyKeys.GO_RESOLVE_DEPENDENCIES, "true");
+        props.setProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, "false");
+        props.setProperty(ConfigPropertyKeys.GO_DEPENDENCY_MANAGER, "godep");
+        props.setProperty(ConfigPropertyKeys.GO_IGNORE_SOURCE_FILES,isIgnoreSourceFiles );
         ResolverConfiguration resolverConfiguration = new FSAConfiguration(props).getResolver();
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(resolverConfiguration);
         return dependencyResolutionService.resolveDependencies(pathsToScan, new String[0]);
     }
-
 }
