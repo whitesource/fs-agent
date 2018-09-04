@@ -136,4 +136,10 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
         }
         return dependencies;
     }
+
+    @Override
+    protected Collection<String> getRelevantScannedFolders(Collection<String> scannedFolders) {
+        // Nuget resolver should scan all folders and should not remove any folder
+        return scannedFolders == null ? Collections.emptyList() : scannedFolders;
+    }
 }

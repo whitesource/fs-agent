@@ -127,5 +127,11 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     public String getPipPath() {
         return pipPath;
     }
+
+    @Override
+    protected Collection<String> getRelevantScannedFolders(Collection<String> scannedFolders) {
+        // Python resolver should scan all folders and should not remove any folder
+        return scannedFolders == null ? Collections.emptyList() : scannedFolders;
+    }
 }
 

@@ -258,6 +258,9 @@ public class FileSystemScanner {
                 if (impactAnalysisLanguage != null) {
                     viaComponents = new ViaComponents(appPath, impactAnalysisLanguage);
                 }
+                // TODO: Check why is result = null in the loop
+                resolutionResult.removeIf(Objects::isNull);
+
                 for (ResolutionResult result : resolutionResult) {
                     Map<AgentProjectInfo, Path> projects = result.getResolvedProjects();
                     Collection<DependencyInfo> dependenciesToVia = new ArrayList<>();

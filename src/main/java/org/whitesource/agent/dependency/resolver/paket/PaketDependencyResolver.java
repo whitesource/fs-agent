@@ -209,4 +209,10 @@ public class PaketDependencyResolver extends AbstractDependencyResolver {
             }
         }
     }
+
+    @Override
+    protected Collection<String> getRelevantScannedFolders(Collection<String> scannedFolders) {
+        // Packet resolver should scan all folders and should not remove any folder
+        return scannedFolders == null ? Collections.emptyList() : scannedFolders;
+    }
 }
