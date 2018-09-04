@@ -217,7 +217,7 @@ public class FSAConfiguration {
             dependencyDirs = new ArrayList<>();
 
         // validate scanned folder
-        if (dependencyDirs.isEmpty()) {
+        if (dependencyDirs.isEmpty() && StringUtils.isEmpty(fileListPath) && (offlineRequestFiles == null || offlineRequestFiles.isEmpty())) {
             dependencyDirs.add(Constants.DOT);
         }
 
