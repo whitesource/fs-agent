@@ -80,7 +80,7 @@ public class ExtensionUtils {
     private static String[] initializeGlobPattern(List<String> extensions) {
         String[] globPatterns = new String[extensions.size()];
         for (int i = 0; i < extensions.size(); i++) {
-            globPatterns[i] = Constants.GLOB_PATTERN_PREFIX + extensions.get(i);
+            globPatterns[i] = Constants.GLOB_PATTERN_PREFIX + Constants.DOT +  extensions.get(i);
         }
         return globPatterns;
     }
