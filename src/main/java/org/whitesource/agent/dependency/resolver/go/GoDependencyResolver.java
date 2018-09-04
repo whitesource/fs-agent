@@ -66,15 +66,15 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private Cli cli;
     private GoDependencyManager goDependencyManager;
     private boolean collectDependenciesAtRuntime;
-    private boolean isDependenciesOnly;
+    private boolean ignoreSourceFiles;
     private boolean ignoreTestPackages;
 
-    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean isDependenciesOnly, boolean ignoreTestPackages){
+    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean ignoreSourceFiles, boolean ignoreTestPackages){
         super();
         this.cli = new Cli();
         this.goDependencyManager = goDependencyManager;
         this.collectDependenciesAtRuntime = collectDependenciesAtRuntime;
-        this.isDependenciesOnly = isDependenciesOnly;
+        this.ignoreSourceFiles = ignoreSourceFiles;
         this.ignoreTestPackages = ignoreTestPackages;
     }
 
@@ -87,7 +87,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
-        if (!collectDependenciesAtRuntime && goDependencyManager != null && isDependenciesOnly){
+        if (!collectDependenciesAtRuntime && goDependencyManager != null && ignoreSourceFiles){
             excludes.add(Constants.PATTERN + GO_EXTENSION);
         }
         return excludes;

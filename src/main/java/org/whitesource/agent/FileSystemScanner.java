@@ -196,7 +196,7 @@ public class FileSystemScanner {
         Set<String> allFiles = fileMapBeforeResolve.entrySet().stream().flatMap(folder -> folder.getValue().stream()).collect(Collectors.toSet());
 
         final int[] totalDependencies = {0};
-        boolean isDependenciesOnly = false;
+        boolean isIgnoreSourceFiles = false;
         if (enableImpactAnalysis && iaLanguage != null) {
             for (String appPath : appPathsToDependencyDirs.keySet()) {
                 if (!appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
@@ -208,7 +208,7 @@ public class FileSystemScanner {
             }
         } else if (dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies(allFiles)) {
             logger.info("Attempting to resolve dependencies");
-            isDependenciesOnly = dependencyResolutionService.isDependenciesOnly();
+            isIgnoreSourceFiles = dependencyResolutionService.isIgnoreSourceFiles();
 
             // get all resolution results
             Collection<ResolutionResult> resolutionResults = new ArrayList<>();
@@ -310,7 +310,7 @@ public class FileSystemScanner {
         DependencyCalculator dependencyCalculator = new DependencyCalculator(showProgressBar);
         final Collection<DependencyInfo> filesDependencies = new LinkedList<>();
 
-        if (!isDependenciesOnly) {
+        if (!isIgnoreSourceFiles) {
             filesDependencies.addAll(dependencyCalculator.createDependencies(
                     scmConnector, totalFiles, fileMap, excludedCopyrights, partialSha1Match, calculateHints, calculateMd5));
         }
@@ -340,7 +340,7 @@ public class FileSystemScanner {
             });
 
             // create new projects if necessary
-            if (!isDependenciesOnly && filesDependencies.size() > 0) {
+            if (!isIgnoreSourceFiles && filesDependencies.size() > 0) {
                 scannerBaseDirs.stream().forEach(directory -> {
                     List<Path> subDirectories;
                     // check all folders

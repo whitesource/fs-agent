@@ -35,7 +35,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     private static final String SCALA = "scala";
     private static final String SBT = "sbt";
     private static final String SCALA_EXTENSION = Constants.DOT + SCALA;
-    private static final List<String> SCALA_SCRIPT_EXTENSION = Arrays.asList(SCALA_EXTENSION, Constants.DOT + SBT);
+    private static final List<String> SCALA_SCRIPT_EXTENSION = Arrays.asList(SCALA_EXTENSION,Constants.DOT + SBT);
     private static final String COMPILE = "compile";
     private static final String TARGET = "target";
     private static final String RESOLUTION_CACHE = "resolution-cache";
@@ -50,7 +50,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     /* --- Private Members --- */
 
     private boolean sbtAggregateModules;
-    private boolean dependenciesOnly;
+    private boolean ignoreSourceFiles;
     private boolean sbtRunPreStep;
     private String sbtTargetFolder;
     private String[] includes = {"**" + fileSeparator + TARGET + fileSeparator + "**" + fileSeparator + Constants.EMPTY_STRING + RESOLUTION_CACHE + fileSeparator + REPORTS + fileSeparator + "*" + COMPILE_XML};
@@ -59,9 +59,9 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Constructors --- */
 
-    public SbtDependencyResolver(boolean sbtAggregateModules, boolean dependenciesOnly, boolean sbtRunPreStep, String sbtTargetFolder) {
+    public SbtDependencyResolver(boolean sbtAggregateModules, boolean ignoreSourceFiles, boolean sbtRunPreStep, String sbtTargetFolder) {
         this.sbtAggregateModules = sbtAggregateModules;
-        this.dependenciesOnly = dependenciesOnly;
+        this.ignoreSourceFiles = ignoreSourceFiles;
         this.bomParser = new SbtBomParser();
         this.sbtRunPreStep = sbtRunPreStep;
         this.sbtTargetFolder = sbtTargetFolder;
@@ -110,8 +110,8 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         }
         Set<String> excludes = new HashSet<>();
         Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
-            if (dependenciesOnly) {
-                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder.toString(), SCALA_SCRIPT_EXTENSION, null));
+            if (ignoreSourceFiles) {
+                excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder,  extensionPattern(SCALA_SCRIPT_EXTENSION), null));
             }
             return Paths.get(topLevelFolder);
         }));
@@ -130,7 +130,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
         excludes.add(Constants.PATTERN + SCALA_EXTENSION);
-        excludes.add("**" + fileSeparator + "project" + fileSeparator + "**");
+        excludes.add("**" + fileSeparator + PROJECT + fileSeparator + "**");
         return excludes;
     }
 
@@ -211,7 +211,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         List<String> lines;
         List<String> targetFolders = new LinkedList<>();
         lines = cli.runCmd(folderPath, cli.getCommandParams(SBT, TARGET));
-        if (!lines.isEmpty()) {
+        if (lines != null && !lines.isEmpty()) {
             for (String line : lines) {
                 if (DependencyCollector.isWindows()) {
                     if (line.endsWith(TARGET) && line.contains(fileSeparator)) {

@@ -15,6 +15,7 @@
  */
 package org.whitesource.agent.dependency.resolver;
 
+import org.apache.bcel.classfile.ConstantString;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyType;
@@ -22,6 +23,7 @@ import org.whitesource.agent.api.model.DependencyType;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,7 +60,13 @@ public abstract class AbstractDependencyResolver {
     public abstract Collection<String> getSourceFileExtensions();
 
     /* --- Protected methods --- */
-
+    protected List<String> extensionPattern(List<String> extensions) {
+        List<String> extensionsPatternStr = new LinkedList<>();
+        for (String extension : extensions) {
+            extensionsPatternStr.add(Constants.PATTERN + extension);
+        }
+        return extensionsPatternStr;
+    }
     protected List<String> normalizeLocalPath(String parentFolder, String topFolderFound, Collection<String> excludes, String folderToIgnore) {
         String normalizedRoot = new File(parentFolder).getPath();
         if (normalizedRoot.equals(topFolderFound)) {

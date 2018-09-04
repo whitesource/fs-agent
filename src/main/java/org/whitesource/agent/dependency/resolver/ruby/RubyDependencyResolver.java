@@ -35,6 +35,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     protected static final String MINGW = "mingw";
 
     private final Logger logger = LoggerFactory.getLogger(RubyDependencyResolver.class);
+    private final boolean ignoreSourceFiles;
 
     private RubyCli cli;
     private boolean runBundleInstall;
@@ -42,12 +43,13 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     private boolean installMissingGems;
     private String rootDirectory;
 
-    public RubyDependencyResolver(boolean runBundleInstall, boolean overwriteGemFile, boolean installMissingGems){
+    public RubyDependencyResolver(boolean runBundleInstall, boolean overwriteGemFile, boolean installMissingGems, boolean ignoreSourceFiles){
         super();
         cli = new RubyCli();
         this.runBundleInstall = runBundleInstall;
         this.overwriteGemFile = overwriteGemFile;
         this.installMissingGems = installMissingGems;
+        this.ignoreSourceFiles = ignoreSourceFiles;
     }
 
     @Override
@@ -60,7 +62,11 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
-        excludes.add(Constants.PATTERN + RUBY_SCRIPT_EXTENSION);
+        if(ignoreSourceFiles) {
+            for (String rubyExtension : RUBY_SCRIPT_EXTENSION) {
+                excludes.add(Constants.PATTERN + rubyExtension);
+            }
+        }
         return excludes;
     }
 

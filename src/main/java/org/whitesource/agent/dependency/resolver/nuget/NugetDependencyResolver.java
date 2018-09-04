@@ -41,26 +41,30 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     private final Logger logger = LoggerFactory.getLogger(NugetDependencyResolver.class);
     public static final String CONFIG = ".config";
     public static final String CSPROJ = ".csproj";
-
+    protected static final String CSHARP = ".cs";
     /* --- Members --- */
 
     private final String whitesourceConfiguration;
     private final String bomPattern;
     private final NugetConfigFileType nugetConfigFileType;
     private boolean runPreStep;
+    private boolean ignoreSourceFiles;
 
     /* --- Constructor --- */
 
-    public NugetDependencyResolver(String whitesourceConfiguration, NugetConfigFileType nugetConfigFileType, boolean runPreStep) {
+    public NugetDependencyResolver(String whitesourceConfiguration, NugetConfigFileType nugetConfigFileType, boolean runPreStep,boolean ignoreSourceFiles) {
         super();
         this.whitesourceConfiguration = whitesourceConfiguration;
         this.nugetConfigFileType = nugetConfigFileType;
         this.runPreStep = runPreStep;
+        this.ignoreSourceFiles=ignoreSourceFiles;
         if (this.nugetConfigFileType == NugetConfigFileType.CONFIG_FILE_TYPE) {
             bomPattern = Constants.PATTERN + CONFIG;
         } else {
             bomPattern = Constants.PATTERN + CSPROJ;
         }
+
+
     }
 
     /* --- Overridden methods --- */
@@ -73,7 +77,7 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
             nugetRestoreCollector.executeRestore(projectFolder, configFiles);
             Collection<AgentProjectInfo> projects = nugetRestoreCollector.collectDependencies(projectFolder);
             Collection<DependencyInfo> dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
-            return new ResolutionResult(dependencies, new LinkedList<>(), getDependencyType(), topLevelFolder);
+            return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
         } else {
             return getResolutionResultFromParsing(topLevelFolder, configFiles, false);
         }
@@ -81,13 +85,16 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
 
     protected ResolutionResult getResolutionResultFromParsing(String topLevelFolder, Set<String> configFiles, boolean onlyDependenciesFromReferenceTag) {
         Collection<DependencyInfo> dependencies = parseNugetPackageFiles(configFiles, onlyDependenciesFromReferenceTag);
-        return new ResolutionResult(dependencies, new LinkedList<>(), getDependencyType(), topLevelFolder);
+        return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
     }
 
     @Override
     protected Collection<String> getExcludes() {
         List<String> excludes = new LinkedList<>();
         excludes.add(CommandLineArgs.CONFIG_FILE_NAME);
+        if(ignoreSourceFiles) {
+            excludes.add(Constants.PATTERN + CSHARP);
+        }
         return excludes;
     }
 
