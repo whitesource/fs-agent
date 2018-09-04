@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -16,15 +15,19 @@ import org.whitesource.agent.dependency.resolver.gradle.GradleCli;
 import org.whitesource.agent.dependency.resolver.gradle.GradleMvnCommand;
 import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.CommandLineProcess;
+import org.whitesource.agent.utils.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GoDependencyResolver extends AbstractDependencyResolver {
 
@@ -66,15 +69,15 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private Cli cli;
     private GoDependencyManager goDependencyManager;
     private boolean collectDependenciesAtRuntime;
-    private boolean isDependenciesOnly;
+    private boolean ignoreSourceFiles;
     private boolean ignoreTestPackages;
 
-    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean isDependenciesOnly, boolean ignoreTestPackages){
+    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean ignoreSourceFiles, boolean ignoreTestPackages){
         super();
         this.cli = new Cli();
         this.goDependencyManager = goDependencyManager;
         this.collectDependenciesAtRuntime = collectDependenciesAtRuntime;
-        this.isDependenciesOnly = isDependenciesOnly;
+        this.ignoreSourceFiles = ignoreSourceFiles;
         this.ignoreTestPackages = ignoreTestPackages;
     }
 
@@ -87,7 +90,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
-        if (!collectDependenciesAtRuntime && goDependencyManager != null && isDependenciesOnly){
+        if (!collectDependenciesAtRuntime && goDependencyManager != null && ignoreSourceFiles){
             excludes.add(Constants.PATTERN + GO_EXTENSION);
         }
         return excludes;
@@ -122,7 +125,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 case VNDR:
                     return new String[]{Constants.PATTERN + VNDR_CONF};
                 case GO_GRADLE:
-                    return new String[]{Constants.BUILD_GRADLE};
+                    return new String[]{Constants.GLOB_PATTERN_PREFIX + Constants.BUILD_GRADLE};
                 case GLIDE:
                     return new String[]{Constants.PATTERN + GLIDE_LOCK, Constants.PATTERN + GLIDE_YAML};
             }
@@ -411,21 +414,29 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private void collectGoGradleDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) {
         logger.debug("collecting dependencies using 'GoGradle'");
         GradleCli gradleCli = new GradleCli(Constants.GRADLE);
-        List<String> lines = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES));
-        if (lines != null) {
-            parseGoGradleDependencies(lines, dependencyInfos, rootDirectory);
-            File goGradleLock = new File(rootDirectory + fileSeparator + GOGRADLE_LOCK);
-            if (goGradleLock.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.LOCK)))){
-                HashMap<String, String> gradleLockFile = parseGoGradleLockFile(goGradleLock);
-                // for each dependency - matching its full commit id
-                dependencyInfos.stream().forEach(dependencyInfo -> dependencyInfo.setCommit(gradleLockFile.get(dependencyInfo.getArtifactId())));
-                // removing dependencies without commit-id and version
-                dependencyInfos.removeIf(dependencyInfo -> dependencyInfo.getCommit() == null && dependencyInfo.getVersion() == null);
-            } else {
-                logger.warn("Can't find {} and verify dependencies commit-ids; make sure 'collectDependenciesAtRuntime' is set to true or run 'gradlew lock' manually", goGradleLock.getPath());
-            }
-        } else {
-            logger.warn("running `gradle dependencies` command failed");
+        try {
+            Stream<Path> pathStream = Files.walk(Paths.get(rootDirectory), Integer.MAX_VALUE).filter(file -> file.getFileName().toString().equals(Constants.BUILD_GRADLE));
+            pathStream.forEach(file -> {
+                List<String> lines = gradleCli.runGradleCmd(file.getParent().toString(), gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES));
+                if (lines != null) {
+                    parseGoGradleDependencies(lines, dependencyInfos, rootDirectory);
+                    File goGradleLock = new File(rootDirectory + fileSeparator + GOGRADLE_LOCK);
+                    if (goGradleLock.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.LOCK)))) {
+                        HashMap<String, String> gradleLockFile = parseGoGradleLockFile(goGradleLock);
+                        // for each dependency - matching its full commit id
+                        dependencyInfos.stream().forEach(dependencyInfo -> dependencyInfo.setCommit(gradleLockFile.get(dependencyInfo.getArtifactId())));
+                        // removing dependencies without commit-id and version
+                        dependencyInfos.removeIf(dependencyInfo -> dependencyInfo.getCommit() == null && dependencyInfo.getVersion() == null);
+                    } else {
+                        logger.warn("Can't find {} and verify dependencies commit-ids; make sure 'collectDependenciesAtRuntime' is set to true or run 'gradlew lock' manually", goGradleLock.getPath());
+                    }
+                } else {
+                    logger.warn("running `gradle dependencies` command failed");
+                }
+            });
+        } catch (IOException e){
+            logger.warn("Error collecting go-gradle dependencies from {}, exception: {}", rootDirectory, e.getMessage());
+            logger.debug("Exception: {}", e.getStackTrace());
         }
     }
 
@@ -478,7 +489,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
                 dependencyInfo.setArtifactId(name);
                 dependencyInfo.setDependencyType(DependencyType.GO);
-                dependencyInfo.setSystemPath(rootDirectory + fileSeparator + "build.gradle");
+                dependencyInfo.setSystemPath(rootDirectory + fileSeparator + Constants.BUILD_GRADLE);
                 dependencyInfos.add(dependencyInfo);
             } catch (Exception e){
                 logger.warn("Error parsing line {}, exception: {}", currentLine, e.getMessage());

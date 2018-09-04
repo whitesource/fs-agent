@@ -20,23 +20,24 @@ import java.util.stream.Collectors;
 public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private static final List<String> GRADLE_SCRIPT_EXTENSION = Arrays.asList(".gradle",".groovy", ".java", ".jar", ".war", ".ear", ".car", ".class");
+
     private static final String JAR_EXTENSION = ".jar";
     public static final String PROJECT = "--- Project";
-
+    private String ignoredScopes;
     private GradleLinesParser gradleLinesParser;
     private GradleCli gradleCli;
     private ArrayList<String> topLevelFoldersNames;
-    private boolean dependenciesOnly;
+    private boolean ignoreSourceCode;
     private boolean gradleAggregateModules;
 
     private final Logger logger = LoggerFactory.getLogger(GradleDependencyResolver.class);
 
-    public GradleDependencyResolver(boolean runAssembleCommand, boolean dependenciesOnly, boolean gradleAggregateModules, String gradlePreferredEnvironment) {
+    public GradleDependencyResolver(boolean runAssembleCommand, boolean ignoreSourceCode, boolean gradleAggregateModules, String gradlePreferredEnvironment) {
         super();
         gradleLinesParser = new GradleLinesParser(runAssembleCommand, gradlePreferredEnvironment);
         gradleCli = new GradleCli(gradlePreferredEnvironment);
         topLevelFoldersNames = new ArrayList<>();
-        this.dependenciesOnly = dependenciesOnly;
+        this.ignoreSourceCode = ignoreSourceCode;
         this.gradleAggregateModules = gradleAggregateModules;
     }
 
@@ -83,8 +84,8 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
                     agentProjectInfo.setCoordinates(coordinates);
                 }
                 projectInfoPathMap.put(agentProjectInfo, bomFolder.toPath());
-                if (dependenciesOnly) {
-                    excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, GRADLE_SCRIPT_EXTENSION, null));
+                if (ignoreSourceCode) {
+                    excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, extensionPattern(GRADLE_SCRIPT_EXTENSION), null));
                 }
             }
         }
@@ -126,7 +127,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String[] getBomPattern() {
-        return new String[]{Constants.BUILD_GRADLE};
+        return new String[]{Constants.GLOB_PATTERN_PREFIX + Constants.BUILD_GRADLE};
     }
 
     @Override

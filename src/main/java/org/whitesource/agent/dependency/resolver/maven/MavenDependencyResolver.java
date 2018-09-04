@@ -41,16 +41,16 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
     private static final List<String> JAVA_EXTENSIONS = Arrays.asList(".java", ".jar", ".war", ".ear", ".car", ".class");
     private static final String TEST = String.join(File.separator, new String[]{Constants.SRC, "test"});
     private final boolean mavenAggregateModules;
-    private final boolean dependenciesOnly;
+    private final boolean ignoreSourceFiles;
 
     /* --- Constructor --- */
 
-    public MavenDependencyResolver(boolean mavenAggregateModules, String[] mavenIgnoredScopes, boolean dependenciesOnly, boolean ignorePomModules) {
+    public MavenDependencyResolver(boolean mavenAggregateModules, String[] mavenIgnoredScopes, boolean ignoreSourceFiles, boolean ignorePomModules) {
         super();
         this.dependencyCollector = new MavenTreeDependencyCollector(mavenIgnoredScopes, ignorePomModules);
         this.bomParser = new MavenPomParser();
         this.mavenAggregateModules = mavenAggregateModules;
-        this.dependenciesOnly = dependenciesOnly;
+        this.ignoreSourceFiles = ignoreSourceFiles;
     }
 
     /* --- Members --- */
@@ -77,13 +77,13 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
 
                 // in java do not remove anything since they are not the duplicates of the dependencies found
                 // discard other java files only if specified ( decenciesOnly = true)
-                if (dependenciesOnly) {
-                    excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), JAVA_EXTENSIONS, null));
+                if (ignoreSourceFiles) {
+                    excludes.addAll(normalizeLocalPath(projectFolder, topFolderFound.toString(), extensionPattern(JAVA_EXTENSIONS), null));
                 }
                 return topFolderFound.toPath();
             } else {
-                if (dependenciesOnly) {
-                    excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder.toString(), JAVA_EXTENSIONS, null));
+                if (ignoreSourceFiles) {
+                    excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, extensionPattern(JAVA_EXTENSIONS), null));
                 }
             }
             return Paths.get(topLevelFolder);

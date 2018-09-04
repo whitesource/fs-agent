@@ -81,7 +81,7 @@ public class FileSystemAgentTest {
         Arrays.stream(dir10.listFiles()).filter(dir -> dir.isDirectory()).forEach(directory -> {
             FilesScanner fs = new FilesScanner();
 
-            Collection<ResolvedFolder> map = fs.findTopFolders(Arrays.asList(directory.getPath()), new NpmDependencyResolver(true, null).getBomPattern(), new LinkedList<>());
+            Collection<ResolvedFolder> map = fs.findTopFolders(Arrays.asList(directory.getPath()), new NpmDependencyResolver(true, null,true).getBomPattern(), new LinkedList<>());
             map.forEach((folder) -> Assert.assertTrue(folder.getTopFoldersFound().size() > 0));
         });
     }
