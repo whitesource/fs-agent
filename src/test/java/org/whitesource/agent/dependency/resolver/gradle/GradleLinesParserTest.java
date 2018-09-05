@@ -31,7 +31,7 @@ public class GradleLinesParserTest {
                 TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\gradle\\sample\\");
         CommandLineProcess commandLineProcess = new CommandLineProcess(folderPath, params);
         List<String> lines = commandLineProcess.executeProcess();
-        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING ,new String[0]); //todo null change
+        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING ,new String[0]);
     }
 
     @Ignore
