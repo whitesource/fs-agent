@@ -128,7 +128,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String[] getBomPattern() {
-        return new String[]{Constants.BUILD_GRADLE};
+        return new String[]{Constants.GLOB_PATTERN_PREFIX + Constants.BUILD_GRADLE};
     }
 
     @Override

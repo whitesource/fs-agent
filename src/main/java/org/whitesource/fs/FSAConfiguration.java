@@ -217,7 +217,7 @@ public class FSAConfiguration {
             dependencyDirs = new ArrayList<>();
 
         // validate scanned folder
-        if (dependencyDirs.isEmpty()) {
+        if (dependencyDirs.isEmpty() && StringUtils.isEmpty(fileListPath) && (offlineRequestFiles == null || offlineRequestFiles.isEmpty())) {
             dependencyDirs.add(Constants.DOT);
         }
 
@@ -312,10 +312,10 @@ public class FSAConfiguration {
             if (!key.equals("defaultKey")) {
                 File file = new File(key);
                 if (!file.exists()) {
-                    errors.add("The path " + key + " does not exist");
+                    errors.add("Effective Usage Analysis will not run if the -appPath parameter references an invalid file path. Check that the -appPath parameter specifies a valid path");
                     return false;
                 } else if (!file.isFile()) {
-                    errors.add("The path " + key + " is not file");
+                    errors.add("Effective Usage Analysis will not run if the -appPath parameter references an invalid file path. Check that the -appPath parameter specifies a valid path");
                     return false;
                 } else {
                     return true;

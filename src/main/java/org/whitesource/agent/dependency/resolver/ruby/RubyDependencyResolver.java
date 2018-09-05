@@ -120,7 +120,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
             // rename the original Gemfile.lock (if it exists)
             gemFileLock.renameTo(origGemFileLock);
         }
-        boolean bundleInstallSuccess = cli.runCmd(rootDirectory, cli.getCommandParams(BUNDLE, Constants.INSTALL)) != null && gemFileLock.isFile();
+        boolean bundleInstallSuccess = !cli.runCmd(rootDirectory, cli.getCommandParams(BUNDLE, Constants.INSTALL)).isEmpty()&& gemFileLock.isFile();
         if (!bundleInstallSuccess && !overwriteGemFile){
             // when running the 'bundle install' command failed and the original file was renamed - restore its name
             origGemFileLock.renameTo(gemFileLock);
@@ -302,7 +302,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                 }
                 if (version == null || (versionToCompare != null && versionCompare(versionToCompare, version) > 0)) {
                     List<String> lines = installGem(partialDependency.getGroupId(), Constants.APOSTROPHE + partialDependency.getVersion() + Constants.APOSTROPHE);
-                    if (lines != null) {
+                    if (!lines.isEmpty()) {
                         File file = findMaxVersionFile(partialDependency.getGroupId(), pathToGems);
                         if (file != null) {
                             String sha1 = ChecksumUtils.calculateSHA1(file);
@@ -395,7 +395,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         String[] commandParams = cli.getCommandParams(GEM, ENVIRONMENT);
         List<String> lines = cli.runCmd(rootDirectory, commandParams);
         String path = null;
-        if (lines != null){
+        if (!lines.isEmpty()){
             path = lines.get(0) + fileSeparator + CACHE;
             if (new File(path).isDirectory() == false){
                 throw new FileNotFoundException();
@@ -428,7 +428,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
             if (file.isFile()) {
                 return file;
             }
-            if (lines != null) {
+            if (!lines.isEmpty()) {
                 List<String> errors = lines.stream().filter(line -> line.startsWith(ERROR)).collect(Collectors.toList());
                 if (errors.size() > 0) {
                     return null;
