@@ -26,6 +26,7 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class ResolverConfiguration {
 
+
     /* --- Constructors --- */
 
     @JsonCreator
@@ -76,6 +77,7 @@ public class ResolverConfiguration {
             @JsonProperty(GRADLE_AGGREGATE_MODULES) boolean gradleAggregateModules,
             @JsonProperty(GRADLE_PREFERRED_ENVIRONMENT) String gradlePreferredEnvironment,
             @JsonProperty(GRADLE_IGNORE_SOURCE_FILES) boolean gradleIgnoreSourceFiles,
+            @JsonProperty(GRADLE_IGNORE_SCOPES) String[] gradleIgnoredScopes,
 
             @JsonProperty(PAKET_RESOLVE_DEPENDENCIES) boolean paketResolveDependencies,
             @JsonProperty(PAKET_IGNORED_GROUPS) String[] paketIgnoredScopes,
@@ -150,7 +152,8 @@ public class ResolverConfiguration {
         this.gradleAggregateModules     = gradleAggregateModules;
         this.gradleRunAssembleCommand   = gradleRunAssembleCommand;
         this.gradlePreferredEnvironment = gradlePreferredEnvironment;
-        this.gradleIgnoreSourceFiles     = gradleIgnoreSourceFiles;
+        this.gradleIgnoreSourceFiles    = gradleIgnoreSourceFiles;
+        this.gradleIgnoredScopes        = gradleIgnoredScopes;
 
         this.paketResolveDependencies   = paketResolveDependencies;
         this.paketIgnoredScopes         = paketIgnoredScopes;
@@ -231,7 +234,7 @@ public class ResolverConfiguration {
     private boolean gradleAggregateModules;
     private String gradlePreferredEnvironment;
     private boolean gradleIgnoreSourceFiles;
-
+    private String[] gradleIgnoredScopes;
 
     private final boolean pythonIsWssPluginInstalled;
     private final boolean pythonUninstallWssPlugin;
@@ -370,11 +373,6 @@ public class ResolverConfiguration {
     public boolean isIgnoreSourceFiles() {
         return ignoreSourceFiles;
     }
-
-//    @JsonProperty(DEPENDENCIES_ONLY)
-//    public boolean isDependenciesOnly() {
-//        return dependenciesOnly;
-//    }
 
     @JsonProperty(WHITESOURCE_CONFIGURATION)
     public String getWhitesourceConfiguration() {
@@ -594,6 +592,12 @@ public class ResolverConfiguration {
     public void setGradleResolveDependencies(boolean gradleResolveDependencies) {
         this.gradleResolveDependencies = gradleResolveDependencies;
     }
+    public void setGradleIgnoredScopes(String[] gradleIgnoredScopes) {
+        this.gradleIgnoredScopes = gradleIgnoredScopes;
+    }
+    public String[] getGradleIgnoredScopes() {
+        return this.gradleIgnoredScopes;
+    }
 
     public void setPhpResolveDependencies(boolean phpResolveDependencies) {
         this.phpResolveDependencies = phpResolveDependencies;
@@ -660,6 +664,7 @@ public class ResolverConfiguration {
                 ", gradleRunAssembleCommand=" + gradleRunAssembleCommand +
                 ", gradle.aggregateModules=" + gradleAggregateModules + '\n' +
                 ", gradle.IgnoreSourceFiles=" + gradleIgnoreSourceFiles + '\n' +
+                ", gradle.IgnoredScopes=" + Arrays.toString(gradleIgnoredScopes) +
                 ", paketResolveDependencies=" + paketResolveDependencies +
                 ", paketIgnoredScopes=" + Arrays.toString(paketIgnoredScopes) +
                 ", paketRunPreStep=" + paketRunPreStep +

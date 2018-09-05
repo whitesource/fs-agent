@@ -405,6 +405,7 @@ public class FSAConfiguration {
         boolean gradleResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
         boolean gradleAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
+        String[] gradleIgnoredScopes = config.getListProperty(ConfigPropertyKeys.GRADLE_IGNORE_SCOPES, new String[0]);
         String gradlePreferredEnvironment = config.getProperty(ConfigPropertyKeys.GRADLE_PREFERRED_ENVIRONMENT, Constants.GRADLE);
         if (gradlePreferredEnvironment.isEmpty()){
             gradlePreferredEnvironment = Constants.GRADLE;
@@ -478,7 +479,7 @@ public class FSAConfiguration {
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles, pythonIgnoreSourceFiles,
-                ignoreSourceFiles, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, gradleIgnoreSourceFiles,
+                ignoreSourceFiles, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, gradleIgnoreSourceFiles, gradleIgnoredScopes,
                 paketResolveDependencies, paketIgnoredScopes, paketRunPreStep, paketPath, paketIgnoreSourceFiles,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, goIgnoreTestPackages, goIgnoreSourceFiles, rubyResolveDependencies, rubyRunBundleInstall,
                 rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles,

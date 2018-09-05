@@ -89,6 +89,8 @@ public class DependencyResolutionService {
 
         final boolean mavenResolveDependencies = config.isMavenResolveDependencies();
         final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
+        final String[] gradleIgnoredScopes = config.getGradleIgnoredScopes();
+
         final boolean mavenAggregateModules = config.isMavenAggregateModules();
         final boolean mavenIgnorePomModules = config.isMavenIgnorePomModules();
         final boolean mavenIgnoreSourceFiles = config.isMavenIgnoreSourceFiles();
@@ -154,7 +156,7 @@ public class DependencyResolutionService {
             }
 
             if (gradleResolveDependencies) {
-                dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), gradleIgnoreSourceFiles, gradleAggregateModules, config.getGradlePreferredEnvironment()));
+                dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), gradleIgnoreSourceFiles, gradleAggregateModules, config.getGradlePreferredEnvironment(), gradleIgnoredScopes));
                 this.gradleAggregateModules = gradleAggregateModules;
             }
 

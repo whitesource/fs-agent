@@ -23,7 +23,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private static final String JAR_EXTENSION = ".jar";
     public static final String PROJECT = "--- Project";
-    private String ignoredScopes;
+    private String[] ignoredScopes;
     private GradleLinesParser gradleLinesParser;
     private GradleCli gradleCli;
     private ArrayList<String> topLevelFoldersNames;
@@ -32,10 +32,11 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private final Logger logger = LoggerFactory.getLogger(GradleDependencyResolver.class);
 
-    public GradleDependencyResolver(boolean runAssembleCommand, boolean ignoreSourceCode, boolean gradleAggregateModules, String gradlePreferredEnvironment) {
+    public GradleDependencyResolver(boolean runAssembleCommand, boolean ignoreSourceCode, boolean gradleAggregateModules, String gradlePreferredEnvironment,String[] gradleIgnoredScopes) {
         super();
         gradleLinesParser = new GradleLinesParser(runAssembleCommand, gradlePreferredEnvironment);
         gradleCli = new GradleCli(gradlePreferredEnvironment);
+        this.ignoredScopes = gradleIgnoredScopes;
         topLevelFoldersNames = new ArrayList<>();
         this.ignoreSourceCode = ignoreSourceCode;
         this.gradleAggregateModules = gradleAggregateModules;
@@ -153,7 +154,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         directoryName = fileSeparator.concat(directoryName);
         List<String> lines = gradleCli.runGradleCmd(directory, gradleCommandParams);
         if (lines != null) {
-            dependencyInfos.addAll(gradleLinesParser.parseLines(lines, directory, directoryName));
+            dependencyInfos.addAll(gradleLinesParser.parseLines(lines, directory, directoryName, ignoredScopes));
         }
         return dependencyInfos;
     }
