@@ -85,14 +85,17 @@ public final class ConfigPropertyKeys {
     public static final String NPM_IGNORE_SCRIPTS                           = "npm.ignoreScripts";
     public static final String NPM_RESOLVE_DEPENDENCIES                     = "npm.resolveDependencies";
     public static final String NPM_INCLUDE_DEV_DEPENDENCIES                 = "npm.includeDevDependencies";
-    public static final String NPM_IGNORE_JAVA_SCRIPT_FILES                 = "npm.ignoreJavaScriptFiles";
     public static final String NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS   = "npm.timeoutDependenciesCollectorInSeconds";
     public static final String NPM_ACCESS_TOKEN                             = "npm.accessToken";
     public static final String NPM_IGNORE_NPM_LS_ERRORS                     = "npm.ignoreNpmLsErrors";
     public static final String NPM_YARN_PROJECT                             = "npm.yarnProject";
+    public static final String NPM_IGNORE_JAVA_SCRIPT_FILES                 = "npm.ignoreJavaScriptFiles";
+    public static final String NPM_IGNORE_SOURCE_FILES                      = "npm.ignoreSourceFiles";
+
 
     public static final String BOWER_RESOLVE_DEPENDENCIES   = "bower.resolveDependencies";
     public static final String BOWER_RUN_PRE_STEP           = "bower.runPreStep";
+    public static final String BOWER_IGNORE_SOURCE_FILES    = "bower.ignoreSourceFiles";
 
     public static final String PYTHON_RESOLVE_DEPENDENCIES      = "python.resolveDependencies";
     public static final String PYTHON_PIP_PATH                  = "python.pipPath";
@@ -100,18 +103,24 @@ public final class ConfigPropertyKeys {
     public static final String PYTHON_IS_WSS_PLUGIN_INSTALLED   = "python.isWssPluginInstalled";
     public static final String PYTHON_UNINSTALL_WSS_PLUGIN      = "python.uninstallWssPlugin";
     public static final String PYTHON_IGNORE_PIP_INSTALL_ERRORS = "python.ignorePipInstallErrors";
-    public static final String PYTHON_INSTALL_VIRTUALENV = "python.installVirtualenv";
-    public static final String PYTHON_RESOLVE_HIERARCHY_TREE = "python.resolveHierarchyTree";
-    public static final String PYTHON_RESOLVE_SETUP_PY_FILES = "python.resolveSetupPyFiles";
+    public static final String PYTHON_INSTALL_VIRTUALENV        = "python.installVirtualenv";
+    public static final String PYTHON_RESOLVE_HIERARCHY_TREE    = "python.resolveHierarchyTree";
+    public static final String PYTHON_RESOLVE_SETUP_PY_FILES    = "python.resolveSetupPyFiles";
+    public static final String PYTHON_IGNORE_SOURCE_FILES       = "python.ignoreSourceFiles";
 
     public static final String NUGET_RESOLVE_DEPENDENCIES   = "nuget.resolveDependencies";
     public static final String NUGET_RESTORE_DEPENDENCIES   = "nuget.restoreDependencies";
     public static final String NUGET_RUN_PRE_STEP           = "nuget.runPreStep";
+    public static final String NUGET_IGNORE_SOURCE_FILES    = "nuget.ignoreSourceFiles";
+
     public static final String MAVEN_IGNORED_SCOPES         = "maven.ignoredScopes";
     public static final String MAVEN_RESOLVE_DEPENDENCIES   = "maven.resolveDependencies";
     public static final String MAVEN_AGGREGATE_MODULES      = "maven.aggregateModules";
     public static final String MAVEN_IGNORE_POM_MODULES     = "maven.ignorePomModules";
-    public static final String DEPENDENCIES_ONLY            = "dependenciesOnly";
+    public static final String MAVEN_IGNORE_SOURCE_FILES    = "maven.ignoreSourceFiles";
+
+    public static final String IGNORE_SOURCE_FILES          = "ignoreSourceFiles";
+
     public static final String PROJECT_PER_SUBFOLDER        = "projectPerFolder";
     public static final String PROJECT_PER_FOLDER_INCLUDES  = "projectPerFolderIncludes";
     public static final String PROJECT_PER_FOLDER_EXCLUDES  = "projectPerFolderExcludes";
@@ -127,26 +136,32 @@ public final class ConfigPropertyKeys {
     public static final String ENDPOINT_PASS            = "endpoint.pass";
     public static final String ENDPOINT_SSL_ENABLED     = "endpoint.ssl";
 
-    public static final String GRADLE_RESOLVE_DEPENDENCIES = "gradle.resolveDependencies";
-    public static final String GRADLE_RUN_ASSEMBLE_COMMAND = "gradle.runAssembleCommand";
-    public static final String GRADLE_AGGREGATE_MODULES    = "gradle.aggregateModules";
+    public static final String GRADLE_RESOLVE_DEPENDENCIES  = "gradle.resolveDependencies";
+    public static final String GRADLE_RUN_ASSEMBLE_COMMAND  = "gradle.runAssembleCommand";
+    public static final String GRADLE_AGGREGATE_MODULES     = "gradle.aggregateModules";
     public static final String GRADLE_PREFERRED_ENVIRONMENT = "gradle.preferredEnvironment";
+    public static final String GRADLE_IGNORE_SOURCE_FILES   = "gradle.ignoreSourceFiles";
+    public static final String GRADLE_IGNORE_SCOPES   = "gradle.ignoredScopes";
+
 
     public static final String PAKET_RESOLVE_DEPENDENCIES   = "paket.resolveDependencies";
     public static final String PAKET_IGNORED_GROUPS         = "paket.ignoredGroups";
-    public static final String PAKET_IGNORE_FILES           = "paket.ignoreFiles";
     public static final String PAKET_RUN_PRE_STEP           = "paket.runPreStep";
     public static final String PAKET_EXE_PATH               = "paket.exePath";
+    public static final String PAKET_IGNORE_FILES               = "paket.ignoreFiles";
+    public static final String PAKET_IGNORE_SOURCE_FILES       = "paket.ignoreSourceFiles";
 
     public static final String GO_RESOLVE_DEPENDENCIES              = "go.resolveDependencies";
     public static final String GO_DEPENDENCY_MANAGER                = "go.dependencyManager";
     public static final String GO_COLLECT_DEPENDENCIES_AT_RUNTIME   = "go.collectDependenciesAtRuntime";
-    public static final String GO_GLIDE_IGNORE_TEST_PACKAGES = "go.glide.ignoreTestPackages";
+    public static final String GO_GLIDE_IGNORE_TEST_PACKAGES        = "go.glide.ignoreTestPackages";
+    public static final String GO_IGNORE_SOURCE_FILES               = "go.glide.ignoreSourceFiles";
 
     public static final String RUBY_RESOLVE_DEPENDENCIES    = "ruby.resolveDependencies";
     public static final String RUBY_RUN_BUNDLE_INSTALL      = "ruby.runBundleInstall";
     public static final String RUBY_OVERWRITE_GEM_FILE      = "ruby.overwriteGemFile";
     public static final String RUBY_INSTALL_MISSING_GEMS    = "ruby.installMissingGems";
+    public static final String RUBY_IGNORE_SOURCE_FILES     = "ruby.ignoreSourceFiles";
 
     public static final String PHP_RESOLVE_DEPENDENCIES     = "php.resolveDependencies";
     public static final String PHP_RUN_PRE_STEP             = "php.runPreStep";
@@ -156,9 +171,11 @@ public final class ConfigPropertyKeys {
     public static final String SBT_AGGREGATE_MODULES        = "sbt.aggregateModules";
     public static final String SBT_RUN_PRE_STEP             = "sbt.runPreStep";
     public static final String SBT_TARGET_FOLDER            = "sbt.targetFolder";
+    public static final String SBT_IGNORE_SOURCE_FILES      = "sbt.ignoreSourceFiles";
 
     public static final String HTML_RESOLVE_DEPENDENCIES    = "html.resolveDependencies";
 
+    public static final String DEPENDENCIES_ONLY            = "dependenciesOnly";
     public static final String WHITESOURCE_CONFIGURATION    = "whitesourceConfiguration";
 
     public static final String SCANNED_FOLDERS = "d";

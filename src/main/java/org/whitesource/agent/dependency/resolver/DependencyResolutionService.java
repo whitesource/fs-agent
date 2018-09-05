@@ -54,7 +54,7 @@ public class DependencyResolutionService {
 
     private final FilesScanner fileScanner;
     private final Collection<AbstractDependencyResolver> dependencyResolvers;
-    private final boolean dependenciesOnly;
+    private final boolean ignoreSourceFiles;
 
     private boolean separateProjects;
     private boolean mavenAggregateModules;
@@ -72,42 +72,52 @@ public class DependencyResolutionService {
         final boolean npmIgnoreScripts = config.isNpmIgnoreScripts();
         final boolean npmResolveDependencies = config.isNpmResolveDependencies();
         final boolean npmIncludeDevDependencies = config.isNpmIncludeDevDependencies();
-        final boolean npmIgnoreJavaScriptFiles = config.isNpmIgnoreJavaScriptFiles();
         final long npmTimeoutDependenciesCollector = config.getNpmTimeoutDependenciesCollector();
         final boolean npmIgnoreNpmLsErrors = config.getNpmIgnoreNpmLsErrors();
         final String npmAccessToken = config.getNpmAccessToken();
         final boolean npmYarnProject = config.getNpmYarnProject();
+        final boolean npmIgnoreSourceFiles = config.isNpmIgnoreSourceFiles();
 
         final boolean bowerResolveDependencies = config.isBowerResolveDependencies();
         final boolean bowerRunPreStep = config.isBowerRunPreStep();
+        final boolean bowerIgnoreSourceFiles = config.isBowerIgnoreSourceFiles();
 
         final boolean nugetResolveDependencies = config.isNugetResolveDependencies();
         final boolean nugetRestoreDependencies = config.isNugetRestoreDependencies();
         final boolean nugetRunPreStep = config.isNugetRunPreStep();
+        final boolean nugetIgnoreSourceFiles = config.isNugetIgnoreSourceFiles();
 
         final boolean mavenResolveDependencies = config.isMavenResolveDependencies();
         final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
+        final String[] gradleIgnoredScopes = config.getGradleIgnoredScopes();
+
         final boolean mavenAggregateModules = config.isMavenAggregateModules();
         final boolean mavenIgnorePomModules = config.isMavenIgnorePomModules();
+        final boolean mavenIgnoreSourceFiles = config.isMavenIgnoreSourceFiles();
 
         boolean pythonResolveDependencies = config.isPythonResolveDependencies();
         final String[] pythonRequirementsFileIncludes = config.getPythonRequirementsFileIncludes();
+        final boolean pythonIgnoreSourceFiles = config.isPythonIgnoreSourceFiles();
 
         boolean gradleResolveDependencies = config.isGradleResolveDependencies();
         boolean gradleAggregateModules = config.isGradleAggregateModules();
+        final boolean gradleIgnoreSourceFiles = config.isGradleIgnoreSourceFiles();
 
         final boolean paketResolveDependencies = config.isPaketResolveDependencies();
         final String[] paketIgnoredScopes = config.getPaketIgnoredScopes();
-        final boolean paketIgnoreFiles = config.getPaketIgnoreFiles();
         final boolean paketRunPreStep = config.isPaketRunPreStep();
         final String paketPath = config.getPaketPath();
+        final boolean paketIgnoreSourceFiles = config.isPaketIgnoreSourceFiles();
+
 
         final boolean goResolveDependencies = config.isGoResolveDependencies();
+        final boolean goIgnoreSourceFiles = config.isGoIgnoreSourceFiles();
 
         final boolean rubyResolveDependencies = config.isRubyResolveDependencies();
         final boolean rubyRunBundleInstall = config.isRubyRunBundleInstall();
         final boolean rubyOverwriteGemFile = config.isRubyOverwriteGemFile();
         final boolean rubyInstallMissingGems = config.isRubyInstallMissingGems();
+        final boolean rubyIgnoreSourceFiles = config.isRubyIgnoreSourceFiles();
 
         final boolean phpResolveDependencies = config.isPhpResolveDependencies();
         final boolean phpRunPreStep = config.isPhpRunPreStep();
@@ -117,60 +127,61 @@ public class DependencyResolutionService {
         final boolean sbtAggregateModules = config.isSbtAggregateModules();
         final boolean sbtRunPreStep = config.isSbtRunPreStep();
         final String sbtTargetFolder = config.getSbtTargetFolder();
+        final boolean sbtIgnoreSourceFiles = config.isSbtIgnoreSourceFiles();
 
         final boolean htmlResolveDependencies = config.isHtmlResolveDependencies();
 
-        dependenciesOnly = config.isDependenciesOnly();
+            ignoreSourceFiles = config.isIgnoreSourceFiles();
 
-        fileScanner = new FilesScanner();
-        dependencyResolvers = new ArrayList<>();
-        if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreJavaScriptFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmIgnoreNpmLsErrors, npmAccessToken, npmYarnProject, npmIgnoreScripts));
-        }
-        if (bowerResolveDependencies) {
-            dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep));
-        }
-        if (nugetResolveDependencies) {
-            String whitesourceConfiguration = config.getWhitesourceConfiguration();
-            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE, nugetRunPreStep));
-            dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies));
-        }
-        if (mavenResolveDependencies) {
-            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, dependenciesOnly, mavenIgnorePomModules));
-            this.mavenAggregateModules = mavenAggregateModules;
-        }
-        if (pythonResolveDependencies) {
-            dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(),
-                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree(), pythonRequirementsFileIncludes));
-        }
+            fileScanner = new FilesScanner();
+            dependencyResolvers = new ArrayList<>();
+            if (npmResolveDependencies) {
+                dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreSourceFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmIgnoreNpmLsErrors, npmAccessToken, npmYarnProject, npmIgnoreScripts));
+            }
+            if (bowerResolveDependencies) {
+                dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep, bowerIgnoreSourceFiles));
+            }
+            if (nugetResolveDependencies) {
+                String whitesourceConfiguration = config.getWhitesourceConfiguration();
+                dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE, nugetRunPreStep, nugetIgnoreSourceFiles));
+                dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies, nugetIgnoreSourceFiles));
+            }
+            if (mavenResolveDependencies) {
+                dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules));
+                this.mavenAggregateModules = mavenAggregateModules;
+            }
+            if (pythonResolveDependencies) {
+                dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(),
+                        config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree(), pythonRequirementsFileIncludes, pythonIgnoreSourceFiles));
+            }
 
-        if (gradleResolveDependencies) {
-            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), dependenciesOnly, gradleAggregateModules, config.getGradlePreferredEnvironment()));
-            this.gradleAggregateModules = gradleAggregateModules;
-        }
+            if (gradleResolveDependencies) {
+                dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), gradleIgnoreSourceFiles, gradleAggregateModules, config.getGradlePreferredEnvironment(), gradleIgnoredScopes));
+                this.gradleAggregateModules = gradleAggregateModules;
+            }
 
-        if (paketResolveDependencies) {
-            dependencyResolvers.add(new PaketDependencyResolver(paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath));
-        }
+            if (paketResolveDependencies) {
+                dependencyResolvers.add(new PaketDependencyResolver(paketIgnoredScopes, paketIgnoreSourceFiles, paketRunPreStep, paketPath));
+            }
 
-        if (goResolveDependencies) {
-            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), config.isDependenciesOnly(), config.isGoIgnoreTestPackages()));
-        }
+            if (goResolveDependencies) {
+                dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles, config.isGoIgnoreTestPackages()));
+            }
 
-        if (rubyResolveDependencies) {
-            dependencyResolvers.add(new RubyDependencyResolver(rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems));
-        }
+            if (rubyResolveDependencies) {
+                dependencyResolvers.add(new RubyDependencyResolver(rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles));
+            }
 
-        if (phpResolveDependencies) {
-            dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies));
-        }
+            if (phpResolveDependencies) {
+                dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies));
+            }
 
-        if (htmlResolveDependencies) {
+            if (htmlResolveDependencies) {
             dependencyResolvers.add(new HtmlDependencyResolver());
         }
 
         if (sbtResolveDependencies) {
-            dependencyResolvers.add(new SbtDependencyResolver(sbtAggregateModules, dependenciesOnly, sbtRunPreStep, sbtTargetFolder));
+            dependencyResolvers.add(new SbtDependencyResolver(sbtAggregateModules, sbtIgnoreSourceFiles, sbtRunPreStep, sbtTargetFolder));
             this.sbtAggregateModules = sbtAggregateModules;
         }
 
@@ -195,9 +206,7 @@ public class DependencyResolutionService {
         return separateProjects;
     }
 
-    public boolean isDependenciesOnly() {
-        return dependenciesOnly;
-    }
+    public boolean isIgnoreSourceFiles() { return ignoreSourceFiles; }
 
     public boolean shouldResolveDependencies(Set<String> allFoundFiles) {
         for (AbstractDependencyResolver dependencyResolver : dependencyResolvers) {
@@ -248,8 +257,9 @@ public class DependencyResolutionService {
                 ResolutionResult result = null;
                 try {
                     result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
-                } catch (FileNotFoundException e) {
+                } catch (Exception e) {
                     logger.error(e.getMessage());
+                    logger.debug("{}" , e.getStackTrace());
                 }
                 resolutionResults.add(result);
 
@@ -313,14 +323,21 @@ public class DependencyResolutionService {
         //reduce the dependencies and duplicates files
         Set<String> topFolders = new HashSet<>();
         topFolderResolverMap.entrySet().forEach((resolverEntry) -> topFolders.addAll(resolverEntry.getKey().getTopFoldersFound().keySet()));
-        //remove all folders that have a parent already mapped
-        topFolders.stream().sorted().forEach(topFolderParent -> {
-            topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
-                if (!(dependencyResolver instanceof HtmlDependencyResolver)) {
-                    resolvedFolder.getTopFoldersFound().entrySet().removeIf(topFolderChild -> isChildFolder(topFolderChild.getKey(), topFolderParent));
-                }
-            });
-        });
+
+        // Take all resolvers and their folders
+        for(Map.Entry<ResolvedFolder, AbstractDependencyResolver> entry : topFolderResolverMap.entrySet()) {
+            AbstractDependencyResolver resolver = entry.getValue();
+            ResolvedFolder resolvedFolder = entry.getKey();
+            if (resolver != null && resolvedFolder != null) {
+                // All folders of the current resolver (top folders and sub folders)
+                Set<String> foldersFound = resolvedFolder.getTopFoldersFound().keySet();
+                // Get the relevant folders for the current resolver (can be all folders or top folders only ...)
+                Collection<String> foldersForResolver = resolver.getRelevantScannedFolders(foldersFound);
+                // Remove all the irrelevant folders
+                resolvedFolder.getTopFoldersFound().keySet().removeIf(folder -> !foldersForResolver.contains(folder));
+            }
+        }
+
     }
 
     private boolean isChildFolder(String childFolder, String topFolderParent) {

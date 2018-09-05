@@ -5,10 +5,11 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.DependencyResolutionService;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
-import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.FSAConfigProperties;
+import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.nio.file.Paths;
@@ -21,31 +22,43 @@ import java.util.List;
 public class DependencyResolversTest {
 
     @Ignore
-    @Test
+//    @Test
     public void shouldReturnDependenciesBower() {
         testBowerResolve(false);
     }
 
     @Ignore
-    @Test
+//    @Test
     public void shouldReturnDependenciesTreeBower() {
         testBowerResolve(true);
     }
 
     @Ignore
-    @Test
+//    @Test
     public void shouldReturnDependenciesNpm() {
         testNpmResolve(false);
     }
 
-    @Ignore
+
+//    @Ignore
     @Test
+    public void npmIgnoreSourceFilesTest() {
+        String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\npm\\");
+        List<ResolutionResult> results = getResolutionResults(Arrays.asList(folderPath), "false");
+        List<ResolutionResult> resultsISF = getResolutionResults(Arrays.asList(folderPath), "true");
+        List<List> bothExcludes = TestHelper.getExcludesFromDependencyResult(results, resultsISF, DependencyType.NPM);
+        String[] includes = new String[]{"**/*.jar", "**/*.js", "**/*.tgz"};
+        Assert.assertFalse(TestHelper.checkResultOfScanFiles(folderPath, bothExcludes.get(0), bothExcludes.get(1), includes, DependencyType.NPM));
+    }
+
+    @Ignore
+//    @Test
     public void shouldReturnDependenciesTreeNpm() {
         testNpmResolve(true);
     }
 
     @Ignore
-    @Test
+//    @Test
     public void shouldResolvePackageJson() {
         String folderParent = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\npm\\");
 
@@ -54,8 +67,8 @@ public class DependencyResolversTest {
         DependencyInfo dependencyInfo = results.get(0).getResolvedProjects().keySet().stream().findFirst().get().getDependencies().stream().findFirst().get();
         Assert.assertNotNull(dependencyInfo.getArtifactId());
     }
-
-    @Test
+    @Ignore
+//    @Test
     public void testRegexInNpmResolver() {
         String problematicLine = " ├── UNMET PEER DEPENDENCY watchify@>=3 <4";
         NpmLsJsonDependencyCollector npmLsJsonDependencyCollector = new NpmLsJsonDependencyCollector(false, 60, false, false);
@@ -64,9 +77,7 @@ public class DependencyResolversTest {
 
     private void testNpmResolve(boolean checkChildren) {
         String folderParent = TestHelper.FOLDER_WITH_NPN_PROJECTS;
-
         List<ResolutionResult> results = getResolutionResults(Arrays.asList(folderParent));
-
         TestHelper.testDependencyResult(checkChildren, results);
     }
 
@@ -76,6 +87,16 @@ public class DependencyResolversTest {
         props.setProperty(ConfigPropertyKeys.NPM_INCLUDE_DEV_DEPENDENCIES, "false");
         props.setProperty(ConfigPropertyKeys.NPM_RUN_PRE_STEP, "true");
 
+        ResolverConfiguration resolverConfiguration = new FSAConfiguration(props).getResolver();
+        DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(resolverConfiguration);
+        return dependencyResolutionService.resolveDependencies(pathsToScan, new String[0]);
+    }
+
+    private List<ResolutionResult> getResolutionResults(List<String> pathsToScan,String isIgnoreSourceFiles) {
+        FSAConfigProperties props = new FSAConfigProperties();
+        props.setProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, "true");
+        props.setProperty(ConfigPropertyKeys.NPM_INCLUDE_DEV_DEPENDENCIES, "false");
+        props.setProperty(ConfigPropertyKeys.NPM_IGNORE_SOURCE_FILES,isIgnoreSourceFiles );
         ResolverConfiguration resolverConfiguration = new FSAConfiguration(props).getResolver();
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(resolverConfiguration);
         return dependencyResolutionService.resolveDependencies(pathsToScan, new String[0]);

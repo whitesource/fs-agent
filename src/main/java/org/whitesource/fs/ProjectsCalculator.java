@@ -52,6 +52,9 @@ public class ProjectsCalculator {
         // read csv directory list
         files.addAll(fsaConfiguration.getDependencyDirs());
 
+        // add directory list to appPath map - defaultKey
+        fsaConfiguration.getAppPathsToDependencyDirs().get(FSAConfiguration.DEFAULT_KEY).addAll(files);
+
         // run the agent
         FileSystemAgent agent = new FileSystemAgent(fsaConfiguration, files);
         // create projects as usual

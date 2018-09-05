@@ -217,7 +217,7 @@ public class FSAConfiguration {
             dependencyDirs = new ArrayList<>();
 
         // validate scanned folder
-        if (dependencyDirs.isEmpty()) {
+        if (dependencyDirs.isEmpty() && StringUtils.isEmpty(fileListPath) && (offlineRequestFiles == null || offlineRequestFiles.isEmpty())) {
             dependencyDirs.add(Constants.DOT);
         }
 
@@ -312,10 +312,10 @@ public class FSAConfiguration {
             if (!key.equals("defaultKey")) {
                 File file = new File(key);
                 if (!file.exists()) {
-                    errors.add("The path " + key + " does not exist");
+                    errors.add("Effective Usage Analysis will not run if the -appPath parameter references an invalid file path. Check that the -appPath parameter specifies a valid path");
                     return false;
                 } else if (!file.isFile()) {
-                    errors.add("The path " + key + " is not file");
+                    errors.add("Effective Usage Analysis will not run if the -appPath parameter references an invalid file path. Check that the -appPath parameter specifies a valid path");
                     return false;
                 } else {
                     return true;
@@ -365,7 +365,7 @@ public class FSAConfiguration {
         boolean npmIgnoreScripts = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_SCRIPTS, false);
         boolean npmResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, true);
         boolean npmIncludeDevDependencies = config.getBooleanProperty(ConfigPropertyKeys.NPM_INCLUDE_DEV_DEPENDENCIES, false);
-        boolean npmIgnoreJavaScriptFiles = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_JAVA_SCRIPT_FILES, true);
+
         long npmTimeoutDependenciesCollector = config.getLongProperty(ConfigPropertyKeys.NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
         boolean npmIgnoreNpmLsErrors = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_NPM_LS_ERRORS, false);
         String npmAccessToken = config.getProperty(ConfigPropertyKeys.NPM_ACCESS_TOKEN);
@@ -382,8 +382,6 @@ public class FSAConfiguration {
         String[] mavenIgnoredScopes = config.getListProperty(ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
         boolean mavenAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, false);
         boolean mavenIgnoredPomModules = config.getBooleanProperty(MAVEN_IGNORE_POM_MODULES, true);
-
-        boolean dependenciesOnly = config.getBooleanProperty(ConfigPropertyKeys.DEPENDENCIES_ONLY, false);
 
         String whiteSourceConfiguration = config.getProperty(ConfigPropertyKeys.PROJECT_CONFIGURATION_PATH);
 
@@ -407,6 +405,7 @@ public class FSAConfiguration {
         boolean gradleResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
         boolean gradleAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
+        String[] gradleIgnoredScopes = config.getListProperty(ConfigPropertyKeys.GRADLE_IGNORE_SCOPES, new String[0]);
         String gradlePreferredEnvironment = config.getProperty(ConfigPropertyKeys.GRADLE_PREFERRED_ENVIRONMENT, Constants.GRADLE);
         if (gradlePreferredEnvironment.isEmpty()){
             gradlePreferredEnvironment = Constants.GRADLE;
@@ -414,7 +413,6 @@ public class FSAConfiguration {
 
         boolean paketResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PAKET_RESOLVE_DEPENDENCIES, true);
         String[] paketIgnoredScopes = config.getListProperty(ConfigPropertyKeys.PAKET_IGNORED_GROUPS, null);
-        boolean paketIgnoreFiles = config.getBooleanProperty(ConfigPropertyKeys.PAKET_IGNORE_FILES, true);
         boolean paketRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.PAKET_RUN_PRE_STEP, false);
         String paketPath = config.getProperty(ConfigPropertyKeys.PAKET_EXE_PATH, null);
 
@@ -439,17 +437,53 @@ public class FSAConfiguration {
 
         boolean htmlResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
 
-        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreJavaScriptFiles,
+        boolean npmIgnoreSourceFiles;
+        boolean bowerIgnoreSourceFiles;
+        boolean nugetIgnoreSourceFiles;
+        boolean mavenIgnoreSourceFiles;
+        boolean pythonIgnoreSourceFiles;
+        boolean gradleIgnoreSourceFiles;
+        boolean paketIgnoreSourceFiles;
+        boolean sbtIgnoreSourceFiles;
+        boolean goIgnoreSourceFiles;
+        boolean rubyIgnoreSourceFiles;
+        boolean ignoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.IGNORE_SOURCE_FILES, ConfigPropertyKeys.DEPENDENCIES_ONLY, false);
+
+        if (ignoreSourceFiles == true){
+            npmIgnoreSourceFiles 	 = true;
+            bowerIgnoreSourceFiles	 = true;
+            nugetIgnoreSourceFiles 	 = true;
+            mavenIgnoreSourceFiles   = true;
+            gradleIgnoreSourceFiles  = true;
+            paketIgnoreSourceFiles   = true;
+            sbtIgnoreSourceFiles     = true;
+            goIgnoreSourceFiles      = true;
+            rubyIgnoreSourceFiles    = true;
+            pythonIgnoreSourceFiles  = true;
+        } else {
+            npmIgnoreSourceFiles 	 = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_SOURCE_FILES, ConfigPropertyKeys.NPM_IGNORE_JAVA_SCRIPT_FILES,false);
+            bowerIgnoreSourceFiles	 = config.getBooleanProperty(ConfigPropertyKeys.BOWER_IGNORE_SOURCE_FILES, false);
+            nugetIgnoreSourceFiles 	 = config.getBooleanProperty(ConfigPropertyKeys.NUGET_IGNORE_SOURCE_FILES, true);
+            mavenIgnoreSourceFiles   = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_IGNORE_SOURCE_FILES, false);
+            gradleIgnoreSourceFiles  = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_IGNORE_SOURCE_FILES, false);
+            paketIgnoreSourceFiles   = config.getBooleanProperty(ConfigPropertyKeys.PAKET_IGNORE_SOURCE_FILES, ConfigPropertyKeys.PAKET_IGNORE_FILES, false);
+            sbtIgnoreSourceFiles     = config.getBooleanProperty(ConfigPropertyKeys.SBT_IGNORE_SOURCE_FILES, false);
+            goIgnoreSourceFiles      = config.getBooleanProperty(ConfigPropertyKeys.GO_IGNORE_SOURCE_FILES, false);
+            pythonIgnoreSourceFiles  = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_SOURCE_FILES, true);
+            rubyIgnoreSourceFiles    = config.getBooleanProperty(ConfigPropertyKeys.RUBY_IGNORE_SOURCE_FILES, true);
+        }
+
+        return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreSourceFiles,
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
-                bowerResolveDependencies, bowerRunPreStep, nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep,
-                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules,
+                bowerResolveDependencies, bowerRunPreStep, bowerIgnoreSourceFiles, nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep, nugetIgnoreSourceFiles,
+                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
-                pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles,
-                dependenciesOnly, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, paketResolveDependencies,
-                paketIgnoredScopes, paketIgnoreFiles, paketRunPreStep, paketPath,
-                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, goIgnoreTestPackages, rubyResolveDependencies, rubyRunBundleInstall,
-                rubyOverwriteGemFile, rubyInstallMissingGems,
-                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, htmlResolveDependencies);
+                pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles, pythonIgnoreSourceFiles,
+                ignoreSourceFiles, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, gradleIgnoreSourceFiles, gradleIgnoredScopes,
+                paketResolveDependencies, paketIgnoredScopes, paketRunPreStep, paketPath, paketIgnoreSourceFiles,
+                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, goIgnoreTestPackages, goIgnoreSourceFiles, rubyResolveDependencies, rubyRunBundleInstall,
+                rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles,
+                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, sbtIgnoreSourceFiles, htmlResolveDependencies);
     }
 
     private RequestConfiguration getRequest(FSAConfigProperties config, String apiToken, String userKey, String projectName, String projectToken, String scanComment) {
