@@ -15,13 +15,13 @@
  */
 package org.whitesource.agent.dependency.resolver;
 
-import org.apache.bcel.classfile.ConstantString;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyType;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.*;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,6 +52,25 @@ public abstract class AbstractDependencyResolver {
     protected abstract String[] getBomPattern();
 
     protected abstract Collection<String> getLanguageExcludes();
+
+    protected Collection<String> getRelevantScannedFolders(Collection<String> scannedFolders) {
+        if (scannedFolders == null) {
+            return new HashSet<>();
+        }
+        if (scannedFolders.isEmpty()) {
+            return scannedFolders;
+        }
+        Collection<String> foldersToRemove = new HashSet<>();
+        for(String folder : scannedFolders) {
+            for (String subFolder : scannedFolders) {
+                if (subFolder.contains(folder) && !subFolder.equals(folder)) {
+                    foldersToRemove.add(subFolder);
+                }
+            }
+        }
+        scannedFolders.removeAll(foldersToRemove);
+        return scannedFolders;
+    }
 
     protected boolean printResolvedFolder() {
         return true;

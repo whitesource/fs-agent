@@ -257,8 +257,9 @@ public class DependencyResolutionService {
                 ResolutionResult result = null;
                 try {
                     result = dependencyResolver.resolveDependencies(resolvedFolder.getOriginalScanFolder(), topFolder, bomFiles);
-                } catch (FileNotFoundException e) {
+                } catch (Exception e) {
                     logger.error(e.getMessage());
+                    logger.debug("{}" , e.getStackTrace());
                 }
                 resolutionResults.add(result);
 
@@ -322,14 +323,21 @@ public class DependencyResolutionService {
         //reduce the dependencies and duplicates files
         Set<String> topFolders = new HashSet<>();
         topFolderResolverMap.entrySet().forEach((resolverEntry) -> topFolders.addAll(resolverEntry.getKey().getTopFoldersFound().keySet()));
-        //remove all folders that have a parent already mapped
-        topFolders.stream().sorted().forEach(topFolderParent -> {
-            topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
-                if (!(dependencyResolver instanceof HtmlDependencyResolver)) {
-                    resolvedFolder.getTopFoldersFound().entrySet().removeIf(topFolderChild -> isChildFolder(topFolderChild.getKey(), topFolderParent));
-                }
-            });
-        });
+
+        // Take all resolvers and their folders
+        for(Map.Entry<ResolvedFolder, AbstractDependencyResolver> entry : topFolderResolverMap.entrySet()) {
+            AbstractDependencyResolver resolver = entry.getValue();
+            ResolvedFolder resolvedFolder = entry.getKey();
+            if (resolver != null && resolvedFolder != null) {
+                // All folders of the current resolver (top folders and sub folders)
+                Set<String> foldersFound = resolvedFolder.getTopFoldersFound().keySet();
+                // Get the relevant folders for the current resolver (can be all folders or top folders only ...)
+                Collection<String> foldersForResolver = resolver.getRelevantScannedFolders(foldersFound);
+                // Remove all the irrelevant folders
+                resolvedFolder.getTopFoldersFound().keySet().removeIf(folder -> !foldersForResolver.contains(folder));
+            }
+        }
+
     }
 
     private boolean isChildFolder(String childFolder, String topFolderParent) {
