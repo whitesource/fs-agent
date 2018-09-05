@@ -1,21 +1,21 @@
 package org.whitesource.agent.dependency.resolver.gradle;
 
-import com.sun.xml.internal.fastinfoset.stax.events.Util;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
 import org.whitesource.agent.utils.FilesUtils;
-
+import org.whitesource.agent.utils.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -285,9 +285,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                     if (folder.isDirectory()) {
                         for (File file : folder.listFiles()) {
                             if ((file.getName().contains(JAR_EXTENSION) || file.getName().contains(AAR_EXTENTION)) && !file.getName().contains("-sources")) {
-                                String pattern = Pattern.quote(fileSeparator);
-                                String[] splitFileName = folder.getName().split(pattern);
-                                String sha1 = splitFileName[splitFileName.length - 1];
+                                String sha1 = getSha1(file.getPath());
                                 dependencyFile = new DependencyFile(sha1,file);
                                 break outerloop;
                             }
@@ -345,7 +343,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 }
                 List<String> lines = gradleCli.runCmd(rootDirectory, gradleCommandParams);
                 removeTempJavaFolder();
-                if (lines != null) {
+                if (!lines.isEmpty()) {
                     for (String line : lines) {
                         if (line.contains("BUILD SUCCESSFUL")) {
                             return true;
