@@ -327,13 +327,10 @@ public class DependencyResolutionService {
             AbstractDependencyResolver resolver = entry.getValue();
             ResolvedFolder resolvedFolder = entry.getKey();
             if (resolver != null && resolvedFolder != null) {
+                // All folders of the current resolver (top folders and sub folders)
                 Set<String> foldersFound = resolvedFolder.getTopFoldersFound().keySet();
-                // For each resolver create a set of its folders and the topFolders (of other resolvers)
-                Set<String> allFoldersSet = new HashSet<>();
-                allFoldersSet.addAll(foldersFound);
-                allFoldersSet.addAll(topFolders);
                 // Get the relevant folders for the current resolver (can be all folders or top folders only ...)
-                Collection<String> foldersForResolver = resolver.getRelevantScannedFolders(allFoldersSet);
+                Collection<String> foldersForResolver = resolver.getRelevantScannedFolders(foldersFound);
                 // Remove all the irrelevant folders
                 resolvedFolder.getTopFoldersFound().keySet().removeIf(folder -> !foldersForResolver.contains(folder));
             }
