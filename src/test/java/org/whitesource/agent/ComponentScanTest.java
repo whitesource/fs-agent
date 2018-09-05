@@ -26,6 +26,8 @@ public class ComponentScanTest {
         File config = TestHelper.getFileFromResources(CommandLineArgs.CONFIG_FILE_NAME);
         String resolverFolder = Paths.get(config.getParent(), "resolver/nuget").toString();
         props.put(Constants.DIRECTORY, resolverFolder);
+//        props.put(ConfigPropertyKeys.SCAN_DOCKER_IMAGES, "true");
+        props.put(ConfigPropertyKeys.SCAN_PACKAGE_MANAGER, "true");
         ComponentScan componentScan = new ComponentScan(props);
 
         // Act
