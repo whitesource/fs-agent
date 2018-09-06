@@ -345,7 +345,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                         fillDependency(sha1, partialDependency, version, gemLockFile, pathToGems, dependencyInfos);
                     }
                 } catch (Exception e) {
-                    logger.warn("Could not remove partial dependency with invalid version {}", e.getMessage());
+                    logger.warn("Could not remove partial dependency {} with invalid version {}",partialDependency.getGroupId(), e.getMessage());
                     logger.debug("stacktrace {}", e.getStackTrace());
                 }
             }
@@ -566,6 +566,10 @@ class GemFileNameFilter implements FilenameFilter{
     }
     @Override
     public boolean accept(File dir, String name) {
-        return name.toLowerCase().startsWith(fileName) && name.endsWith(Constants.DOT + GEM);
+        if(name.toLowerCase().startsWith(fileName) && name.endsWith(Constants.DOT + GEM)) {
+            int indx = name.toLowerCase().indexOf(fileName.toLowerCase()) + fileName.length() + 1; // index of first char after fileName + "-"
+            return Character.isDigit(name.charAt(indx));
+        }
+        return false;
     }
 }
