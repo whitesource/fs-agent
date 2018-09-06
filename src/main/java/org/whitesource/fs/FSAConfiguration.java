@@ -405,9 +405,10 @@ public class FSAConfiguration {
         boolean gradleResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
         boolean gradleAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
+        boolean gradleRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RUN_PRE_STEP, false);
         String[] gradleIgnoredScopes = config.getListProperty(ConfigPropertyKeys.GRADLE_IGNORE_SCOPES, new String[0]);
         String gradlePreferredEnvironment = config.getProperty(ConfigPropertyKeys.GRADLE_PREFERRED_ENVIRONMENT, Constants.GRADLE);
-        if (gradlePreferredEnvironment.isEmpty()){
+        if (gradlePreferredEnvironment.isEmpty()) {
             gradlePreferredEnvironment = Constants.GRADLE;
         }
 
@@ -449,28 +450,28 @@ public class FSAConfiguration {
         boolean rubyIgnoreSourceFiles;
         boolean ignoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.IGNORE_SOURCE_FILES, ConfigPropertyKeys.DEPENDENCIES_ONLY, false);
 
-        if (ignoreSourceFiles == true){
-            npmIgnoreSourceFiles 	 = true;
-            bowerIgnoreSourceFiles	 = true;
-            nugetIgnoreSourceFiles 	 = true;
-            mavenIgnoreSourceFiles   = true;
-            gradleIgnoreSourceFiles  = true;
-            paketIgnoreSourceFiles   = true;
-            sbtIgnoreSourceFiles     = true;
-            goIgnoreSourceFiles      = true;
-            rubyIgnoreSourceFiles    = true;
-            pythonIgnoreSourceFiles  = true;
+        if (ignoreSourceFiles == true) {
+            npmIgnoreSourceFiles = true;
+            bowerIgnoreSourceFiles = true;
+            nugetIgnoreSourceFiles = true;
+            mavenIgnoreSourceFiles = true;
+            gradleIgnoreSourceFiles = true;
+            paketIgnoreSourceFiles = true;
+            sbtIgnoreSourceFiles = true;
+            goIgnoreSourceFiles = true;
+            rubyIgnoreSourceFiles = true;
+            pythonIgnoreSourceFiles = true;
         } else {
-            npmIgnoreSourceFiles 	 = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_SOURCE_FILES, ConfigPropertyKeys.NPM_IGNORE_JAVA_SCRIPT_FILES,false);
-            bowerIgnoreSourceFiles	 = config.getBooleanProperty(ConfigPropertyKeys.BOWER_IGNORE_SOURCE_FILES, false);
-            nugetIgnoreSourceFiles 	 = config.getBooleanProperty(ConfigPropertyKeys.NUGET_IGNORE_SOURCE_FILES, true);
-            mavenIgnoreSourceFiles   = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_IGNORE_SOURCE_FILES, false);
-            gradleIgnoreSourceFiles  = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_IGNORE_SOURCE_FILES, false);
-            paketIgnoreSourceFiles   = config.getBooleanProperty(ConfigPropertyKeys.PAKET_IGNORE_SOURCE_FILES, ConfigPropertyKeys.PAKET_IGNORE_FILES, false);
-            sbtIgnoreSourceFiles     = config.getBooleanProperty(ConfigPropertyKeys.SBT_IGNORE_SOURCE_FILES, false);
-            goIgnoreSourceFiles      = config.getBooleanProperty(ConfigPropertyKeys.GO_IGNORE_SOURCE_FILES, false);
-            pythonIgnoreSourceFiles  = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_SOURCE_FILES, true);
-            rubyIgnoreSourceFiles    = config.getBooleanProperty(ConfigPropertyKeys.RUBY_IGNORE_SOURCE_FILES, true);
+            npmIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_SOURCE_FILES, ConfigPropertyKeys.NPM_IGNORE_JAVA_SCRIPT_FILES, false);
+            bowerIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.BOWER_IGNORE_SOURCE_FILES, false);
+            nugetIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.NUGET_IGNORE_SOURCE_FILES, true);
+            mavenIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_IGNORE_SOURCE_FILES, false);
+            gradleIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_IGNORE_SOURCE_FILES, false);
+            paketIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.PAKET_IGNORE_SOURCE_FILES, ConfigPropertyKeys.PAKET_IGNORE_FILES, false);
+            sbtIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.SBT_IGNORE_SOURCE_FILES, false);
+            goIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.GO_IGNORE_SOURCE_FILES, false);
+            pythonIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_SOURCE_FILES, true);
+            rubyIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.RUBY_IGNORE_SOURCE_FILES, true);
         }
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreSourceFiles,
@@ -479,7 +480,7 @@ public class FSAConfiguration {
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles, pythonIgnoreSourceFiles,
-                ignoreSourceFiles, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, gradleIgnoreSourceFiles, gradleIgnoredScopes,
+                ignoreSourceFiles, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, gradleIgnoreSourceFiles, gradleRunPreStep, gradleIgnoredScopes,
                 paketResolveDependencies, paketIgnoredScopes, paketRunPreStep, paketPath, paketIgnoreSourceFiles,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, goIgnoreTestPackages, goIgnoreSourceFiles, rubyResolveDependencies, rubyRunBundleInstall,
                 rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles,

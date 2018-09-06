@@ -143,6 +143,6 @@ public class FSAConfigProperties extends Properties {
         if (StringUtils.isNotBlank(includesString)) {
             return getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         }
-        return new String[0];
+        return getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, ".*.*").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
     }
 }

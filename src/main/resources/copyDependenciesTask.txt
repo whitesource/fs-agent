@@ -1,0 +1,9 @@
+task copyDependencies(type: Copy) {
+   from configurations.runtime
+   from configurations.testCompile
+   from configurations.testRuntime
+   from configurations.compileOnly
+   from configurations.testCompileOnly
+   from configurations.compile
+    into "lib"
+}

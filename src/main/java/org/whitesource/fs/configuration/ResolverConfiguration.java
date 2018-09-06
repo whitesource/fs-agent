@@ -26,7 +26,6 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class ResolverConfiguration {
 
-
     /* --- Constructors --- */
 
     @JsonCreator
@@ -77,6 +76,7 @@ public class ResolverConfiguration {
             @JsonProperty(GRADLE_AGGREGATE_MODULES) boolean gradleAggregateModules,
             @JsonProperty(GRADLE_PREFERRED_ENVIRONMENT) String gradlePreferredEnvironment,
             @JsonProperty(GRADLE_IGNORE_SOURCE_FILES) boolean gradleIgnoreSourceFiles,
+            @JsonProperty(GRADLE_RUN_PRE_STEP) boolean gradleRunPreStep,
             @JsonProperty(GRADLE_IGNORE_SCOPES) String[] gradleIgnoredScopes,
 
             @JsonProperty(PAKET_RESOLVE_DEPENDENCIES) boolean paketResolveDependencies,
@@ -152,6 +152,8 @@ public class ResolverConfiguration {
         this.gradleAggregateModules     = gradleAggregateModules;
         this.gradleRunAssembleCommand   = gradleRunAssembleCommand;
         this.gradlePreferredEnvironment = gradlePreferredEnvironment;
+        this.gradleIgnoreSourceFiles    = gradleIgnoreSourceFiles;
+        this.gradleRunPreStep           = gradleRunPreStep;
         this.gradleIgnoreSourceFiles    = gradleIgnoreSourceFiles;
         this.gradleIgnoredScopes        = gradleIgnoredScopes;
 
@@ -234,6 +236,7 @@ public class ResolverConfiguration {
     private boolean gradleAggregateModules;
     private String gradlePreferredEnvironment;
     private boolean gradleIgnoreSourceFiles;
+    private boolean gradleRunPreStep;
     private String[] gradleIgnoredScopes;
 
     private final boolean pythonIsWssPluginInstalled;
@@ -452,6 +455,9 @@ public class ResolverConfiguration {
     @JsonProperty(GRADLE_IGNORE_SOURCE_FILES)
     public boolean isGradleIgnoreSourceFiles() { return gradleIgnoreSourceFiles; }
 
+    @JsonProperty(GRADLE_RUN_PRE_STEP)
+    public boolean isGradleRunPreStep() { return gradleRunPreStep; }
+
     @JsonProperty(PAKET_RESOLVE_DEPENDENCIES)
     public boolean isPaketResolveDependencies() {
         return paketResolveDependencies;
@@ -599,6 +605,10 @@ public class ResolverConfiguration {
         return this.gradleIgnoredScopes;
     }
 
+    public void setGradleRunPreStep(boolean gradleRunPreStep) {
+        this.gradleRunPreStep = gradleRunPreStep;
+    }
+
     public void setPhpResolveDependencies(boolean phpResolveDependencies) {
         this.phpResolveDependencies = phpResolveDependencies;
     }
@@ -664,6 +674,7 @@ public class ResolverConfiguration {
                 ", gradleRunAssembleCommand=" + gradleRunAssembleCommand +
                 ", gradle.aggregateModules=" + gradleAggregateModules + '\n' +
                 ", gradle.IgnoreSourceFiles=" + gradleIgnoreSourceFiles + '\n' +
+                ", gradle.runPreStep=" + gradleRunPreStep + '\n' +
                 ", gradle.IgnoredScopes=" + Arrays.toString(gradleIgnoredScopes) +
                 ", paketResolveDependencies=" + paketResolveDependencies +
                 ", paketIgnoredScopes=" + Arrays.toString(paketIgnoredScopes) +
