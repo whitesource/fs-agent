@@ -318,7 +318,7 @@ public class DependencyResolutionService {
     }
 
     /* --- Private methods --- */
-//    TODO remove comment WSE-756 and replace with the function above
+//    TODO remove comment WSE-756 and replace with the function from line 343
 //    private void reduceDependencies(Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap) {
 //        //reduce the dependencies and duplicates files
 //        Set<String> topFolders = new HashSet<>();
