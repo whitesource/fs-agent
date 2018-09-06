@@ -124,7 +124,9 @@ public class FilesScanner {
                 // remove from list folders that are children of the one found so they will not be calculated twice
                 foldersGroupedByLengthMap.entrySet().removeIf(otherFolder -> {
                     Path otherFolderPath = Paths.get(otherFolder.getKey());
-                    Path folderPath = Paths.get(folder);
+                    //    TODO remove comment WSE-756 and remove line 129
+//                    Path folderPath = Paths.get(folder);
+                    Path folderPath = Paths.get(folder).getParent();
 
                     boolean shouldRemove = false;
                     try {
