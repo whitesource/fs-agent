@@ -318,26 +318,40 @@ public class DependencyResolutionService {
     }
 
     /* --- Private methods --- */
+//    TODO remove comment WSE-756 and replace with the function above
+//    private void reduceDependencies(Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap) {
+//        //reduce the dependencies and duplicates files
+//        Set<String> topFolders = new HashSet<>();
+//        topFolderResolverMap.entrySet().forEach((resolverEntry) -> topFolders.addAll(resolverEntry.getKey().getTopFoldersFound().keySet()));
+//
+//        // Take all resolvers and their folders
+//        for(Map.Entry<ResolvedFolder, AbstractDependencyResolver> entry : topFolderResolverMap.entrySet()) {
+//            AbstractDependencyResolver resolver = entry.getValue();
+//            ResolvedFolder resolvedFolder = entry.getKey();
+//            if (resolver != null && resolvedFolder != null) {
+//                // All folders of the current resolver (top folders and sub folders)
+//                Set<String> foldersFound = resolvedFolder.getTopFoldersFound().keySet();
+//                // Get the relevant folders for the current resolver (can be all folders or top folders only ...)
+//                Collection<String> foldersForResolver = resolver.getRelevantScannedFolders(foldersFound);
+//                // Remove all the irrelevant folders
+//                resolvedFolder.getTopFoldersFound().keySet().removeIf(folder -> !foldersForResolver.contains(folder));
+//            }
+//        }
+//
+//    }
 
     private void reduceDependencies(Map<ResolvedFolder, AbstractDependencyResolver> topFolderResolverMap) {
         //reduce the dependencies and duplicates files
         Set<String> topFolders = new HashSet<>();
         topFolderResolverMap.entrySet().forEach((resolverEntry) -> topFolders.addAll(resolverEntry.getKey().getTopFoldersFound().keySet()));
-
-        // Take all resolvers and their folders
-        for(Map.Entry<ResolvedFolder, AbstractDependencyResolver> entry : topFolderResolverMap.entrySet()) {
-            AbstractDependencyResolver resolver = entry.getValue();
-            ResolvedFolder resolvedFolder = entry.getKey();
-            if (resolver != null && resolvedFolder != null) {
-                // All folders of the current resolver (top folders and sub folders)
-                Set<String> foldersFound = resolvedFolder.getTopFoldersFound().keySet();
-                // Get the relevant folders for the current resolver (can be all folders or top folders only ...)
-                Collection<String> foldersForResolver = resolver.getRelevantScannedFolders(foldersFound);
-                // Remove all the irrelevant folders
-                resolvedFolder.getTopFoldersFound().keySet().removeIf(folder -> !foldersForResolver.contains(folder));
-            }
-        }
-
+        //remove all folders that have a parent already mapped
+        topFolders.stream().sorted().forEach(topFolderParent -> {
+            topFolderResolverMap.forEach((resolvedFolder, dependencyResolver) -> {
+                if (!(dependencyResolver instanceof HtmlDependencyResolver)) {
+                    resolvedFolder.getTopFoldersFound().entrySet().removeIf(topFolderChild -> isChildFolder(topFolderChild.getKey(), topFolderParent));
+                }
+            });
+        });
     }
 
     private boolean isChildFolder(String childFolder, String topFolderParent) {
