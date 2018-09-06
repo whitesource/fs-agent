@@ -19,7 +19,7 @@ import ch.qos.logback.classic.Level;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,6 +51,9 @@ public class ProjectsCalculator {
 
         // read csv directory list
         files.addAll(fsaConfiguration.getDependencyDirs());
+
+        // add directory list to appPath map - defaultKey
+        fsaConfiguration.getAppPathsToDependencyDirs().get(FSAConfiguration.DEFAULT_KEY).addAll(files);
 
         // run the agent
         FileSystemAgent agent = new FileSystemAgent(fsaConfiguration, files);

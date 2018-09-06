@@ -1,7 +1,7 @@
 package org.whitesource.fs;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
@@ -26,11 +26,11 @@ public class ComponentScan {
 
     /* --- Members --- */
 
-    private Properties config;
+    private FSAConfigProperties config;
 
     /* --- Constructors --- */
 
-    public ComponentScan(Properties config) {
+    public ComponentScan(FSAConfigProperties config) {
         this.config = config;
     }
 

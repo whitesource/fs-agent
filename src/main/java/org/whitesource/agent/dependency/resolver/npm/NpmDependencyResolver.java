@@ -18,7 +18,7 @@ package org.whitesource.agent.dependency.resolver.npm;
 import org.eclipse.jgit.util.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -79,7 +79,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     private final NpmLsJsonDependencyCollector bomCollector;
     private final NpmBomParser bomParser;
-    private final boolean ignoreJavaScriptFiles;
+    private final boolean ignoreSourceFiles;
     private final boolean runPreStep;
     private final FilesScanner filesScanner;
     private final String npmAccessToken;
@@ -87,20 +87,20 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Constructor --- */
 
-    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreJavaScriptFiles, long npmTimeoutDependenciesCollector,
+    public NpmDependencyResolver(boolean includeDevDependencies, boolean ignoreSourceFiles, long npmTimeoutDependenciesCollector,
                                  boolean runPreStep, boolean npmIgnoreNpmLsErrors, String npmAccessToken, boolean npmYarnProject, boolean ignoreScripts) {
         super();
-        bomCollector = npmYarnProject ? new YarnDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, ignoreJavaScriptFiles, ignoreScripts) : new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, npmIgnoreNpmLsErrors, ignoreScripts);
+        bomCollector = npmYarnProject ? new YarnDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, ignoreSourceFiles, ignoreScripts) : new NpmLsJsonDependencyCollector(includeDevDependencies, npmTimeoutDependenciesCollector, npmIgnoreNpmLsErrors, ignoreScripts);
         bomParser = new NpmBomParser();
-        this.ignoreJavaScriptFiles = ignoreJavaScriptFiles;
+        this.ignoreSourceFiles = ignoreSourceFiles;
         this.runPreStep = runPreStep;
         this.filesScanner = new FilesScanner();
         this.npmAccessToken = npmAccessToken;
         this.npmYarnProject = npmYarnProject;
     }
 
-    public NpmDependencyResolver(boolean runPreStep, String npmAccessToken) {
-        this(false,true, NPM_DEFAULT_LS_TIMEOUT , runPreStep, false, npmAccessToken, false, false);
+    public NpmDependencyResolver(boolean runPreStep, String npmAccessToken, boolean bowerIgnoreSourceFiles) {
+        this(false,bowerIgnoreSourceFiles, NPM_DEFAULT_LS_TIMEOUT , runPreStep, false, npmAccessToken, false, false);
     }
 
     /* --- Overridden methods --- */
@@ -183,7 +183,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         // create excludes for .js files upon finding NPM dependencies
         List<String> excludes = new LinkedList<>();
         if (!dependencies.isEmpty() || zeroDependenciesList) {
-            if (ignoreJavaScriptFiles) {
+            if (ignoreSourceFiles ) {
                 //return excludes.stream().map(exclude -> finalRes + exclude).collect(Collectors.toList());
                 excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, Arrays.asList(JS_PATTERN, Constants.PATTERN + TYPE_SCRIPT_EXTENSION,
                         Constants.PATTERN + TSX_EXTENSION), null));
@@ -335,7 +335,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
             executorService.invokeAll(threadsCollection);
             executorService.shutdown();
         } catch (InterruptedException e) {
-            logger.error("One of the threads was interrupted, please try to scan again the project. Error: {}", e);
+            logger.error("One of the threads was interrupted, please try to scan again the project. Error: {}", e.getMessage());
             System.exit(StatusCode.ERROR.getValue());
         }
     }

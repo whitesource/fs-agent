@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 package org.whitesource.agent;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.whitesource.agent.api.dispatch.*;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
 import org.whitesource.agent.report.PolicyCheckReport;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.contracts.PluginInfo;
 import org.whitesource.fs.LogMapAppender;
+import org.whitesource.fs.Main;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.OfflineConfiguration;
@@ -160,6 +162,11 @@ public class ProjectsSender {
             for (AgentProjectInfo project : projectsDetails.getProjectToViaComponents().keySet()) {
                 // check language for scan according to user file
                 LinkedList<ViaComponents> viaComponentsList = projectsDetails.getProjectToViaComponents().get(project);
+                if (viaComponentsList.size() == 0) {
+                    logger.error("Effective Usage Analysis will not run if 0 dependencies are found. Check that the -d parameter specifies a valid project path");
+                    Main.exit(StatusCode.ERROR.getValue());
+                    //// TODO: 8/28/2018 as a result of WSE-765 exit using function from main. function signature should be change to throw an exception
+                }
                 for (ViaComponents viaComponents : viaComponentsList) {
                     logger.info("Starting VIA impact analysis");
                     String appPath = viaComponents.getAppPath();
@@ -403,7 +410,7 @@ public class ProjectsSender {
 
     private String getLogData() {
         String logs = Constants.EMPTY_STRING;
-        ch.qos.logback.classic.Logger setLog = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Constants.MAP_LOG_NAME);
+        ch.qos.logback.classic.Logger setLog = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(Constants.MAP_LOG_NAME);
         ConcurrentSkipListMap<Long, ILoggingEvent> collectToSet = ((LogMapAppender) setLog.getAppender(Constants.MAP_APPENDER_NAME)).getLogEvents();
         // going over all the collected events, filtering out the empty ones, and writing them to a long string
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);

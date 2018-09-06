@@ -17,7 +17,7 @@ package org.whitesource.agent.utils;
 
 import org.apache.tools.ant.DirectoryScanner;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.SingleFileScanner;
 import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 
@@ -83,7 +83,7 @@ public class FilesScanner {
     /* --- Private methods --- */
 
     private Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String[] includesPattern, Collection<String> excludes) {
-        Map pathToIncludedFilesMap = new HashMap();
+        Map<String, String[]> pathToIncludedFilesMap = new HashMap<>();
         pathsToScan.stream().forEach(scanFolder -> {
             String[] includedFiles = getDirectoryContent(new File(scanFolder).getPath(), includesPattern,
                     excludes.toArray(new String[excludes.size()]), false, false);
@@ -124,7 +124,7 @@ public class FilesScanner {
                 // remove from list folders that are children of the one found so they will not be calculated twice
                 foldersGroupedByLengthMap.entrySet().removeIf(otherFolder -> {
                     Path otherFolderPath = Paths.get(otherFolder.getKey());
-                    Path folderPath = Paths.get(folder).getParent();
+                    Path folderPath = Paths.get(folder);
 
                     boolean shouldRemove = false;
                     try {

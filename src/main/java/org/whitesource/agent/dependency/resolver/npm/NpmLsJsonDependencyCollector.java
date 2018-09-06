@@ -17,7 +17,7 @@ package org.whitesource.agent.dependency.resolver.npm;
 
 import org.json.JSONObject;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -57,7 +57,8 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
     private static final String DEDUPED = "deduped";
     private static final String REQUIRED = "required";
     private static final String IGNORE_SCRIPTS = "--ignore-scripts";
-    private static final String UNMET_DEPENDENCY = "+-- UNMET DEPENDENCY";
+    // Could be used for "-- UNMET DEPENDENCY" or "-- UNMET OPTIONAL DEPENDENCY"
+    private static final String UNMET_DEPENDENCY = "-- UNMET ";
     private final Pattern GENERAL_PACKAGE_NAME_PATTERN = Pattern.compile(".* (.*)@(\\^)?[0-9]+\\.[0-9]+");
     private final Pattern SECOND_GENERAL_PACKAGE_PATTERN = Pattern.compile(".* (.*)@");
 
@@ -138,7 +139,14 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
             if (dependenciesJsonObject != null) {
                 for (int i = 0; i < dependenciesJsonObject.keySet().size(); i++) {
                     String currentLine = linesOfNpmLs.get(currentLineNumber);
-                    if (currentLine.endsWith(DEDUPED) || currentLine.startsWith(UNMET_DEPENDENCY)) {
+                    // Examples:
+                    // +-- UNMET DEPENDENCY @material-ui/core@1.5.0
+                    // | +-- UNMET DEPENDENCY @babel/runtime@7.0.0-beta.42
+                    // | | `-- UNMET DEPENDENCY regenerator-runtime@0.11.1
+                    // |   | +-- UNMET OPTIONAL DEPENDENCY are-we-there-yet@1.1.4
+                    // |   | | +-- UNMET OPTIONAL DEPENDENCY delegates@1.0.0
+                    // |   | | `-- UNMET OPTIONAL DEPENDENCY readable-stream@2.3.6
+                    if (currentLine.endsWith(DEDUPED) || currentLine.contains(UNMET_DEPENDENCY)) {
                         currentLineNumber++;
                         continue;
                     }

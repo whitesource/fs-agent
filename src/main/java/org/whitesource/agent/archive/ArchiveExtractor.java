@@ -37,10 +37,11 @@ import org.redline_rpm.header.AbstractHeader;
 import org.redline_rpm.header.Format;
 import org.redline_rpm.header.Header;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.Pair;
+import org.whitesource.agent.TempFolders;
 
 import java.io.*;
 import java.nio.channels.Channels;
@@ -70,7 +71,7 @@ public class ArchiveExtractor {
     public static final String NULL_HEADER = "mainheader is null";
 
     private final String JAVA_TEMP_DIR = System.getProperty("java.io.tmpdir");
-    private final String WHITESOURCE_TEMP_FOLDER = "WhiteSource-ArchiveExtractor";
+
 
     public static final List<String> ZIP_EXTENSIONS = Arrays.asList("jar", "war", "aar", "ear", "egg", "zip", "whl", "sca", "sda", "nupkg");
     public static final List<String> GEM_EXTENSIONS = Collections.singletonList("gem");
@@ -147,9 +148,9 @@ public class ArchiveExtractor {
 
     private String getTempFolder(String scannerBaseDir) {
         String creationDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-        String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + WHITESOURCE_TEMP_FOLDER + File.separator + creationDate :
-                JAVA_TEMP_DIR + File.separator + WHITESOURCE_TEMP_FOLDER + File.separator + creationDate;
-        String destDirectory = tempFolder + "_" + this.randomString;
+        String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + TempFolders.WHITESOURCE_ARCHIVE_EXTRACTOR + File.separator + creationDate :
+                JAVA_TEMP_DIR + File.separator + TempFolders.WHITESOURCE_ARCHIVE_EXTRACTOR + File.separator + creationDate;
+        String destDirectory = tempFolder + Constants.UNDERSCORE + this.randomString;
         int separatorIndex = scannerBaseDir.lastIndexOf(File.separator);
 
         if (separatorIndex != -1) {

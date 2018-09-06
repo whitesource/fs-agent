@@ -12,7 +12,7 @@ import org.eclipse.jgit.dircache.InvalidPathException;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FS;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 
 import java.io.File;
 
@@ -81,7 +81,9 @@ public class GitConnector extends ScmConnector {
                 });
                 cloneCommand.setCredentialsProvider(new passphraseCredentialsProvider(getPassword()));
             } else {
-                cloneCommand.setCredentialsProvider(new UsernamePasswordCredentialsProvider(getUsername(), getPassword()));
+                if (getUrlName() != null && getPassword() != null) {
+                    cloneCommand.setCredentialsProvider(new UsernamePasswordCredentialsProvider(getUsername(), getPassword()));
+                }
             }
 
             // clone repository

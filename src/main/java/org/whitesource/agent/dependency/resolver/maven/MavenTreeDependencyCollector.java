@@ -18,7 +18,7 @@ package org.whitesource.agent.dependency.resolver.maven;
 import fr.dutra.tools.maven.deptree.core.Node;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
@@ -58,6 +58,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     public static final String ALL = "All";
     private static final String POM = "pom";
     private static final String B_PARAMETER = "-B";
+    private static final String VERSION_PARAMETER = "-v";
     private static final String TEST_JAR = "test-jar";
     private static final String JAR = "jar";
 
@@ -92,57 +93,61 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
-        if (StringUtils.isBlank(M2Path)){
-            this.M2Path = getMavenM2Path(Constants.DOT);
-        }
-
         Collection<AgentProjectInfo> projects = new ArrayList<>();
-        try {
-            CommandLineProcess mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParamsBatchMode());
-            List<String> lines = mvnDependencies.executeProcess();
-            if (mvnDependencies.isErrorInProcess()) {
-                logger.debug("Failed to execute the command {}", getLsCommandParamsBatchMode());
-                mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParams());
-                lines = mvnDependencies.executeProcess();
+        if(!this.isMavenExist(rootDirectory)) {
+            logger.warn("Please install maven");
+        } else {
+            if (StringUtils.isBlank(M2Path)) {
+                this.M2Path = getMavenM2Path(Constants.DOT);
             }
-            if (!mvnDependencies.isErrorInProcess()) {
-                List<Node> nodes = mavenLinesParser.parseLines(lines);
 
-                logger.info("End parsing pom files , found : " + String.join(Constants.COMMA,
-                        nodes.stream().map(node -> node.getArtifactId()).collect(Collectors.toList())));
+            try {
+                CommandLineProcess mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParamsBatchMode());
+                List<String> lines = mvnDependencies.executeProcess();
 
-                projects = nodes.stream()
-                        .filter(node -> !this.ignorePomModules || (ignorePomModules && !node.getPackaging().equals(POM)))
-                        .map(tree -> {
-                    Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
-                    List<DependencyInfo> dependencies = new LinkedList<>();
-                    Stream<Node> nodeStream = tree.getChildNodes().stream().filter(node -> !mavenIgnoredScopes.contains(node.getScope()));
-                    dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
+                if (mvnDependencies.isErrorInProcess()) {
+                    logger.debug("Failed to execute the command {}", getLsCommandParamsBatchMode());
+                    mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParams());
+                    lines = mvnDependencies.executeProcess();
+                }
+                if (!mvnDependencies.isErrorInProcess()) {
+                    List<Node> nodes = mavenLinesParser.parseLines(lines);
 
-                    Map<String, String> pathToSha1Map = pathToDependenciesMap.keySet().stream().distinct().parallel().collect(Collectors.toMap(file -> file, file -> getSha1(file)));
-                    pathToSha1Map.entrySet().forEach(pathSha1Pair -> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency -> {
-                        dependency.setSha1(pathSha1Pair.getValue());
-                        dependency.setSystemPath(pathSha1Pair.getKey());
-                    }));
+                    logger.info("End parsing pom files , found : " + String.join(Constants.COMMA,
+                            nodes.stream().map(node -> node.getArtifactId()).collect(Collectors.toList())));
 
-                    AgentProjectInfo projectInfo = new AgentProjectInfo();
-                    projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
-                    dependencies.stream().filter(dependency -> StringUtils.isNotEmpty(dependency.getSha1())).forEach(dependency ->
-                            projectInfo.getDependencies().add(dependency));
-                    return projectInfo;
-                }).collect(Collectors.toList());
-            } else {
-                logger.warn("Failed to scan and send {}", getLsCommandParams());
+                    projects = nodes.stream()
+                            .filter(node -> !this.ignorePomModules || (ignorePomModules && !node.getPackaging().equals(POM)))
+                            .map(tree -> {
+                                Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
+                                List<DependencyInfo> dependencies = new LinkedList<>();
+                                Stream<Node> nodeStream = tree.getChildNodes().stream().filter(node -> !mavenIgnoredScopes.contains(node.getScope()));
+                                dependencies.addAll(nodeStream.map(node -> getDependencyFromNode(node, pathToDependenciesMap)).collect(Collectors.toList()));
+                                Map<String, String> pathToSha1Map = pathToDependenciesMap.keySet().stream().distinct().parallel().collect(Collectors.toMap(file -> file, file -> getSha1(file)));
+                                pathToSha1Map.entrySet().forEach(pathSha1Pair -> pathToDependenciesMap.get(pathSha1Pair.getKey()).stream().forEach(dependency -> {
+                                    dependency.setSha1(pathSha1Pair.getValue());
+                                    dependency.setSystemPath(pathSha1Pair.getKey());
+                                }));
+
+                                AgentProjectInfo projectInfo = new AgentProjectInfo();
+                                projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
+                                dependencies.stream().filter(dependency -> StringUtils.isNotEmpty(dependency.getSha1())).forEach(dependency ->
+                                        projectInfo.getDependencies().add(dependency));
+                                return projectInfo;
+                            }).collect(Collectors.toList());
+                } else {
+                    logger.warn("Failed to scan and send {}", getLsCommandParams()); //either dead code? supposed to be up there..
+                }
+            } catch (IOException e) {
+                logger.warn("Error getting dependencies after running {} on {}, {}", getLsCommandParams(), rootDirectory, e.getMessage());
+                logger.debug("Error: {}", e.getStackTrace());
             }
-        } catch (IOException e) {
-            logger.warn("Error getting dependencies after running {} on {}, {}" , getLsCommandParams() , rootDirectory, e.getMessage());
-            logger.debug("Error: {}", e.getStackTrace());
-        }
 
-        if (projects != null && projects.isEmpty()) {
-            if (!showMavenTreeError) {
-                logger.warn("Failed to getting dependencies after running '{}' Please install maven ", getLsCommandParams());
-                showMavenTreeError = true;
+            if (projects != null && projects.isEmpty()) {
+                if (!showMavenTreeError) {
+                    logger.warn("Failed to getting dependencies after running '{}'", getLsCommandParams());
+                    showMavenTreeError = true;
+                }
             }
         }
         return projects;
@@ -154,6 +159,24 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         } catch (IOException e) {
             logger.warn("Failed getting " + filePath + ". File will not be sent to WhiteSource server.");
             return Constants.EMPTY_STRING;
+        }
+    }
+
+    private boolean isMavenExist(String rootDirectory) {
+        try {
+            CommandLineProcess mvnProcess = new CommandLineProcess(rootDirectory, getVersionCommandParams());
+            List<String> lines = mvnProcess.executeProcess();
+            if (mvnProcess.isErrorInProcess() || lines.isEmpty()) {
+                logger.debug("Failed to get maven version");
+                return false;
+            }
+            else  {
+                logger.debug("Maven : {}", lines);
+                return true;
+            }
+        } catch (IOException io) {
+            logger.debug("Failed to get maven version : {}", io.getMessage());
+            return false;
         }
     }
 
@@ -191,6 +214,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         return dependency;
     }
 
+
     /* --- Private methods --- */
 
     private String[] getLsCommandParams() {
@@ -209,6 +233,14 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         }
         result[result.length - 1] = B_PARAMETER;
         return result;
+    }
+
+    private String[] getVersionCommandParams() {
+        if (isWindows()) {
+            return new String[] {Constants.CMD, C_CHAR_WINDOWS, MVN_COMMAND, VERSION_PARAMETER};
+        } else {
+            return new String[] {MVN_COMMAND, VERSION_PARAMETER};
+        }
     }
 
     protected String getMavenM2Path(String rootDirectory) {

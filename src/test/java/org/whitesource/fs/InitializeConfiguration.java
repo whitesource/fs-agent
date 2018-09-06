@@ -27,7 +27,7 @@ public class InitializeConfiguration {
 
     /* --- Private Members --- */
 
-    private Properties config;
+    private FSAConfigProperties config;
     private FSAConfiguration fsaConfiguration;
     private ProjectsSender projectsSender;
     private Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToViaComponents;
@@ -35,7 +35,7 @@ public class InitializeConfiguration {
 
     @Before
     public void setUp() throws IOException {
-        config = new Properties();
+        config = new FSAConfigProperties();
         config.load(new FileInputStream(CONFIG));
         config.setProperty(Constants.DIRECTORY, DIRECTORY);
         String directory = config.getProperty(Constants.DIRECTORY);
@@ -106,7 +106,7 @@ public class InitializeConfiguration {
         return config;
     }
 
-    public void setConfig(Properties config) {
+    public void setConfig(FSAConfigProperties config) {
         this.config = config;
     }
 

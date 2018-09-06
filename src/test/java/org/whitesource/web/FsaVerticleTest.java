@@ -14,6 +14,7 @@ import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.fs.FSAConfiguration;
+import org.whitesource.fs.FSAConfigProperties;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
@@ -70,7 +71,7 @@ public class FsaVerticleTest {
                 }));
 
 
-        Properties properties = new Properties();
+        FSAConfigProperties properties = new FSAConfigProperties();
         properties.setProperty(ConfigPropertyKeys.SCM_TYPE_PROPERTY_KEY, "git");
         properties.setProperty(ConfigPropertyKeys.SCM_USER_PROPERTY_KEY, Constants.EMPTY_STRING);
         properties.setProperty(ConfigPropertyKeys.SCM_PASS_PROPERTY_KEY, Constants.EMPTY_STRING);
