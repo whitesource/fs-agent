@@ -200,7 +200,8 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                 String name = currLine.substring(index, spaceIndex > -1 ? spaceIndex : currLine.length());
                                 // looking for the dependency in the parents' list
                                 dependencyInfo = parentsList.stream().filter(d -> d.getGroupId().equals(name)).findFirst().orElse(null);
-                                if (dependencyInfo == null) {
+                                boolean inParentsList = dependencyInfo!=null;
+                                if (!inParentsList) {
                                     dependencyInfo = childrenList.stream().filter(d -> d.getGroupId().equals(name)).findFirst().orElse(null);
                                     if (dependencyInfo == null) {
                                         dependencyInfo = new DependencyInfo();
@@ -220,13 +221,12 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                                 dependencyInfo.setVersion(version);
                                             }
                                         }
-                                        if (partialDependencies.contains(dependencyInfo) == false) {
-                                            partialDependencies.add(dependencyInfo);
-                                        }
                                     }
                                 }
-
                                 if(parentDependency != null) {
+                                    if (!partialDependencies.contains(dependencyInfo)) {
+                                        partialDependencies.add(dependencyInfo);
+                                    }
                                     // adding this dependency as a child to its parent
                                     parentDependency.getChildren().add(dependencyInfo); // using loop with `equal` and not `contains` since the contains would fail when the key of a hash map is modified after its creation (as in this case)
                                     // if this dependency is already found in the children's list - continue
@@ -235,10 +235,9 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                             continue whileLoop;
                                         }
                                     }
-
                                     childrenList.add(dependencyInfo);
                                 }
-                              else {
+                                else if(!inParentsList){
                                     // Adding this dependency as a parent although its a child of other dependency.
                                     // This case happens when failed to create parent of this dependency (for example in case parent gem isn't installed)
                                     String version = dependencyInfo.getVersion();
@@ -248,7 +247,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
                                             logger.warn("Can't find gem file for {}-{}", name, version);
                                             continue whileLoop;
                                         }
-                                        partialDependencies.remove(dependencyInfo);
+                                        dependencyInfo.setSha1(sha1);
                                         setDependencyInfoProperties(dependencyInfo, name, version, gemLockFile, pathToGems);
                                         parentsList.add(dependencyInfo);
                                     } catch (IOException e) {
