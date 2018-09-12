@@ -7,6 +7,8 @@ import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.dependency.resolver.docker.DockerResolver;
+import org.whitesource.agent.dependency.resolver.packageManger.PackageManagerExtractor;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
@@ -64,11 +66,20 @@ public class ComponentScan {
             setDirs.addAll(scannerBaseDirs);
             Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
             appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
-            Collection<AgentProjectInfo> projects = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent(), false).createProjects(
-                    scannerBaseDirs, appPathsToDependencyDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getAgent().getArchiveExtractionDepth(),
-                    fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(),
-                    followSymlinks, excludedCopyrights, fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(),
-                    fsaConfiguration.getAgent().isCalculateMd5(), fsaConfiguration.getAgent().getPythonRequirementsFileIncludes()).keySet();
+            Collection<AgentProjectInfo> projects;
+            // scan packageManager||Docker||Regular Scan
+            if (Boolean.valueOf(config.getProperty(ConfigPropertyKeys.SCAN_PACKAGE_MANAGER))) {
+                projects = new PackageManagerExtractor().createProjects();
+            } else if (Boolean.valueOf(config.getProperty(ConfigPropertyKeys.SCAN_DOCKER_IMAGES))) {
+                projects = new DockerResolver(fsaConfiguration).resolveDockerImages();
+            } else {
+                projects = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent(), false).createProjects(
+                        scannerBaseDirs, appPathsToDependencyDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getAgent().getArchiveExtractionDepth(),
+                        fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(),
+                        followSymlinks, excludedCopyrights, fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(),
+                        fsaConfiguration.getAgent().isCalculateMd5(), fsaConfiguration.getAgent().getPythonRequirementsFileIncludes()).keySet();
+            }
+
             logger.info("Finished dependency resolution");
             for (AgentProjectInfo project : projects) {
                 project.setProjectToken(Constants.WHITESPACE);

@@ -5,7 +5,9 @@ import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
+import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.fs.CommandLineArgs;
 import org.whitesource.fs.FSAConfigProperties;
 
@@ -14,9 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -187,6 +187,47 @@ public class TestHelper {
         return file;
     }
 
+    public static List<List> getExcludesFromDependencyResult(List<ResolutionResult> results, List<ResolutionResult> resultIgnoreSourceFiles,
+                                                             DependencyType dependencyType){
+        List excludesConfigFileList = new LinkedList();
+        List excludesIgnoreSFList = new LinkedList();
+        for (ResolutionResult result : results) {
+            if (result.getDependencyType()!=null && result.getDependencyType().equals(dependencyType)){
+                excludesConfigFileList.addAll(result.getExcludes());
+            }
+        }
+        for (ResolutionResult resultIsf : resultIgnoreSourceFiles){
+            if (resultIsf.getDependencyType()!=null && resultIsf.getDependencyType().equals(dependencyType)){
+                excludesIgnoreSFList.addAll(resultIsf.getExcludes());
+            }
+        }
+        List<List> bothExcludes= new ArrayList<>(2);
+        bothExcludes.add(excludesConfigFileList);
+        bothExcludes.add(excludesIgnoreSFList);
+        return bothExcludes;
+    }
+
+    public static boolean checkResultOfScanFiles(String folderPath,List<List<String>> excludesNormal, List<List<String>> excludesIsf, String[] includes,
+                                                 DependencyType dependencyType) {
+        List<String> scannerBaseDirs = new LinkedList<>();
+        scannerBaseDirs.add(folderPath);
+        Set<String> pathsToScan = new HashSet<>();
+        for (String path : scannerBaseDirs) {
+            try {
+                pathsToScan.add(new File(path).getCanonicalPath());
+            } catch (IOException e) {
+                pathsToScan.add(path);
+            }
+    }
+
+        Collection<String> excludesNormal1 = excludesNormal.get(0);
+        Collection<String> excludesIsf1= excludesIsf.get(0);
+        String[] excludesNormalStr = excludesNormal1.toArray(new String[excludesNormal1.size()]);
+        String[] excludesIsfStr = excludesIsf1.toArray(new String[excludesIsf1.size()]);
+        Map<File, Collection<String>> fileMap = new FilesUtils().fillFilesMap(pathsToScan, includes, excludesNormalStr, false, false);
+        Map<File, Collection<String>> fileMapIsf = new FilesUtils().fillFilesMap(pathsToScan, includes, excludesIsfStr, false, false);
+        return fileMap.values().toString().equals(fileMapIsf.values().toString());
+    }
     public static String getOsRelativePath(String relativeFilePath) {
         return relativeFilePath.replace("\\", String.valueOf(File.separatorChar).replace(Constants.FORWARD_SLASH, String.valueOf(File.separatorChar)));
     }

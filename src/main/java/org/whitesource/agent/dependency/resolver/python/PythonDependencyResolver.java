@@ -33,6 +33,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     private final String pythonPath;
     private final String pipPath;
+    private final boolean ignoreSourceFiles;
     private Collection<String> excludes = new ArrayList<>();
     private boolean ignorePipInstallErrors;
     private boolean installVirutalenv;
@@ -49,7 +50,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     /* --- Constructors --- */
 
     public PythonDependencyResolver(String pythonPath, String pipPath, boolean ignorePipInstallErrors,
-                                    boolean installVirtualEnv, boolean resolveHierarchyTree, String[] pythonRequirementsFileIncludes) {
+                                    boolean installVirtualEnv, boolean resolveHierarchyTree, String[] pythonRequirementsFileIncludes,boolean ignoreSourceFiles) {
         super();
         this.pythonPath = pythonPath;
         this.pipPath = pipPath;
@@ -57,11 +58,15 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         this.installVirutalenv = installVirtualEnv;
         this.resolveHierarchyTree = resolveHierarchyTree;
         this.pythonRequirementsFileIncludes = pythonRequirementsFileIncludes;
+        this.ignoreSourceFiles =ignoreSourceFiles;
     }
 
     @Override
     public ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> dependenciesFiles) {
-        this.excludes = Arrays.asList(Constants.PATTERN + PY_EXT);
+
+        if (ignoreSourceFiles) {
+            this.excludes = Arrays.asList(Constants.PATTERN + PY_EXT);
+        }
         Collection<DependencyInfo> resultDependencies = new LinkedList<>();
         for (String dependencyFile : dependenciesFiles) {
             FilesUtils filesUtils = new FilesUtils();
@@ -126,6 +131,12 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     public String getPipPath() {
         return pipPath;
+    }
+
+    @Override
+    protected Collection<String> getRelevantScannedFolders(Collection<String> scannedFolders) {
+        // Python resolver should scan all folders and should not remove any folder
+        return scannedFolders == null ? Collections.emptyList() : scannedFolders;
     }
 }
 
