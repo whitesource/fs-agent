@@ -90,6 +90,7 @@ public class ResolverConfiguration {
             @JsonProperty(GO_COLLECT_DEPENDENCIES_AT_RUNTIME) boolean goCollectDependenciesAtRuntime,
             @JsonProperty(GO_GLIDE_IGNORE_TEST_PACKAGES) boolean goIgnoreTestPackages,
             @JsonProperty(GO_IGNORE_SOURCE_FILES) boolean goIgnoreSourceFiles,
+            @JsonProperty(GO_GRADLE_ENABLE_TASK_ALIAS) boolean goGradleEnableTaskAlias,
 
             @JsonProperty(RUBY_RESOLVE_DEPENDENCIES) boolean rubyResolveDependencies,
             @JsonProperty(RUBY_RUN_BUNDLE_INSTALL) boolean rubyRunBundleInstall,
@@ -170,12 +171,13 @@ public class ResolverConfiguration {
         this.goCollectDependenciesAtRuntime = goCollectDependenciesAtRuntime;
         this.goIgnoreTestPackages           = goIgnoreTestPackages;
         this.goIgnoreSourceFiles            = goIgnoreSourceFiles;
+        this.goGradleEnableTaskAlias        = goGradleEnableTaskAlias;
 
         this.rubyResolveDependencies    = rubyResolveDependencies;
         this.rubyRunBundleInstall       = rubyRunBundleInstall;
         this.rubyOverwriteGemFile       = rubyOverwriteGemFile;
         this.rubyInstallMissingGems     = rubyInstallMissingGems;
-        this.rubyIgnoreSourceFiles               = rubyIgnoreSourceFiles;
+        this.rubyIgnoreSourceFiles      = rubyIgnoreSourceFiles;
 
         this.phpResolveDependencies     = phpResolveDependencies;
         this.phpRunPreStep              = phpRunPreStep;
@@ -253,7 +255,7 @@ public class ResolverConfiguration {
     private boolean goCollectDependenciesAtRuntime;
     private boolean goIgnoreTestPackages;
     private boolean goIgnoreSourceFiles;
-
+    private boolean goGradleEnableTaskAlias;
 
     private boolean rubyResolveDependencies;
     private boolean rubyRunBundleInstall;
@@ -504,6 +506,8 @@ public class ResolverConfiguration {
     @JsonProperty(GO_IGNORE_SOURCE_FILES)
     public boolean isGoIgnoreSourceFiles() { return goIgnoreSourceFiles; }
 
+    @JsonProperty(GO_GRADLE_ENABLE_TASK_ALIAS)
+    public boolean isGoGradleEnableTaskAlias(){  return goGradleEnableTaskAlias;    }
 
     @JsonProperty(RUBY_RESOLVE_DEPENDENCIES)
     public boolean isRubyResolveDependencies() {
