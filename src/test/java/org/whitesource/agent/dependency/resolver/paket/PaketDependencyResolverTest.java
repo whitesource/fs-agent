@@ -1,4 +1,4 @@
-package org.whitesource.agent.dependency.resolver.gradle;
+package org.whitesource.agent.dependency.resolver.paket;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -15,23 +15,24 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
-public class GradleDependencyResolverTest {
+public class PaketDependencyResolverTest {
 
     //    @Ignore
     @Test
-    public void gradleIgnoreSourceFilesTest() {
-        String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\gradle\\");
+    public void paketIgnoreSourceFilesTest() {
+        String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\paket\\");
         List<ResolutionResult> results = getResolutionResults(Arrays.asList(folderPath), "false");
         List<ResolutionResult> resultsISF = getResolutionResults(Arrays.asList(folderPath), "true");
-        List<List> bothExcludes = TestHelper.getExcludesFromDependencyResult(results, resultsISF, DependencyType.GRADLE);
-        String[] includes = new String[]{"**/*.jar", "**/*.java"};
-        Assert.assertFalse(TestHelper.checkResultOfScanFiles(folderPath, bothExcludes.get(0), bothExcludes.get(1), includes, DependencyType.GRADLE));
+        List<List> bothExcludes = TestHelper.getExcludesFromDependencyResult(results, resultsISF, DependencyType.NUGET);
+        String[] includes = new String[]{"**/*.cs","**/*.js","**/*.dll","**/*.exe","**/*.nupkg"};
+        //EXCLUDES ON PACKAGE VS ALL FOLDER
+        Assert.assertFalse(TestHelper.checkResultOfScanFiles(folderPath, bothExcludes.get(0), bothExcludes.get(1), includes, DependencyType.NUGET));
     }
 
     private List<ResolutionResult> getResolutionResults(List<String> pathsToScan,String isIgnoreSourceFiles) {
         FSAConfigProperties props = new FSAConfigProperties();
-        props.setProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, "true");
-        props.setProperty(ConfigPropertyKeys.GRADLE_IGNORE_SOURCE_FILES, isIgnoreSourceFiles );
+        props.setProperty(ConfigPropertyKeys.PAKET_RESOLVE_DEPENDENCIES, "true");
+        props.setProperty(ConfigPropertyKeys.PAKET_IGNORE_SOURCE_FILES,isIgnoreSourceFiles );
         ResolverConfiguration resolverConfiguration = new FSAConfiguration(props).getResolver();
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(resolverConfiguration);
         return dependencyResolutionService.resolveDependencies(pathsToScan, new String[0]);

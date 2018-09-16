@@ -83,7 +83,7 @@ public class FilesScanner {
     /* --- Private methods --- */
 
     private Map<String, String[]> findAllFiles(Collection<String> pathsToScan, String[] includesPattern, Collection<String> excludes) {
-        Map pathToIncludedFilesMap = new HashMap();
+        Map<String, String[]> pathToIncludedFilesMap = new HashMap<>();
         pathsToScan.stream().forEach(scanFolder -> {
             String[] includedFiles = getDirectoryContent(new File(scanFolder).getPath(), includesPattern,
                     excludes.toArray(new String[excludes.size()]), false, false);
@@ -124,6 +124,8 @@ public class FilesScanner {
                 // remove from list folders that are children of the one found so they will not be calculated twice
                 foldersGroupedByLengthMap.entrySet().removeIf(otherFolder -> {
                     Path otherFolderPath = Paths.get(otherFolder.getKey());
+                    //    TODO remove comment WSE-756 and remove line 129
+//                    Path folderPath = Paths.get(folder);
                     Path folderPath = Paths.get(folder).getParent();
 
                     boolean shouldRemove = false;

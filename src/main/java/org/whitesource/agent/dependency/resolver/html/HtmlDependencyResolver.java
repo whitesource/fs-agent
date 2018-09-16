@@ -201,4 +201,10 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     protected Collection<String> getLanguageExcludes() {
         return new ArrayList<>();
     }
+
+    @Override
+    protected Collection<String> getRelevantScannedFolders(Collection<String> scannedFolders) {
+        // HTML resolver should scan all folders and should not remove any folder
+        return scannedFolders == null ? Collections.emptyList() : scannedFolders;
+    }
 }

@@ -23,8 +23,8 @@ public class DotNetDependencyResolver extends NugetDependencyResolver {
 
     /* --- Constructor --- */
 
-    public DotNetDependencyResolver(String whitesourceConfiguration, NugetConfigFileType nugetConfigFileType, boolean nugetRestoreDependencies) {
-        super(whitesourceConfiguration, nugetConfigFileType, nugetRestoreDependencies);
+    public DotNetDependencyResolver(String whitesourceConfiguration, NugetConfigFileType nugetConfigFileType, boolean nugetRestoreDependencies, boolean ignoreSourceFiles) {
+        super(whitesourceConfiguration, nugetConfigFileType, nugetRestoreDependencies, ignoreSourceFiles);
         this.nugetRestoreDependencies = nugetRestoreDependencies;
         this.resolveCollector = new DotNetRestoreCollector();
     }

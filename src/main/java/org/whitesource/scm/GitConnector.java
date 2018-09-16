@@ -81,7 +81,9 @@ public class GitConnector extends ScmConnector {
                 });
                 cloneCommand.setCredentialsProvider(new passphraseCredentialsProvider(getPassword()));
             } else {
-                cloneCommand.setCredentialsProvider(new UsernamePasswordCredentialsProvider(getUsername(), getPassword()));
+                if (getUrlName() != null && getPassword() != null) {
+                    cloneCommand.setCredentialsProvider(new UsernamePasswordCredentialsProvider(getUsername(), getPassword()));
+                }
             }
 
             // clone repository

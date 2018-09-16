@@ -3,20 +3,19 @@ package org.whitesource.agent.dependency.resolver.gradle;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
 import org.whitesource.agent.utils.FilesUtils;
-
+import org.whitesource.agent.utils.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
-import java.util.regex.Pattern;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -69,7 +68,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         javaDirPath = mainDirPath + fileSeparator+ JAVA;
     }
 
-    public List<DependencyInfo> parseLines(List<String> lines, String rootDirectory, String directoryName) {
+    public List<DependencyInfo> parseLines(List<String> lines, String rootDirectory, String directoryName, String[] ignoredScopes) {
         if (StringUtils.isBlank(dotGradlePath)){
             this.dotGradlePath = getDotGradleFolderPath();
         }
@@ -79,6 +78,12 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         this.rootDirectory = rootDirectory;
         this.directoryName = directoryName;
         logger.info("Start parsing gradle dependencies of: {}", rootDirectory + directoryName);
+
+        //parse dependencies
+        //check if to ignore scopes and parse lines of gradle dependencies to map of scopes
+        if (ignoredScopes.length != 0) {
+            lines=ignoreScopesOfGradleDependencies(ignoredScopes, lines);
+        }
         List<String> projectsLines = lines.stream()
                 .filter(line->(line.contains(PLUS) || line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))
                 .collect(Collectors.toList());
@@ -199,6 +204,35 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         return dependenciesList;
     }
 
+    private List<String> ignoreScopesOfGradleDependencies(String[] ignoredScopes, List<String> lines) {
+        String scope = Constants.EMPTY_STRING;
+        Map<String, String> gradleScopes = new HashMap<>();
+        for (String line : lines) {
+            if (Character.isLetter(line.charAt(0))) {
+                int indexOfWhiteSpace = line.indexOf(' ');
+                // in case line is a single word take it.. else take the first word before whitespace
+                if(indexOfWhiteSpace == -1) {
+                    scope = line;
+                } else {
+                    scope = line.substring(0, indexOfWhiteSpace);
+                }
+                gradleScopes.put(scope,"");
+            } else {
+                if (gradleScopes.containsKey(scope)) {
+                    String strConcatinator = gradleScopes.get(scope);
+                    strConcatinator = strConcatinator + line + "\n";
+                    gradleScopes.put(scope, strConcatinator);
+                }
+
+            }
+        }
+        // remove ignoredScopes from scopes if exists
+        for (String ignoredScope : ignoredScopes) {
+            gradleScopes.remove(ignoredScope);
+        }
+        return Arrays.asList(gradleScopes.values().toString().split("\n"));
+    }
+
     private String getDotGradleFolderPath() {
         String currentUsersHomeDir = System.getProperty(USER_HOME);
         File dotGradle = Paths.get(currentUsersHomeDir, ".gradle", "caches","modules-2","files-2.1").toFile();
@@ -251,9 +285,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                     if (folder.isDirectory()) {
                         for (File file : folder.listFiles()) {
                             if ((file.getName().contains(JAR_EXTENSION) || file.getName().contains(AAR_EXTENTION)) && !file.getName().contains("-sources")) {
-                                String pattern = Pattern.quote(fileSeparator);
-                                String[] splitFileName = folder.getName().split(pattern);
-                                String sha1 = splitFileName[splitFileName.length - 1];
+                                String sha1 = getSha1(file.getPath());
                                 dependencyFile = new DependencyFile(sha1,file);
                                 break outerloop;
                             }

@@ -67,6 +67,18 @@ public class FSAConfigProperties extends Properties {
         return property;
     }
 
+    public  boolean getBooleanProperty(String propertyKey, String dominantPropertyKey, boolean defaultValue) {
+        boolean property = defaultValue;
+        String propertyValue = getProperty(propertyKey);
+        String dominantPropertyValue = getProperty(dominantPropertyKey);
+        if (StringUtils.isNotBlank(dominantPropertyValue)) {
+            property = Boolean.valueOf(dominantPropertyValue);
+        } else if (StringUtils.isNotBlank(propertyValue)) {
+            property = Boolean.valueOf(propertyValue);
+        }
+        return property;
+    }
+
     public long getLongProperty(String propertyKey, long defaultValue) {
         long property = defaultValue;
         String propertyValue = getProperty(propertyKey);
@@ -131,6 +143,6 @@ public class FSAConfigProperties extends Properties {
         if (StringUtils.isNotBlank(includesString)) {
             return getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         }
-        return new String[0];
+        return getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, ".*.*").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
     }
 }
