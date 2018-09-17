@@ -292,7 +292,8 @@ public class FSAConfiguration {
             } else {
                 boolean validViaAppPath = checkAppPathsForVia(viaAppPaths, errors);
                 if (validViaAppPath) {
-                    if (resolver.getMavenIgnoredScopes() == null || !Arrays.asList(resolver.getMavenIgnoredScopes()).contains(MavenTreeDependencyCollector.ALL)
+                    if (resolver.getMavenIgnoredScopes() == null || (!Arrays.asList(resolver.getMavenIgnoredScopes()).contains(MavenTreeDependencyCollector.ALL)
+                            && !Arrays.asList(resolver.getMavenIgnoredScopes()).contains(MavenTreeDependencyCollector.NONE))
                             || !resolver.isMavenAggregateModules() || !resolver.isGradleAggregateModules()) {
                         errors.add("Effective Usage Analysis will not run if the following configuration file settings are not made: maven.ignoredScopes=All, " +
                                 "maven.aggregateModules=true, gradle.aggregateModules=true");
