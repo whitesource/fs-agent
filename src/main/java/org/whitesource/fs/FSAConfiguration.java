@@ -463,12 +463,12 @@ public class FSAConfiguration {
             rubyIgnoreSourceFiles = true;
             pythonIgnoreSourceFiles = true;
         } else {
-            npmIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_SOURCE_FILES, ConfigPropertyKeys.NPM_IGNORE_JAVA_SCRIPT_FILES, false);
+            npmIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_SOURCE_FILES, ConfigPropertyKeys.NPM_IGNORE_JAVA_SCRIPT_FILES, true);
             bowerIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.BOWER_IGNORE_SOURCE_FILES, false);
             nugetIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.NUGET_IGNORE_SOURCE_FILES, true);
             mavenIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_IGNORE_SOURCE_FILES, false);
             gradleIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_IGNORE_SOURCE_FILES, false);
-            paketIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.PAKET_IGNORE_SOURCE_FILES, ConfigPropertyKeys.PAKET_IGNORE_FILES, false);
+            paketIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.PAKET_IGNORE_SOURCE_FILES, ConfigPropertyKeys.PAKET_IGNORE_FILES, true);
             sbtIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.SBT_IGNORE_SOURCE_FILES, false);
             goIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.GO_IGNORE_SOURCE_FILES, false);
             pythonIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_SOURCE_FILES, true);

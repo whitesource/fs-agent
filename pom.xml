@@ -4,7 +4,7 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>18.9.1-SNAPSHOT</version>
+    <version>18.8.3.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>White Source File System Agent</name>
@@ -35,7 +35,7 @@
         <connection>scm:git:git@github.com:whitesource/fs-agent.git</connection>
         <developerConnection>scm:git:git@github.com:whitesource/fs-agent.git</developerConnection>
         <url>git@github.com:whitesource/fs-agent.git</url>
-        <tag>whitesource-fs-agent-18.4.1</tag>
+        <tag>whitesource-fs-agent-18.8.3</tag>
     </scm>
     <issueManagement>
         <url>https://github.com/whitesource/fs-agent/issues</url>
@@ -141,11 +141,11 @@
         </dependency>
 
         <!-- VIA test -->
-        <dependency>
-            <groupId>org.whitesource.analysis</groupId>
-            <artifactId>whitesource-analysis-via</artifactId>
-            <version>18.9.1.140</version>
-         </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.whitesource.analysis</groupId>-->
+            <!--<artifactId>whitesource-analysis-via</artifactId>-->
+            <!--<version>0.0.21</version>-->
+         <!--</dependency>-->
 
         <!-- end VIA -->
 
@@ -308,31 +308,31 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>org.whitesource.fs.Main</mainClass>
-                        </manifest>
-                    </archive>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <finalName>whitesource-fs-agent-${project.version}</finalName>
-                    <appendAssemblyId>false</appendAssemblyId>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+                <!--<artifactId>maven-assembly-plugin</artifactId>-->
+                <!--<version>2.4</version>-->
+                <!--<configuration>-->
+                    <!--<archive>-->
+                        <!--<manifest>-->
+                            <!--<mainClass>org.whitesource.fs.Main</mainClass>-->
+                        <!--</manifest>-->
+                    <!--</archive>-->
+                    <!--<descriptorRefs>-->
+                        <!--<descriptorRef>jar-with-dependencies</descriptorRef>-->
+                    <!--</descriptorRefs>-->
+                    <!--<finalName>whitesource-fs-agent-${project.version}</finalName>-->
+                    <!--<appendAssemblyId>false</appendAssemblyId>-->
+                <!--</configuration>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<id>make-assembly</id>-->
+                        <!--<phase>package</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>single</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
