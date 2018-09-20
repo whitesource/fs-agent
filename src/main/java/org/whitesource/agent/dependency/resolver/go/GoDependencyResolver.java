@@ -534,12 +534,15 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         name = null;
                         commit = null;
                     }
+                    // WSE-823 - goGradle.lock file may contain quotation marks, apostrophes (probably - didn't meet any such example yet) or none
                     if (currLine.contains(NAME + Constants.COLON + Constants.WHITESPACE)) {
-                        name = currLine.substring(currLine.indexOf(Constants.QUOTATION_MARK) + 1);
+                        name = currLine.substring(currLine.indexOf(Constants.COLON) + 1).trim();
                         name = name.replace(Constants.QUOTATION_MARK, Constants.EMPTY_STRING);
+                        name = name.replace(Constants.APOSTROPHE, Constants.EMPTY_STRING);
                     } else if (currLine.contains(COMMIT)) {
-                        commit = currLine.substring(currLine.indexOf(Constants.QUOTATION_MARK) + 1);
+                        commit = currLine.substring(currLine.indexOf(Constants.COLON) + 1).trim();
                         commit = commit.replace(Constants.QUOTATION_MARK, Constants.EMPTY_STRING);
+                        commit = commit.replace(Constants.APOSTROPHE, Constants.EMPTY_STRING);
                     }
                 }
                 if (name != null && commit != null){

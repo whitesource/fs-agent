@@ -62,13 +62,12 @@ public class FSAConfiguration {
     @Override
     public String toString() {
         return "FSA Configuration {\n" +
-                "logLevel" + logLevel + '\n' +
+                "logLevel=" + logLevel + '\n' +
                 "configFilePath=" + configFilePath + '\n' +
                 "fileListPath=" + fileListPath + '\n' +
                 "dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
                 sender.toString() + '\n' +
                 resolver.toString() + '\n' +
-                ", dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
                 request.toString() + '\n' +
                 ", scanPackageManager=" + scanPackageManager + '\n' +
                 ", offline=" + offline.isEnabled() + '\n' +
