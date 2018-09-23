@@ -292,7 +292,8 @@ public class FSAConfiguration {
             } else {
                 boolean validViaAppPath = checkAppPathsForVia(viaAppPaths, errors);
                 if (validViaAppPath) {
-                    if (resolver.getMavenIgnoredScopes() == null || !Arrays.asList(resolver.getMavenIgnoredScopes()).contains(MavenTreeDependencyCollector.ALL)
+                    if (resolver.getMavenIgnoredScopes() == null || (!Arrays.asList(resolver.getMavenIgnoredScopes()).contains(MavenTreeDependencyCollector.ALL)
+                            && !Arrays.asList(resolver.getMavenIgnoredScopes()).contains(MavenTreeDependencyCollector.NONE))
                             || !resolver.isMavenAggregateModules() || !resolver.isGradleAggregateModules()) {
                         errors.add("Effective Usage Analysis will not run if the following configuration file settings are not made: maven.ignoredScopes=All, " +
                                 "maven.aggregateModules=true, gradle.aggregateModules=true");
@@ -421,6 +422,7 @@ public class FSAConfiguration {
         String goDependencyManager = config.getProperty(ConfigPropertyKeys.GO_DEPENDENCY_MANAGER, Constants.EMPTY_STRING);
         boolean goCollectDependenciesAtRuntime = config.getBooleanProperty(ConfigPropertyKeys.GO_COLLECT_DEPENDENCIES_AT_RUNTIME, false);
         boolean goIgnoreTestPackages = config.getBooleanProperty(ConfigPropertyKeys.GO_GLIDE_IGNORE_TEST_PACKAGES, true);
+        boolean goGradleEnableTaskAlias = config.getBooleanProperty(ConfigPropertyKeys.GO_GRADLE_ENABLE_TASK_ALIAS, false);
 
         boolean rubyResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.RUBY_RESOLVE_DEPENDENCIES, true);
         boolean rubyRunBundleInstall = config.getBooleanProperty(ConfigPropertyKeys.RUBY_RUN_BUNDLE_INSTALL, false);
@@ -476,15 +478,19 @@ public class FSAConfiguration {
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreSourceFiles,
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
-                bowerResolveDependencies, bowerRunPreStep, bowerIgnoreSourceFiles, nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep, nugetIgnoreSourceFiles,
+                bowerResolveDependencies, bowerRunPreStep, bowerIgnoreSourceFiles,
+                nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep, nugetIgnoreSourceFiles,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles, pythonIgnoreSourceFiles,
-                ignoreSourceFiles, whiteSourceConfiguration, gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, gradleIgnoreSourceFiles, gradleRunPreStep, gradleIgnoredScopes,
+                ignoreSourceFiles, whiteSourceConfiguration,
+                gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, gradleIgnoreSourceFiles, gradleRunPreStep, gradleIgnoredScopes,
                 paketResolveDependencies, paketIgnoredScopes, paketRunPreStep, paketPath, paketIgnoreSourceFiles,
-                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, goIgnoreTestPackages, goIgnoreSourceFiles, rubyResolveDependencies, rubyRunBundleInstall,
-                rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles,
-                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies, sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, sbtIgnoreSourceFiles, htmlResolveDependencies);
+                goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, goIgnoreTestPackages, goIgnoreSourceFiles, goGradleEnableTaskAlias,
+                rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles,
+                phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies,
+                sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, sbtIgnoreSourceFiles,
+                htmlResolveDependencies);
     }
 
     private RequestConfiguration getRequest(FSAConfigProperties config, String apiToken, String userKey, String projectName, String projectToken, String scanComment) {

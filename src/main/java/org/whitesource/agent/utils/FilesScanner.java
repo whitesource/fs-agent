@@ -17,7 +17,6 @@ package org.whitesource.agent.utils;
 
 import org.apache.tools.ant.DirectoryScanner;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.SingleFileScanner;
 import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 
@@ -124,10 +123,7 @@ public class FilesScanner {
                 // remove from list folders that are children of the one found so they will not be calculated twice
                 foldersGroupedByLengthMap.entrySet().removeIf(otherFolder -> {
                     Path otherFolderPath = Paths.get(otherFolder.getKey());
-                    //    TODO remove comment WSE-756 and remove line 129
-//                    Path folderPath = Paths.get(folder);
-                    Path folderPath = Paths.get(folder).getParent();
-
+                    Path folderPath = Paths.get(folder);
                     boolean shouldRemove = false;
                     try {
                         shouldRemove = otherFolderPath.toFile().getCanonicalPath().startsWith(folderPath.toFile().getCanonicalPath());

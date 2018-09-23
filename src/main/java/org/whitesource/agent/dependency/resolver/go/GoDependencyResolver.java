@@ -71,20 +71,25 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final String TEST_IMPORTS = "testImports";
     private static final String GLIDE_YAML = "glide.yaml";
     private static final String GO_UPDATE = "update";
+    public static String  GO_DEPENDENCIES = "goDependencies";
+    public static final String GRADLE_LOCK = "lock";
+    public static final String GRADLE_GO_LOCK = "goLock";
 
     private Cli cli;
     private GoDependencyManager goDependencyManager;
     private boolean collectDependenciesAtRuntime;
     private boolean ignoreSourceFiles;
     private boolean ignoreTestPackages;
+    private boolean goGradleEnableTaskAlias;
 
-    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean ignoreSourceFiles, boolean ignoreTestPackages){
+    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean ignoreSourceFiles, boolean ignoreTestPackages, boolean goGradleEnableTaskAlias){
         super();
         this.cli = new Cli();
         this.goDependencyManager = goDependencyManager;
         this.collectDependenciesAtRuntime = collectDependenciesAtRuntime;
         this.ignoreSourceFiles = ignoreSourceFiles;
         this.ignoreTestPackages = ignoreTestPackages;
+        this.goGradleEnableTaskAlias = goGradleEnableTaskAlias;
     }
 
     @Override
@@ -119,7 +124,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String[] getBomPattern() {
-        if (collectDependenciesAtRuntime || goDependencyManager == null) {
+        // when collectDependenciesAtRuntime=false, the FSA should look for the relevant lock/json file, when its true
+        // the FSA should look for a *.go file, unless when the dependency-manager is go-gradle, don't return *.go but build.gradle
+        if (goDependencyManager == null || (collectDependenciesAtRuntime && goDependencyManager != GoDependencyManager.GO_GRADLE)) {
             return new String[]{Constants.PATTERN + GO_EXTENSION};
         }
         if (goDependencyManager != null) {
@@ -478,25 +485,34 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoGradleDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) {
         logger.debug("collecting dependencies using 'GoGradle'");
-        GradleCli gradleCli = new GradleCli(Constants.GRADLE);
+        GradleCli gradleCli = new GradleCli(Constants.GRADLE_WRAPPER);
         try {
             Stream<Path> pathStream = Files.walk(Paths.get(rootDirectory), Integer.MAX_VALUE).filter(file -> file.getFileName().toString().equals(Constants.BUILD_GRADLE));
             pathStream.forEach(file -> {
-                List<String> lines = gradleCli.runGradleCmd(file.getParent().toString(), gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES));
+                GradleMvnCommand command = this.goGradleEnableTaskAlias ? GradleMvnCommand.GO_DEPENDENCIES : GradleMvnCommand.DEPENDENCIES;
+                List<String> lines = gradleCli.runGradleCmd(file.getParent().toString(), gradleCli.getGradleCommandParams(command));
                 if (lines != null) {
                     parseGoGradleDependencies(lines, dependencyInfos, rootDirectory);
-                    File goGradleLock = new File(rootDirectory + fileSeparator + GOGRADLE_LOCK);
-                    if (goGradleLock.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.LOCK)))) {
-                        HashMap<String, String> gradleLockFile = parseGoGradleLockFile(goGradleLock);
-                        // for each dependency - matching its full commit id
-                        dependencyInfos.stream().forEach(dependencyInfo -> dependencyInfo.setCommit(gradleLockFile.get(dependencyInfo.getArtifactId())));
-                        // removing dependencies without commit-id and version
-                        dependencyInfos.removeIf(dependencyInfo -> dependencyInfo.getCommit() == null && dependencyInfo.getVersion() == null);
+                    if (dependencyInfos.size() > 0) {
+                        File goGradleLock = new File(rootDirectory + fileSeparator + GOGRADLE_LOCK);
+                        // in case goGradle-enable-task-alias is true - use goLock instead of lock
+                        if (goGradleLock.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, gradleCli.getGradleCommandParams(this.goGradleEnableTaskAlias ? GradleMvnCommand.GO_LOCK : GradleMvnCommand.LOCK)))) {
+                            HashMap<String, String> gradleLockFile = parseGoGradleLockFile(goGradleLock);
+                            // for each dependency - matching its full commit id
+                            dependencyInfos.stream().forEach(dependencyInfo -> dependencyInfo.setCommit(gradleLockFile.get(dependencyInfo.getArtifactId())));
+                            // removing dependencies without commit-id and version
+                            dependencyInfos.removeIf(dependencyInfo -> dependencyInfo.getCommit() == null && dependencyInfo.getVersion() == null);
+                        } else {
+                            logger.warn("Can't find {} and verify dependencies commit-ids; make sure 'collectDependenciesAtRuntime' is set to true or run 'gradlew lock' manually", goGradleLock.getPath());
+                        }
                     } else {
-                        logger.warn("Can't find {} and verify dependencies commit-ids; make sure 'collectDependenciesAtRuntime' is set to true or run 'gradlew lock' manually", goGradleLock.getPath());
+                      logger.warn("no dependencies found after running 'gradlew " + command.getCommand() +" command.  \n" +
+                              "If your gradle.properties file includes 'org.gradle.jvmargs=-Dgogradle.alias=true' make sure that 'go.gogradle.enableTaskAlias' in the configuration file is set to 'true'");
                     }
                 } else {
-                    logger.warn("running `gradle dependencies` command failed");
+                    logger.warn("running `gradlew " + command.getCommand() + "` command failed.  \n" +
+                            "If your gradle.properties file includes 'org.gradle.jvmargs=-Dgogradle.alias=true' make sure that 'go.gogradle.enableTaskAlias' in the configuration file is set to 'true';\n" +
+                            "otherwise - set it to false");
                 }
             });
         } catch (IOException e){
@@ -623,9 +639,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 if (runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GLIDE.getType(), GO_UPDATE))) {
                     if (glideLock.isFile()) {
                         dependencyInfos.addAll(parseGlideLock(glideLock));
+                    } else {
+                        throw new Exception("Can't find " + GLIDE_LOCK + " file after running 'glide update'. Please make sure 'Glide' is installed and run 'Glide update' command");
                     }
                 } else {
-                    throw new Exception("Failed to execute the command 'glide update'");
+                    throw new Exception("Can't find " + GLIDE_LOCK + " file. Please make sure 'Glide' is installed and run 'Glide update' command");
                 }
             } else {
                 throw new Exception("Can't find " + GLIDE_YAML + " file. Please make sure 'Glide' is installed and run 'Glide init' command");
