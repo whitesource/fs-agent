@@ -35,13 +35,18 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private static final String PROJECTS        = "[[projects]]";
     private static final String DEPS            = "Deps";
+    private static final String PACKAGE         = "package";
     private static final String REV             = "Rev";
     private static final String COMMENT         = "Comment";
     private static final String IMPORT_PATH     = "ImportPath";
+    private static final String PATH            = "path";
     private static final String NAME            = "name";
     private static final String COMMIT          = "commit: ";
     private static final String VERSION         = "version = ";
+    private static final String VERSION_GOV     = "version";
     private static final String REVISION        = "revision = ";
+    private static final String REVISION_GOV    = "revision";
+    private static final String CHECKSUM_SHA1    = "checksumSHA1";
     private static final String PACKAGES        = "packages = ";
     private static final String BRACKET         = "]";
     private static final String DOT             = ".";
@@ -49,6 +54,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final String SLASH           = "\\--";
     private static final String GOPKG_LOCK      = "Gopkg.lock";
     private static final String GODEPS_JSON     = "Godeps.json";
+    private static final String GOVENDOR_JSON   = "vendor.json";
     private static final String VNDR_CONF       = "vendor.conf";
     private static final String GOGRADLE_LOCK   = "gogradle.lock";
     private static final String GLIDE_LOCK      = "glide.lock";
@@ -128,6 +134,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     return new String[]{Constants.GLOB_PATTERN_PREFIX + Constants.BUILD_GRADLE};
                 case GLIDE:
                     return new String[]{Constants.PATTERN + GLIDE_LOCK, Constants.PATTERN + GLIDE_YAML};
+                case GO_VENDOR:
+                    return new String[]{Constants.PATTERN + GOVENDOR_JSON};
             }
         }
         return new String[]{Constants.EMPTY_STRING};
@@ -159,6 +167,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         break;
                     case GLIDE:
                         collectGlideDependencies(rootDirectory, dependencyInfos);
+                        break;
+                    case GO_VENDOR:
+                        collectGoVendorDependencies(rootDirectory, dependencyInfos);
                         break;
                     default:
                         error = "The selected dependency manager - " + goDependencyManager.getType() + " - is not supported.";
@@ -193,7 +204,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     try {
                         collectGlideDependencies(rootDirectory, dependencyInfos);
                     } catch (Exception e3) {
-                        error = "Couldn't collect dependencies - no dependency manager is installed";
+                        try {
+                            collectGoVendorDependencies(rootDirectory, dependencyInfos);
+                        } catch (Exception e4) {
+                            error = "Couldn't collect dependencies - no dependency manager is installed";
+                        }
                     }
                 }
             }
@@ -355,7 +370,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
             }
         } catch (FileNotFoundException e){
-            throw e;
+            logger.warn("FileNotFoundException: {}", e.getMessage());
+            logger.debug("FileNotFoundException: {}", e.getStackTrace());
         } finally {
             if (fileReader != null){
                 fileReader.close();
@@ -371,6 +387,55 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             groupId = split[1];
         }
         return groupId;
+    }
+
+    private void collectGoVendorDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
+        logger.debug("collecting dependencies using 'govendor'");
+        File goVendorJson = new File(rootDirectory  + fileSeparator +  GOVENDOR_JSON);
+        if (goVendorJson.isFile()){
+            dependencyInfos.addAll(parseGoVendor(goVendorJson));
+        } else {
+            throw new Exception("Can't find " + GOVENDOR_JSON + " file.  Please make sure 'govendor' is installed and run 'govendor init' command");
+        }
+    }
+
+    private List<DependencyInfo> parseGoVendor(File goVendor) throws IOException {
+        List<DependencyInfo> dependencyInfos = new ArrayList<>();
+        JsonParser parser = new JsonParser();
+        FileReader fileReader = null;
+        //parse GoVendor dependency json file
+        try {
+            fileReader = new FileReader(goVendor.getPath());
+            JsonElement dependencyElement = parser.parse(fileReader);
+            if (dependencyElement.isJsonObject()){
+                //foreach dependency info get relevant parameters
+                JsonArray packages = dependencyElement.getAsJsonObject().getAsJsonArray(PACKAGE);
+                logger.debug("Packeges in json: {}", packages.getAsString());
+                DependencyInfo dependencyInfo;
+                for (int i = 0; i < packages.size(); i++){
+                    dependencyInfo = new DependencyInfo();
+                    JsonObject pck = packages.get(i).getAsJsonObject();
+                    String Path = pck.get(PATH).getAsString();
+                    dependencyInfo.setGroupId(getGroupId(Path));
+                    dependencyInfo.setArtifactId(Path);
+                    dependencyInfo.setCommit(pck.get(REVISION_GOV).getAsString());
+                    dependencyInfo.setDependencyType(DependencyType.GO);
+                    dependencyInfo.setSystemPath(goVendor.getPath());
+                    if(pck.get(VERSION_GOV) != null) {
+                        dependencyInfo.setVersion(pck.get(VERSION_GOV).getAsString());
+                    }
+                    dependencyInfos.add(dependencyInfo);
+                }
+            }
+        } catch (FileNotFoundException e){
+            logger.warn("FileNotFoundException: {}", e.getMessage());
+            logger.debug("FileNotFoundException: {}", e.getStackTrace());
+        } finally {
+            if (fileReader != null){
+                fileReader.close();
+            }
+        }
+        return dependencyInfos;
     }
 
     private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
