@@ -185,4 +185,17 @@ public final class ConfigPropertyKeys {
     public static final String SCAN_COMMENT = "scanComment";
 
     public static final String LOG_CONTEXT = "logContext";
+
+    // Global values for remote Docker
+    public static final String DOCKER_PULL_IMAGES = "docker.pull.images";
+    public static final String DOCKER_PULL_TAGS = "docker.pull.tags";
+    public static final String DOCKER_PULL_DIGEST = "docker.pull.digest";
+
+    // Values for remote Docker on AWS ECR
+    public static final String DOCKER_AWS_REGISTRY_IDS = "docker.aws.registryIds";
+    public static final String DOCKER_AWS_REGION = "docker.aws.region";
+    public static final String DOCKER_AWS_ACCESSKEY = "docker.aws.accessKey";
+    public static final String DOCKER_AWS_SECRETKEY = "docker.aws.secretKey";
+
+
 }

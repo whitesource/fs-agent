@@ -5,6 +5,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.archiver.ArchiverException;
 import org.slf4j.Logger;
+import org.whitesource.agent.dependency.resolver.docker.remotedocker.AbstractRemoteDocker;
+import org.whitesource.agent.dependency.resolver.docker.remotedocker.RemoteDockerAmazonECR;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
@@ -76,7 +78,11 @@ public class DockerResolver {
      * @return list of projects for all docker images
      */
     public Collection<AgentProjectInfo> resolveDockerImages() {
-        logger.info("Resolving docker images");
+        AbstractRemoteDocker remoteDocker = new RemoteDockerAmazonECR(config.getRemoteDocker());
+        //remoteDocker.listImagesOnRemoteRegistry();
+        int imagesCount = remoteDocker.pullRemoteDockerImages();
+        logger.info("Pulled {} docker images", imagesCount);
+        logger.info("Resolving docker images ------------------------------");
         Collection<AgentProjectInfo> projects = new LinkedList<>();
         String line = null;
         Collection<DockerImage> dockerImages = new LinkedList<>();
@@ -102,17 +108,19 @@ public class DockerResolver {
                     saveDockerImages(dockerImagesToScan, projects);
                 }
             }
+            br.close();
         } catch (IOException e) {
-            logger.error("IO exception : ", e.getMessage());
-            logger.debug("IO exception : ", e.getStackTrace());
+            logger.error("IO exception : {}", e.getMessage());
+            logger.debug("IO exception : {}", e.getStackTrace());
         } catch (InterruptedException e) {
-            logger.error("Interrupted exception : ", e.getMessage());
-            logger.debug("Interrupted exception : ", e.getStackTrace());
+            logger.error("Interrupted exception : {}", e.getMessage());
+            logger.debug("Interrupted exception : {}", e.getStackTrace());
         } finally {
             if (process != null) {
                 process.destroy();
             }
         }
+        remoteDocker.removePulledImages();
         return projects;
     }
 
@@ -221,7 +229,7 @@ public class DockerResolver {
 
                 RpmParser rpmParser = new RpmParser();
                 Collection<String> yumDbFoldersPath = new LinkedList<>();
-                rpmParser.findFolder(imageExtractionDir, YUM_DB, yumDbFoldersPath);
+                RpmParser.findFolder(imageExtractionDir, YUM_DB, yumDbFoldersPath);
                 File yumDbFolder = rpmParser.checkFolders(yumDbFoldersPath, RPM_YUM_DB_FOLDER_DEFAULT_PATH);
                 int rpmPackages = parseProjectInfo(projectInfo, rpmParser, yumDbFolder);
                 logger.info("Found {} Rpm Packages", rpmPackages);
