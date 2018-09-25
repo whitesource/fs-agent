@@ -1,6 +1,7 @@
 package org.whitesource.agent.dependency.resolver.npm;
 
 import org.apache.commons.io.IOUtils;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.whitesource.agent.utils.LoggerFactory;
@@ -178,7 +179,11 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
                 InputStream is = new FileInputStream(packageJson.getPath());
                 String jsonText = IOUtils.toString(is, Constants.UTF8);
                 JSONObject json = new JSONObject(jsonText);
-                devDependenciesMap = json.getJSONObject(DEV_DEPENDENCIES).toMap();
+                try {
+                    devDependenciesMap = json.getJSONObject(DEV_DEPENDENCIES).toMap();
+                } catch (JSONException e){
+                    logger.error("No '{}' node found in {}", DEV_DEPENDENCIES, packageJson);
+                }
 
             } catch (Exception e) {
                 logger.error(e.getMessage());
