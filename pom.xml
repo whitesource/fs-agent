@@ -276,6 +276,14 @@
             <artifactId>spring-web</artifactId>
             <version>4.3.1.RELEASE</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-ecr -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-ecr</artifactId>
+            <version>1.11.410</version>
+        </dependency>
+
     </dependencies>
 
     <build>

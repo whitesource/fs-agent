@@ -99,6 +99,7 @@ public class FSAConfiguration {
     private final ResolverConfiguration resolver;
     private final ConfigurationValidation configurationValidation;
     private final EndPointConfiguration endpoint;
+    private final RemoteDockerConfiguration remoteDockerConfiguration;
 
     private final List<String> errors;
 
@@ -275,6 +276,7 @@ public class FSAConfiguration {
         sender = getSender(config);
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
+        remoteDockerConfiguration = getRemoteDockerConfiguration(config);
 
         // check properties to ensure via is ready to run
         checkPropertiesForVia(sender, resolver, appPathsToDependencyDirs, errors);
@@ -620,6 +622,24 @@ public class FSAConfiguration {
         return new ScmConfiguration(type, user, pass, ppk, url, branch, tag, repositoriesPath, npmInstall, npmInstallTimeoutMinutes);
     }
 
+    private RemoteDockerConfiguration getRemoteDockerConfiguration(FSAConfigProperties config) {
+        String[] all = new String[]{".*.*"};
+        String[] empty = new String[0];
+        String[] dockerImages   = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, all);
+        String[] dockerTags     = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, all);
+        String[] dockerDigests  = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, empty);
+        String[] dockerAmazonRegistryIds = config.getListProperty(ConfigPropertyKeys.DOCKER_AWS_REGISTRY_IDS, empty);
+        String dockerAmazonRegion = config.getProperty(ConfigPropertyKeys.DOCKER_AWS_REGION, "east");
+
+        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(new ArrayList<>(Arrays.asList(dockerImages)),
+                                            new ArrayList<>(Arrays.asList(dockerTags)),
+                                            new ArrayList<>(Arrays.asList(dockerDigests)));
+        result.setAmazonRegistryId(new ArrayList<>(Arrays.asList(dockerAmazonRegistryIds)));
+        result.setAmazonRegion(dockerAmazonRegion);
+
+        return result;
+    }
+
     private void initializeDependencyDirsToAppPath(String[] args) {
         boolean wasDir = false;
         for (int i = 0; i < args.length; i++) {
@@ -718,6 +738,8 @@ public class FSAConfiguration {
     public ResolverConfiguration getResolver() {
         return resolver;
     }
+
+    public RemoteDockerConfiguration getRemoteDocker() { return remoteDockerConfiguration;}
 
     public String getScannedFolders() {
         return scannedFolders;
