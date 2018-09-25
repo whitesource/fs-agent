@@ -5,8 +5,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.archiver.ArchiverException;
 import org.slf4j.Logger;
-import org.whitesource.agent.dependency.resolver.docker.remotedocker.AbstractRemoteDocker;
-import org.whitesource.agent.dependency.resolver.docker.remotedocker.RemoteDockerAmazonECR;
+import org.whitesource.agent.dependency.resolver.docker.remotedocker.RemoteDockersManager;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
@@ -63,6 +62,8 @@ public class DockerResolver {
     /* --- Members --- */
 
     private FSAConfiguration config;
+    private static boolean alreadyResolved = false;
+    private static Collection<AgentProjectInfo> projects = new LinkedList<>();
 
     /* --- Constructor --- */
 
@@ -78,12 +79,15 @@ public class DockerResolver {
      * @return list of projects for all docker images
      */
     public Collection<AgentProjectInfo> resolveDockerImages() {
-        AbstractRemoteDocker remoteDocker = new RemoteDockerAmazonECR(config.getRemoteDocker());
-        //remoteDocker.listImagesOnRemoteRegistry();
-        int imagesCount = remoteDocker.pullRemoteDockerImages();
-        logger.info("Pulled {} docker images", imagesCount);
+        // A temp solution for WSE-841
+        if(DockerResolver.alreadyResolved) {
+            return projects;
+        }
+
+        RemoteDockersManager remoteDockersManager = new RemoteDockersManager(config.getRemoteDocker());
+        remoteDockersManager.pullRemoteDockerImages();
+
         logger.info("Resolving docker images ------------------------------");
-        Collection<AgentProjectInfo> projects = new LinkedList<>();
         String line = null;
         Collection<DockerImage> dockerImages = new LinkedList<>();
         Collection<DockerImage> dockerImagesToScan;
@@ -120,7 +124,8 @@ public class DockerResolver {
                 process.destroy();
             }
         }
-        remoteDocker.removePulledImages();
+        remoteDockersManager.removePulledRemoteDockerImages();
+        DockerResolver.alreadyResolved = true;
         return projects;
     }
 

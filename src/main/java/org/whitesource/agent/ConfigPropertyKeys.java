@@ -187,11 +187,14 @@ public final class ConfigPropertyKeys {
     public static final String LOG_CONTEXT = "logContext";
 
     // Global values for remote Docker
+    public static final String DOCKER_PULL_ENABLE = "docker.pull.enable";
     public static final String DOCKER_PULL_IMAGES = "docker.pull.images";
     public static final String DOCKER_PULL_TAGS = "docker.pull.tags";
     public static final String DOCKER_PULL_DIGEST = "docker.pull.digest";
+    public static final String DOCKER_DELETE_FORCE = "docker.delete.force";
 
     // Values for remote Docker on AWS ECR
+    public static final String DOCKER_AWS_ENABLE = "docker.aws.enable";
     public static final String DOCKER_AWS_REGISTRY_IDS = "docker.aws.registryIds";
     public static final String DOCKER_AWS_REGION = "docker.aws.region";
     public static final String DOCKER_AWS_ACCESSKEY = "docker.aws.accessKey";

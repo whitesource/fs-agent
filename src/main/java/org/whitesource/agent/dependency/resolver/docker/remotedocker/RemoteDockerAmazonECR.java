@@ -3,6 +3,7 @@ package org.whitesource.agent.dependency.resolver.docker.remotedocker;
 import com.amazonaws.services.ecr.AmazonECR;
 import com.amazonaws.services.ecr.AmazonECRClientBuilder;
 import com.amazonaws.services.ecr.model.*;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.docker.DockerImage;
@@ -25,6 +26,7 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
     private static final AmazonECR amazonClient = AmazonECRClientBuilder.standard().build();
 
     private Map<String, String> imageToRepositoryUriMap;
+    private String defaultRegistryId;
 
     public RemoteDockerAmazonECR(RemoteDockerConfiguration config) {
         super(config);
@@ -36,8 +38,26 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
     }
 
     public boolean loginToRemoteRegistry() {
+        boolean saveDefaultRegistryId = true;
+        StringBuilder stCommand = new StringBuilder();
+        stCommand.append(AWS_ECR_GET_LOGIN);
+        if (config != null) {
+            List<String> registriesList = config.getAmazonRegistryIds();
+            if (registriesList != null && !registriesList.isEmpty()) {
+                stCommand.append(Constants.WHITESPACE);
+                stCommand.append("--registry-ids");
+                for (String registryId : registriesList) {
+                    stCommand.append(Constants.WHITESPACE);
+                    stCommand.append(registryId);
+                }
+                // We have several registry ids - so we don't know which is the default
+                saveDefaultRegistryId = false;
+            }
+        }
+
+        boolean loginResult = false;
         // Run this command to ask for permissions from Amazon to run Docker
-        Pair<Integer, InputStream> result = executeCommand(AWS_ECR_GET_LOGIN);
+        Pair<Integer, InputStream> result = executeCommand(stCommand.toString());
         Integer intVal = result.getKey();
         // The request was successful
         if (intVal == 0) {
@@ -46,19 +66,38 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
                 // The result will be a long string with the full information (like password, region, etc)
                 InputStream inputStream = result.getValue();
                 BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-                // Store the result
-                StringBuilder stBuilder = new StringBuilder();
+
+                // Each line will include a Docker login command
                 while ((line = br.readLine()) != null) {
-                    stBuilder.append(line);
+                    if (line.startsWith(DOCKER_CLI_LOGIN)) {
+                        // Execute the Docker command and get permission
+                        result = executeCommand(line);
+                        boolean loginToCurrentRegistry = (result.getKey() == 0);
+                        // Were able to login to at least 1 registry
+                        loginResult = loginResult || loginToCurrentRegistry;
+                        String[] dockerCommandVal = line.split(Constants.WHITESPACE);
+                        if (dockerCommandVal.length > 1) {
+                            String registryPath = dockerCommandVal[dockerCommandVal.length - 1];
+                            String loginMessage = "OK";
+                            if (!loginToCurrentRegistry) {
+                                loginMessage = "Failed";
+                            }
+                            logger.info("Login to registry : {} - {}", registryPath, loginMessage);
+                            if (saveDefaultRegistryId) {
+                                defaultRegistryId = registryPath;
+                            }
+                        }
+                        else {
+                            logger.info("Invalid Docker login command: {}", line);
+                        }
+                    }
+
                 }
-                // Then execute the result and get permission
-                result = executeCommand(stBuilder.toString());
-                return result.getKey() == 0;
             } catch (IOException e) {
                 logger.info("Execution of {} failed - {}", AWS_ECR_GET_LOGIN, e.getMessage());
             }
         }
-        return false;
+        return loginResult;
     }
 
     private String getSHA256FromManifest(String manifest) {
@@ -151,8 +190,9 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
                 repositoriesList = Collections.emptyList();
             }
         } catch (Exception ex) {
-            logger.info("Could not get repositories info");
-            logger.info("{}", ex.getMessage());
+            String currentRegistryName = !StringUtils.isBlank(registryId) ? registryId : defaultRegistryId;
+            logger.error("Could not get repositories info of registry - {}", currentRegistryName);
+            logger.error("{}", ex.getMessage());
         }
 
         return repositoriesList;
@@ -175,8 +215,9 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
             DescribeImagesResult describeImagesResult = amazonClient.describeImages(request);
             imageDetailsList = describeImagesResult.getImageDetails();
         } catch (Exception ex) {
-            logger.info("Could not get repository images info");
-            logger.info("{}", ex.getMessage());
+            String currentRegistryName = !StringUtils.isBlank(registryId) ? registryId : defaultRegistryId;
+            logger.error("Could not get repository images info of repository {} - on registry - {}", repositoryName, currentRegistryName);
+            logger.error("{}", ex.getMessage());
         }
         return imageDetailsList;
     }
@@ -213,6 +254,8 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
         }
 
         try {
+            // Here we got a response that includes 2 lists:
+            // images list & failures list
             BatchGetImageResult response = amazonClient.batchGetImage(request);
             if (response != null) {
                 resultImage = response.getImages();
@@ -236,6 +279,7 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
         if (image != null) {
             String repositoryName = image.getRepositoryName();
             String manifestInfo = image.getImageManifest();
+            // Docker's sha256 different form Amazon's sha256 (but it can be found in Amazon's manifest)
             String imageHash = getSHA256FromManifest(manifestInfo);
             try {
                 String tag = image.getImageId().getImageTag();
@@ -249,8 +293,11 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
     }
 
     public Collection<DockerImage> listImagesOnRemoteRegistry() {
-        List<String> registryIdsList = config.getAmazonRegistryId();
-        if (registryIdsList == null || registryIdsList.isEmpty()) {
+        List<String> registryIdsList = config.getAmazonRegistryIds();
+        // The registry id values should be explicitly defined, so if the user does not define it or use a .*.* value
+        // then we convert it to empty value - which will be considered by Amazon as the default registry (of the user
+        // that performed the login)
+        if (registryIdsList == null || registryIdsList.isEmpty() || registryIdsList.contains(".*.*")) {
             registryIdsList = new ArrayList<>(1);
             registryIdsList.add(Constants.EMPTY_STRING);
         }
@@ -258,7 +305,11 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
         List<DockerImage> result = new ArrayList<>();
         // Get all repositories of required registry ids
         for(String registryId : registryIdsList) {
-            Collection<Repository> repositoriesList = getRepositoriesList(registryId, config.getImageNames());
+            // Use 'null' instead of 'config.getImageNames()' - because getImageNames() can include repository names
+            // that do not appear in the current registry id - this will cause an exception from Amazon response and
+            // we will not get the other available repository names in the response.
+            // But when using repository names = null -> Amazon will treat it as a request to bring all repositories
+            Collection<Repository> repositoriesList = getRepositoriesList(registryId,null);
             if (repositoriesList != null) {
                 // for each repository (repository = collection of same image with different tags/digests)
                 for (Repository repository : repositoriesList) {
@@ -288,6 +339,5 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
             }
         }
         return result;
-
     }
 }
