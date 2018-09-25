@@ -376,31 +376,35 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             fileReader = new FileReader(goPmFile);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             String currLine;
+            //insideDeps is a boolean indicates if we are inside [deps] section in .gopmfile
             boolean insideDeps = false;
             DependencyInfo dependencyInfo = null;
             ArrayList<String> repositoryPackages = null;
             while ((currLine = bufferedReader.readLine()) != null){
-                if (insideDeps) {
+                if (insideDeps) { //if we are inside the needed section
                     dependencyInfo = new DependencyInfo();
                     if (currLine.isEmpty() ) {
                         continue;
                     }
+                    //if we are no longer in [deps] section
                     else if (currLine.contains(OPENNING_BRACKET) && currLine.contains(BRACKET) && !currLine.contains(GOPM_DEPS)){
                         insideDeps = false;
                     } else {
+                        //example: github.com/astaxie/beego = tag:v1.9.2 , it will be splitted to two, 1- github.com/astaxie/beego , 2-tag:v1.9.2
                         String[] line = currLine.split(EQUAL);
-                        if (line.length>0) {
+                        if (line.length > 0) { //retrieving info from the first part {github.com/astaxie/beego}
+                            //removing whitespaces
                             line[0] = line[0].trim();
                             dependencyInfo.setGroupId(getGroupId(line[0]));
                             dependencyInfo.setArtifactId(line[0]);
                         }
-                        if (line.length>1) {
+                        if (line.length > 1) {//retrieving info from the second part {tag:v1.9.2}
                             line[1] = line[1].trim();
-                            if(line[1].contains(GOPM_TAG)) {
-                                dependencyInfo.setVersion(line[1].substring(GOPM_TAG.length()));
-                            } else if (line[1].contains(GOPM_COMMIT)) {
-                                dependencyInfo.setCommit(line[1].substring(GOPM_COMMIT.length()));
-                            } else if (line[1].contains(GOPM_BRANCH)) {
+                            if (line[1].contains(GOPM_TAG)) { //tag:v1.9.2
+                                dependencyInfo.setVersion(line[1].substring(GOPM_TAG.length())); //extract the value after tag:
+                            } else if (line[1].contains(GOPM_COMMIT)) {//commit:a210eea3bd1c3766d76968108dfcd83c331f549c
+                                dependencyInfo.setCommit(line[1].substring(GOPM_COMMIT.length()));//extract the value after commit:
+                            } else if (line[1].contains(GOPM_BRANCH)) { //branch:master
                                 //toDo add branch
                                 //dependencyInfo.(line[1].substring(GOPM_BRANCH.length()));
                             }
@@ -409,20 +413,23 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         dependencyInfo.setSystemPath(goPmFile.getPath());
                         dependencyInfos.add(dependencyInfo);
                     }
-                } else if (currLine.contains(GOPM_DEPS)){
+                } else if (currLine.contains(OPENNING_BRACKET + GOPM_DEPS + BRACKET)){ //if the current line contains [deps]
                     insideDeps = true;
                 }
             }
         } catch (FileNotFoundException e) {
-            logger.error("Can't find " + goPmFile.getPath());
+            logger.warn("FileNotFoundException: {}", e.getMessage());
+            logger.debug("FileNotFoundException: {}", e.getStackTrace());
         } catch (IOException e) {
-            logger.error("Can't read " + goPmFile.getPath());
+            logger.warn("IOException: {}", e.getMessage());
+            logger.debug("IOException: {}", e.getStackTrace());
         } finally {
             if (fileReader != null){
                 try {
                     fileReader.close();
                 } catch (IOException e) {
-                    logger.error("can't close {}: {}", goPmFile.getPath(), e.getMessage());
+                    logger.warn("IOException: {}", e.getMessage());
+                    logger.debug("IOException: {}", e.getStackTrace());
                 }
             }
         }
