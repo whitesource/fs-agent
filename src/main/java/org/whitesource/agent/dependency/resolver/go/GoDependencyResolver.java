@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 public class GoDependencyResolver extends AbstractDependencyResolver {
 
+    public static final String GOPM_GEN_CMD = "gen";
     private final Logger logger = LoggerFactory.getLogger(GoDependencyResolver.class);
 
     private static final String PROJECTS        = "[[projects]]";
@@ -71,6 +72,13 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final String TEST_IMPORTS = "testImports";
     private static final String GLIDE_YAML = "glide.yaml";
     private static final String GO_UPDATE = "update";
+    private static final String GOPM_FILE = ".gopmfile";
+    private static final String GOPM_DEPS = "deps";
+    private static final String OPENNING_BRACKET = "[";
+    private static final String EQUAL = "=";
+    private static final String GOPM_TAG = "tag:";
+    private static final String GOPM_COMMIT = "commit:";
+    private static final String GOPM_BRANCH = "branch:";
     public static String  GO_DEPENDENCIES = "goDependencies";
     public static final String GRADLE_LOCK = "lock";
     public static final String GRADLE_GO_LOCK = "goLock";
@@ -143,6 +151,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     return new String[]{Constants.PATTERN + GLIDE_LOCK, Constants.PATTERN + GLIDE_YAML};
                 case GO_VENDOR:
                     return new String[]{Constants.PATTERN + GOVENDOR_JSON};
+                case GOPM:
+                    return new String[]{Constants.PATTERN + GOPM_FILE};
             }
         }
         return new String[]{Constants.EMPTY_STRING};
@@ -177,6 +187,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         break;
                     case GO_VENDOR:
                         collectGoVendorDependencies(rootDirectory, dependencyInfos);
+                        break;
+                    case GOPM:
+                        collectGoPMDependencies(rootDirectory, dependencyInfos);
                         break;
                     default:
                         error = "The selected dependency manager - " + goDependencyManager.getType() + " - is not supported.";
@@ -214,7 +227,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         try {
                             collectGoVendorDependencies(rootDirectory, dependencyInfos);
                         } catch (Exception e4) {
-                            error = "Couldn't collect dependencies - no dependency manager is installed";
+                            try {
+                                collectGoPMDependencies(rootDirectory, dependencyInfos);
+                            } catch (Exception e5) {
+                                error = "Couldn't collect dependencies - no dependency manager is installed";
+                            }
                         }
                     }
                 }
@@ -326,6 +343,90 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             }
         }
         dependencyInfos.stream().forEach(dependencyInfo -> {dependencyInfo.setSystemPath(goPckLock.getPath()); dependencyInfo.setDependencyType(DependencyType.GO);});
+        return dependencyInfos;
+    }
+
+    private void collectGoPMDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
+        logger.debug("collecting dependencies using 'GoPM'");
+        File goPMFile = new File(rootDirectory + fileSeparator + GOPM_FILE);
+        String error = Constants.EMPTY_STRING;
+        if (goPMFile.isFile()){
+            dependencyInfos.addAll(parseGoPm(goPMFile));
+        } else if (collectDependenciesAtRuntime) {
+            if (runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GOPM.getType(), GOPM_GEN_CMD))) {
+                dependencyInfos.addAll(parseGoPm(goPMFile));
+            } else {
+                error = "Can't run 'gopm gen' command.  Make sure gopm is installed and run the 'gopm gen' command manually.";
+                logger.warn("FileNotFoundException: {}", error);
+            }
+        } else {
+            error = "Can't find " + GOPM_FILE + " file.  Run the 'gopm gen' command.";
+            logger.warn("FileNotFoundException: {}", error);
+        }
+        if (!error.isEmpty()) {
+            throw new Exception(error);
+        }
+    }
+
+    private List<DependencyInfo> parseGoPm(File goPmFile){
+        logger.debug("parsing {}", goPmFile.getPath());
+        List<DependencyInfo> dependencyInfos = new ArrayList<>();
+        FileReader fileReader = null;
+        try {
+            fileReader = new FileReader(goPmFile);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String currLine;
+            boolean insideDeps = false;
+            DependencyInfo dependencyInfo = null;
+            ArrayList<String> repositoryPackages = null;
+            while ((currLine = bufferedReader.readLine()) != null){
+                if (insideDeps) {
+                    dependencyInfo = new DependencyInfo();
+                    if (currLine.isEmpty() ) {
+                        continue;
+                    }
+                    else if (currLine.contains(OPENNING_BRACKET) && currLine.contains(BRACKET) && !currLine.contains(GOPM_DEPS)){
+                        insideDeps = false;
+                    } else {
+                        String[] line = currLine.split(EQUAL);
+                        if (line.length>0) {
+                            line[0] = line[0].trim();
+                            dependencyInfo.setGroupId(getGroupId(line[0]));
+                            dependencyInfo.setArtifactId(line[0]);
+                        }
+                        if (line.length>1) {
+                            line[1] = line[1].trim();
+                            if(line[1].contains(GOPM_TAG)) {
+                                dependencyInfo.setVersion(line[1].substring(GOPM_TAG.length()));
+                            } else if (line[1].contains(GOPM_COMMIT)) {
+                                dependencyInfo.setCommit(line[1].substring(GOPM_COMMIT.length()));
+                            } else if (line[1].contains(GOPM_BRANCH)) {
+                                //toDo add branch
+                                //dependencyInfo.(line[1].substring(GOPM_BRANCH.length()));
+                            }
+                        }
+                        dependencyInfo.setDependencyType(DependencyType.GO);
+                        dependencyInfo.setSystemPath(goPmFile.getPath());
+                        dependencyInfos.add(dependencyInfo);
+                    }
+                } else if (currLine.contains(GOPM_DEPS)){
+                    insideDeps = true;
+                }
+            }
+        } catch (FileNotFoundException e) {
+            logger.error("Can't find " + goPmFile.getPath());
+        } catch (IOException e) {
+            logger.error("Can't read " + goPmFile.getPath());
+        } finally {
+            if (fileReader != null){
+                try {
+                    fileReader.close();
+                } catch (IOException e) {
+                    logger.error("can't close {}: {}", goPmFile.getPath(), e.getMessage());
+                }
+            }
+        }
+        dependencyInfos.stream().forEach(dependencyInfo -> {dependencyInfo.setSystemPath(goPmFile.getPath()); dependencyInfo.setDependencyType(DependencyType.GO);});
         return dependencyInfos;
     }
 
@@ -729,7 +830,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private boolean runCmd(String rootDirectory, String[] params){
         try {
             CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, params);
-            commandLineProcess.executeProcessWithErrorOutput();
+            List<String> a = commandLineProcess.executeProcessWithErrorOutput();
             if (!commandLineProcess.isErrorInProcess()) {
                 return true;
             }

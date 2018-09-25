@@ -6,6 +6,7 @@ public enum GoDependencyManager {
     VNDR("vndr"),
     GO_GRADLE("gogradle"),
     GO_VENDOR("govendor"),
+    GOPM("gopm"),
     GLIDE("glide");
 
 
