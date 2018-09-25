@@ -17,7 +17,7 @@ public class YarnDependencyCollectorTest {
 
     @Before
     public void setup() {
-        yarnDependencyCollector = new YarnDependencyCollector(true, 10000, true, true);
+        yarnDependencyCollector = new YarnDependencyCollector(false, 10000, true, true);
     }
 
     @Ignore
