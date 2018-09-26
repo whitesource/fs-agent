@@ -625,16 +625,16 @@ public class FSAConfiguration {
         String[] dockerDigests  = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, empty);
         boolean forceDelete = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_DELETE_FORCE, false);
         boolean enablePulling = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_ENABLE, false);
-        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(new ArrayList<>(Arrays.asList(dockerImages)),
-                                            new ArrayList<>(Arrays.asList(dockerTags)),
-                                            new ArrayList<>(Arrays.asList(dockerDigests)),
+        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(new LinkedList<>(Arrays.asList(dockerImages)),
+                                            new LinkedList<>(Arrays.asList(dockerTags)),
+                                            new LinkedList<>(Arrays.asList(dockerDigests)),
                                             forceDelete, enablePulling);
 
         // Amazon configuration
         String[] dockerAmazonRegistryIds = config.getListProperty(ConfigPropertyKeys.DOCKER_AWS_REGISTRY_IDS, empty);
         String dockerAmazonRegion = config.getProperty(ConfigPropertyKeys.DOCKER_AWS_REGION, "east");
         boolean enableAmazon = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_AWS_ENABLE, false);
-        result.setAmazonRegistryIds(new ArrayList<>(Arrays.asList(dockerAmazonRegistryIds)));
+        result.setAmazonRegistryIds(new LinkedList<>(Arrays.asList(dockerAmazonRegistryIds)));
         result.setAmazonRegion(dockerAmazonRegion);
         result.setRemoteDockerAmazonEnabled(enableAmazon);
 

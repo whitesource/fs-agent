@@ -84,10 +84,13 @@ public class DockerResolver {
             return projects;
         }
 
+        // TODO: Read this before changing RemoteDockersManager location
+        // Remote Docker pulling should be enable only if docker.scanImages==true && docker.pull.enable==true
+        // Before calling resolveDockerImages() there is a check for isScanDockerImages()
+        // If we create RemoteDockersManager outside of resolveDockerImages then we have to check isScanDockerImages()
         RemoteDockersManager remoteDockersManager = new RemoteDockersManager(config.getRemoteDocker());
         remoteDockersManager.pullRemoteDockerImages();
 
-        logger.info("Resolving docker images ------------------------------");
         String line = null;
         Collection<DockerImage> dockerImages = new LinkedList<>();
         Collection<DockerImage> dockerImagesToScan;

@@ -1,6 +1,6 @@
 package org.whitesource.fs.configuration;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class RemoteDockerConfiguration {
@@ -19,9 +19,9 @@ public class RemoteDockerConfiguration {
 
 
     public RemoteDockerConfiguration() {
-        this.imageNames     = new ArrayList<>();
-        this.imageTags      = new ArrayList<>();
-        this.imageDigests   = new ArrayList<>();
+        this.imageNames     = new LinkedList<>();
+        this.imageTags      = new LinkedList<>();
+        this.imageDigests   = new LinkedList<>();
         forceDelete         = false;
         remoteDockerEnabled = false;
     }
