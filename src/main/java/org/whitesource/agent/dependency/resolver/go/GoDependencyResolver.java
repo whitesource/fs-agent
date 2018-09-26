@@ -31,17 +31,23 @@ import java.util.stream.Stream;
 
 public class GoDependencyResolver extends AbstractDependencyResolver {
 
+    public static final String GOPM_GEN_CMD = "gen";
     private final Logger logger = LoggerFactory.getLogger(GoDependencyResolver.class);
 
     private static final String PROJECTS        = "[[projects]]";
     private static final String DEPS            = "Deps";
+    private static final String PACKAGE         = "package";
     private static final String REV             = "Rev";
     private static final String COMMENT         = "Comment";
     private static final String IMPORT_PATH     = "ImportPath";
+    private static final String PATH            = "path";
     private static final String NAME            = "name";
     private static final String COMMIT          = "commit: ";
     private static final String VERSION         = "version = ";
+    private static final String VERSION_GOV     = "version";
     private static final String REVISION        = "revision = ";
+    private static final String REVISION_GOV    = "revision";
+    private static final String CHECKSUM_SHA1    = "checksumSHA1";
     private static final String PACKAGES        = "packages = ";
     private static final String BRACKET         = "]";
     private static final String DOT             = ".";
@@ -49,6 +55,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final String SLASH           = "\\--";
     private static final String GOPKG_LOCK      = "Gopkg.lock";
     private static final String GODEPS_JSON     = "Godeps.json";
+    private static final String GOVENDOR_JSON   = "vendor.json";
     private static final String VNDR_CONF       = "vendor.conf";
     private static final String GOGRADLE_LOCK   = "gogradle.lock";
     private static final String GLIDE_LOCK      = "glide.lock";
@@ -65,6 +72,13 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final String TEST_IMPORTS = "testImports";
     private static final String GLIDE_YAML = "glide.yaml";
     private static final String GO_UPDATE = "update";
+    private static final String GOPM_FILE = ".gopmfile";
+    private static final String GOPM_DEPS = "deps";
+    private static final String OPENNING_BRACKET = "[";
+    private static final String EQUAL = "=";
+    private static final String GOPM_TAG = "tag:";
+    private static final String GOPM_COMMIT = "commit:";
+    private static final String GOPM_BRANCH = "branch:";
     public static String  GO_DEPENDENCIES = "goDependencies";
     public static final String GRADLE_LOCK = "lock";
     public static final String GRADLE_GO_LOCK = "goLock";
@@ -135,6 +149,10 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     return new String[]{Constants.GLOB_PATTERN_PREFIX + Constants.BUILD_GRADLE};
                 case GLIDE:
                     return new String[]{Constants.PATTERN + GLIDE_LOCK, Constants.PATTERN + GLIDE_YAML};
+                case GO_VENDOR:
+                    return new String[]{Constants.PATTERN + GOVENDOR_JSON};
+                case GOPM:
+                    return new String[]{Constants.PATTERN + GOPM_FILE};
             }
         }
         return new String[]{Constants.EMPTY_STRING};
@@ -166,6 +184,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         break;
                     case GLIDE:
                         collectGlideDependencies(rootDirectory, dependencyInfos);
+                        break;
+                    case GO_VENDOR:
+                        collectGoVendorDependencies(rootDirectory, dependencyInfos);
+                        break;
+                    case GOPM:
+                        collectGoPMDependencies(rootDirectory, dependencyInfos);
                         break;
                     default:
                         error = "The selected dependency manager - " + goDependencyManager.getType() + " - is not supported.";
@@ -200,7 +224,15 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     try {
                         collectGlideDependencies(rootDirectory, dependencyInfos);
                     } catch (Exception e3) {
-                        error = "Couldn't collect dependencies - no dependency manager is installed";
+                        try {
+                            collectGoVendorDependencies(rootDirectory, dependencyInfos);
+                        } catch (Exception e4) {
+                            try {
+                                collectGoPMDependencies(rootDirectory, dependencyInfos);
+                            } catch (Exception e5) {
+                                error = "Couldn't collect dependencies - no dependency manager is installed";
+                            }
+                        }
                     }
                 }
             }
@@ -314,6 +346,97 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         return dependencyInfos;
     }
 
+    private void collectGoPMDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
+        logger.debug("collecting dependencies using 'GoPM'");
+        File goPMFile = new File(rootDirectory + fileSeparator + GOPM_FILE);
+        String error = Constants.EMPTY_STRING;
+        if (goPMFile.isFile()){
+            dependencyInfos.addAll(parseGoPm(goPMFile));
+        } else if (collectDependenciesAtRuntime) {
+            if (runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GOPM.getType(), GOPM_GEN_CMD))) {
+                dependencyInfos.addAll(parseGoPm(goPMFile));
+            } else {
+                error = "Can't run 'gopm gen' command.  Make sure gopm is installed and run the 'gopm gen' command manually.";
+                logger.warn("FileNotFoundException: {}", error);
+            }
+        } else {
+            error = "Can't find " + GOPM_FILE + " file.  Run the 'gopm gen' command.";
+            logger.warn("FileNotFoundException: {}", error);
+        }
+        if (!error.isEmpty()) {
+            throw new Exception(error);
+        }
+    }
+
+    private List<DependencyInfo> parseGoPm(File goPmFile){
+        logger.debug("parsing {}", goPmFile.getPath());
+        List<DependencyInfo> dependencyInfos = new ArrayList<>();
+        FileReader fileReader = null;
+        try {
+            fileReader = new FileReader(goPmFile);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String currLine;
+            //insideDeps is a boolean indicates if we are inside [deps] section in .gopmfile
+            boolean insideDeps = false;
+            DependencyInfo dependencyInfo = null;
+            ArrayList<String> repositoryPackages = null;
+            while ((currLine = bufferedReader.readLine()) != null){
+                if (insideDeps) { //if we are inside the needed section
+                    dependencyInfo = new DependencyInfo();
+                    if (currLine.isEmpty() ) {
+                        continue;
+                    }
+                    //if we are no longer in [deps] section
+                    else if (currLine.contains(OPENNING_BRACKET) && currLine.contains(BRACKET) && !currLine.contains(GOPM_DEPS)){
+                        insideDeps = false;
+                    } else {
+                        //example: github.com/astaxie/beego = tag:v1.9.2 , it will be splitted to two, 1- github.com/astaxie/beego , 2-tag:v1.9.2
+                        String[] line = currLine.split(EQUAL);
+                        if (line.length > 0) { //retrieving info from the first part {github.com/astaxie/beego}
+                            //removing whitespaces
+                            line[0] = line[0].trim();
+                            dependencyInfo.setGroupId(getGroupId(line[0]));
+                            dependencyInfo.setArtifactId(line[0]);
+                        }
+                        if (line.length > 1) {//retrieving info from the second part {tag:v1.9.2}
+                            line[1] = line[1].trim();
+                            if (line[1].contains(GOPM_TAG)) { //tag:v1.9.2
+                                dependencyInfo.setVersion(line[1].substring(GOPM_TAG.length())); //extract the value after tag:
+                            } else if (line[1].contains(GOPM_COMMIT)) {//commit:a210eea3bd1c3766d76968108dfcd83c331f549c
+                                dependencyInfo.setCommit(line[1].substring(GOPM_COMMIT.length()));//extract the value after commit:
+                            } else if (line[1].contains(GOPM_BRANCH)) { //branch:master
+                                //toDo add branch
+                                //dependencyInfo.(line[1].substring(GOPM_BRANCH.length()));
+                            }
+                        }
+                        dependencyInfo.setDependencyType(DependencyType.GO);
+                        dependencyInfo.setSystemPath(goPmFile.getPath());
+                        dependencyInfos.add(dependencyInfo);
+                    }
+                } else if (currLine.contains(OPENNING_BRACKET + GOPM_DEPS + BRACKET)){ //if the current line contains [deps]
+                    insideDeps = true;
+                }
+            }
+        } catch (FileNotFoundException e) {
+            logger.warn("FileNotFoundException: {}", e.getMessage());
+            logger.debug("FileNotFoundException: {}", e.getStackTrace());
+        } catch (IOException e) {
+            logger.warn("IOException: {}", e.getMessage());
+            logger.debug("IOException: {}", e.getStackTrace());
+        } finally {
+            if (fileReader != null){
+                try {
+                    fileReader.close();
+                } catch (IOException e) {
+                    logger.warn("IOException: {}", e.getMessage());
+                    logger.debug("IOException: {}", e.getStackTrace());
+                }
+            }
+        }
+        dependencyInfos.stream().forEach(dependencyInfo -> {dependencyInfo.setSystemPath(goPmFile.getPath()); dependencyInfo.setDependencyType(DependencyType.GO);});
+        return dependencyInfos;
+    }
+
     private String getValue(String line){
         int firstIndex = line.indexOf(Constants.QUOTATION_MARK);
         int lastIndex = line.lastIndexOf(Constants.QUOTATION_MARK);
@@ -362,7 +485,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
             }
         } catch (FileNotFoundException e){
-            throw e;
+            logger.warn("FileNotFoundException: {}", e.getMessage());
+            logger.debug("FileNotFoundException: {}", e.getStackTrace());
         } finally {
             if (fileReader != null){
                 fileReader.close();
@@ -378,6 +502,55 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             groupId = split[1];
         }
         return groupId;
+    }
+
+    private void collectGoVendorDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
+        logger.debug("collecting dependencies using 'govendor'");
+        File goVendorJson = new File(rootDirectory  + fileSeparator +  GOVENDOR_JSON);
+        if (goVendorJson.isFile()){
+            dependencyInfos.addAll(parseGoVendor(goVendorJson));
+        } else {
+            throw new Exception("Can't find " + GOVENDOR_JSON + " file.  Please make sure 'govendor' is installed and run 'govendor init' command");
+        }
+    }
+
+    private List<DependencyInfo> parseGoVendor(File goVendor) throws IOException {
+        List<DependencyInfo> dependencyInfos = new ArrayList<>();
+        JsonParser parser = new JsonParser();
+        FileReader fileReader = null;
+        //parse GoVendor dependency json file
+        try {
+            fileReader = new FileReader(goVendor.getPath());
+            JsonElement dependencyElement = parser.parse(fileReader);
+            if (dependencyElement.isJsonObject()){
+                //foreach dependency info get relevant parameters
+                JsonArray packages = dependencyElement.getAsJsonObject().getAsJsonArray(PACKAGE);
+                logger.debug("Packeges in json: {}", packages.getAsString());
+                DependencyInfo dependencyInfo;
+                for (int i = 0; i < packages.size(); i++){
+                    dependencyInfo = new DependencyInfo();
+                    JsonObject pck = packages.get(i).getAsJsonObject();
+                    String Path = pck.get(PATH).getAsString();
+                    dependencyInfo.setGroupId(getGroupId(Path));
+                    dependencyInfo.setArtifactId(Path);
+                    dependencyInfo.setCommit(pck.get(REVISION_GOV).getAsString());
+                    dependencyInfo.setDependencyType(DependencyType.GO);
+                    dependencyInfo.setSystemPath(goVendor.getPath());
+                    if(pck.get(VERSION_GOV) != null) {
+                        dependencyInfo.setVersion(pck.get(VERSION_GOV).getAsString());
+                    }
+                    dependencyInfos.add(dependencyInfo);
+                }
+            }
+        } catch (FileNotFoundException e){
+            logger.warn("FileNotFoundException: {}", e.getMessage());
+            logger.debug("FileNotFoundException: {}", e.getStackTrace());
+        } finally {
+            if (fileReader != null){
+                fileReader.close();
+            }
+        }
+        return dependencyInfos;
     }
 
     private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
@@ -534,12 +707,15 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         name = null;
                         commit = null;
                     }
+                    // WSE-823 - goGradle.lock file may contain quotation marks, apostrophes (probably - didn't meet any such example yet) or none
                     if (currLine.contains(NAME + Constants.COLON + Constants.WHITESPACE)) {
-                        name = currLine.substring(currLine.indexOf(Constants.QUOTATION_MARK) + 1);
+                        name = currLine.substring(currLine.indexOf(Constants.COLON) + 1).trim();
                         name = name.replace(Constants.QUOTATION_MARK, Constants.EMPTY_STRING);
+                        name = name.replace(Constants.APOSTROPHE, Constants.EMPTY_STRING);
                     } else if (currLine.contains(COMMIT)) {
-                        commit = currLine.substring(currLine.indexOf(Constants.QUOTATION_MARK) + 1);
+                        commit = currLine.substring(currLine.indexOf(Constants.COLON) + 1).trim();
                         commit = commit.replace(Constants.QUOTATION_MARK, Constants.EMPTY_STRING);
+                        commit = commit.replace(Constants.APOSTROPHE, Constants.EMPTY_STRING);
                     }
                 }
                 if (name != null && commit != null){
@@ -664,7 +840,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private boolean runCmd(String rootDirectory, String[] params){
         try {
             CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, params);
-            commandLineProcess.executeProcessWithErrorOutput();
+            List<String> a = commandLineProcess.executeProcessWithErrorOutput();
             if (!commandLineProcess.isErrorInProcess()) {
                 return true;
             }

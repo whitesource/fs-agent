@@ -685,11 +685,12 @@ public class ResolverConfiguration {
                 ", paketRunPreStep=" + paketRunPreStep +
                 ", paket.exePath=" +paketPath + '\n' +
                 ", paket.IgnoreSourceFiles =" +paketIgnoreSourceFiles + '\n' +
-                ", goResolveDependencies=" + goResolveDependencies +
-                ", goDependencyManager=" + goDependencyManager +
-                ", goCollectDependenciesAtRuntime=" + goCollectDependenciesAtRuntime  +
-                ", goIgnoreTestPackages=" + goIgnoreTestPackages + '\n' +
-                ", go.IgnoreSourceFiles=" + goIgnoreSourceFiles + '\n' +
+                ", go.resolveDependencies=" + goResolveDependencies +
+                ", go.dependencyManager=" + goDependencyManager +
+                ", go.collectDependenciesAtRuntime=" + goCollectDependenciesAtRuntime  +
+                ", go.ignoreTestPackages=" + goIgnoreTestPackages + '\n' +
+                ", go.ignoreSourceFiles=" + goIgnoreSourceFiles + '\n' +
+                ", go.goGradleEnableTaskAlias=" + goGradleEnableTaskAlias + '\n' +
                 ", rubyResolveDependencies=" + rubyResolveDependencies +
                 ", rubyRunBundleInstall=" + rubyRunBundleInstall +
                 ", rubyOverwriteGemFile=" + rubyOverwriteGemFile +

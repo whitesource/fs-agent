@@ -138,6 +138,23 @@ public class CommandLineArgs {
     @Parameter(names = "-logContext", description = "Context id for logger")
     String logContext = null;
 
+    /*
+    @Parameter(names = "-aws_account_id", description = "AWS Account ID")
+    String awsAccountId = null;
+
+    @Parameter(names = "-aws_region", description = "AWS Region")
+    String awsRegion = null;
+
+    @Parameter(names = "-docker_image", description = "Docker Image")
+    String dockerImage = null;
+
+    @Parameter(names = "-docker_tag", description = "Docker Image's Tag")
+    String dockerTag = null;
+
+    @Parameter(names = "-docker_digest", description = "Docker Image's Digest")
+    String dockerDigest = null;
+    */
+
     /* --- Public methods --- */
 
     public String getConfigFilePath() {

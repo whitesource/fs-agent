@@ -60,10 +60,9 @@ public class AlpineParser extends AbstractParser {
                     dependencyInfos.add(dependencyInfo);
                 }
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            logger.debug("{}", e.getStackTrace());
         } finally {
             closeStream(br, fr);
         }

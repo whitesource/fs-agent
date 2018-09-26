@@ -71,7 +71,7 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
     /* --- private methods --- */
 
     private Collection<DependencyInfo> collectChildrenDependencies(DependencyInfo dependency, List<String> groupLines) {
-        logger.debug("Collect child dependencies of {}", dependency.getGroupId());
+        logger.debug("Collect child dependencies of {}, total group-lines = {}", dependency.getGroupId(), groupLines.size());
         Collection<DependencyInfo> dependencies = new LinkedList<>();
         boolean dependencyLine = false;
         for (String line : groupLines) {
