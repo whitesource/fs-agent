@@ -82,7 +82,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         //parse dependencies
         //check if to ignore scopes and parse lines of gradle dependencies to map of scopes
         if (ignoredScopes.length != 0) {
-            lines=ignoreScopesOfGradleDependencies(ignoredScopes, lines);
+            lines = ignoreScopesOfGradleDependencies(ignoredScopes, lines);
         }
         List<String> projectsLines = lines.stream()
                 .filter(line->(line.contains(PLUS) || line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))

@@ -261,7 +261,8 @@ public class DockerResolver {
                 logger.error("Error extracting {}: {}", imageTarFile, e.getMessage());
                 logger.debug("Error extracting tar archive", e);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.error(e.getMessage());
+                logger.debug("{}", e.getStackTrace());
             } finally {
                 process.destroy();
                 deleteDockerArchiveFiles(imageTarFile, imageExtractionDir);

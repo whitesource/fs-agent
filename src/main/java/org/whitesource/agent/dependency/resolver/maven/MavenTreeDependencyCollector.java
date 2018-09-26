@@ -56,6 +56,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String M2 = ".m2";
     private static final String REPOSITORY = "repository";
     public static final String ALL = "All";
+    public static final String NONE = "None";
     private static final String POM = "pom";
     private static final String B_PARAMETER = "-B";
     private static final String VERSION_PARAMETER = "-v";
@@ -79,7 +80,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             this.mavenIgnoredScopes.add(SCOPE_PROVIDED);
             this.mavenIgnoredScopes.add(SCOPE_TEST);
         } else {
-            if (mavenIgnoredScopes.length == 1 && mavenIgnoredScopes[0].equals(ALL)) {
+            if (mavenIgnoredScopes.length == 1 && (mavenIgnoredScopes[0].equals(ALL) || mavenIgnoredScopes[0].equals(NONE))) {
                 // do not filter out any scope
             } else {
                 Arrays.stream(mavenIgnoredScopes).filter(exclude -> StringUtils.isBlank(exclude))

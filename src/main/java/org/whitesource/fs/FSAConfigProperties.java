@@ -24,22 +24,18 @@ public class FSAConfigProperties extends Properties {
 
     @Override
     public synchronized Object put(Object key, Object value) {
-        if(key instanceof String) {
+        if (key instanceof String) {
             return super.put(((String) key).toLowerCase(), value);
-        }
-        else
-        {
+        } else {
             return super.put(key, value);
         }
     }
 
     @Override
     public synchronized Object get(Object key) {
-        if(key instanceof String) {
+        if (key instanceof String) {
             return super.get(((String) key).toLowerCase());
-        }
-        else
-        {
+        } else {
             return super.get(key);
         }
     }
@@ -58,7 +54,7 @@ public class FSAConfigProperties extends Properties {
         return value;
     }
 
-    public  boolean getBooleanProperty(String propertyKey, boolean defaultValue) {
+    public boolean getBooleanProperty(String propertyKey, boolean defaultValue) {
         boolean property = defaultValue;
         String propertyValue = getProperty(propertyKey);
         if (StringUtils.isNotBlank(propertyValue)) {
@@ -67,7 +63,7 @@ public class FSAConfigProperties extends Properties {
         return property;
     }
 
-    public  boolean getBooleanProperty(String propertyKey, String dominantPropertyKey, boolean defaultValue) {
+    public boolean getBooleanProperty(String propertyKey, String dominantPropertyKey, boolean defaultValue) {
         boolean property = defaultValue;
         String propertyValue = getProperty(propertyKey);
         String dominantPropertyValue = getProperty(dominantPropertyKey);
@@ -101,7 +97,7 @@ public class FSAConfigProperties extends Properties {
         return getIntProperty(ConfigPropertyKeys.ARCHIVE_EXTRACTION_DEPTH_KEY, FSAConfiguration.DEFAULT_ARCHIVE_DEPTH);
     }
 
-    public  String[] getIncludes() {
+    public String[] getIncludes() {
         String includesString = getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING);
         if (StringUtils.isNotBlank(includesString)) {
             return getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
@@ -139,10 +135,10 @@ public class FSAConfigProperties extends Properties {
     }
 
     public String[] getDockerIncludes() {
-        String includesString = getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING);
-        if (StringUtils.isNotBlank(includesString)) {
-            return getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String includesString = getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, Constants.GLOB_PATTERN);
+        if (StringUtils.isEmpty(includesString)) {
+            setProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, Constants.GLOB_PATTERN);
         }
-        return getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, ".*.*").split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        return getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, Constants.GLOB_PATTERN).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
     }
 }

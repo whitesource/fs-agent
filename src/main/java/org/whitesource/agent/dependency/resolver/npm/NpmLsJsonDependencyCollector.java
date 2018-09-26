@@ -15,6 +15,7 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.whitesource.agent.utils.LoggerFactory;
@@ -151,26 +152,36 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
                         continue;
                     }
                     String dependencyAlias = getTheNextPackageNameFromNpmLs(currentLine);
-                    JSONObject dependencyJsonObject = dependenciesJsonObject.getJSONObject(dependencyAlias);
-                    DependencyInfo dependency = getDependency(dependencyAlias, dependencyJsonObject);
-                    if (dependency != null) {
-                        dependencies.add(dependency);
-                        logger.debug("Collect child dependencies of {}", dependencyAlias);
-                        // collect child dependencies
-                        Collection<DependencyInfo> childDependencies = new ArrayList<>();
-                        currentLineNumber = getDependencies(dependencyJsonObject, linesOfNpmLs, currentLineNumber + 1, childDependencies);
-                        dependency.getChildren().addAll(childDependencies);
-                    } else {
-                        // it can be only if was an error in 'npm ls'
-                        if (dependencyJsonObject.has(REQUIRED)) {
-                            Object requiredObject = dependencyJsonObject.get(REQUIRED);
-                            if (requiredObject instanceof JSONObject) {
-                                currentLineNumber = getDependencies((JSONObject) requiredObject, linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
+                    try {
+                        JSONObject dependencyJsonObject = dependenciesJsonObject.getJSONObject(dependencyAlias);
+                        DependencyInfo dependency = getDependency(dependencyAlias, dependencyJsonObject);
+                        if (dependency != null) {
+                            dependencies.add(dependency);
+                            logger.debug("Collect child dependencies of {}", dependencyAlias);
+                            // collect child dependencies
+                            Collection<DependencyInfo> childDependencies = new ArrayList<>();
+                            currentLineNumber = getDependencies(dependencyJsonObject, linesOfNpmLs, currentLineNumber + 1, childDependencies);
+                            dependency.getChildren().addAll(childDependencies);
+                        } else {
+                            // it can be only if was an error in 'npm ls'
+                            if (dependencyJsonObject.has(REQUIRED)) {
+                                Object requiredObject = dependencyJsonObject.get(REQUIRED);
+                                if (requiredObject instanceof JSONObject) {
+                                    currentLineNumber = getDependencies((JSONObject) requiredObject, linesOfNpmLs, currentLineNumber + 1, new ArrayList<>());
+                                } else {
+                                    currentLineNumber++;
+                                }
                             } else {
                                 currentLineNumber++;
                             }
-                        } else {
+                        }
+                    } catch (JSONException e){
+                        if (ignoreNpmLsErrors) {
+                            logger.error(e.getMessage());
+                            logger.debug("{}", e.getStackTrace());
                             currentLineNumber++;
+                        } else {
+                            throw e;
                         }
                     }
                 }
@@ -200,7 +211,8 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
         try {
             uri = new URI(linkResolved);
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
+            logger.debug("{}", e.getStackTrace());
         }
         String path = uri.getPath();
         String idStr = path.substring(path.lastIndexOf('/') + 1);
