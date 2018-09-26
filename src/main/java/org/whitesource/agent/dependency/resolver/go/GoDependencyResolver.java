@@ -407,7 +407,6 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             } else if (line[1].contains(GOPM_BRANCH)) { //branch:master
                                 //toDo add branch
                                 //dependencyInfo.(line[1].substring(GOPM_BRANCH.length()));
-                                logger.warn("Using branch to define dependency is not supported currently, library {} will not be recognized by WSS", line[0]);
                             }
                         }
                         dependencyInfo.setDependencyType(DependencyType.GO);
