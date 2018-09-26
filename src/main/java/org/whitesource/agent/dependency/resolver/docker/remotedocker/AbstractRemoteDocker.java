@@ -106,22 +106,21 @@ public abstract class AbstractRemoteDocker {
         List<String> tagsList = config.getImageTags();
         List<String> digestList = config.getImageDigests();
 
-        // TODO: use constant for .*.*
         boolean allNames = false;
         // If images list is not configured - we assume that we want to scan ALL images
-        if (namesList.isEmpty() || namesList.contains(".*.*")) {
+        if (namesList == null || namesList.isEmpty() || namesList.contains(Constants.GLOB_PATTERN)) {
             allNames = true;
         }
 
         boolean allTags = false;
         // If tag list is not configured - we assume that we want to scan ALL tags
-        if (tagsList.isEmpty() || tagsList.contains(".*.*")) {
+        if (tagsList == null || tagsList.isEmpty() || tagsList.contains(Constants.GLOB_PATTERN)) {
             allTags = true;
         }
 
         boolean allDigests = false;
         // If digest list is not configured - we assume that we want to scan ALL tags
-        if (digestList.isEmpty() || digestList.contains(".*.*")) {
+        if (digestList == null || digestList.isEmpty() || digestList.contains(Constants.GLOB_PATTERN)) {
             allDigests = true;
         }
 
@@ -240,7 +239,11 @@ public abstract class AbstractRemoteDocker {
     }
 
     private boolean isDockerInstalled() {
-        return isCommandSuccessful(DOCKER_CLI_VERSION);
+         boolean installed = isCommandSuccessful(DOCKER_CLI_VERSION);
+         if (!installed) {
+             logger.error("Docker is not installed or its path is not configured correctly");
+         }
+         return installed;
     }
 
     private boolean isMatchStringInList(String toMatch, List<String> stringsList) {

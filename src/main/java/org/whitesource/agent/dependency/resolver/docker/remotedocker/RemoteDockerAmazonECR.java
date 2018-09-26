@@ -34,7 +34,11 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
     }
 
     public boolean isRequiredRegistryManagerInstalled() {
-        return isCommandSuccessful(AWS_VERSION);
+        boolean installed = isCommandSuccessful(AWS_VERSION);
+        if (!installed) {
+            logger.error("AWS ECR is not installed or its path is not configured correctly");
+        }
+        return installed;
     }
 
     public boolean loginToRemoteRegistry() {
@@ -43,7 +47,8 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
         stCommand.append(AWS_ECR_GET_LOGIN);
         if (config != null) {
             List<String> registriesList = config.getAmazonRegistryIds();
-            if (registriesList != null && !registriesList.isEmpty()) {
+            // We have several registry Ids
+            if (registriesList.size() > 1) {
                 stCommand.append(Constants.WHITESPACE);
                 stCommand.append("--registry-ids");
                 for (String registryId : registriesList) {
@@ -52,6 +57,16 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
                 }
                 // We have several registry ids - so we don't know which is the default
                 saveDefaultRegistryId = false;
+            } else if (registriesList.size() == 1) {
+                String registryId = registriesList.get(0);
+                if (Constants.EMPTY_STRING.equals(registryId)) {
+                    logger.error("No registryIds value is found! Logging to default Amazon ECR registry");
+                } else {
+                    stCommand.append(Constants.WHITESPACE);
+                    stCommand.append("--registry-ids");
+                    stCommand.append(Constants.WHITESPACE);
+                    stCommand.append(registryId);
+                }
             }
         }
 
@@ -96,6 +111,7 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
                 logger.info("Execution of {} failed - {}", AWS_ECR_GET_LOGIN, e.getMessage());
             }
         } else {
+            logger.info("Login to registries list - {} - failed", config.getAmazonRegistryIds());
             logger.debug("loginToRemoteRegistry - failed with error code {}", intVal);
         }
         return loginResult;
@@ -317,8 +333,7 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
         // then we convert it to empty value - which will be considered by Amazon as the default registry (of the user
         // that performed the login)
         //Constants.
-        // TODO: check for pattern for .*.*
-        if (registryIdsList == null || registryIdsList.isEmpty() || registryIdsList.contains(".*.*")) {
+        if (registryIdsList == null || registryIdsList.isEmpty() || registryIdsList.contains(Constants.GLOB_PATTERN)) {
             registryIdsList = new LinkedList<>();
             registryIdsList.add(Constants.EMPTY_STRING);
             logger.debug("listImagesOnRemoteRegistry registryIdsList is default (includes only empty string)");
