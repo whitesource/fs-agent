@@ -86,6 +86,11 @@ public class ProjectsSender {
         // send request
         logger.info("Initializing WhiteSource Client");
         Collection<AgentProjectInfo> projects = projectsDetails.getProjects();
+
+        if(checkDependenciesUpbound(projects)){
+            return new Pair<>("Number of dependencies exceeded the maximum supported", StatusCode.SERVER_FAILURE);
+        }
+
         WhitesourceService service = createService();
         String resultInfo = Constants.EMPTY_STRING;
         if (offlineConfig.isEnabled()) {
@@ -101,7 +106,7 @@ public class ProjectsSender {
                 logger.info("Invalid value {} for updateType, defaulting to {}", updateTypeValue, UpdateType.OVERRIDE);
             }
             logger.info("UpdateType set to {} ", updateTypeValue);
-            checkDependenciesUpbound(projects);
+
             StatusCode statusCode = StatusCode.SUCCESS;
             if (senderConfig.isEnableImpactAnalysis()) {
                 runViaAnalysis(projectsDetails, service);
@@ -209,11 +214,13 @@ public class ProjectsSender {
         }
     }
 
-    private void checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
+    private boolean checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
         int numberOfDependencies = projects.stream().map(x -> x.getDependencies()).mapToInt(x -> x.size()).sum();
         if (numberOfDependencies > Constants.MAX_NUMBER_OF_DEPENDENCIES) {
             logger.warn("Number of dependencies: {} exceeded the maximum supported: {}", numberOfDependencies, Constants.MAX_NUMBER_OF_DEPENDENCIES);
+            return true;
         }
+        return false;
     }
 
     protected WhitesourceService createService() {
