@@ -11,75 +11,68 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 public abstract class AbstractRemoteDocker {
 
+    // This is a list of the pulled images only - Users may require to pull existing images - but they are not saved
+    // in this list because we will remove the images that we pulled here (we don't want to remove the existing images
+    // of the users)
     private Collection<DockerImage> imagesPulled;
+
     private Collection<DockerImage> imagesFound;
     private static String DOCKER_CLI_VERSION = "docker --version";
+    protected static String DOCKER_CLI_LOGIN  = "docker login";
     private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteDocker.class);
 
     protected RemoteDockerConfiguration config;
+    private int pulledImagesCount;
+    private int existingImagesCount;
+
     /* --- Constructors --- */
 
     public AbstractRemoteDocker(RemoteDockerConfiguration config) {
         this.config = config;
+        pulledImagesCount = 0;
+        existingImagesCount = 0;
     }
 
     /* --- Public methods --- */
 
-    public int pullRemoteDockerImages() {
-        int pulledImagesCount = 0;
+    public void pullRemoteDockerImages() {
         if (isAllSoftwareRequiredInstalled()) {
              if (loginToRemoteRegistry()) {
                  imagesFound = listImagesOnRemoteRegistry();
                  if (imagesFound != null && !imagesFound.isEmpty()) {
                      imagesPulled = pullImagesFromRemoteRegistry();
-                     if (imagesPulled != null) {
-                         return imagesPulled.size();
-                     }
                  }
+                 logger.info("{} New images were pulled", pulledImagesCount);
+                 logger.info("{} Images are up to date (not pulled)", existingImagesCount);
              }
         }
-        return pulledImagesCount;
     }
 
-    /*
-     private void displayProgress(int index, int totalFiles) {
-        StringBuilder sb = new StringBuilder("[INFO] ");
-
-        // draw each animation for 4 frames
-        int actualAnimationIndex = animationIndex % (ANIMATION_FRAMES * 4);
-        sb.append(progressAnimation.get((actualAnimationIndex / 4) % ANIMATION_FRAMES));
-        animationIndex++;
-
-        // draw progress bar
-        sb.append(" [");
-        double percentage = ((double) index / totalFiles) * 100;
-        int progressionBlocks = (int) (percentage / 3);
-        for (int i = 0; i < progressionBlocks; i++) {
-            sb.append(Constants.POUND);
-        }
-        for (int i = progressionBlocks; i < 33; i++) {
-            sb.append(Constants.WHITESPACE);
-        }
-        sb.append("] {0}% - {1} of {2} files\r");
-        System.out.print(MessageFormat.format(sb.toString(), (int) percentage, index, totalFiles));
-
-        if (index == totalFiles) {
-            // clear progress animation
-            System.out.print("                                                                                  \r");
+    public void removePulledRemoteDockerImages() {
+        if (imagesPulled != null) {
+            for(DockerImage image: imagesPulled) {
+                String command = "docker rmi ";
+                // Use force delete
+                if (config.isForceDelete()) {
+                    command += "-f ";
+                }
+                executeCommand(command + image.getId());
+            }
         }
     }
-     */
 
     protected abstract boolean loginToRemoteRegistry();
 
     protected abstract Collection<DockerImage> listImagesOnRemoteRegistry();
+
+    protected abstract boolean isRequiredRegistryManagerInstalled();
+
+    protected abstract String getImageFullURL(DockerImage image);
 
     private Collection<DockerImage> pullImagesFromRemoteRegistry() {
         if (imagesFound != null) {
@@ -97,40 +90,60 @@ public abstract class AbstractRemoteDocker {
         return Collections.emptyList();
     }
 
-    protected abstract boolean isRequiredRegistryManagerInstalled();
-
     private boolean isAllSoftwareRequiredInstalled() {
         return isDockerInstalled() && isRequiredRegistryManagerInstalled();
     }
 
     private boolean isImageRequired(DockerImage image) {
         if (config != null && image != null) {
-            // TODO: Maybe enable regular expression for tags/ids ?! like .*18.3.* or .*.*
 
+            List<String> namesList = config.getImageNames();
             List<String> tagsList = config.getImageTags();
             List<String> digestList = config.getImageDigests();
 
-            // If tag list is not configured - we assume that we want to scan ALL tags
-            if (tagsList == null || tagsList.isEmpty() || tagsList.contains(".*.*")) {
-                return true;
+            boolean allNames = false;
+            // If images list is not configured - we assume that we want to scan ALL images
+            if (namesList == null || namesList.isEmpty() || namesList.contains(".*.*")) {
+                allNames = true;
             }
 
+            boolean allTags = false;
+            // If tag list is not configured - we assume that we want to scan ALL tags
+            if (tagsList == null || tagsList.isEmpty() || tagsList.contains(".*.*")) {
+                allTags = true;
+            }
+
+            boolean allDigests = false;
             // If digest list is not configured - we assume that we want to scan ALL tags
             if (digestList == null || digestList.isEmpty() || digestList.contains(".*.*")) {
+                allDigests = true;
+            }
+
+            // We want to pull everything - so every image is required
+            if (allNames && allTags && allDigests) {
                 return true;
             }
 
             // Otherwise we look for specific tag(s)/sha256
             String imageTag = image.getTag();
             String imageDigest = image.getId();
+            String imageName = image.getRepository();
 
-            if ((imageTag == null || imageTag.isEmpty()) && (imageDigest == null || imageDigest.isEmpty())) {
-                // This tag/sha256 does not met the requirements
+            if ( (imageTag == null || imageTag.isEmpty()) &&
+                 (imageDigest == null || imageDigest.isEmpty()) &&
+                 (imageName == null || imageName.isEmpty())) {
+                // This tag/sha256/name does not met any of the requirements
                 return false;
             }
 
-            // Is this tag/sha256 in the required tags/sha256 list?
-            return tagsList.contains(imageTag) || digestList.contains(imageDigest);
+            // Name and Tag may have a regular expression match
+            boolean isNameMet   = allNames || namesList.contains(imageName) || isMatchStringInList(imageName, namesList);
+            boolean isTagMet    = allTags  || tagsList.contains(imageTag)   || isMatchStringInList(imageTag, tagsList);
+            // Digest cannot have a regular expression match
+            boolean isDigestMet = allDigests || digestList.contains(imageDigest);
+
+            // Is this tag/sha256/name in the required tags/sha256/name list?
+            return isNameMet && isTagMet && isDigestMet ;
         }
         return false;
     }
@@ -142,29 +155,44 @@ public abstract class AbstractRemoteDocker {
             String command = "docker pull";
             command += Constants.WHITESPACE;
             command += imageURL;
-            Pair<Integer, String> pullResult = executeCommandWithOutput(command);
-            result = pullResult.getKey() == 0;
-            if (result) {
-                logger.info("Image was pulled successfully (or already up to date)");
-                int index = pullResult.getValue().indexOf("Status:");
-                if (index > 0) {
-                    String status = pullResult.getValue().substring(index);
-                    logger.info("{}", status);
+            try {
+                Process process = Runtime.getRuntime().exec(command);
+                StringBuilder resultText = new StringBuilder();
+                try (final BufferedReader reader
+                             = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                    for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                        System.out.println(line);
+                        resultText.append(line);
+                    }
                 }
-            } else {
-                logger.info("Image was not pulled!");
-                logger.info("{}", pullResult.getValue());
+                int resultValue = process.waitFor();
+                result = resultValue == 0;
+                if (result) {
+                    int index = resultText.indexOf("Status:");
+                    if (index > 0) {
+                        String status = resultText.substring(index);
+                        logger.info("{}", status);
+                        if (status.contains("Image is up to date for")) {
+                            existingImagesCount++;
+                            result = false; // The image was not pulled
+                        } else if (status.contains("Downloaded newer image for")) {
+                            pulledImagesCount++;
+                        }
+                    }
+                } else {
+                    logger.info("Image was not pulled!");
+                    logger.info("{}", resultText);
+                }
+            } catch (InterruptedException e) {
+                logger.info("Execution of {} failed: - {}", command, e.getMessage());
+                Thread.currentThread().interrupt();
+            } catch (IOException  e) {
+                logger.info("Execution of {} failed: - {}", command, e.getMessage());
             }
         }
         return result;
     }
 
-    //public abstract Collection<DockerImage> getAllImages();
-    /*
-    protected boolean isEnoughSpaceForImage() {
-        return true;
-    }
-*/
     // This function cannot be run with multiple threads because each time it is run it overrides the values
     // of resultVal and inputStream, so if other thread (for example) is reading the stream, it might get mixed data
     // from old command's stream and the new command's stream
@@ -172,12 +200,17 @@ public abstract class AbstractRemoteDocker {
         int resultVal = 1;
         InputStream inputStream = null;
         try {
+            logger.debug("Executing command: {}", command);
             Process process =  Runtime.getRuntime().exec(command);
+
             resultVal = process.waitFor();
             inputStream = process.getInputStream();
-        } catch (IOException | InterruptedException e) {
+
+        } catch (InterruptedException e) {
             logger.info("Execution of {} failed: code - {} ; message - {}", command, resultVal, e.getMessage());
             Thread.currentThread().interrupt();
+        } catch (IOException  e) {
+            logger.info("Execution of {} failed: code - {} ; message - {}", command, resultVal, e.getMessage());
         }
         if (inputStream == null) {
            // Create an empty InputStream instead of returning a null
@@ -197,35 +230,45 @@ public abstract class AbstractRemoteDocker {
         return val == 0;
     }
 
-    private Pair<Integer, String> executeCommandWithOutput(String command) {
-        Pair<Integer, InputStream> executionResult = executeCommand(command);
-        StringBuilder stBuilder = new StringBuilder();
-        Integer intVal = executionResult.getKey();
-        try {
-            String line;
-            InputStream inputStream = executionResult.getValue();
-            BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-            while ((line = br.readLine()) != null) {
-                stBuilder.append(line);
-            }
-        } catch (IOException e) {
-            logger.info("Execution of {} failed - {}", command, e.getMessage());
-        }
-        return new Pair<>(intVal, stBuilder.toString());
-    }
-
     private boolean isDockerInstalled() {
         return isCommandSuccessful(DOCKER_CLI_VERSION);
     }
 
-    public void removePulledImages() {
-        if (imagesPulled != null) {
-            for(DockerImage image: imagesPulled) {
-                executeCommand("docker rmi " + image.getId());
+    private boolean isMatchStringInList(String toMatch, List<String> stringsList) {
+        if (toMatch == null || stringsList == null || stringsList.isEmpty()) {
+            return false;
+        }
+        for (String currentString : stringsList) {
+            if (toMatch.matches(currentString)) {
+                return true;
             }
         }
+        return false;
     }
 
-    protected abstract String getImageFullURL(DockerImage image);
+    /*
+    private String getImageSizeInMB(String imageUrl) {
+        String command = "docker image inspect " + imageUrl + " --format='{{.Size}}'";
+        Pair<Integer, String> pullResult = executeCommandWithOutput(command);
+        boolean cmdResult = pullResult.getKey() == 0;
+        String result = "Unknown";
+        if (cmdResult) {
+            String cmdVal = pullResult.getValue().replaceAll("'","");
+            try {
+                long sizeInBytes = Long.parseLong(cmdVal);
+                long sizeInMegaBytes = sizeInBytes / 1024 / 1024;
+                result = String.valueOf(sizeInMegaBytes);
+            } catch (Exception ex) {
+                logger.debug("Was not able to parse image size {} ", imageUrl);
+                logger.debug("Error - {}", ex.getMessage());
+            }
+        }
+        return result;
+    }
+
+    protected boolean isEnoughSpaceForImage() {
+        return true;
+    }
+    */
 
 }

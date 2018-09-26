@@ -5,11 +5,16 @@ import java.util.List;
 
 public class RemoteDockerConfiguration {
 
+    // Global Docker configurations
     private List<String> imageNames;
     private List<String> imageTags;
     private List<String> imageDigests;
+    private boolean forceDelete;
+    private boolean remoteDockerEnabled;
 
+    // Amazon ECR configurations
     private List<String> amazonRegistryIds;
+    private boolean remoteDockerAmazonEnabled;
     private String amazonRegion = "east";
 
 
@@ -17,12 +22,17 @@ public class RemoteDockerConfiguration {
         this.imageNames     = new ArrayList<>();
         this.imageTags      = new ArrayList<>();
         this.imageDigests   = new ArrayList<>();
+        forceDelete         = false;
+        remoteDockerEnabled = false;
     }
 
-    public RemoteDockerConfiguration(List<String> imageNames, List<String> imageTags, List<String> imageDigests) {
+    public RemoteDockerConfiguration(List<String> imageNames, List<String> imageTags, List<String> imageDigests,
+                                     boolean forceDelete, boolean remoteDockerEnabled) {
         this.imageNames = imageNames;
         this.imageTags = imageTags;
         this.imageDigests = imageDigests;
+        this.forceDelete = forceDelete;
+        this.remoteDockerEnabled = remoteDockerEnabled;
     }
 
     public List<String> getImageNames() {
@@ -49,11 +59,29 @@ public class RemoteDockerConfiguration {
         this.imageDigests = imageDigests;
     }
 
-    public List<String> getAmazonRegistryId() {
+    public boolean isForceDelete() {
+        return forceDelete;
+    }
+
+    public void setForceDelete(boolean forceDelete) {
+        this.forceDelete = forceDelete;
+    }
+
+    public boolean isRemoteDockerEnabled() {
+        return remoteDockerEnabled;
+    }
+
+    public void setRemoteDockerEnabled(boolean remoteDockerEnabled) {
+        this.remoteDockerEnabled = remoteDockerEnabled;
+    }
+
+    // Amazon methods
+
+    public List<String> getAmazonRegistryIds() {
         return amazonRegistryIds;
     }
 
-    public void setAmazonRegistryId(List<String> amazonRegistryIds) {
+    public void setAmazonRegistryIds(List<String> amazonRegistryIds) {
         this.amazonRegistryIds = amazonRegistryIds;
     }
 
@@ -63,5 +91,13 @@ public class RemoteDockerConfiguration {
 
     public void setAmazonRegion(String amazonRegion) {
         this.amazonRegion = amazonRegion;
+    }
+
+    public boolean isRemoteDockerAmazonEnabled() {
+        return remoteDockerAmazonEnabled;
+    }
+
+    public void setRemoteDockerAmazonEnabled(boolean remoteDockerAmazonEnabled) {
+        this.remoteDockerAmazonEnabled = remoteDockerAmazonEnabled;
     }
 }
