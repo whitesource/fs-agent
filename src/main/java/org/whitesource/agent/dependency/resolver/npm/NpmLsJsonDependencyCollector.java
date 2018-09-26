@@ -211,7 +211,8 @@ public class NpmLsJsonDependencyCollector extends DependencyCollector {
         try {
             uri = new URI(linkResolved);
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
+            logger.debug("{}", e.getStackTrace());
         }
         String path = uri.getPath();
         String idStr = path.substring(path.lastIndexOf('/') + 1);

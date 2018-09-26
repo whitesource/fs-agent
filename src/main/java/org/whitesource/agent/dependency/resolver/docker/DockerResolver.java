@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.archiver.ArchiverException;
 import org.slf4j.Logger;
+import org.whitesource.agent.dependency.resolver.docker.remotedocker.RemoteDockersManager;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
@@ -61,6 +62,8 @@ public class DockerResolver {
     /* --- Members --- */
 
     private FSAConfiguration config;
+    private static boolean alreadyResolved = false;
+    private static Collection<AgentProjectInfo> projects = new LinkedList<>();
 
     /* --- Constructor --- */
 
@@ -76,8 +79,15 @@ public class DockerResolver {
      * @return list of projects for all docker images
      */
     public Collection<AgentProjectInfo> resolveDockerImages() {
-        logger.info("Resolving docker images");
-        Collection<AgentProjectInfo> projects = new LinkedList<>();
+        // A temp solution for WSE-841
+        if(DockerResolver.alreadyResolved) {
+            return projects;
+        }
+
+        RemoteDockersManager remoteDockersManager = new RemoteDockersManager(config.getRemoteDocker());
+        remoteDockersManager.pullRemoteDockerImages();
+
+        logger.info("Resolving docker images ------------------------------");
         String line = null;
         Collection<DockerImage> dockerImages = new LinkedList<>();
         Collection<DockerImage> dockerImagesToScan;
@@ -102,17 +112,20 @@ public class DockerResolver {
                     saveDockerImages(dockerImagesToScan, projects);
                 }
             }
+            br.close();
         } catch (IOException e) {
-            logger.error("IO exception : ", e.getMessage());
-            logger.debug("IO exception : ", e.getStackTrace());
+            logger.error("IO exception : {}", e.getMessage());
+            logger.debug("IO exception : {}", e.getStackTrace());
         } catch (InterruptedException e) {
-            logger.error("Interrupted exception : ", e.getMessage());
-            logger.debug("Interrupted exception : ", e.getStackTrace());
+            logger.error("Interrupted exception : {}", e.getMessage());
+            logger.debug("Interrupted exception : {}", e.getStackTrace());
         } finally {
             if (process != null) {
                 process.destroy();
             }
         }
+        remoteDockersManager.removePulledRemoteDockerImages();
+        DockerResolver.alreadyResolved = true;
         return projects;
     }
 
@@ -221,7 +234,7 @@ public class DockerResolver {
 
                 RpmParser rpmParser = new RpmParser();
                 Collection<String> yumDbFoldersPath = new LinkedList<>();
-                rpmParser.findFolder(imageExtractionDir, YUM_DB, yumDbFoldersPath);
+                RpmParser.findFolder(imageExtractionDir, YUM_DB, yumDbFoldersPath);
                 File yumDbFolder = rpmParser.checkFolders(yumDbFoldersPath, RPM_YUM_DB_FOLDER_DEFAULT_PATH);
                 int rpmPackages = parseProjectInfo(projectInfo, rpmParser, yumDbFolder);
                 logger.info("Found {} Rpm Packages", rpmPackages);
@@ -245,7 +258,8 @@ public class DockerResolver {
                 logger.error("Error extracting {}: {}", imageTarFile, e.getMessage());
                 logger.debug("Error extracting tar archive", e);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.error(e.getMessage());
+                logger.debug("{}", e.getStackTrace());
             } finally {
                 process.destroy();
                 deleteDockerArchiveFiles(imageTarFile, imageExtractionDir);

@@ -75,7 +75,8 @@ public class FileWalker implements Iterator<Path> {
                                 pathBlockingQueue.offer(file, 4242, TimeUnit.HOURS);
                             }
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            logger.error(e.getMessage());
+                            logger.debug("{}", e.getStackTrace());
                         }
                         return FileVisitResult.CONTINUE;
                     }
@@ -89,7 +90,8 @@ public class FileWalker implements Iterator<Path> {
                     }
                 });
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error(e.getMessage());
+                logger.debug("{}", e.getStackTrace());
             }
         });
         thread.setDaemon(true);
@@ -97,7 +99,8 @@ public class FileWalker implements Iterator<Path> {
         try {
             thread.join(200);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
+            logger.debug("{}", e.getStackTrace());
         }
     }
 
@@ -118,7 +121,8 @@ public class FileWalker implements Iterator<Path> {
             try {
                 Thread.sleep(1);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.error(e.getMessage());
+                logger.debug("{}", e.getStackTrace());
             }
         }
         return hasNext;
@@ -129,7 +133,8 @@ public class FileWalker implements Iterator<Path> {
         try {
             path = pathBlockingQueue.take();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
+            logger.debug("{}", e.getStackTrace());
         }
         return path;
     }

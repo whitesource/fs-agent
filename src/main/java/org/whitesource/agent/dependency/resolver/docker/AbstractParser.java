@@ -1,6 +1,8 @@
 package org.whitesource.agent.dependency.resolver.docker;
 
+import org.slf4j.Logger;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.utils.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,6 +16,7 @@ import java.util.Collection;
 public abstract class AbstractParser {
 
     /* --- Constructors --- */
+    protected static final Logger logger = LoggerFactory.getLogger(AbstractParser.class);
 
     public AbstractParser() {
 
@@ -28,7 +31,8 @@ public abstract class AbstractParser {
             if (fr != null)
                 fr.close();
         } catch (IOException ex) {
-            ex.printStackTrace();
+            logger.error(ex.getMessage());
+            logger.debug("{}", ex.getStackTrace());
         }
     }
 
