@@ -1,6 +1,7 @@
 package org.whitesource.agent.dependency.resolver.npm;
 
 import org.apache.commons.io.IOUtils;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.whitesource.agent.utils.LoggerFactory;
@@ -37,6 +38,7 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String folder) {
         if (!includeDevDependencies){
+            // when 'indcludeDevDependenceis=false' - collecting the list of dev-dependencies so that later they're excluded from the list of dependencies
             devDependencies = findDevDependencies(folder);
         }
         File yarnLock = new File(folder + fileSeparator + YARN_LOCK);
@@ -68,7 +70,8 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
+            logger.debug("{}", e.getStackTrace());
         }
         return false;
     }
@@ -140,10 +143,9 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
                     dependencyInfos.add(parentsMap.get(parent));
                 }
             }
-        } catch (FileNotFoundException e){
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e){
+            logger.error(e.getMessage());
+            logger.debug("{}", e.getStackTrace());
         } finally {
             if (fileReader != null){
                 try {
@@ -177,12 +179,15 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
                 InputStream is = new FileInputStream(packageJson.getPath());
                 String jsonText = IOUtils.toString(is, Constants.UTF8);
                 JSONObject json = new JSONObject(jsonText);
-                devDependenciesMap = json.getJSONObject(DEV_DEPENDENCIES).toMap();
+                try {
+                    devDependenciesMap = json.getJSONObject(DEV_DEPENDENCIES).toMap();
+                } catch (JSONException e){
+                    logger.error("No '{}' node found in {}", DEV_DEPENDENCIES, packageJson);
+                }
 
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+                logger.debug("{}", e.getStackTrace());
             }
         }
         return devDependenciesMap;

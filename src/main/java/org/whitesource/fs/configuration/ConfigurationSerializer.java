@@ -36,7 +36,7 @@ public class ConfigurationSerializer <T> {
 
     /* --- Static members --- */
 
-    private final Logger logger = LoggerFactory.getLogger(ConfigurationSerializer.class);
+    private static final Logger logger = LoggerFactory.getLogger(ConfigurationSerializer.class);
 
     /* --- Members --- */
 
@@ -125,7 +125,8 @@ public class ConfigurationSerializer <T> {
                 return config;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
+            logger.debug("{}", e.getStackTrace());
             return null;
         }
     }
