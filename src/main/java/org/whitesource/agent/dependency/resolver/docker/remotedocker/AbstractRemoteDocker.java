@@ -1,5 +1,6 @@
 package org.whitesource.agent.dependency.resolver.docker.remotedocker;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.docker.DockerImage;
@@ -16,18 +17,21 @@ import java.util.*;
 
 public abstract class AbstractRemoteDocker {
 
+    private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteDocker.class);
+    private static String DOCKER_CLI_VERSION = "docker --version";
+    protected static String DOCKER_CLI_LOGIN  = "docker login";
+
     // This is a list of the pulled images only - Users may require to pull existing images - but they are not saved
     // in this list because we will remove the images that we pulled here (we don't want to remove the existing images
     // of the users)
     private Collection<DockerImage> imagesPulled;
 
     private Collection<DockerImage> imagesFound;
-    private static String DOCKER_CLI_VERSION = "docker --version";
-    protected static String DOCKER_CLI_LOGIN  = "docker login";
-    private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteDocker.class);
 
     protected RemoteDockerConfiguration config;
+
     private int pulledImagesCount;
+
     private int existingImagesCount;
 
     /* --- Constructors --- */
@@ -75,87 +79,91 @@ public abstract class AbstractRemoteDocker {
     protected abstract String getImageFullURL(DockerImage image);
 
     private Collection<DockerImage> pullImagesFromRemoteRegistry() {
-        if (imagesFound != null) {
-            Collection<DockerImage> pulledImagesList = new ArrayList<>();
-            for (DockerImage image : imagesFound) {
-                if (isImageRequired(image)) {
-                    String imageURL = getImageFullURL(image);
-                    if (pullImageWithFullUrl(imageURL)) {
-                        pulledImagesList.add(image);
-                    }
+        Collection<DockerImage> pulledImagesList = new LinkedList<>();
+        for (DockerImage image : imagesFound) {
+            if (isImagePullRequired(image)) {
+                String imageURL = getImageFullURL(image);
+                if (pullImageWithFullUrl(imageURL)) {
+                    pulledImagesList.add(image);
                 }
             }
-            return pulledImagesList;
         }
-        return Collections.emptyList();
+        return pulledImagesList;
     }
 
     private boolean isAllSoftwareRequiredInstalled() {
         return isDockerInstalled() && isRequiredRegistryManagerInstalled();
     }
 
-    private boolean isImageRequired(DockerImage image) {
-        if (config != null && image != null) {
+    private boolean isImagePullRequired(DockerImage image) {
 
-            List<String> namesList = config.getImageNames();
-            List<String> tagsList = config.getImageTags();
-            List<String> digestList = config.getImageDigests();
-
-            boolean allNames = false;
-            // If images list is not configured - we assume that we want to scan ALL images
-            if (namesList == null || namesList.isEmpty() || namesList.contains(".*.*")) {
-                allNames = true;
-            }
-
-            boolean allTags = false;
-            // If tag list is not configured - we assume that we want to scan ALL tags
-            if (tagsList == null || tagsList.isEmpty() || tagsList.contains(".*.*")) {
-                allTags = true;
-            }
-
-            boolean allDigests = false;
-            // If digest list is not configured - we assume that we want to scan ALL tags
-            if (digestList == null || digestList.isEmpty() || digestList.contains(".*.*")) {
-                allDigests = true;
-            }
-
-            // We want to pull everything - so every image is required
-            if (allNames && allTags && allDigests) {
-                return true;
-            }
-
-            // Otherwise we look for specific tag(s)/sha256
-            String imageTag = image.getTag();
-            String imageDigest = image.getId();
-            String imageName = image.getRepository();
-
-            if ( (imageTag == null || imageTag.isEmpty()) &&
-                 (imageDigest == null || imageDigest.isEmpty()) &&
-                 (imageName == null || imageName.isEmpty())) {
-                // This tag/sha256/name does not met any of the requirements
-                return false;
-            }
-
-            // Name and Tag may have a regular expression match
-            boolean isNameMet   = allNames || namesList.contains(imageName) || isMatchStringInList(imageName, namesList);
-            boolean isTagMet    = allTags  || tagsList.contains(imageTag)   || isMatchStringInList(imageTag, tagsList);
-            // Digest cannot have a regular expression match
-            boolean isDigestMet = allDigests || digestList.contains(imageDigest);
-
-            // Is this tag/sha256/name in the required tags/sha256/name list?
-            return isNameMet && isTagMet && isDigestMet ;
+        if (image == null) {
+            logger.debug("Docker Image is null");
+            return false;
         }
-        return false;
+
+        List<String> namesList = config.getImageNames();
+        List<String> tagsList = config.getImageTags();
+        List<String> digestList = config.getImageDigests();
+
+        boolean allNames = false;
+        // If images list is not configured - we assume that we want to scan ALL images
+        if (namesList == null || namesList.isEmpty() || namesList.contains(Constants.GLOB_PATTERN)) {
+            allNames = true;
+        }
+
+        boolean allTags = false;
+        // If tag list is not configured - we assume that we want to scan ALL tags
+        if (tagsList == null || tagsList.isEmpty() || tagsList.contains(Constants.GLOB_PATTERN)) {
+            allTags = true;
+        }
+
+        boolean allDigests = false;
+        // If digest list is not configured - we assume that we want to scan ALL tags
+        if (digestList == null || digestList.isEmpty() || digestList.contains(Constants.GLOB_PATTERN)) {
+            allDigests = true;
+        }
+
+        // We want to pull everything - so every image is required
+        if (allNames && allTags && allDigests) {
+            return true;
+        }
+
+        // Otherwise we look for specific tag(s)/sha256
+        String imageTag = image.getTag();
+        String imageDigest = image.getId();
+        String imageName = image.getRepository();
+
+        if (StringUtils.isBlank(imageTag) && StringUtils.isBlank(imageDigest) && StringUtils.isBlank(imageName)) {
+            // This tag/sha256/name does not met any of the requirements
+            logger.debug("Image values are empty or null");
+            return false;
+        }
+
+        // Name and Tag may have a regular expression match
+        boolean isNameMet   = allNames || namesList.contains(imageName) || isMatchStringInList(imageName, namesList);
+        boolean isTagMet    = allTags  || tagsList.contains(imageTag)   || isMatchStringInList(imageTag, tagsList);
+        // Digest cannot have a regular expression match
+        boolean isDigestMet = allDigests || digestList.contains(imageDigest);
+
+        // Is this tag/sha256/name in the required tags/sha256/name list?
+        boolean result = isNameMet && isTagMet && isDigestMet ;
+        if (!result) {
+            logger.debug("Image does not met the requirements: {}", image);
+            logger.debug("Name met - {} , Tag met - {} , Digest met - {}", isNameMet, isTagMet, isDigestMet);
+        }
+        return result;
     }
 
     private boolean pullImageWithFullUrl(String imageURL) {
         boolean result = false;
-        if (imageURL != null && !imageURL.isEmpty()) {
+        if (!StringUtils.isBlank(imageURL)) {
             logger.info("Trying to pull image : {}", imageURL);
             String command = "docker pull";
             command += Constants.WHITESPACE;
             command += imageURL;
             try {
+                // TODO: check if can use CommandLineProcess
                 Process process = Runtime.getRuntime().exec(command);
                 StringBuilder resultText = new StringBuilder();
                 try (final BufferedReader reader
@@ -231,7 +239,11 @@ public abstract class AbstractRemoteDocker {
     }
 
     private boolean isDockerInstalled() {
-        return isCommandSuccessful(DOCKER_CLI_VERSION);
+         boolean installed = isCommandSuccessful(DOCKER_CLI_VERSION);
+         if (!installed) {
+             logger.error("Docker is not installed or its path is not configured correctly");
+         }
+         return installed;
     }
 
     private boolean isMatchStringInList(String toMatch, List<String> stringsList) {

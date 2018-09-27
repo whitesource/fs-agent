@@ -17,6 +17,7 @@ package org.whitesource.fs;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.Constants;
@@ -29,11 +30,16 @@ import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.*;
 
 import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.Proxy;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.whitesource.agent.ConfigPropertyKeys.MAVEN_IGNORE_POM_MODULES;
 import static org.whitesource.agent.client.ClientConstants.SERVICE_URL_KEYWORD;
 
@@ -623,23 +629,33 @@ public class FSAConfiguration {
     }
 
     private RemoteDockerConfiguration getRemoteDockerConfiguration(FSAConfigProperties config) {
-        String[] all = new String[]{".*.*"};
         String[] empty = new String[0];
-        String[] dockerImages   = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, all);
-        String[] dockerTags     = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, all);
-        String[] dockerDigests  = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, empty);
+        String[] dockerImages   = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, null);
+        String[] dockerTags     = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, null);
+        String[] dockerDigests  = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, null);
         boolean forceDelete = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_DELETE_FORCE, false);
         boolean enablePulling = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_ENABLE, false);
-        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(new ArrayList<>(Arrays.asList(dockerImages)),
-                                            new ArrayList<>(Arrays.asList(dockerTags)),
-                                            new ArrayList<>(Arrays.asList(dockerDigests)),
-                                            forceDelete, enablePulling);
+        List<String> dockerImagesList = null;
+        if (dockerImages != null) {
+            dockerImagesList = new LinkedList<>(Arrays.asList(dockerImages));
+        }
+        List<String> dockerTagsList = null;
+        if (dockerTags != null) {
+            dockerTagsList = new LinkedList<>(Arrays.asList(dockerTags));
+        }
+        List<String> dockerDigestsList = null;
+        if (dockerDigests != null) {
+            dockerDigestsList = new LinkedList<>(Arrays.asList(dockerDigests));
+        }
+
+        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
+                dockerDigestsList, forceDelete, enablePulling);
 
         // Amazon configuration
         String[] dockerAmazonRegistryIds = config.getListProperty(ConfigPropertyKeys.DOCKER_AWS_REGISTRY_IDS, empty);
         String dockerAmazonRegion = config.getProperty(ConfigPropertyKeys.DOCKER_AWS_REGION, "east");
         boolean enableAmazon = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_AWS_ENABLE, false);
-        result.setAmazonRegistryIds(new ArrayList<>(Arrays.asList(dockerAmazonRegistryIds)));
+        result.setAmazonRegistryIds(new LinkedList<>(Arrays.asList(dockerAmazonRegistryIds)));
         result.setAmazonRegion(dockerAmazonRegion);
         result.setRemoteDockerAmazonEnabled(enableAmazon);
 
@@ -689,28 +705,63 @@ public class FSAConfiguration {
     public static Pair<FSAConfigProperties, List<String>> readWithError(String configFilePath) {
         FSAConfigProperties configProps = new FSAConfigProperties();
         List<String> errors = new ArrayList<>();
+        BufferedReader readFileFromUrl = null;
+        StringBuffer writeUrlFileContent = null;
+        //since we don't know if it a url or local path, so we first try to resolve a url, if it failed, then we try local path
         try {
-            try (FileInputStream inputStream = new FileInputStream(configFilePath)) {
-                try {
-                    //                    configProps.load(inputStream); replaced by the below
-                    configProps.load(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-                    // Remove extra spaces from the values
-                    Set<String> keys = configProps.stringPropertyNames();
-                    for (String key : keys) {
-                        String value = configProps.getProperty(key);
-                        if (value != null) {
-                            value = value.trim();
-                        }
-                        configProps.put(key, value);
-                    }
-                } catch (FileNotFoundException e) {
-                    errors.add("Failed to open " + configFilePath + " for reading " + e.getMessage());
-                } catch (IOException e) {
-                    errors.add("Error occurred when reading from " + configFilePath + e.getMessage());
+            //assign the url to point to config path url
+            URL url = new URL(configFilePath);
+            //toDo complete proxy settings once finished in WSE-791
+            Proxy proxy = null;
+            if (0 == 1) {
+                proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 21));
+            }
+            //if proxy is set, so open the connection with proxy
+            if (proxy != null) {
+                url.openConnection(proxy);
+            }
+            readFileFromUrl = new BufferedReader(new InputStreamReader(url.openStream()));
+            String inputLine;
+            writeUrlFileContent = new StringBuffer();
+            //write data of the file to string buffer
+            while ((inputLine = readFileFromUrl.readLine()) != null) {
+                writeUrlFileContent.append(inputLine + "\n");
+            }
+        }
+        //if error occurred that means it is not a url that we can resolve, still need to try local path, so do nothing in catch
+        catch (MalformedURLException e) {
+        } catch (IOException e) {
+        }
+
+        InputStream inputStream = null;
+        //if there is any data written to the buffer, so convert to input stream
+        if (writeUrlFileContent != null)
+        {
+            inputStream = IOUtils.toInputStream(writeUrlFileContent,UTF_8);
+        }
+        //if string buffer still null, so try to open stream of local file path
+        else {
+            try {
+                inputStream = new FileInputStream(configFilePath);
+            } catch (FileNotFoundException e) {
+                errors.add("Failed to open " + configFilePath + " for reading " + e.getMessage());
+            }
+        }
+
+        try {
+            //                    configProps.load(inputStream); replaced by the below
+            configProps.load(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            // Remove extra spaces from the values
+            Set<String> keys = configProps.stringPropertyNames();
+            for (String key : keys) {
+                String value = configProps.getProperty(key);
+                if (value != null) {
+                    value = value.trim();
                 }
+                configProps.put(key, value);
             }
         } catch (IOException e) {
-            errors.add("Error occurred when reading from " + configFilePath + " - " + e.getMessage());
+            errors.add("Error occurred when reading from " + configFilePath + e.getMessage());
         }
         return new Pair<>(configProps, errors);
     }

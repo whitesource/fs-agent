@@ -526,21 +526,24 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             if (dependencyElement.isJsonObject()){
                 //foreach dependency info get relevant parameters
                 JsonArray packages = dependencyElement.getAsJsonObject().getAsJsonArray(PACKAGE);
-                logger.debug("Packeges in json: {}", packages.getAsString());
-                DependencyInfo dependencyInfo;
-                for (int i = 0; i < packages.size(); i++){
-                    dependencyInfo = new DependencyInfo();
-                    JsonObject pck = packages.get(i).getAsJsonObject();
-                    String Path = pck.get(PATH).getAsString();
-                    dependencyInfo.setGroupId(getGroupId(Path));
-                    dependencyInfo.setArtifactId(Path);
-                    dependencyInfo.setCommit(pck.get(REVISION_GOV).getAsString());
-                    dependencyInfo.setDependencyType(DependencyType.GO);
-                    dependencyInfo.setSystemPath(goVendor.getPath());
-                    if(pck.get(VERSION_GOV) != null) {
-                        dependencyInfo.setVersion(pck.get(VERSION_GOV).getAsString());
+                if (packages != null) {
+                    logger.debug("Number of packeges in json: {}", packages.size());
+                    DependencyInfo dependencyInfo;
+                    for (int i = 0; i < packages.size(); i++) {
+                        logger.debug("Packeges in json #{} : {}", i, packages.get(i).toString());
+                        dependencyInfo = new DependencyInfo();
+                        JsonObject pck = packages.get(i).getAsJsonObject();
+                        String Path = pck.get(PATH).getAsString();
+                        dependencyInfo.setGroupId(getGroupId(Path));
+                        dependencyInfo.setArtifactId(Path);
+                        dependencyInfo.setCommit(pck.get(REVISION_GOV).getAsString());
+                        dependencyInfo.setDependencyType(DependencyType.GO);
+                        dependencyInfo.setSystemPath(goVendor.getPath());
+                        if (pck.get(VERSION_GOV) != null) {
+                            dependencyInfo.setVersion(pck.get(VERSION_GOV).getAsString());
+                        }
+                        dependencyInfos.add(dependencyInfo);
                     }
-                    dependencyInfos.add(dependencyInfo);
                 }
             }
         } catch (FileNotFoundException e){
