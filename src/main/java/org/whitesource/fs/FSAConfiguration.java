@@ -286,11 +286,11 @@ public class FSAConfiguration {
         Set<String> viaAppPaths = appPathsToDependencyDirs.keySet();
         if (sender.isEnableImpactAnalysis()) {
             // the default appPath size is one (defaultKey = -d property), this one check if the user set more then one appPath
-           /* if (viaAppPaths.size() > 2) {
+            if (viaAppPaths.size() > 2) {
                 errors.add("Effective Usage Analysis will not run if the command line parameter 'appPath' is specified more than once");
             } else if (viaAppPaths.size() == 1) {
                 errors.add("Effective Usage Analysis will not run if the command line parameter 'appPath' is not specified");
-            } else {*/
+            } else {
                 boolean validViaAppPath = checkAppPathsForVia(viaAppPaths, errors);
                 if (validViaAppPath) {
                     if (resolver.getMavenIgnoredScopes() == null || (!Arrays.asList(resolver.getMavenIgnoredScopes()).contains(MavenTreeDependencyCollector.ALL)
@@ -300,7 +300,7 @@ public class FSAConfiguration {
                                 "maven.aggregateModules=true, gradle.aggregateModules=true");
                     }
                 }
-
+            }
         } else {
             if (viaAppPaths.size() > 1) {
                 errors.add("Effective Usage Analysis will not run if the configuration file parameter enableImpactAnalysis is not set to 'true'");
@@ -625,15 +625,15 @@ public class FSAConfiguration {
     private RemoteDockerConfiguration getRemoteDockerConfiguration(FSAConfigProperties config) {
         String[] all = new String[]{".*.*"};
         String[] empty = new String[0];
-        String[] dockerImages   = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, all);
-        String[] dockerTags     = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, all);
-        String[] dockerDigests  = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, empty);
+        String[] dockerImages = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, all);
+        String[] dockerTags = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, all);
+        String[] dockerDigests = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, empty);
         boolean forceDelete = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_DELETE_FORCE, false);
         boolean enablePulling = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_ENABLE, false);
-        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(new ArrayList<>(Arrays.asList(dockerImages)),
-                                            new ArrayList<>(Arrays.asList(dockerTags)),
-                                            new ArrayList<>(Arrays.asList(dockerDigests)),
-                                            forceDelete, enablePulling);
+        RemoteDockerConfiguration result = new RemoteDockerConfiguration(new ArrayList<>(Arrays.asList(dockerImages)),
+                new ArrayList<>(Arrays.asList(dockerTags)),
+                new ArrayList<>(Arrays.asList(dockerDigests)),
+                forceDelete, enablePulling);
 
         // Amazon configuration
         String[] dockerAmazonRegistryIds = config.getListProperty(ConfigPropertyKeys.DOCKER_AWS_REGISTRY_IDS, empty);
@@ -745,7 +745,9 @@ public class FSAConfiguration {
         return resolver;
     }
 
-    public RemoteDockerConfiguration getRemoteDocker() { return remoteDockerConfiguration;}
+    public RemoteDockerConfiguration getRemoteDocker() {
+        return remoteDockerConfiguration;
+    }
 
     public String getScannedFolders() {
         return scannedFolders;
