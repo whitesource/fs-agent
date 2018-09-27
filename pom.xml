@@ -292,7 +292,16 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
             </resource>
+
+            <resource>
+                <directory>.</directory>
+                <includes>
+                    <include>README.md</include>
+                    <include>README.EUA.md</include>
+                </includes>
+            </resource>
         </resources>
+
         <plugins>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
