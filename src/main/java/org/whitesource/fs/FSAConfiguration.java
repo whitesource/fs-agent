@@ -629,10 +629,21 @@ public class FSAConfiguration {
         String[] dockerDigests  = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, null);
         boolean forceDelete = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_DELETE_FORCE, false);
         boolean enablePulling = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_ENABLE, false);
-        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(new LinkedList<>(Arrays.asList(dockerImages)),
-                                            new LinkedList<>(Arrays.asList(dockerTags)),
-                                            new LinkedList<>(Arrays.asList(dockerDigests)),
-                                            forceDelete, enablePulling);
+        List<String> dockerImagesList = null;
+        if (dockerImages != null) {
+            dockerImagesList = new LinkedList<>(Arrays.asList(dockerImages));
+        }
+        List<String> dockerTagsList = null;
+        if (dockerTags != null) {
+            dockerTagsList = new LinkedList<>(Arrays.asList(dockerTags));
+        }
+        List<String> dockerDigestsList = null;
+        if (dockerDigests != null) {
+            dockerDigestsList = new LinkedList<>(Arrays.asList(dockerDigests));
+        }
+
+        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
+                dockerDigestsList, forceDelete, enablePulling);
 
         // Amazon configuration
         String[] dockerAmazonRegistryIds = config.getListProperty(ConfigPropertyKeys.DOCKER_AWS_REGISTRY_IDS, empty);
