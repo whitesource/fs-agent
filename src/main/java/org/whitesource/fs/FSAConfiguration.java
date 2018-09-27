@@ -286,11 +286,11 @@ public class FSAConfiguration {
         Set<String> viaAppPaths = appPathsToDependencyDirs.keySet();
         if (sender.isEnableImpactAnalysis()) {
             // the default appPath size is one (defaultKey = -d property), this one check if the user set more then one appPath
-            if (viaAppPaths.size() > 2) {
+           /* if (viaAppPaths.size() > 2) {
                 errors.add("Effective Usage Analysis will not run if the command line parameter 'appPath' is specified more than once");
             } else if (viaAppPaths.size() == 1) {
                 errors.add("Effective Usage Analysis will not run if the command line parameter 'appPath' is not specified");
-            } else {
+            } else {*/
                 boolean validViaAppPath = checkAppPathsForVia(viaAppPaths, errors);
                 if (validViaAppPath) {
                     if (resolver.getMavenIgnoredScopes() == null || (!Arrays.asList(resolver.getMavenIgnoredScopes()).contains(MavenTreeDependencyCollector.ALL)
@@ -300,7 +300,7 @@ public class FSAConfiguration {
                                 "maven.aggregateModules=true, gradle.aggregateModules=true");
                     }
                 }
-            }
+
         } else {
             if (viaAppPaths.size() > 1) {
                 errors.add("Effective Usage Analysis will not run if the configuration file parameter enableImpactAnalysis is not set to 'true'");
