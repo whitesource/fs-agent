@@ -629,23 +629,33 @@ public class FSAConfiguration {
     }
 
     private RemoteDockerConfiguration getRemoteDockerConfiguration(FSAConfigProperties config) {
-        String[] all = new String[]{".*.*"};
         String[] empty = new String[0];
-        String[] dockerImages   = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, all);
-        String[] dockerTags     = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, all);
-        String[] dockerDigests  = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, empty);
+        String[] dockerImages   = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, null);
+        String[] dockerTags     = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, null);
+        String[] dockerDigests  = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, null);
         boolean forceDelete = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_DELETE_FORCE, false);
         boolean enablePulling = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_ENABLE, false);
-        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(new ArrayList<>(Arrays.asList(dockerImages)),
-                                            new ArrayList<>(Arrays.asList(dockerTags)),
-                                            new ArrayList<>(Arrays.asList(dockerDigests)),
-                                            forceDelete, enablePulling);
+        List<String> dockerImagesList = null;
+        if (dockerImages != null) {
+            dockerImagesList = new LinkedList<>(Arrays.asList(dockerImages));
+        }
+        List<String> dockerTagsList = null;
+        if (dockerTags != null) {
+            dockerTagsList = new LinkedList<>(Arrays.asList(dockerTags));
+        }
+        List<String> dockerDigestsList = null;
+        if (dockerDigests != null) {
+            dockerDigestsList = new LinkedList<>(Arrays.asList(dockerDigests));
+        }
+
+        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
+                dockerDigestsList, forceDelete, enablePulling);
 
         // Amazon configuration
         String[] dockerAmazonRegistryIds = config.getListProperty(ConfigPropertyKeys.DOCKER_AWS_REGISTRY_IDS, empty);
         String dockerAmazonRegion = config.getProperty(ConfigPropertyKeys.DOCKER_AWS_REGION, "east");
         boolean enableAmazon = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_AWS_ENABLE, false);
-        result.setAmazonRegistryIds(new ArrayList<>(Arrays.asList(dockerAmazonRegistryIds)));
+        result.setAmazonRegistryIds(new LinkedList<>(Arrays.asList(dockerAmazonRegistryIds)));
         result.setAmazonRegion(dockerAmazonRegion);
         result.setRemoteDockerAmazonEnabled(enableAmazon);
 
