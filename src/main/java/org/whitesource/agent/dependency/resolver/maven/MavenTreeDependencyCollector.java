@@ -134,7 +134,9 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                                 projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
                                 logger.debug("Project/Module coordinates: {}", projectInfo.getCoordinates().toString());
                                 logger.debug("Total project direct dependencies found : {}", dependencies.size());
-                                dependencies.stream().filter(dependency -> StringUtils.isNotEmpty(dependency.getSha1())).forEach(dependency ->
+                                dependencies.stream().filter(dependency -> StringUtils.isNotEmpty(dependency.getSha1()) ||
+                                        (StringUtils.isNotEmpty(dependency.getGroupId()) && StringUtils.isNotEmpty(dependency.getArtifactId())
+                                                && StringUtils.isNotEmpty(dependency.getVersion()))).forEach(dependency ->
                                         projectInfo.getDependencies().add(dependency));
                                 logger.debug("ProjectInfo direct dependency added : {}", projectInfo.getDependencies().size());
                                 return projectInfo;
@@ -161,7 +163,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         try {
             return ChecksumUtils.calculateSHA1(new File(filePath));
         } catch (IOException e) {
-            logger.warn("Failed getting " + filePath + ". File will not be sent to WhiteSource server.");
+            logger.warn("Failed getting " + filePath + ". Consider run 'mvn clean install' ");
             return Constants.EMPTY_STRING;
         }
     }
