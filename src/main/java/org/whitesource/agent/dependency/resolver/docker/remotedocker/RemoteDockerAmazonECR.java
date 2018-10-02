@@ -399,6 +399,7 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
                 }
             }
         }
+        logger.debug("Found {} images", result.size());
         logger.debug("listImagesOnRemoteRegistry finish");
         return result;
     }

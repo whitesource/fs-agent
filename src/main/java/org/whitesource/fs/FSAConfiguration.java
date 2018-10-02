@@ -649,7 +649,7 @@ public class FSAConfiguration {
         }
 
         int maxImagesScan = config.getIntProperty(ConfigPropertyKeys.DOCKER_SCAN_MAX_IMAGES, 0);
-        int maxImagesPull = config.getIntProperty(ConfigPropertyKeys.DOCKER_PULL_MAX_IMAGES, 3);
+        int maxImagesPull = config.getIntProperty(ConfigPropertyKeys.DOCKER_PULL_MAX_IMAGES, 10);
         boolean pullForce = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_FORCE, false);
         RemoteDockerConfiguration result =  new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
                 dockerDigestsList, forceDelete, enablePulling, maxImagesScan, pullForce, maxImagesPull);

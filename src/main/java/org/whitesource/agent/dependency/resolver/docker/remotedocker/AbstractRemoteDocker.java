@@ -97,6 +97,10 @@ public abstract class AbstractRemoteDocker {
         Set<AbstractRemoteDockerImage> pulledImagesList = new HashSet<>();
         int maxPullImages = config.getMaxPullImages();
         int pullImagesCounter = 0;
+        if (maxPullImages < 1) {
+            logger.info("No images will be pull - Configuration 'docker.pull.maxImages' is equal to {} ", maxPullImages);
+            return pulledImagesList;
+        }
         for (AbstractRemoteDockerImage image : imagesFound) {
             // Check if image meets the required name/tag/digest
             if (isImagePullRequired(image)) {
@@ -107,7 +111,7 @@ public abstract class AbstractRemoteDocker {
                 }
             }
             if (pullImagesCounter >= maxPullImages) {
-                logger.info("Reached maximum images pull count of {} - will not pull anymore images", pullImagesCounter);
+                logger.info("Reached maximum images pull count of {} - will not pull any more images", pullImagesCounter);
                 break;
             }
         }
