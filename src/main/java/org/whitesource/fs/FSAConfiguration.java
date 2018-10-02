@@ -705,25 +705,61 @@ public class FSAConfiguration {
     public static Pair<FSAConfigProperties, List<String>> readWithError(String configFilePath) {
         FSAConfigProperties configProps = new FSAConfigProperties();
         List<String> errors = new ArrayList<>();
+        BufferedReader readFileFromUrl = null;
+        StringBuffer writeUrlFileContent = null;
+        //since we don't know if it a url or local path, so we first try to resolve a url, if it failed, then we try local path
         try {
-            try (FileInputStream inputStream = new FileInputStream(configFilePath)) {
-                try {
-                    //                    configProps.load(inputStream); replaced by the below
-                    configProps.load(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-                    // Remove extra spaces from the values
-                    Set<String> keys = configProps.stringPropertyNames();
-                    for (String key : keys) {
-                        String value = configProps.getProperty(key);
-                        if (value != null) {
-                            value = value.trim();
-                        }
-                        configProps.put(key, value);
-                    }
-                } catch (FileNotFoundException e) {
-                    errors.add("Failed to open " + configFilePath + " for reading " + e.getMessage());
-                } catch (IOException e) {
-                    errors.add("Error occurred when reading from " + configFilePath + e.getMessage());
+            //assign the url to point to config path url
+            URL url = new URL(configFilePath);
+            //toDo complete proxy settings once finished in WSE-791
+            Proxy proxy = null;
+            if (0 == 1) {
+                proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 21));
+            }
+            //if proxy is set, so open the connection with proxy
+            if (proxy != null) {
+                url.openConnection(proxy);
+            } else {
+                url.openConnection();
+            }
+            readFileFromUrl = new BufferedReader(new InputStreamReader(url.openStream()));
+            String inputLine;
+            writeUrlFileContent = new StringBuffer();
+            //write data of the file to string buffer
+            while ((inputLine = readFileFromUrl.readLine()) != null) {
+                writeUrlFileContent.append(inputLine + "\n");
+            }
+        }
+        //if error occurred that means it is not a url that we can resolve, still need to try local path, so do nothing in catch
+        catch (MalformedURLException e) {
+        } catch (IOException e) {
+        }
+
+        InputStream inputStream = null;
+        //if there is any data written to the buffer, so convert to input stream
+        if (writeUrlFileContent != null) {
+            inputStream = IOUtils.toInputStream(writeUrlFileContent,UTF_8);
+        }
+        //if string buffer still null, so try to open stream of local file path
+        else {
+            try {
+                inputStream = new FileInputStream(configFilePath);
+            } catch (FileNotFoundException e) {
+                errors.add("Failed to open " + configFilePath + " for reading " + e.getMessage());
+            }
+        }
+
+        try {
+            //                    configProps.load(inputStream); replaced by the below
+            configProps.load(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            // Remove extra spaces from the values
+            Set<String> keys = configProps.stringPropertyNames();
+            for (String key : keys) {
+                String value = configProps.getProperty(key);
+                if (value != null) {
+                    value = value.trim();
                 }
+                configProps.put(key, value);
             }
         } catch (IOException e) {
             errors.add("Error occurred when reading from " + configFilePath + e.getMessage());
