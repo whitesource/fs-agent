@@ -719,6 +719,8 @@ public class FSAConfiguration {
             //if proxy is set, so open the connection with proxy
             if (proxy != null) {
                 url.openConnection(proxy);
+            } else {
+                url.openConnection();
             }
             readFileFromUrl = new BufferedReader(new InputStreamReader(url.openStream()));
             String inputLine;
@@ -735,8 +737,7 @@ public class FSAConfiguration {
 
         InputStream inputStream = null;
         //if there is any data written to the buffer, so convert to input stream
-        if (writeUrlFileContent != null)
-        {
+        if (writeUrlFileContent != null) {
             inputStream = IOUtils.toInputStream(writeUrlFileContent,UTF_8);
         }
         //if string buffer still null, so try to open stream of local file path
