@@ -26,11 +26,13 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
     private static final AmazonECR amazonClient = AmazonECRClientBuilder.standard().build();
 
     private Map<String, String> imageToRepositoryUriMap;
+    private Map<String, String> imageDigestToTagMap;
     private String defaultRegistryId;
 
     public RemoteDockerAmazonECR(RemoteDockerConfiguration config) {
         super(config);
         imageToRepositoryUriMap = new HashMap<>();
+        imageDigestToTagMap = new HashMap<>();
     }
 
     public boolean isRequiredRegistryManagerInstalled() {
@@ -167,15 +169,16 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
     }
 
     @Override
-    public String getImageFullURL(DockerImage image) {
+    public String getImageFullURL(AbstractRemoteDockerImage image) {
         String result = Constants.EMPTY_STRING;
         if (image != null) {
-            String repositoryUri = imageToRepositoryUriMap.get(image.getRepository());
+            String repositoryUri = imageToRepositoryUriMap.get(image.getRepositoryName());
             if (repositoryUri != null && !repositoryUri.isEmpty()) {
                 /* Command should look like:
                    'docker pull {registryId}.dkr.ecr.us-east-1.amazonaws.com/{imageName}:{Tag}'
                 */
-                result = repositoryUri + Constants.COLON + image.getTag();
+                result = repositoryUri + Constants.COLON + imageDigestToTagMap.get(image.getImageDigest());
+                //result = repositoryUri + "@" + image.getImageDigest();
             }
         }
         return result;
@@ -324,7 +327,9 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
         return resultImage;
     }
 
-    public Collection<DockerImage> listImagesOnRemoteRegistry() {
+    //public Collection<DockerImage> listImagesOnRemoteRegistry() {
+    @Override
+    protected Set<AbstractRemoteDockerImage> listImagesOnRemoteRegistry() {
 
         logger.debug("listImagesOnRemoteRegistry start");
 
@@ -339,7 +344,8 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
             logger.debug("listImagesOnRemoteRegistry registryIdsList is default (includes only empty string)");
         }
 
-        List<DockerImage> result = new LinkedList<>();
+        //List<DockerImage> result = new LinkedList<>();
+        Set<AbstractRemoteDockerImage> result = new HashSet<>();
         // Get all repositories of required registry ids
         for(String registryId : registryIdsList) {
             // Use 'null' instead of 'config.getImageNames()' - because getImageNames() can include repository names
@@ -364,6 +370,7 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
                             String digest = imageDetail.getImageDigest();
                             String registry = imageDetail.getRegistryId();
                             List<String> tags = imageDetail.getImageTags();
+                            Date imagePushedAt = imageDetail.getImagePushedAt();
                             logger.debug("listImagesOnRemoteRegistry registryId - {} , repository - {}, tags - {}",
                                     registryId, repositoryName, tags);
                             // Get the 'Image' information - it includes the sha256 as Docker stores it
@@ -371,9 +378,20 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
                             if (imagesList != null && !imagesList.isEmpty()) {
                                 for (Image image : imagesList) {
                                     // Convert 'Image' to 'DockerImage' by extracting the Docker sha256 from 'Image'
-                                    DockerImage newDockerImage = getRepositoryImageAsDockerImage(image);
-                                    logger.debug("listImagesOnRemoteRegistry - new Docker image - {}", newDockerImage);
+                                    //DockerImage newDockerImage = getRepositoryImageAsDockerImage(image);
+                                    //logger.debug("listImagesOnRemoteRegistry - new Docker image - {}", newDockerImage);
+                                    //result.add(image.getImageManifest());
+                                    // TODO: change this
+                                    String manifest = image.getImageManifest();
+                                    String mainTag = image.getImageId().getImageTag();
+                                    String dockerDigest = getSHA256FromManifest(manifest);
+
+                                    DockerImageAmazon newDockerImage = new DockerImageAmazon(registry, repositoryName,
+                                            digest, tags, imagePushedAt, manifest, mainTag, dockerDigest);
+                                    //newDockerImage.setImageSha256(dockerDigest);
+
                                     result.add(newDockerImage);
+                                    imageDigestToTagMap.put(digest, mainTag);
                                 }
                             }
                         }

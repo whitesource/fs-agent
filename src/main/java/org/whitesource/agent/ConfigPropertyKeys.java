@@ -192,12 +192,16 @@ public final class ConfigPropertyKeys {
     public static final String DOCKER_PULL_IMAGES = "docker.pull.images";
     public static final String DOCKER_PULL_TAGS = "docker.pull.tags";
     public static final String DOCKER_PULL_DIGEST = "docker.pull.digest";
+    public static final String DOCKER_PULL_FORCE = "docker.pull.force";
+    public static final String DOCKER_PULL_MAX_IMAGES = "docker.pull.maxImages";
     public static final String DOCKER_DELETE_FORCE = "docker.delete.force";
+    public static final String DOCKER_SCAN_MAX_IMAGES = "docker.scan.maxImages";
 
     // Values for remote Docker on AWS ECR
     public static final String DOCKER_AWS_ENABLE = "docker.aws.enable";
     public static final String DOCKER_AWS_REGISTRY_IDS = "docker.aws.registryIds";
     public static final String DOCKER_AWS_REGION = "docker.aws.region";
+    public static final String DOCKER_AWS_MAX_PULL_IMAGES = "docker.aws.maxPullImages";
     public static final String DOCKER_AWS_ACCESSKEY = "docker.aws.accessKey";
     public static final String DOCKER_AWS_SECRETKEY = "docker.aws.secretKey";
 

@@ -642,16 +642,21 @@ public class FSAConfiguration {
             dockerDigestsList = new LinkedList<>(Arrays.asList(dockerDigests));
         }
 
+        int maxImagesScan = config.getIntProperty(ConfigPropertyKeys.DOCKER_SCAN_MAX_IMAGES, 0);
+        int maxImagesPull = config.getIntProperty(ConfigPropertyKeys.DOCKER_PULL_MAX_IMAGES, 3);
+        boolean pullForce = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_FORCE, false);
         RemoteDockerConfiguration result =  new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
-                dockerDigestsList, forceDelete, enablePulling);
+                dockerDigestsList, forceDelete, enablePulling, maxImagesScan, pullForce, maxImagesPull);
 
         // Amazon configuration
         String[] dockerAmazonRegistryIds = config.getListProperty(ConfigPropertyKeys.DOCKER_AWS_REGISTRY_IDS, empty);
         String dockerAmazonRegion = config.getProperty(ConfigPropertyKeys.DOCKER_AWS_REGION, "east");
         boolean enableAmazon = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_AWS_ENABLE, false);
+        int maxPullImagesFromAmazon = config.getIntProperty(ConfigPropertyKeys.DOCKER_AWS_MAX_PULL_IMAGES, 0);
         result.setAmazonRegistryIds(new LinkedList<>(Arrays.asList(dockerAmazonRegistryIds)));
         result.setAmazonRegion(dockerAmazonRegion);
         result.setRemoteDockerAmazonEnabled(enableAmazon);
+        result.setAmazonMaxPullImages(maxPullImagesFromAmazon);
 
         return result;
     }
