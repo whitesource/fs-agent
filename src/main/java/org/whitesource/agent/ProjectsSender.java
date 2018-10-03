@@ -23,6 +23,8 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.api.dispatch.*;
 import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.Coordinates;
+import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
@@ -87,7 +89,7 @@ public class ProjectsSender {
         logger.info("Initializing WhiteSource Client");
         Collection<AgentProjectInfo> projects = projectsDetails.getProjects();
 
-        if(checkDependenciesUpbound(projects)){
+        if (checkDependenciesUpbound(projects)) {
             return new Pair<>("Number of dependencies exceeded the maximum supported", StatusCode.SERVER_FAILURE);
         }
 
@@ -174,6 +176,7 @@ public class ProjectsSender {
                 }
                 for (ViaComponents viaComponents : viaComponentsList) {
                     logger.info("Starting VIA impact analysis");
+                    checkDependenciesSha1(viaComponents);
                     String appPath = viaComponents.getAppPath();
                     ViaLanguage language = viaComponents.getLanguage();
                     try {
@@ -211,6 +214,34 @@ public class ProjectsSender {
             logger.error("Failed to run VIA impact analysis, couldn't find method {}", e.getMessage());
         } catch (ClassNotFoundException e) {
             logger.error("Failed to run VIA impact analysis, couldn't find class {}", e.getMessage());
+        }
+    }
+
+    private void checkDependenciesSha1(ViaComponents viaComponents) {
+        Collection<DependencyInfo> dependencyWithoutSha1 = new LinkedList<>();
+        int unknownDependencyCounter = 0;
+        for (DependencyInfo dependencyInfo : viaComponents.getDependencies()) {
+            if (StringUtils.isEmpty(dependencyInfo.getSha1())) {
+                unknownDependencyCounter++;
+                dependencyWithoutSha1.add(dependencyInfo);
+            }
+        }
+        if (unknownDependencyCounter > 0) {
+            if (requestConfig.isRequireKnownSha1()) {
+                logger.warn("The system found {} with an unknown SHA1 value. Default processing was terminated.", unknownDependencyCounter);
+                printDependenciesWithoutSha1(dependencyWithoutSha1);
+                Main.exit(StatusCode.ERROR.getValue());
+            } else {
+                logger.warn("The system found {} with an unknown SHA1 value. Default processing termination was overridden by parameter.", unknownDependencyCounter);
+                printDependenciesWithoutSha1(dependencyWithoutSha1);
+            }
+        }
+    }
+
+    private void printDependenciesWithoutSha1(Collection<DependencyInfo> dependencyWithoutSha1) {
+        logger.warn("Found dependencies with an unknown SHA1 value:");
+        for (DependencyInfo dependencyInfo : dependencyWithoutSha1) {
+            logger.warn(new Coordinates(dependencyInfo.getGroupId(), dependencyInfo.getArtifactId(), dependencyInfo.getVersion()).toString());
         }
     }
 

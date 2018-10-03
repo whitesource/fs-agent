@@ -511,8 +511,9 @@ public class FSAConfiguration {
         boolean projectPerSubFolder = config.getBooleanProperty(ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(ConfigPropertyKeys.REQUESTER_EMAIL);
         int viaAnalysis = config.getIntProperty(ConfigPropertyKeys.VIA_ANALYSIS_LEVEL, VIA_DEFAULT_ANALYSIS_LEVEL);
+        boolean requireKnownSha1 = config.getBooleanProperty(ConfigPropertyKeys.REQUIRE_KNOWN_SHA1, true);
         return new RequestConfiguration(apiToken, userKey, requesterEmail, projectPerSubFolder, projectName, projectToken,
-                projectVersion, productName, productToken, productVersion, appPath, viaDebug, viaAnalysis, iaLanguage, scanComment);
+                projectVersion, productName, productToken, productVersion, appPath, viaDebug, viaAnalysis, iaLanguage, scanComment, requireKnownSha1);
     }
 
     private SenderConfiguration getSender(FSAConfigProperties config) {
@@ -630,9 +631,9 @@ public class FSAConfiguration {
 
     private RemoteDockerConfiguration getRemoteDockerConfiguration(FSAConfigProperties config) {
         String[] empty = new String[0];
-        String[] dockerImages   = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, null);
-        String[] dockerTags     = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, null);
-        String[] dockerDigests  = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, null);
+        String[] dockerImages = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, null);
+        String[] dockerTags = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, null);
+        String[] dockerDigests = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, null);
         boolean forceDelete = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_DELETE_FORCE, false);
         boolean enablePulling = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_ENABLE, false);
         List<String> dockerImagesList = null;
@@ -651,7 +652,7 @@ public class FSAConfiguration {
         int maxImagesScan = config.getIntProperty(ConfigPropertyKeys.DOCKER_SCAN_MAX_IMAGES, 0);
         int maxImagesPull = config.getIntProperty(ConfigPropertyKeys.DOCKER_PULL_MAX_IMAGES, 10);
         boolean pullForce = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_FORCE, false);
-        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
+        RemoteDockerConfiguration result = new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
                 dockerDigestsList, forceDelete, enablePulling, maxImagesScan, pullForce, maxImagesPull);
 
         // Amazon configuration
@@ -743,7 +744,7 @@ public class FSAConfiguration {
         InputStream inputStream = null;
         //if there is any data written to the buffer, so convert to input stream
         if (writeUrlFileContent != null) {
-            inputStream = IOUtils.toInputStream(writeUrlFileContent,UTF_8);
+            inputStream = IOUtils.toInputStream(writeUrlFileContent, UTF_8);
         }
         //if string buffer still null, so try to open stream of local file path
         else {
@@ -802,7 +803,9 @@ public class FSAConfiguration {
         return resolver;
     }
 
-    public RemoteDockerConfiguration getRemoteDocker() { return remoteDockerConfiguration;}
+    public RemoteDockerConfiguration getRemoteDocker() {
+        return remoteDockerConfiguration;
+    }
 
     public String getScannedFolders() {
         return scannedFolders;
@@ -998,6 +1001,9 @@ public class FSAConfiguration {
 
         // Check whether the user inserted scmRepositoriesFile via command line
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCM_REPOSITORIES_FILE, commandLineArgs.repositoriesFile);
+
+        // User-entry of a flag that overrides default FSA process termination
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.REQUIRE_KNOWN_SHA1, commandLineArgs.requireKnownSha1);
 
         return offlineRequestFiles;
     }
