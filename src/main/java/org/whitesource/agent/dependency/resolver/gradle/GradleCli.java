@@ -45,7 +45,7 @@ public class GradleCli extends Cli {
                 return lines;
             }
         } catch (IOException e) {
-            if (StringUtils.isNotBlank(params[0]) && GRADLE_COMMAND.equals(params[0])) {
+            if (StringUtils.isNotBlank(params[0]) && params[0].contains(GRADLE_COMMAND)) {
                 setGradleCommandByEnv(params);
                 return runGradleCmd(rootDirectory, params);
             } else {
