@@ -1,5 +1,6 @@
 package org.whitesource.agent.dependency.resolver.docker.remotedocker;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.docker.DockerImage;
@@ -16,19 +17,24 @@ import java.util.*;
 
 public abstract class AbstractRemoteDocker {
 
-    // This is a list of the pulled images only - Users may require to pull existing images - but they are not saved
-    // in this list because we will remove the images that we pulled here (we don't want to remove the existing images
-    // of the users)
-    private Collection<DockerImage> imagesPulled;
-
-    private Collection<DockerImage> imagesFound;
-    private static String DOCKER_CLI_VERSION = "docker --version";
-    protected static String DOCKER_CLI_LOGIN  = "docker login";
     private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteDocker.class);
+    private static String DOCKER_CLI_VERSION = "docker --version";
+    static String DOCKER_CLI_LOGIN  = "docker login";
+    private static final String WS_SCANNED_TAG = "WS.Scanned";
+
+    // This is a set of the pulled images only - Users may require to pull existing images - but they are not saved
+    // in this set because we will remove the images that we pulled here (we don't want to remove the existing images
+    // of the users)
+    private Set<AbstractRemoteDockerImage> imagesPulled;
+
+    private Set<AbstractRemoteDockerImage> imagesFound;
 
     protected RemoteDockerConfiguration config;
+
     private int pulledImagesCount;
     private int existingImagesCount;
+    private int maxScanImagesCount;
+    private int scannedImagesCount;
 
     /* --- Constructors --- */
 
@@ -36,6 +42,8 @@ public abstract class AbstractRemoteDocker {
         this.config = config;
         pulledImagesCount = 0;
         existingImagesCount = 0;
+        maxScanImagesCount = config.getMaxScanImages();
+        scannedImagesCount = 0;
     }
 
     /* --- Public methods --- */
@@ -55,107 +63,216 @@ public abstract class AbstractRemoteDocker {
 
     public void removePulledRemoteDockerImages() {
         if (imagesPulled != null) {
-            for(DockerImage image: imagesPulled) {
+            for(AbstractRemoteDockerImage image: imagesPulled) {
                 String command = "docker rmi ";
                 // Use force delete
                 if (config.isForceDelete()) {
                     command += "-f ";
                 }
-                executeCommand(command + image.getId());
+                executeCommand(command + image.getImageSha256());
             }
         }
     }
 
     protected abstract boolean loginToRemoteRegistry();
 
-    protected abstract Collection<DockerImage> listImagesOnRemoteRegistry();
+    /*
+        TODO: this function should return a collection of manifest image object
+        TODO: DockerImage object does not include all the required data (like date, tags list, etc...)
+     */
+    protected abstract Set<AbstractRemoteDockerImage> listImagesOnRemoteRegistry();
 
     protected abstract boolean isRequiredRegistryManagerInstalled();
 
-    protected abstract String getImageFullURL(DockerImage image);
+    protected abstract String getImageFullURL(AbstractRemoteDockerImage image);
 
-    private Collection<DockerImage> pullImagesFromRemoteRegistry() {
-        if (imagesFound != null) {
-            Collection<DockerImage> pulledImagesList = new ArrayList<>();
-            for (DockerImage image : imagesFound) {
-                if (isImageRequired(image)) {
-                    String imageURL = getImageFullURL(image);
-                    if (pullImageWithFullUrl(imageURL)) {
-                        pulledImagesList.add(image);
-                    }
-                }
-            }
+    /*
+    private boolean isNamePullRequired();
+    private boolean isTagPullRequired();
+    private boolean isDigestPullRequired();
+    private boolean isDatePullRequired();
+*/
+
+    private Set<AbstractRemoteDockerImage> pullImagesFromRemoteRegistry() {
+        Set<AbstractRemoteDockerImage> pulledImagesList = new HashSet<>();
+        int maxPullImages = config.getMaxPullImages();
+        int pullImagesCounter = 0;
+        if (maxPullImages < 1) {
+            logger.info("No images will be pull - Configuration 'docker.pull.maxImages' is equal to {} ", maxPullImages);
             return pulledImagesList;
         }
-        return Collections.emptyList();
+        for (AbstractRemoteDockerImage image : imagesFound) {
+            // Check if image meets the required name/tag/digest
+            if (isImagePullRequired(image)) {
+                String imageURL = getImageFullURL(image);
+                if (pullImageWithFullUrl(imageURL)) {
+                    pulledImagesList.add(image);
+                    pullImagesCounter++;
+                }
+            }
+            if (pullImagesCounter >= maxPullImages) {
+                logger.info("Reached maximum images pull count of {} - will not pull any more images", pullImagesCounter);
+                break;
+            }
+        }
+        return pulledImagesList;
     }
 
     private boolean isAllSoftwareRequiredInstalled() {
         return isDockerInstalled() && isRequiredRegistryManagerInstalled();
     }
 
-    private boolean isImageRequired(DockerImage image) {
-        if (config != null && image != null) {
+    private boolean isAllNamesRequired() {
+        List<String> namesList = config.getImageNames();
+        boolean allNames = false;
+        // If images list is not configured - we assume that we want to scan ALL images
+        if (namesList == null || namesList.isEmpty() || namesList.contains(Constants.GLOB_PATTERN)) {
+            allNames = true;
+        }
+        return allNames;
+    }
 
-            List<String> namesList = config.getImageNames();
-            List<String> tagsList = config.getImageTags();
-            List<String> digestList = config.getImageDigests();
+    private boolean isAllTagsRequired() {
+        List<String> tagsList = config.getImageTags();
+        boolean allTags = false;
+        // If tag list is not configured - we assume that we want to scan ALL tags
+        if (tagsList == null || tagsList.isEmpty() || tagsList.contains(Constants.GLOB_PATTERN)) {
+            allTags = true;
+        }
+        return allTags;
+    }
 
-            boolean allNames = false;
-            // If images list is not configured - we assume that we want to scan ALL images
-            if (namesList == null || namesList.isEmpty() || namesList.contains(".*.*")) {
-                allNames = true;
-            }
+    private boolean isAllDigestsRequired() {
+        List<String> digestList = config.getImageDigests();
+        boolean allDigests = false;
+        // If digest list is not configured - we assume that we want to scan ALL tags
+        if (digestList == null || digestList.isEmpty() || digestList.contains(Constants.GLOB_PATTERN)) {
+            allDigests = true;
+        }
+        return allDigests;
+    }
 
-            boolean allTags = false;
-            // If tag list is not configured - we assume that we want to scan ALL tags
-            if (tagsList == null || tagsList.isEmpty() || tagsList.contains(".*.*")) {
-                allTags = true;
-            }
-
-            boolean allDigests = false;
-            // If digest list is not configured - we assume that we want to scan ALL tags
-            if (digestList == null || digestList.isEmpty() || digestList.contains(".*.*")) {
-                allDigests = true;
-            }
-
-            // We want to pull everything - so every image is required
-            if (allNames && allTags && allDigests) {
-                return true;
-            }
-
-            // Otherwise we look for specific tag(s)/sha256
-            String imageTag = image.getTag();
-            String imageDigest = image.getId();
-            String imageName = image.getRepository();
-
-            if ( (imageTag == null || imageTag.isEmpty()) &&
-                 (imageDigest == null || imageDigest.isEmpty()) &&
-                 (imageName == null || imageName.isEmpty())) {
-                // This tag/sha256/name does not met any of the requirements
-                return false;
-            }
-
-            // Name and Tag may have a regular expression match
-            boolean isNameMet   = allNames || namesList.contains(imageName) || isMatchStringInList(imageName, namesList);
-            boolean isTagMet    = allTags  || tagsList.contains(imageTag)   || isMatchStringInList(imageTag, tagsList);
-            // Digest cannot have a regular expression match
-            boolean isDigestMet = allDigests || digestList.contains(imageDigest);
-
-            // Is this tag/sha256/name in the required tags/sha256/name list?
-            return isNameMet && isTagMet && isDigestMet ;
+    private boolean isAllImagesRequired() {
+        // forcePulling = Pull images that are already scanned
+        boolean forcePulling = config.isForcePull();
+        // We want to pull everything - so every image is required
+        if (isAllNamesRequired() && isAllTagsRequired() && isAllDigestsRequired() && forcePulling) {
+            return true;
         }
         return false;
     }
 
+    private boolean isImageDataValid(AbstractRemoteDockerImage image) {
+        List<String> imageTags = image.getImageTags();
+        String imageDigest = image.getImageDigest();
+        String imageName = image.getRepositoryName();
+
+        if (imageTags == null && StringUtils.isBlank(imageDigest) && StringUtils.isBlank(imageName)) {
+            // This tag/sha256/name does not met any of the requirements
+            logger.debug("Image values are empty or null");
+            return false;
+        }
+        return true;
+    }
+
+    // TODO: this function should receive manifest image object and check for all values (like date, tags list, etc.)
+    private boolean isImagePullRequired(AbstractRemoteDockerImage image) {
+
+        if (image == null) {
+            logger.debug("Docker Image is null");
+            return false;
+        }
+
+        /*
+        // All images are required
+        if (isAllImagesRequired()) {
+            return true;
+        }
+        */
+
+        boolean isAllNamesRequired = isAllNamesRequired();
+        boolean isAllTagsRequired  = isAllTagsRequired();
+        boolean isAllDigestsRequired = isAllDigestsRequired();
+
+        // All images are required ?
+        boolean forcePulling = config.isForcePull();
+        // We want to pull everything - so every image is required
+        if (isAllNamesRequired && isAllTagsRequired && isAllDigestsRequired && forcePulling) {
+            return true;
+        }
+
+        // Otherwise we check if the image data is full for specific tag(s)/sha256
+        if (!isImageDataValid(image)) {
+            return false;
+        }
+
+        // Data from the remote image
+        List<String> imageTags = image.getImageTags();
+        String imageDigest = image.getImageDigest();
+        String imageName = image.getRepositoryName();
+
+        if (imageTags == null || imageTags.isEmpty()) {
+            logger.info("Image {} with Digest {} - does not have any tags and will be ignored", imageName, imageDigest);
+            return false;
+        }
+
+        // Data from the config file
+        List<String> configImageNames = config.getImageNames();
+        List<String> configImageTags = config.getImageTags();
+        List<String> configImageDigests = config.getImageDigests();
+
+        boolean isNameMet;
+        // Empty configuration = similar to using all names
+        if (configImageNames == null) {
+            isNameMet = true;
+            logger.debug("Configuration - docker.pull.images was not found - using .*.* as default");
+        }
+        // 'Name' may have a regular expression match
+        else {
+            isNameMet = isAllNamesRequired || configImageNames.contains(imageName) || isMatchStringInList(imageName, configImageNames);
+        }
+
+        // 'Tag' may have a regular expression match
+        // 'Tag' should consider pulling/ignoring images with the WS.Scanned tag - according to 'docker.pull.force' flag
+        boolean isTagMet = false;
+        if (configImageTags == null) {
+            isTagMet = true;
+            logger.debug("Configuration - docker.pull.tags was not found - using .*.* as default");
+        }else {
+            for(String currentTag : imageTags) {
+                isTagMet = isTagMet || configImageTags.contains(currentTag) || isMatchStringInList(currentTag, configImageTags);
+            }
+        }
+
+        // 'Digest' cannot have a regular expression match
+        boolean isDigestMet = isAllDigestsRequired || configImageDigests.contains(imageDigest);
+
+        // Do not pull images that are already tagged with WS.Scanned tag
+        if (!forcePulling) {
+            if (imageTags.contains(WS_SCANNED_TAG)) {
+                logger.debug("Image {} - was scanned already", imageName);
+                isTagMet = false;
+            }
+        }
+
+        // Is this tag/sha256/name in the required tags/sha256/name list?
+        boolean result = isNameMet && isTagMet && isDigestMet ;
+        if (!result) {
+            logger.debug("Image does not met the requirements: {}", image);
+            logger.debug("Name met - {} , Tag met - {} , Digest met - {}", isNameMet, isTagMet, isDigestMet);
+        }
+        return result;
+    }
+
     private boolean pullImageWithFullUrl(String imageURL) {
         boolean result = false;
-        if (imageURL != null && !imageURL.isEmpty()) {
+        if (!StringUtils.isBlank(imageURL)) {
             logger.info("Trying to pull image : {}", imageURL);
             String command = "docker pull";
             command += Constants.WHITESPACE;
             command += imageURL;
             try {
+                // TODO: check if can use CommandLineProcess
                 Process process = Runtime.getRuntime().exec(command);
                 StringBuilder resultText = new StringBuilder();
                 try (final BufferedReader reader
@@ -231,7 +348,11 @@ public abstract class AbstractRemoteDocker {
     }
 
     private boolean isDockerInstalled() {
-        return isCommandSuccessful(DOCKER_CLI_VERSION);
+         boolean installed = isCommandSuccessful(DOCKER_CLI_VERSION);
+         if (!installed) {
+             logger.error("Docker is not installed or its path is not configured correctly");
+         }
+         return installed;
     }
 
     private boolean isMatchStringInList(String toMatch, List<String> stringsList) {
@@ -244,6 +365,29 @@ public abstract class AbstractRemoteDocker {
             }
         }
         return false;
+    }
+/*
+    private boolean isMatchStringInListWithIgnore(String toMatch, List<String> stringsList, List<String> ignoreList) {
+        if (toMatch == null || stringsList == null || stringsList.isEmpty()) {
+            return false;
+        }
+        if (ignoreList == null || ignoreList.isEmpty()) {
+            return isMatchStringInList(toMatch, stringsList);
+        }
+        else {
+            for (String currentString : stringsList) {
+                if (!ignoreList.contains(currentString)) {
+                    if (toMatch.matches(currentString)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+*/
+    public void incrementScannedImagesCount(int amount) {
+        scannedImagesCount += amount;
     }
 
     /*

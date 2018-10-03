@@ -95,7 +95,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String rootDirectory) {
         Collection<AgentProjectInfo> projects = new ArrayList<>();
-        if(!this.isMavenExist(rootDirectory)) {
+        if (!this.isMavenExist(rootDirectory)) {
             logger.warn("Please install maven");
         } else {
             if (StringUtils.isBlank(M2Path)) {
@@ -132,8 +132,13 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
                                 AgentProjectInfo projectInfo = new AgentProjectInfo();
                                 projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
-                                dependencies.stream().filter(dependency -> StringUtils.isNotEmpty(dependency.getSha1())).forEach(dependency ->
+                                logger.debug("Project/Module coordinates: {}", projectInfo.getCoordinates().toString());
+                                logger.debug("Total project direct dependencies found : {}", dependencies.size());
+                                dependencies.stream().filter(dependency -> StringUtils.isNotEmpty(dependency.getSha1()) ||
+                                        (StringUtils.isNotEmpty(dependency.getGroupId()) && StringUtils.isNotEmpty(dependency.getArtifactId())
+                                                && StringUtils.isNotEmpty(dependency.getVersion()))).forEach(dependency ->
                                         projectInfo.getDependencies().add(dependency));
+                                logger.debug("ProjectInfo direct dependency added : {}", projectInfo.getDependencies().size());
                                 return projectInfo;
                             }).collect(Collectors.toList());
                 } else {
@@ -158,7 +163,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         try {
             return ChecksumUtils.calculateSHA1(new File(filePath));
         } catch (IOException e) {
-            logger.warn("Failed getting " + filePath + ". File will not be sent to WhiteSource server.");
+            logger.warn("Failed getting " + filePath + ". Consider run 'mvn clean install' ");
             return Constants.EMPTY_STRING;
         }
     }
@@ -170,8 +175,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             if (mvnProcess.isErrorInProcess() || lines.isEmpty()) {
                 logger.debug("Failed to get maven version");
                 return false;
-            }
-            else  {
+            } else {
                 logger.debug("Maven : {}", lines);
                 return true;
             }
@@ -181,7 +185,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         }
     }
 
-    private DependencyInfo getDependencyFromNode(Node node, Map<String,List<DependencyInfo>> paths ) {
+    private DependencyInfo getDependencyFromNode(Node node, Map<String, List<DependencyInfo>> paths) {
         logger.debug("converting node to dependency :" + node.getArtifactId());
         DependencyInfo dependency = new DependencyInfo(node.getGroupId(), node.getArtifactId(), node.getVersion());
         dependency.setDependencyType(DependencyType.MAVEN);
@@ -193,7 +197,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DOT + node.getPackaging();
         } else {
             String nodePackaging = node.getPackaging();
-            if (nodePackaging.equals(TEST_JAR)){
+            if (nodePackaging.equals(TEST_JAR)) {
                 nodePackaging = JAR;
             }
             shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DASH + node.getClassifier() + Constants.DOT + nodePackaging;
@@ -206,7 +210,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         paths.get(filePath).add(dependency);
         if (StringUtils.isNotBlank(filePath)) {
             File jarFile = new File(filePath);
-            if(jarFile.exists()) {
+            if (jarFile.exists()) {
                 dependency.setFilename(jarFile.getName());
             }
         }
@@ -220,9 +224,9 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
     private String[] getLsCommandParams() {
         if (isWindows()) {
-            return new String[] {Constants.CMD, C_CHAR_WINDOWS, MVN_COMMAND, MVN_PARAMS_TREE};
+            return new String[]{Constants.CMD, C_CHAR_WINDOWS, MVN_COMMAND, MVN_PARAMS_TREE};
         } else {
-            return new String[] {MVN_COMMAND, MVN_PARAMS_TREE};
+            return new String[]{MVN_COMMAND, MVN_PARAMS_TREE};
         }
     }
 
@@ -238,9 +242,9 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
     private String[] getVersionCommandParams() {
         if (isWindows()) {
-            return new String[] {Constants.CMD, C_CHAR_WINDOWS, MVN_COMMAND, VERSION_PARAMETER};
+            return new String[]{Constants.CMD, C_CHAR_WINDOWS, MVN_COMMAND, VERSION_PARAMETER};
         } else {
-            return new String[] {MVN_COMMAND, VERSION_PARAMETER};
+            return new String[]{MVN_COMMAND, VERSION_PARAMETER};
         }
     }
 

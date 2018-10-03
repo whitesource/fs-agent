@@ -42,25 +42,30 @@ public class DebianParser extends AbstractParser {
             Package packageInfo = new Package();
             // Create Debian package - package-version-architecture.deb
             while ((line = br.readLine()) != null) {
-                if (!line.isEmpty()) {
+                // Some fields (like 'Description') can be extended over several lines (which don't have ":")
+                // We don't need to parse these lines
+                if (!line.isEmpty() && line.contains(Constants.COLON)) {
                     String[] lineSplit = line.split(Constants.COLON);
-                    String dependencyParameter = lineSplit[1].trim();
-                    switch (lineSplit[0]) {
-                        case PACKAGE:
-                            packageInfo.setPackageName(dependencyParameter);
-                            break;
-                        case VERSION:
-                            if (packageInfo.getPackageName() != null) {
-                                packageInfo.setVersion(dependencyParameter);
-                            }
-                            break;
-                        case ARCHITECTURE:
-                            if (packageInfo.getPackageName() != null) {
-                                packageInfo.setArchitecture(dependencyParameter);
-                            }
-                            break;
-                        default:
-                            break;
+                    // To prevent checking lines that look like - "Text:"
+                    if (lineSplit.length > 1) {
+                        String dependencyParameter = lineSplit[1].trim();
+                        switch (lineSplit[0]) {
+                            case PACKAGE:
+                                packageInfo.setPackageName(dependencyParameter);
+                                break;
+                            case VERSION:
+                                if (packageInfo.getPackageName() != null) {
+                                    packageInfo.setVersion(dependencyParameter);
+                                }
+                                break;
+                            case ARCHITECTURE:
+                                if (packageInfo.getPackageName() != null) {
+                                    packageInfo.setArchitecture(dependencyParameter);
+                                }
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 } else {
                     if (packageInfo.getPackageName() != null) {
@@ -71,9 +76,9 @@ public class DebianParser extends AbstractParser {
                 }
             }
         } catch (FileNotFoundException e) {
-            logger.error("Error getting package data", e.getMessage());
+            logger.error("Error getting package data {}", e.getMessage());
         } catch (IOException e) {
-            logger.error("Error getting package data", e.getMessage());
+            logger.error("Error getting package data {}", e.getMessage());
         } finally {
             closeStream(br, fr);
         }
