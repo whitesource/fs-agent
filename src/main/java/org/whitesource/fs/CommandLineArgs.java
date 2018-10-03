@@ -138,6 +138,9 @@ public class CommandLineArgs {
     @Parameter(names = "-logContext", description = "Context id for logger")
     String logContext = null;
 
+    @Parameter(names = "-requireKnownSha1", description = "User-entry of a flag that overrides default FSA process termination when sha1 is missing in case of via")
+    String requireKnownSha1 = null;
+
     /*
     @Parameter(names = "-aws_account_id", description = "AWS Account ID")
     String awsAccountId = null;
