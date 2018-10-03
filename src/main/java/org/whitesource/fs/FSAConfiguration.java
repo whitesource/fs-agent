@@ -70,7 +70,7 @@ public class FSAConfiguration {
                 resolver.toString() + '\n' +
                 request.toString() + '\n' +
                 ", scanPackageManager=" + scanPackageManager + '\n' +
-                ", offline=" + offline.isEnabled() + '\n' +
+                ", " + offline.toString() + '\n' +
                 ", projectPerFolder=" + projectPerFolder + '\n' +
                 ", wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
                 ", scanPackageManager=" + scanPackageManager + '\n' +
@@ -545,7 +545,7 @@ public class FSAConfiguration {
     private OfflineConfiguration getOffline(FSAConfigProperties config) {
         boolean enabled = config.getBooleanProperty(ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, false);
         boolean zip = config.getBooleanProperty(ConfigPropertyKeys.OFFLINE_ZIP_PROPERTY_KEY, false);
-        boolean prettyJson = config.getBooleanProperty(ConfigPropertyKeys.OFFLINE_PRETTY_JSON_KEY, false);
+        boolean prettyJson = config.getBooleanProperty(ConfigPropertyKeys.OFFLINE_PRETTY_JSON_KEY, true);
         String wsFolder = StringUtils.isBlank(config.getProperty(ConfigPropertyKeys.WHITESOURCE_FOLDER_PATH)) ? WHITE_SOURCE_DEFAULT_FOLDER_PATH : config.getProperty(ConfigPropertyKeys.WHITESOURCE_FOLDER_PATH);
         return new OfflineConfiguration(enabled, zip, prettyJson, wsFolder);
     }
