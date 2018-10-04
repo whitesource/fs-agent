@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.whitesource.agent.TempFolders.BUILD_GRADLE_DIRECTORY;
 
@@ -80,7 +81,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
             logger.warn("Command \"gradle projects\" did not return a list of projects");
         }
         if (gradleRunPreStep) {
-            downloadMissingDependencies(bomFiles);
+            downloadMissingDependencies(projectFolder);
         }
 
         for (String bomFile : bomFiles) {
@@ -223,35 +224,40 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     }
 
     // copy all the bom files (build.gradle) to temp folder and run the command "gradle copyDependencies"
-    private void downloadMissingDependencies(Set<String> bomFiles) {
+    private void downloadMissingDependencies(String projectFolder) {
+        logger.debug("running pre-steps on folder {}", projectFolder);
         File buildGradleTempDirectory = new File(BUILD_GRADLE_DIRECTORY);
         buildGradleTempDirectory.mkdir();
-        for (String bomFile : bomFiles) {
-            File buildGradleTmp = copyBomFile(bomFile, buildGradleTempDirectory);
-            if (buildGradleTmp.exists()) {
-                appendTaskToBomFile(buildGradleTmp);
-                runPreStepCommand(buildGradleTmp);
-                buildGradleTmp.delete();
-            } else {
-                logger.warn("Could not find the path {}", buildGradleTmp.getPath());
+        if (copyProjectFolder(projectFolder, buildGradleTempDirectory)) {
+            try {
+                Stream<Path> pathStream = Files.walk(Paths.get(buildGradleTempDirectory.getPath()), Integer.MAX_VALUE).filter(file -> file.getFileName().toString().equals(Constants.BUILD_GRADLE));
+                pathStream.forEach(path -> {
+                    File buildGradleTmp = new File(path.toString());
+                    if (buildGradleTmp.exists()) {
+                        appendTaskToBomFile(buildGradleTmp);
+                        runPreStepCommand(buildGradleTmp);
+                    } else {
+                        logger.warn("Could not find the path {}", buildGradleTmp.getPath());
+                    }
+                });
+            } catch (IOException e) {
+                logger.warn("Couldn't list all 'build.gradle' files, error: {}", e.getMessage());
+                logger.debug("Error: {}", e.getStackTrace());
             }
+            FileUtils.deleteQuietly(buildGradleTempDirectory);
         }
-        FileUtils.deleteQuietly(buildGradleTempDirectory);
-
     }
 
-    // copy bom file to local temp directory
-
-    private File copyBomFile(String bomFile, File buildGradleTempDirectory) {
-        File buildGradle = new File(bomFile);
-        logger.debug("Copy bom file from {} to {}", buildGradle.getPath(), buildGradleTempDirectory);
-        File buildGradleTmp = new File(buildGradleTempDirectory + fileSeparator + "build.gradle");
+    // copy project to local temp directory
+    private boolean copyProjectFolder(String projectFolder, File buildGradleTempDirectory) {
         try {
-            FileUtils.copyFile(buildGradle, buildGradleTmp);
+            FileUtils.copyDirectory(new File(projectFolder), buildGradleTempDirectory);
         } catch (IOException e) {
-            logger.error("Could not copy the file {} to {} , the cause {}", buildGradle.getPath(), buildGradleTempDirectory.getPath(), e.getMessage());
+            logger.error("Could not copy the folder {} to {} , the cause {}", projectFolder, buildGradleTempDirectory.getPath(), e.getMessage());
+            return false;
         }
-        return buildGradleTmp;
+        logger.debug("copied folder {} to temp folder successfully", projectFolder);
+        return true;
     }
 
     // append new task to bom file
