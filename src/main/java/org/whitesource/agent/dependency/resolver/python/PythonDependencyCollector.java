@@ -195,7 +195,7 @@ public class PythonDependencyCollector extends DependencyCollector {
         File[] directDependenciesFiles = directDependenciesFolder.listFiles();
         if (directDependenciesFiles.length > dependencies.size()) {
             int missingDirectDependencies = directDependenciesFiles.length - dependencies.size();
-            logger.debug("There are " + missingDirectDependencies + "missing direct dependencies");
+            logger.debug("There are " + missingDirectDependencies + " missing direct dependencies");
             int i = 0;
             while (missingDirectDependencies > 0) {
                 boolean found = false;
@@ -208,7 +208,13 @@ public class PythonDependencyCollector extends DependencyCollector {
                 }
                 if (!found) {
                     logger.debug("Trying to find the direct dependency of: {}", directDependencyToCheck.getName());
-                    dependencies.add(findDirectDependencyInTree(dependencies, directDependencyToCheck));
+                    DependencyInfo foundDependencyInfo = findDirectDependencyInTree(dependencies, directDependencyToCheck);
+                    if (foundDependencyInfo != null) {
+                        dependencies.add(foundDependencyInfo);
+                    } else {
+                        // probably issue with pipdeptree (maybe cyclic dependency)
+                        logger.warn("Error getting dependency {}, might be issues using pipdeptree command", directDependencyToCheck.getName());
+                    }
                     missingDirectDependencies--;
                 }
                 i++;

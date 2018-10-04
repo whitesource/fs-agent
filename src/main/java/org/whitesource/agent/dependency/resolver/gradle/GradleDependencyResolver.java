@@ -170,15 +170,16 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         // kept (i.e. - the command 'gradlew' should only be called from the root's project).  In case of a multi-module
         // project, adding the module's name before the 'dependencies' command, so it'll know which folder to refer to
         String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES);
-        String directoryName = "";
+        String directoryName = Constants.EMPTY_STRING;
         if (!isParent) {
-            // TODO - test on linux
+            // get the name of the directory
             String[] directoryPath = directory.split(Pattern.quote(fileSeparator));
             directoryName = directoryPath[directoryPath.length - 1];
             int lastParamIndex = gradleCommandParams.length - 1;
             gradleCommandParams[lastParamIndex] = directoryName + Constants.COLON + gradleCommandParams[lastParamIndex];
             directory = String.join(fileSeparator, Arrays.copyOfRange(directoryPath, 0, directoryPath.length - 1));
         }
+        // get gradle dependencies, if the command runs successfully parse the dependencies
         directoryName = fileSeparator.concat(directoryName);
         List<String> lines = gradleCli.runGradleCmd(directory, gradleCommandParams);
         if (lines != null) {
