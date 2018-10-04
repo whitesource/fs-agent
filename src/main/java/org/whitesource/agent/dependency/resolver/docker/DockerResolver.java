@@ -101,7 +101,9 @@ public class DockerResolver {
             process.waitFor();
             InputStream inputStream = process.getInputStream();
             BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+            logger.debug("Docker images list from BufferedReader");
             while ((line = br.readLine()) != null) {
+                logger.debug(line);
                 // read all docker images data, skip the first line
                 if (!line.startsWith(REPOSITORY)) {
                     String[] dockerImageString = line.split(SPACES_REGEX);

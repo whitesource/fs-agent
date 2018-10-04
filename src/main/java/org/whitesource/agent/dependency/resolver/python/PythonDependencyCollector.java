@@ -208,7 +208,13 @@ public class PythonDependencyCollector extends DependencyCollector {
                 }
                 if (!found) {
                     logger.debug("Trying to find the direct dependency of: {}", directDependencyToCheck.getName());
-                    dependencies.add(findDirectDependencyInTree(dependencies, directDependencyToCheck));
+                    DependencyInfo foundDependencyInfo = findDirectDependencyInTree(dependencies, directDependencyToCheck);
+                    if (foundDependencyInfo != null) {
+                        dependencies.add(foundDependencyInfo);
+                    } else {
+                        // probably issue with pipdeptree (maybe cyclic dependency)
+                        logger.warn("Error getting dependency {}, might be issues using pipdeptree command", directDependencyToCheck.getName());
+                    }
                     missingDirectDependencies--;
                 }
                 i++;

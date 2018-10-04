@@ -41,6 +41,7 @@ public class RequestConfiguration {
     private final int viaAnalysisLevel;
     private final String iaLanguage;
     private final String scanComment;
+    private final boolean requireKnownSha1;
 
     public RequestConfiguration(@JsonProperty(ORG_TOKEN_PROPERTY_KEY) String apiToken,
                                 @JsonProperty(USER_KEY_PROPERTY_KEY) String userKey,
@@ -56,7 +57,8 @@ public class RequestConfiguration {
                                 @JsonProperty(VIA_DEBUG) String viaDebug,
                                 @JsonProperty(VIA_ANALYSIS_LEVEL) int viaAnalysisLevel,
                                 @JsonProperty(IA_LANGUAGE) String iaLanguage,
-                                @JsonProperty(SCAN_COMMENT) String scanComment) {
+                                @JsonProperty(SCAN_COMMENT) String scanComment,
+                                @JsonProperty(REQUIRE_KNOWN_SHA1) boolean requireKnownSha1) {
         this.apiToken = apiToken;
         this.userKey = userKey;
         this.requesterEmail = requesterEmail;
@@ -72,6 +74,7 @@ public class RequestConfiguration {
         this.viaDebug = viaDebug;
         this.iaLanguage = iaLanguage;
         this.scanComment = scanComment;
+        this.requireKnownSha1 = requireKnownSha1;
     }
 
     @JsonProperty(PROJECT_NAME_PROPERTY_KEY)
@@ -147,13 +150,15 @@ public class RequestConfiguration {
         return scanComment;
     }
 
+    @JsonProperty(REQUIRE_KNOWN_SHA1)
+    public boolean isRequireKnownSha1() { return requireKnownSha1; }
+
     public String getProductNameOrToken() {
         if (StringUtils.isBlank(getProductToken())) {
             return getProductName();
         }
         return getProductToken();
     }
-
 
     @Override
     public String toString() {
@@ -167,6 +172,7 @@ public class RequestConfiguration {
                 ", productName='" + productName + '\n' +
                 ", productVersion='" + productVersion + '\n' +
                 ", projectName='" + projectName + '\n' +
+                ", requireKnownSha1=" + requireKnownSha1 + '\n' +
                 ", scanComment ='" + scanComment;
     }
 }
