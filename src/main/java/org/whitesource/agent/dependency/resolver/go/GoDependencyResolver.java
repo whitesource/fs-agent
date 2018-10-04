@@ -613,6 +613,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             // for each dependency - matching its full commit id
                             dependencyInfos.stream().forEach(dependencyInfo -> dependencyInfo.setCommit(gradleLockFile.get(dependencyInfo.getArtifactId())));
                             // removing dependencies without commit-id and version
+                            dependencyInfos.stream().forEach(dependencyInfo -> {
+                                if (dependencyInfo.getVersion() == null && dependencyInfo.getCommit() == null){
+                                    logger.debug("{}/{} has no version nor commit-id; removing it from the dependencies' list", dependencyInfo.getArtifactId(), dependencyInfo.getGroupId());
+                                }
+                            });
                             dependencyInfos.removeIf(dependencyInfo -> dependencyInfo.getCommit() == null && dependencyInfo.getVersion() == null);
                         } else {
                             logger.warn("Can't find {} and verify dependencies commit-ids; make sure 'collectDependenciesAtRuntime' is set to true or run 'gradlew lock' manually", goGradleLock.getPath());
