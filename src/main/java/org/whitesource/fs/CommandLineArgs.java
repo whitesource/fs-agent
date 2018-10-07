@@ -71,9 +71,6 @@ public class CommandLineArgs {
     @Parameter(names = "-proxy.pass", description = "Proxy Password")
     String proxyPass = null;
 
-    @Parameter(names = "-proxy", description = "Proxy info in format: scheme://<user>:<password>@host:port/")
-    String proxy = null;
-
     @Parameter(names = "-archiveFastUnpack", description = "Fast unpack")
     String archiveFastUnpack = "false";
 
