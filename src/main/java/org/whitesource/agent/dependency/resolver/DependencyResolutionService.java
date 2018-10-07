@@ -91,6 +91,7 @@ public class DependencyResolutionService {
         final boolean mavenAggregateModules = config.isMavenAggregateModules();
         final boolean mavenIgnorePomModules = config.isMavenIgnorePomModules();
         final boolean mavenIgnoreSourceFiles = config.isMavenIgnoreSourceFiles();
+        final boolean mavenRunPreStep = config.isMavenRunPreStep();
 
         boolean pythonResolveDependencies = config.isPythonResolveDependencies();
         final String[] pythonRequirementsFileIncludes = config.getPythonRequirementsFileIncludes();
@@ -146,7 +147,7 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies, nugetIgnoreSourceFiles));
         }
         if (mavenResolveDependencies) {
-            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules));
+            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules, mavenRunPreStep));
             this.mavenAggregateModules = mavenAggregateModules;
         }
         if (pythonResolveDependencies) {
