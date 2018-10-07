@@ -32,7 +32,9 @@ public final class ConfigPropertyKeys {
     public static final String CONNECTION_RETRIES = "connectionRetries";
     public static final String CONNECTION_RETRIES_INTERVALS = "connectionRetriesInterval";
     public static final String ORG_TOKEN_PROPERTY_KEY = "apiKey";
+    public static final String ORG_TOKEN_FILE = "apiKeyFile";
     public static final String USER_KEY_PROPERTY_KEY = "userKey";
+    public static final String USER_KEY_FILE = "userKeyFile";
     public static final String PARTIAL_SHA1_MATCH_KEY = "partialSha1Match";
     public static final String PRODUCT_TOKEN_PROPERTY_KEY = "productToken"; // optional
     public static final String PRODUCT_NAME_PROPERTY_KEY = "productName"; // optional
@@ -118,6 +120,7 @@ public final class ConfigPropertyKeys {
     public static final String MAVEN_AGGREGATE_MODULES      = "maven.aggregateModules";
     public static final String MAVEN_IGNORE_POM_MODULES     = "maven.ignorePomModules";
     public static final String MAVEN_IGNORE_SOURCE_FILES    = "maven.ignoreSourceFiles";
+    public static final String MAVEN_RUN_PRE_STEP           = "maven.runPreStep";
 
     public static final String IGNORE_SOURCE_FILES          = "ignoreSourceFiles";
 

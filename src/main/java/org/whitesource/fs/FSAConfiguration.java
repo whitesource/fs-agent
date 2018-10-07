@@ -40,7 +40,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.whitesource.agent.ConfigPropertyKeys.MAVEN_IGNORE_POM_MODULES;
 import static org.whitesource.agent.client.ClientConstants.SERVICE_URL_KEYWORD;
 
 /**
@@ -231,8 +230,8 @@ public class FSAConfiguration {
         String projectToken = config.getProperty(ConfigPropertyKeys.PROJECT_TOKEN_PROPERTY_KEY);
         String projectNameFinal = !StringUtils.isBlank(projectName) ? projectName : config.getProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY);
         projectPerFolder = config.getBooleanProperty(ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, false);
-        String apiToken = config.getProperty(ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY);
-        String userKey = config.getProperty(ConfigPropertyKeys.USER_KEY_PROPERTY_KEY);
+        String apiToken = getToken(config, ConfigPropertyKeys.ORG_TOKEN_FILE, ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY);
+        String userKey = getToken(config, ConfigPropertyKeys.USER_KEY_FILE, ConfigPropertyKeys.USER_KEY_PROPERTY_KEY);
         int archiveExtractionDepth = config.getArchiveDepth();
         String[] includes = config.getIncludes();
         String[] projectPerFolderIncludes = config.getProjectPerFolderIncludes();
@@ -286,6 +285,26 @@ public class FSAConfiguration {
 
         // check properties to ensure via is ready to run
         checkPropertiesForVia(sender, resolver, appPathsToDependencyDirs, errors);
+    }
+
+    private String getToken(FSAConfigProperties config, String propertyKeyFile, String propertyKeyToken) {
+        String token = null;
+        String tokenFile = config.getProperty(propertyKeyFile);
+        if (StringUtils.isNotEmpty(tokenFile)) {
+            Pair<InputStream, List<String>> inputStreamAndErrors = getInputStreamFromFile(tokenFile);
+            if (inputStreamAndErrors.getValue().isEmpty()) {
+                try {
+                    token = new BufferedReader(new InputStreamReader(inputStreamAndErrors.getKey())).readLine();
+                } catch (IOException e) {
+                    errors.add("Error occurred when reading from " + tokenFile + e.getMessage());
+                }
+            } else {
+                errors.addAll(inputStreamAndErrors.getValue());
+            }
+        } else {
+            token = config.getProperty(propertyKeyToken);
+        }
+        return token;
     }
 
     public void checkPropertiesForVia(SenderConfiguration sender, ResolverConfiguration resolver, Map<String, Set<String>> appPathsToDependencyDirs, List<String> errors) {
@@ -389,7 +408,8 @@ public class FSAConfiguration {
         boolean mavenResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = config.getListProperty(ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
         boolean mavenAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, false);
-        boolean mavenIgnoredPomModules = config.getBooleanProperty(MAVEN_IGNORE_POM_MODULES, true);
+        boolean mavenIgnoredPomModules = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_IGNORE_POM_MODULES, true);
+        boolean mavenRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RUN_PRE_STEP, false);
 
         String whiteSourceConfiguration = config.getProperty(ConfigPropertyKeys.PROJECT_CONFIGURATION_PATH);
 
@@ -487,7 +507,7 @@ public class FSAConfiguration {
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
                 bowerResolveDependencies, bowerRunPreStep, bowerIgnoreSourceFiles,
                 nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep, nugetIgnoreSourceFiles,
-                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles,
+                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles, mavenRunPreStep,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles, pythonIgnoreSourceFiles,
                 ignoreSourceFiles, whiteSourceConfiguration,
@@ -710,13 +730,36 @@ public class FSAConfiguration {
 
     public static Pair<FSAConfigProperties, List<String>> readWithError(String configFilePath) {
         FSAConfigProperties configProps = new FSAConfigProperties();
+        Pair<InputStream, List<String>> inputStreamErrorsPair = getInputStreamFromFile(configFilePath);
+        InputStream inputStream = inputStreamErrorsPair.getKey();
+        List<String> errors = inputStreamErrorsPair.getValue();
+
+        try {
+            //                    configProps.load(inputStream); replaced by the below
+            configProps.load(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            // Remove extra spaces from the values
+            Set<String> keys = configProps.stringPropertyNames();
+            for (String key : keys) {
+                String value = configProps.getProperty(key);
+                if (value != null) {
+                    value = value.trim();
+                }
+                configProps.put(key, value);
+            }
+        } catch (IOException e) {
+            errors.add("Error occurred when reading from " + configFilePath + e.getMessage());
+        }
+        return new Pair<>(configProps, errors);
+    }
+
+    private static Pair<InputStream, List<String>> getInputStreamFromFile(String filePath) {
         List<String> errors = new ArrayList<>();
         BufferedReader readFileFromUrl = null;
         StringBuffer writeUrlFileContent = null;
         //since we don't know if it a url or local path, so we first try to resolve a url, if it failed, then we try local path
         try {
             //assign the url to point to config path url
-            URL url = new URL(configFilePath);
+            URL url = new URL(filePath);
             //toDo complete proxy settings once finished in WSE-791
             Proxy proxy = null;
             if (0 == 1) {
@@ -749,28 +792,12 @@ public class FSAConfiguration {
         //if string buffer still null, so try to open stream of local file path
         else {
             try {
-                inputStream = new FileInputStream(configFilePath);
+                inputStream = new FileInputStream(filePath);
             } catch (FileNotFoundException e) {
-                errors.add("Failed to open " + configFilePath + " for reading " + e.getMessage());
+                errors.add("Failed to open " + filePath + " for reading " + e.getMessage());
             }
         }
-
-        try {
-            //                    configProps.load(inputStream); replaced by the below
-            configProps.load(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            // Remove extra spaces from the values
-            Set<String> keys = configProps.stringPropertyNames();
-            for (String key : keys) {
-                String value = configProps.getProperty(key);
-                if (value != null) {
-                    value = value.trim();
-                }
-                configProps.put(key, value);
-            }
-        } catch (IOException e) {
-            errors.add("Error occurred when reading from " + configFilePath + e.getMessage());
-        }
-        return new Pair<>(configProps, errors);
+        return new Pair<>(inputStream, errors);
     }
 
     /* --- Public getters --- */

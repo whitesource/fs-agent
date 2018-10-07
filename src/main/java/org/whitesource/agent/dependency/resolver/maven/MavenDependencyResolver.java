@@ -45,9 +45,9 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Constructor --- */
 
-    public MavenDependencyResolver(boolean mavenAggregateModules, String[] mavenIgnoredScopes, boolean ignoreSourceFiles, boolean ignorePomModules) {
+    public MavenDependencyResolver(boolean mavenAggregateModules, String[] mavenIgnoredScopes, boolean ignoreSourceFiles, boolean ignorePomModules, boolean runPreStep) {
         super();
-        this.dependencyCollector = new MavenTreeDependencyCollector(mavenIgnoredScopes, ignorePomModules);
+        this.dependencyCollector = new MavenTreeDependencyCollector(mavenIgnoredScopes, ignorePomModules, runPreStep);
         this.bomParser = new MavenPomParser();
         this.mavenAggregateModules = mavenAggregateModules;
         this.ignoreSourceFiles = ignoreSourceFiles;
