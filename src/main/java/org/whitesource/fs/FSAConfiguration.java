@@ -151,6 +151,8 @@ public class FSAConfiguration {
         appPathsToDependencyDirs = new HashMap<>();
         requirementsFileIncludes = new LinkedList<>();
         appPaths = null;
+        String apiToken = null;
+        String userKey = null;
         if ((args != null)) {
             // read command line args
             // validate args // TODO use jCommander validators
@@ -182,6 +184,12 @@ public class FSAConfiguration {
 
             //override
             offlineRequestFiles = updateProperties(config, commandLineArgs);
+            if (StringUtils.isNotEmpty(commandLineArgs.apiKey)) {
+                apiToken = commandLineArgs.apiKey;
+            }
+            if (StringUtils.isNotEmpty(commandLineArgs.userKey)) {
+                userKey = commandLineArgs.userKey;
+            }
             projectName = config.getProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY);
             fileListPath = commandLineArgs.fileListPath;
             if (commandLineArgs.dependencyDirs != null && !commandLineArgs.dependencyDirs.isEmpty()) {
@@ -231,8 +239,12 @@ public class FSAConfiguration {
         String projectToken = config.getProperty(ConfigPropertyKeys.PROJECT_TOKEN_PROPERTY_KEY);
         String projectNameFinal = !StringUtils.isBlank(projectName) ? projectName : config.getProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY);
         projectPerFolder = config.getBooleanProperty(ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, false);
-        String apiToken = getToken(config, ConfigPropertyKeys.ORG_TOKEN_FILE, ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY);
-        String userKey = getToken(config, ConfigPropertyKeys.USER_KEY_FILE, ConfigPropertyKeys.USER_KEY_PROPERTY_KEY);
+        if (StringUtils.isEmpty(apiToken)) {
+            apiToken = getToken(config, ConfigPropertyKeys.ORG_TOKEN_FILE, ConfigPropertyKeys.ORG_TOKEN_PROPERTY_KEY);
+        }
+        if (StringUtils.isEmpty(userKey)) {
+            userKey = getToken(config, ConfigPropertyKeys.USER_KEY_FILE, ConfigPropertyKeys.USER_KEY_PROPERTY_KEY);
+        }
         int archiveExtractionDepth = config.getArchiveDepth();
         String[] includes = config.getIncludes();
         String[] projectPerFolderIncludes = config.getProjectPerFolderIncludes();
