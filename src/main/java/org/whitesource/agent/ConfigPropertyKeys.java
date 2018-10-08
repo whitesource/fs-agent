@@ -120,6 +120,7 @@ public final class ConfigPropertyKeys {
     public static final String MAVEN_AGGREGATE_MODULES      = "maven.aggregateModules";
     public static final String MAVEN_IGNORE_POM_MODULES     = "maven.ignorePomModules";
     public static final String MAVEN_IGNORE_SOURCE_FILES    = "maven.ignoreSourceFiles";
+    public static final String MAVEN_RUN_PRE_STEP           = "maven.runPreStep";
 
     public static final String IGNORE_SOURCE_FILES          = "ignoreSourceFiles";
 

@@ -19,28 +19,28 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
+import org.whitesource.agent.dependency.resolver.go.GoDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.*;
 
 import java.io.*;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.Proxy;
-import java.net.URL;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.whitesource.agent.ConfigPropertyKeys.MAVEN_IGNORE_POM_MODULES;
+import static org.whitesource.agent.Constants.COLON;
+import static org.whitesource.agent.Constants.EMPTY_STRING;
 import static org.whitesource.agent.client.ClientConstants.SERVICE_URL_KEYWORD;
 
 /**
@@ -161,7 +161,7 @@ public class FSAConfiguration {
             commandLineArgs.parseCommandLine(args);
 
             if (config == null) {
-                Pair<FSAConfigProperties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath);
+                Pair<FSAConfigProperties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath, commandLineArgs);
                 errors.addAll(propertiesWithErrors.getValue());
                 config = propertiesWithErrors.getKey();
                 if (StringUtils.isNotEmpty(commandLineArgs.project)) {
@@ -292,7 +292,7 @@ public class FSAConfiguration {
         String token = null;
         String tokenFile = config.getProperty(propertyKeyFile);
         if (StringUtils.isNotEmpty(tokenFile)) {
-            Pair<InputStream, List<String>> inputStreamAndErrors = getInputStreamFromFile(tokenFile);
+            Pair<InputStream, List<String>> inputStreamAndErrors = getInputStreamFromFile(tokenFile, new CommandLineArgs());
             if (inputStreamAndErrors.getValue().isEmpty()) {
                 try {
                     token = new BufferedReader(new InputStreamReader(inputStreamAndErrors.getKey())).readLine();
@@ -409,7 +409,8 @@ public class FSAConfiguration {
         boolean mavenResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = config.getListProperty(ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
         boolean mavenAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, false);
-        boolean mavenIgnoredPomModules = config.getBooleanProperty(MAVEN_IGNORE_POM_MODULES, true);
+        boolean mavenIgnoredPomModules = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_IGNORE_POM_MODULES, true);
+        boolean mavenRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RUN_PRE_STEP, false);
 
         String whiteSourceConfiguration = config.getProperty(ConfigPropertyKeys.PROJECT_CONFIGURATION_PATH);
 
@@ -446,7 +447,7 @@ public class FSAConfiguration {
         String paketPath = config.getProperty(ConfigPropertyKeys.PAKET_EXE_PATH, null);
 
         boolean goResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GO_RESOLVE_DEPENDENCIES, true);
-        String goDependencyManager = config.getProperty(ConfigPropertyKeys.GO_DEPENDENCY_MANAGER, Constants.EMPTY_STRING);
+        String goDependencyManager = config.getProperty(ConfigPropertyKeys.GO_DEPENDENCY_MANAGER, EMPTY_STRING);
         boolean goCollectDependenciesAtRuntime = config.getBooleanProperty(ConfigPropertyKeys.GO_COLLECT_DEPENDENCIES_AT_RUNTIME, false);
         boolean goIgnoreTestPackages = config.getBooleanProperty(ConfigPropertyKeys.GO_GLIDE_IGNORE_TEST_PACKAGES, true);
         boolean goGradleEnableTaskAlias = config.getBooleanProperty(ConfigPropertyKeys.GO_GRADLE_ENABLE_TASK_ALIAS, false);
@@ -463,7 +464,7 @@ public class FSAConfiguration {
         boolean sbtResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.SBT_RESOLVE_DEPENDENCIES, true);
         boolean sbtAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.SBT_AGGREGATE_MODULES, false);
         boolean sbtRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.SBT_RUN_PRE_STEP, false);
-        String sbtTargetFolder = config.getProperty(ConfigPropertyKeys.SBT_TARGET_FOLDER, Constants.EMPTY_STRING);
+        String sbtTargetFolder = config.getProperty(ConfigPropertyKeys.SBT_TARGET_FOLDER, EMPTY_STRING);
 
         boolean htmlResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
 
@@ -507,7 +508,7 @@ public class FSAConfiguration {
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
                 bowerResolveDependencies, bowerRunPreStep, bowerIgnoreSourceFiles,
                 nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep, nugetIgnoreSourceFiles,
-                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles,
+                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles, mavenRunPreStep,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles, pythonIgnoreSourceFiles,
                 ignoreSourceFiles, whiteSourceConfiguration,
@@ -527,7 +528,7 @@ public class FSAConfiguration {
         String projectVersion = config.getProperty(ConfigPropertyKeys.PROJECT_VERSION_PROPERTY_KEY);
         List<String> appPath = (List<String>) config.get(ConfigPropertyKeys.APP_PATH);
         String iaLanguage = config.getProperty(ConfigPropertyKeys.IA_LANGUAGE, null);
-        String viaDebug = config.getProperty(ConfigPropertyKeys.VIA_DEBUG, Constants.EMPTY_STRING);
+        String viaDebug = config.getProperty(ConfigPropertyKeys.VIA_DEBUG, EMPTY_STRING);
         boolean projectPerSubFolder = config.getBooleanProperty(ConfigPropertyKeys.PROJECT_PER_SUBFOLDER, false);
         String requesterEmail = config.getProperty(ConfigPropertyKeys.REQUESTER_EMAIL);
         int viaAnalysis = config.getIntProperty(ConfigPropertyKeys.VIA_ANALYSIS_LEVEL, VIA_DEFAULT_ANALYSIS_LEVEL);
@@ -579,14 +580,14 @@ public class FSAConfiguration {
 
     private AgentConfiguration getAgent(FSAConfigProperties config) {
         String[] includes = config.getIncludes();
-        String[] excludes = config.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String[] excludes = config.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         String[] dockerIncludes = config.getDockerIncludes();
-        String[] dockerExcludes = config.getProperty(ConfigPropertyKeys.DOCKER_EXCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String[] dockerExcludes = config.getProperty(ConfigPropertyKeys.DOCKER_EXCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         String[] projectPerFolderIncludes = config.getProjectPerFolderIncludes();
         String[] projectPerFolderExcludes = config.getProjectPerFolderExcludes();
         int archiveExtractionDepth = config.getArchiveDepth();
-        String[] archiveIncludes = config.getProperty(ConfigPropertyKeys.ARCHIVE_INCLUDES_PATTERN_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
-        String[] archiveExcludes = config.getProperty(ConfigPropertyKeys.ARCHIVE_EXCLUDES_PATTERN_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String[] archiveIncludes = config.getProperty(ConfigPropertyKeys.ARCHIVE_INCLUDES_PATTERN_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+        String[] archiveExcludes = config.getProperty(ConfigPropertyKeys.ARCHIVE_EXCLUDES_PATTERN_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         String[] pythonRequirementsFileIncludes = config.getPythonIncludes();
         boolean archiveFastUnpack = config.getBooleanProperty(ConfigPropertyKeys.ARCHIVE_FAST_UNPACK_KEY, false);
         boolean archiveFollowSymbolicLinks = config.getBooleanProperty(ConfigPropertyKeys.FOLLOW_SYMBOLIC_LINKS, true);
@@ -599,7 +600,7 @@ public class FSAConfiguration {
 
         //key , val
 
-        Collection<String> excludesCopyrights = getExcludeCopyrights(config.getProperty(ConfigPropertyKeys.EXCLUDED_COPYRIGHT_KEY, Constants.EMPTY_STRING));
+        Collection<String> excludesCopyrights = getExcludeCopyrights(config.getProperty(ConfigPropertyKeys.EXCLUDED_COPYRIGHT_KEY, EMPTY_STRING));
 
         return new AgentConfiguration(includes, excludes, dockerIncludes, dockerExcludes,
                 archiveExtractionDepth, archiveIncludes, archiveExcludes, archiveFastUnpack, archiveFollowSymbolicLinks,
@@ -609,7 +610,7 @@ public class FSAConfiguration {
 
     private Collection<String> getExcludeCopyrights(String excludedCopyrightsValue) {
         Collection<String> excludes = new ArrayList<>(Arrays.asList(excludedCopyrightsValue.split(Constants.COMMA)));
-        excludes.remove(Constants.EMPTY_STRING);
+        excludes.remove(EMPTY_STRING);
         return excludes;
     }
 
@@ -728,9 +729,9 @@ public class FSAConfiguration {
         }
     }
 
-    public static Pair<FSAConfigProperties, List<String>> readWithError(String configFilePath) {
+    public static Pair<FSAConfigProperties, List<String>> readWithError(String configFilePath, CommandLineArgs commandLineArgs) {
         FSAConfigProperties configProps = new FSAConfigProperties();
-        Pair<InputStream, List<String>> inputStreamErrorsPair = getInputStreamFromFile(configFilePath);
+        Pair<InputStream, List<String>> inputStreamErrorsPair = getInputStreamFromFile(configFilePath, commandLineArgs);
         InputStream inputStream = inputStreamErrorsPair.getKey();
         List<String> errors = inputStreamErrorsPair.getValue();
 
@@ -752,7 +753,7 @@ public class FSAConfiguration {
         return new Pair<>(configProps, errors);
     }
 
-    private static Pair<InputStream, List<String>> getInputStreamFromFile(String filePath) {
+    private static Pair<InputStream, List<String>> getInputStreamFromFile(String filePath, CommandLineArgs commandLineArgs) {
         List<String> errors = new ArrayList<>();
         BufferedReader readFileFromUrl = null;
         StringBuffer writeUrlFileContent = null;
@@ -762,16 +763,41 @@ public class FSAConfiguration {
             URL url = new URL(filePath);
             //toDo complete proxy settings once finished in WSE-791
             Proxy proxy = null;
-            if (0 == 1) {
-                proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 21));
+            String[] parsedProxy = null;
+            String authUser = null;
+            String authPass = null;
+            URLConnection urlConnection;
+
+            if (commandLineArgs.proxy != null) {
+                //get hostname, port and credentials of proxy
+                parsedProxy = parseProxy(commandLineArgs.proxy, errors);
+                authUser = parsedProxy[2];
+                authPass = parsedProxy[3];
+                if (parsedProxy[1] != null && Integer.valueOf(parsedProxy[1]) > 0) {
+                    proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(parsedProxy[0], Integer.valueOf(parsedProxy[1])));
+                } else {
+                    errors.add("Port must be set or greater than 0");
+                }
+            } else if (commandLineArgs.proxyHost != null){
+                authUser = commandLineArgs.proxyUser;
+                authPass = commandLineArgs.proxyPass;
+                proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(commandLineArgs.proxyHost, Integer.valueOf(commandLineArgs.proxyPort)));
             }
             //if proxy is set, so open the connection with proxy
             if (proxy != null) {
-                url.openConnection(proxy);
+                //setting proxy authenticator and disable schemes for http connections
+                ProxyAuthenticator proxyAuthenticator = new ProxyAuthenticator(authUser,authPass);
+                Authenticator.setDefault(proxyAuthenticator);
+                /*The 'jdk.http.auth.tunneling.disabledSchemes' property lists the authentication
+                schemes that will be disabled when tunneling HTTPS over a proxy, HTTP CONNECT.
+                so setting it to empty for this run only*/
+                System.setProperty("jdk.http.auth.tunneling.disabledSchemes", EMPTY_STRING);
+                urlConnection = url.openConnection(proxy);
             } else {
-                url.openConnection();
+                urlConnection = url.openConnection();
             }
-            readFileFromUrl = new BufferedReader(new InputStreamReader(url.openStream()));
+            urlConnection.connect();
+            readFileFromUrl = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
             String inputLine;
             writeUrlFileContent = new StringBuffer();
             //write data of the file to string buffer
@@ -932,9 +958,9 @@ public class FSAConfiguration {
     }
 
     public static String[] getIncludes(Properties configProps) {
-        String includesString = configProps.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING);
+        String includesString = configProps.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING);
         if (StringUtils.isNotBlank(includesString)) {
-            return configProps.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+            return configProps.getProperty(ConfigPropertyKeys.INCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         }
         return new String[0];
     }
@@ -950,9 +976,9 @@ public class FSAConfiguration {
     public static String[] getProjectPerFolderIncludes(Properties configProps) {
         String projectPerFolderIncludesString = configProps.getProperty(ConfigPropertyKeys.PROJECT_PER_FOLDER_INCLUDES, null);
         if (StringUtils.isNotBlank(projectPerFolderIncludesString)) {
-            return configProps.getProperty(ConfigPropertyKeys.PROJECT_PER_FOLDER_INCLUDES, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+            return configProps.getProperty(ConfigPropertyKeys.PROJECT_PER_FOLDER_INCLUDES, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         }
-        if (Constants.EMPTY_STRING.equals(projectPerFolderIncludesString)) {
+        if (EMPTY_STRING.equals(projectPerFolderIncludesString)) {
             return null;
         }
         String[] result = new String[1];
@@ -961,17 +987,17 @@ public class FSAConfiguration {
     }
 
     public static String[] getProjectPerFolderExcludes(Properties configProps) {
-        String projectPerFolderExcludesString = configProps.getProperty(ConfigPropertyKeys.PROJECT_PER_FOLDER_EXCLUDES, Constants.EMPTY_STRING);
+        String projectPerFolderExcludesString = configProps.getProperty(ConfigPropertyKeys.PROJECT_PER_FOLDER_EXCLUDES, EMPTY_STRING);
         if (StringUtils.isNotBlank(projectPerFolderExcludesString)) {
-            return configProps.getProperty(ConfigPropertyKeys.PROJECT_PER_FOLDER_EXCLUDES, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+            return configProps.getProperty(ConfigPropertyKeys.PROJECT_PER_FOLDER_EXCLUDES, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         }
         return new String[0];
     }
 
     public static String[] getDockerIncludes(Properties configProps) {
-        String includesString = configProps.getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING);
+        String includesString = configProps.getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING);
         if (StringUtils.isNotBlank(includesString)) {
-            return configProps.getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, Constants.EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
+            return configProps.getProperty(ConfigPropertyKeys.DOCKER_INCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         }
         return new String[0];
     }
@@ -1015,10 +1041,21 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.IA_LANGUAGE, commandLineArgs.iaLanguage);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.X_PATHS, commandLineArgs.xPaths);
         // proxy
-        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);
-        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PORT_PROPERTY_KEY, commandLineArgs.proxyPort);
-        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_USER_PROPERTY_KEY, commandLineArgs.proxyUser);
-        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY, commandLineArgs.proxyPass);
+        if (commandLineArgs.proxy == null) {
+            readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);
+            readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PORT_PROPERTY_KEY, commandLineArgs.proxyPort);
+            readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_USER_PROPERTY_KEY, commandLineArgs.proxyUser);
+            readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY, commandLineArgs.proxyPass);
+        } else {
+            List<String> errors = new ArrayList<>();
+            String[] parsedProxy = parseProxy(commandLineArgs.proxy, errors);
+            if (errors.isEmpty()) {
+                readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, parsedProxy[0]);
+                readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PORT_PROPERTY_KEY, parsedProxy[1]);
+                readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_USER_PROPERTY_KEY, parsedProxy[2]);
+                readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_PASS_PROPERTY_KEY, parsedProxy[3]);
+            }
+        }
 
         // archiving
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ARCHIVE_FAST_UNPACK_KEY, commandLineArgs.archiveFastUnpack);
@@ -1033,6 +1070,29 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.REQUIRE_KNOWN_SHA1, commandLineArgs.requireKnownSha1);
 
         return offlineRequestFiles;
+    }
+
+    //returns data of proxy url from command line parameter proxy
+    public static String[] parseProxy (String proxy, List<String> errors) {
+        String[] parsedProxyInfo = new String[4];
+        if (proxy != null) {
+            try {
+                URL proxyAsUrl = new URL(proxy);
+                parsedProxyInfo[0] = proxyAsUrl.getHost();
+                parsedProxyInfo[1] = String.valueOf(proxyAsUrl.getPort());
+                if (proxyAsUrl.getUserInfo() != null) {
+                    String[] parsedCred = proxyAsUrl.getUserInfo().split(COLON);
+                    parsedProxyInfo[2] = parsedCred[0];
+                    if (parsedCred.length > 1) {
+                        parsedProxyInfo[3] = parsedCred[1];
+                    }
+                }
+
+            } catch (MalformedURLException e) {
+                errors.add("Malformed proxy url : {}" + e.getMessage());
+            }
+        }
+        return parsedProxyInfo;
     }
 
     private void readPropertyFromCommandLine(FSAConfigProperties configProps, String propertyKey, String propertyValue) {
@@ -1057,5 +1117,25 @@ public class FSAConfiguration {
         errors.addAll(configurationValidation.getConfigurationErrors(getRequest().isProjectPerSubFolder(), getRequest().getProjectToken(),
                 getRequest().getProjectName(), getRequest().getApiToken(), configFilePath, getAgent().getArchiveExtractionDepth(),
                 getAgent().getIncludes(), getAgent().getProjectPerFolderIncludes(), getAgent().getPythonRequirementsFileIncludes(), getRequest().getScanComment()));
+    }
+
+    //ProxyAuthenticator is used for proxy authentication requests
+    static class ProxyAuthenticator extends Authenticator {
+
+        private String user;
+        private String password;
+
+        public ProxyAuthenticator(String user, String password) {
+            this.user = user;
+            if (password != null) {
+                this.password = password;
+            } else {
+                this.password = EMPTY_STRING;
+            }
+        }
+        //called when a request over proxy is executed
+        protected PasswordAuthentication getPasswordAuthentication() {
+            return new PasswordAuthentication(user, password.toCharArray());
+        }
     }
 }
