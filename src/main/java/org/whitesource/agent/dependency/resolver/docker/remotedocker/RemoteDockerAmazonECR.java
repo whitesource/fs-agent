@@ -4,6 +4,7 @@ import com.amazonaws.services.ecr.AmazonECR;
 import com.amazonaws.services.ecr.AmazonECRClientBuilder;
 import com.amazonaws.services.ecr.model.*;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.docker.DockerImage;
@@ -62,7 +63,7 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
             } else if (registriesList.size() == 1) {
                 String registryId = registriesList.get(0);
                 if (Constants.EMPTY_STRING.equals(registryId)) {
-                    logger.error("No registryIds value is found! Logging to default Amazon ECR registry");
+                    logger.info("No registryIds value is found! Logging to default Amazon ECR registry");
                 } else {
                     stCommand.append(Constants.WHITESPACE);
                     stCommand.append("--registry-ids");
@@ -87,8 +88,12 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
                 // Each line will include a Docker login command
                 while ((line = br.readLine()) != null) {
                     if (line.startsWith(DOCKER_CLI_LOGIN)) {
+                        String command = line;
+                        if (SystemUtils.IS_OS_LINUX && config.isLoginSudo()) {
+                            command = LINUX_PREFIX_SUDO + command;
+                        }
                         // Execute the Docker command and get permission
-                        result = executeCommand(line);
+                        result = executeCommand(command);
                         boolean loginToCurrentRegistry = (result.getKey() == 0);
                         // Were able to login to at least 1 registry
                         loginResult = loginResult || loginToCurrentRegistry;

@@ -62,7 +62,6 @@ public class DockerResolver {
     /* --- Members --- */
 
     private FSAConfiguration config;
-    private static boolean alreadyResolved = false;
     private static Collection<AgentProjectInfo> projects = new LinkedList<>();
 
     /* --- Constructor --- */
@@ -79,10 +78,6 @@ public class DockerResolver {
      * @return list of projects for all docker images
      */
     public Collection<AgentProjectInfo> resolveDockerImages() {
-        // A temp solution for WSE-841
-        if(DockerResolver.alreadyResolved) {
-            return projects;
-        }
 
         // TODO: Read this before changing RemoteDockersManager location
         // Remote Docker pulling should be enable only if docker.scanImages==true && docker.pull.enable==true
@@ -98,7 +93,6 @@ public class DockerResolver {
         try {
             // docker get list of images, use wait to get the whole list
             process = Runtime.getRuntime().exec(DOCKER_IMAGES);
-            process.waitFor();
             InputStream inputStream = process.getInputStream();
             BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
             logger.debug("Docker images list from BufferedReader");
@@ -107,9 +101,14 @@ public class DockerResolver {
                 // read all docker images data, skip the first line
                 if (!line.startsWith(REPOSITORY)) {
                     String[] dockerImageString = line.split(SPACES_REGEX);
-                    dockerImages.add(new DockerImage(dockerImageString[0], dockerImageString[1], dockerImageString[2]));
+                    if (dockerImageString.length > 2) {
+                        dockerImages.add(new DockerImage(dockerImageString[0], dockerImageString[1], dockerImageString[2]));
+                    } else {
+                        logger.info("Docker line content is ignored: {}", line);
+                    }
                 }
             }
+            process.waitFor();
             if (!dockerImages.isEmpty()) {
                 // filter docker images using includes & excludes parameter
                 dockerImagesToScan = filterDockerImagesToScan(dockerImages, config.getAgent().getDockerIncludes(), config.getAgent().getDockerExcludes());
@@ -124,13 +123,15 @@ public class DockerResolver {
         } catch (InterruptedException e) {
             logger.error("Interrupted exception : {}", e.getMessage());
             logger.debug("Interrupted exception : {}", e.getStackTrace());
+        } catch (Exception e) {
+            logger.error("Exception : {}", e.getMessage());
+            logger.debug("Resolve Docker Images Exception : {}", e);
         } finally {
             if (process != null) {
                 process.destroy();
             }
         }
         remoteDockersManager.removePulledRemoteDockerImages();
-        DockerResolver.alreadyResolved = true;
         return projects;
     }
 
@@ -174,101 +175,116 @@ public class DockerResolver {
      * Save docker images and scan files
      */
     private void saveDockerImages(Collection<DockerImage> dockerImages, Collection<AgentProjectInfo> projects) throws IOException {
-        Process process = null;
         logger.info("Saving {} docker images", dockerImages.size());
-        //String osName = System.getProperty(Constants.OS_NAME);
         for (DockerImage dockerImage : dockerImages) {
-            logger.debug("Saving image {} {}", dockerImage.getRepository(), dockerImage.getTag());
-            // create agent project info
-            AgentProjectInfo projectInfo = new AgentProjectInfo();
-            projectInfo.setCoordinates(new Coordinates(null, DOCKER_NAME_FORMAT.format(DOCKER_NAME_FORMAT_STRING, dockerImage.getId(),
-                    dockerImage.getRepository(), dockerImage.getTag()), null));
-            projects.add(projectInfo);
+            saveDockerImage(dockerImage, projects);
+        }
+    }
 
-            File imageTarFile = new File(TEMP_FOLDER, dockerImage.getRepository() + TAR_SUFFIX);
-            File imageExtractionDir = new File(TEMP_FOLDER, dockerImage.getRepository());
-            imageExtractionDir.mkdirs();
+    private void saveDockerImage(DockerImage dockerImage, Collection<AgentProjectInfo> projects) throws IOException {
+        logger.debug("Saving image {} {}", dockerImage.getRepository(), dockerImage.getTag());
+        Process process = null;
+        // create agent project info
+        AgentProjectInfo projectInfo = new AgentProjectInfo();
+        projectInfo.setCoordinates(new Coordinates(null, DOCKER_NAME_FORMAT.format(DOCKER_NAME_FORMAT_STRING, dockerImage.getId(),
+                dockerImage.getRepository(), dockerImage.getTag()), null));
+        projects.add(projectInfo);
+
+        File imageTarFile = new File(TEMP_FOLDER, dockerImage.getRepository() + TAR_SUFFIX);
+        File imageExtractionDir = new File(TEMP_FOLDER, dockerImage.getRepository());
+        imageExtractionDir.mkdirs();
+        try {
+            //Save image as tar file
+            process = Runtime.getRuntime().exec(DOCKER_SAVE_IMAGE_COMMAND + Constants.WHITESPACE + dockerImage.getId() +
+                    Constants.WHITESPACE + O_PARAMETER + Constants.WHITESPACE + imageTarFile.getPath());
+            process.waitFor();
+
+            // extract tar archive
+            ArchiveExtractor archiveExtractor = new ArchiveExtractor(config.getAgent().getArchiveIncludes(), config.getAgent().getArchiveExcludes(), config.getAgent().getIncludes());
             try {
-                //Save image as tar file
-                process = Runtime.getRuntime().exec(DOCKER_SAVE_IMAGE_COMMAND + Constants.WHITESPACE + dockerImage.getId() +
-                        Constants.WHITESPACE + O_PARAMETER + Constants.WHITESPACE + imageTarFile.getPath());
-                process.waitFor();
+                int megaByte = 1048576; // 1024*1024
+                long tarSizeInBytes = imageTarFile.length();
+                long tarSizeInMBs = tarSizeInBytes/megaByte;
+                long freeDiskSpaceInBytes = imageTarFile.getFreeSpace();
+                long freeDiskSpaceInMBs = imageTarFile.getFreeSpace()/megaByte;
 
-                // extract tar archive
-                ArchiveExtractor archiveExtractor = new ArchiveExtractor(config.getAgent().getArchiveIncludes(), config.getAgent().getArchiveExcludes(), config.getAgent().getIncludes());
-                archiveExtractor.extractDockerImageLayers(imageTarFile, imageExtractionDir);
-                FilesScanner filesScanner = new FilesScanner();
-                String[] fileNames = filesScanner.getDirectoryContent(imageExtractionDir.getParent(), scanIncludes, scanExcludes, true, false);
-
-                // build the full path correctly
-                for (int i = 0; i < fileNames.length; i++) {
-                    fileNames[i] = imageExtractionDir.getParent() + File.separator + fileNames[i];
-                }
-
-                // check for dependencies for each docker operating system (Debian,Arch-Linux,Alpine,Rpm)
-                AbstractParser parser = new DebianParser();
-                File file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE);
-
-                // extract .xz file to read the package log file
-                if (file != null) {
-                    file = getPackagesLogFile(file, archiveExtractor);
-                }
-                parseProjectInfo(projectInfo, parser, file);
-                file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE_AVAILABLE);
-                if (file != null) {
-                    parseProjectInfo(projectInfo, parser, file);
-                }
-
-                // try to find duplicates and clear them
-                Collection<DependencyInfo> debianDependencyInfos = mergeDependencyInfos(projectInfo);
-                if (debianDependencyInfos != null && !debianDependencyInfos.isEmpty()) {
-                    projectInfo.getDependencies().clear();
-                    projectInfo.getDependencies().addAll(debianDependencyInfos);
-                }
-                logger.info("Found {} Debian Packages", debianDependencyInfos.size());
-
-                parser = new ArchLinuxParser();
-                file = parser.findFile(fileNames, ARCH_LINUX_DESC_FOLDERS);
-                int archLinuxPackages = parseProjectInfo(projectInfo, parser, file);
-                logger.info("Found {} Arch linux Packages", archLinuxPackages);
-
-                parser = new AlpineParser();
-                file = parser.findFile(fileNames, ALPINE_LIST_PACKAGES_FILE);
-                int alpinePackages = parseProjectInfo(projectInfo, parser, file);
-                logger.info("Found {} Alpine Packages", alpinePackages);
-
-                RpmParser rpmParser = new RpmParser();
-                Collection<String> yumDbFoldersPath = new LinkedList<>();
-                RpmParser.findFolder(imageExtractionDir, YUM_DB, yumDbFoldersPath);
-                File yumDbFolder = rpmParser.checkFolders(yumDbFoldersPath, RPM_YUM_DB_FOLDER_DEFAULT_PATH);
-                int rpmPackages = parseProjectInfo(projectInfo, rpmParser, yumDbFolder);
-                logger.info("Found {} Rpm Packages", rpmPackages);
-
-                // scan files
-                String extractPath = imageExtractionDir.getPath();
-                Set<String> setDirs = new HashSet<>();
-                setDirs.add(extractPath);
-                Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
-                appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
-                List<DependencyInfo> dependencyInfos = new FileSystemScanner(config.getResolver(), config.getAgent(), false).createProjects(
-                        Arrays.asList(extractPath), appPathsToDependencyDirs, false, config.getAgent().getIncludes(), config.getAgent().getExcludes(),
-                        config.getAgent().getGlobCaseSensitive(), config.getAgent().getArchiveExtractionDepth(), FileExtensions.ARCHIVE_INCLUDES,
-                        FileExtensions.ARCHIVE_EXCLUDES, false, config.getAgent().isFollowSymlinks(), config.getAgent().getExcludedCopyrights(), PARTIAL_SHA1_MATCH, config.getAgent().getPythonRequirementsFileIncludes());
-
-                projectInfo.getDependencies().addAll(dependencyInfos);
-            } catch (IOException e) {
-                logger.error("Error exporting image {}: {}", dockerImage.getRepository(), e.getMessage());
-                logger.debug("Error exporting image {}", dockerImage.getRepository(), e);
-            } catch (ArchiverException e) {
-                logger.error("Error extracting {}: {}", imageTarFile, e.getMessage());
-                logger.debug("Error extracting tar archive", e);
-            } catch (InterruptedException e) {
-                logger.error(e.getMessage());
-                logger.debug("{}", e.getStackTrace());
-            } finally {
-                process.destroy();
-                deleteDockerArchiveFiles(imageTarFile, imageExtractionDir);
+                logger.info("Extracting file {} - Size {} Bytes ({} MBs)- Free Space {} Bytes ({} MBs)",
+                        imageTarFile.getCanonicalPath(), tarSizeInBytes, tarSizeInMBs, freeDiskSpaceInBytes, freeDiskSpaceInMBs);
+            } catch (Exception ex){
+                logger.error("Could not get file size - {}", ex);
             }
+            archiveExtractor.extractDockerImageLayers(imageTarFile, imageExtractionDir);
+            FilesScanner filesScanner = new FilesScanner();
+            String[] fileNames = filesScanner.getDirectoryContent(imageExtractionDir.getParent(), scanIncludes, scanExcludes, true, false);
+
+            // build the full path correctly
+            for (int i = 0; i < fileNames.length; i++) {
+                fileNames[i] = imageExtractionDir.getParent() + File.separator + fileNames[i];
+            }
+
+            // check for dependencies for each docker operating system (Debian,Arch-Linux,Alpine,Rpm)
+            AbstractParser parser = new DebianParser();
+            File file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE);
+
+            // extract .xz file to read the package log file
+            if (file != null) {
+                file = getPackagesLogFile(file, archiveExtractor);
+            }
+            parseProjectInfo(projectInfo, parser, file);
+            file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE_AVAILABLE);
+            if (file != null) {
+                parseProjectInfo(projectInfo, parser, file);
+            }
+
+            // try to find duplicates and clear them
+            Collection<DependencyInfo> debianDependencyInfos = mergeDependencyInfos(projectInfo);
+            if (debianDependencyInfos != null && !debianDependencyInfos.isEmpty()) {
+                projectInfo.getDependencies().clear();
+                projectInfo.getDependencies().addAll(debianDependencyInfos);
+            }
+            logger.info("Found {} Debian Packages", debianDependencyInfos.size());
+
+            parser = new ArchLinuxParser();
+            file = parser.findFile(fileNames, ARCH_LINUX_DESC_FOLDERS);
+            int archLinuxPackages = parseProjectInfo(projectInfo, parser, file);
+            logger.info("Found {} Arch linux Packages", archLinuxPackages);
+
+            parser = new AlpineParser();
+            file = parser.findFile(fileNames, ALPINE_LIST_PACKAGES_FILE);
+            int alpinePackages = parseProjectInfo(projectInfo, parser, file);
+            logger.info("Found {} Alpine Packages", alpinePackages);
+
+            RpmParser rpmParser = new RpmParser();
+            Collection<String> yumDbFoldersPath = new LinkedList<>();
+            RpmParser.findFolder(imageExtractionDir, YUM_DB, yumDbFoldersPath);
+            File yumDbFolder = rpmParser.checkFolders(yumDbFoldersPath, RPM_YUM_DB_FOLDER_DEFAULT_PATH);
+            int rpmPackages = parseProjectInfo(projectInfo, rpmParser, yumDbFolder);
+            logger.info("Found {} Rpm Packages", rpmPackages);
+
+            // scan files
+            String extractPath = imageExtractionDir.getPath();
+            Set<String> setDirs = new HashSet<>();
+            setDirs.add(extractPath);
+            Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
+            appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
+            List<DependencyInfo> dependencyInfos = new FileSystemScanner(config.getResolver(), config.getAgent(), false).createProjects(
+                    Arrays.asList(extractPath), appPathsToDependencyDirs, false, config.getAgent().getIncludes(), config.getAgent().getExcludes(),
+                    config.getAgent().getGlobCaseSensitive(), config.getAgent().getArchiveExtractionDepth(), FileExtensions.ARCHIVE_INCLUDES,
+                    FileExtensions.ARCHIVE_EXCLUDES, false, config.getAgent().isFollowSymlinks(), config.getAgent().getExcludedCopyrights(), PARTIAL_SHA1_MATCH, config.getAgent().getPythonRequirementsFileIncludes());
+
+            projectInfo.getDependencies().addAll(dependencyInfos);
+        } catch (IOException e) {
+            logger.error("Error exporting image {}: {}", dockerImage.getRepository(), e.getMessage());
+            logger.debug("Error exporting image {}", dockerImage.getRepository(), e);
+        } catch (ArchiverException e) {
+            logger.error("Error extracting {}: {}", imageTarFile, e.getMessage());
+            logger.debug("Error extracting tar archive", e);
+        } catch (InterruptedException e) {
+            logger.error(e.getMessage());
+            logger.debug("{}", e.getStackTrace());
+        } finally {
+            process.destroy();
+            deleteDockerArchiveFiles(imageTarFile, imageExtractionDir);
         }
     }
 

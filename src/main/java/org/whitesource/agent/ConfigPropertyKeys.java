@@ -203,6 +203,7 @@ public final class ConfigPropertyKeys {
     public static final String DOCKER_PULL_DIGEST = "docker.pull.digest";
     public static final String DOCKER_PULL_MAX_IMAGES = "docker.pull.maxImages";
     public static final String DOCKER_DELETE_FORCE = "docker.delete.force";
+    public static final String DOCKER_LOGIN_SUDO = "docker.login.sudo";
     // TODO: Not implemented yet
     public static final String DOCKER_SCAN_MAX_IMAGES = "docker.scan.maxImages";
     // TODO: Not implemented yet
