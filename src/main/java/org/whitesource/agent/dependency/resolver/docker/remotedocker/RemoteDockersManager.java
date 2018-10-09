@@ -2,16 +2,15 @@ package org.whitesource.agent.dependency.resolver.docker.remotedocker;
 
 import org.whitesource.fs.configuration.RemoteDockerConfiguration;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class RemoteDockersManager {
 
      private boolean remoteDockersEnabled = false;
-     private List<AbstractRemoteDocker> remoteDockersList;
+     private List<AbstractRemoteDocker> remoteDockersList = new LinkedList<>();
+     private Set<AbstractRemoteDockerImage> pulledDockerImages = new HashSet<>();
 
      public RemoteDockersManager(RemoteDockerConfiguration config) {
-        remoteDockersList = new LinkedList<>();
         if (config != null) {
             remoteDockersEnabled = config.isRemoteDockerEnabled();
             // TODO: Remote Docker pulling should be enable only if docker.scanImages==true && docker.pull.enable==true
@@ -23,13 +22,17 @@ public class RemoteDockersManager {
         }
     }
 
-    public void pullRemoteDockerImages() {
+    public Set<AbstractRemoteDockerImage> pullRemoteDockerImages() {
         if (!remoteDockersEnabled) {
-            return;
+            return Collections.emptySet();
         }
         for (AbstractRemoteDocker remoteDocker : remoteDockersList) {
-            remoteDocker.pullRemoteDockerImages();
+            Set<AbstractRemoteDockerImage> pulledImages = remoteDocker.pullRemoteDockerImages();
+            if (pulledImages != null) {
+                pulledDockerImages.addAll(pulledImages);
+            }
         }
+        return pulledDockerImages;
     }
 
     public void removePulledRemoteDockerImages() {
@@ -39,5 +42,10 @@ public class RemoteDockersManager {
         for (AbstractRemoteDocker remoteDocker : remoteDockersList) {
             remoteDocker.removePulledRemoteDockerImages();
         }
+        pulledDockerImages.clear();
+    }
+
+    public Set<AbstractRemoteDockerImage> getPulledDockerImages() {
+        return pulledDockerImages;
     }
 }

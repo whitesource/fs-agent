@@ -80,7 +80,7 @@ public class FileSystemAgent {
                 } else if (file.isFile()) {
                     this.dependencyDirs.add(directory);
                 } else {
-                    logger.warn(directory + "is not a file nor a directory .");
+                    logger.warn("{} is not a file nor a directory .", directory);
                 }
             }
         } else {
@@ -91,55 +91,78 @@ public class FileSystemAgent {
     /* --- Overridden methods --- */
 
     public ProjectsDetails createProjects() {
-        ProjectsDetails projects;
-        if (projectPerSubFolder) {
-            if (this.config.getSender().isEnableImpactAnalysis()) {
-                logger.warn("Could not executing VIA impact analysis with the 'projectPerFolder' flag");
+        ProjectsDetails projects = new ProjectsDetails(new ArrayList<>(), StatusCode.SUCCESS, Constants.EMPTY_STRING);
+        // Use FSA a as a package manger extractor for Debian/RPM/Arch Linux/Alpine
+        if (config.isScanProjectManager()) {
+            Collection<AgentProjectInfo> tempProjects = new PackageManagerExtractor().createProjects();
+            ProjectsDetails projectsDetails = new ProjectsDetails(tempProjects, StatusCode.SUCCESS, Constants.EMPTY_STRING);
+            String projectName = config.getRequest().getProjectName();
+            addProjectDetailsToProjects(projectsDetails, projectName, projects);
+        } else if (config.isScanDockerImages()) {
+            Collection<AgentProjectInfo> tempProjects = new DockerResolver(config).resolveDockerImages();
+            ProjectsDetails projectsDetails = new ProjectsDetails(tempProjects, StatusCode.SUCCESS, Constants.EMPTY_STRING);
+            for (AgentProjectInfo projectInfo : projectsDetails.getProjects()) {
+                String projectName = projectInfo.getCoordinates().getArtifactId();
+                addProjectDetailsToProjects(projectsDetails, projectName, projects);
             }
-            projects = new ProjectsDetails(new ArrayList<>(), StatusCode.SUCCESS, Constants.EMPTY_STRING);
-            for (String directory : dependencyDirs) {
-                Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
-                Set<String> setDirs = new HashSet<>();
-                setDirs.add(directory);
-                appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
-                ProjectsDetails projectsDetails = getProjects(Collections.singletonList(directory), appPathsToDependencyDirs);
-                if (projectsDetails.getProjects().size() == 1) {
-                    String projectName = new File(directory).getName();
-                    String projectVersion = config.getRequest().getProjectVersion();
-                    AgentProjectInfo projectInfo = projectsDetails.getProjects().stream().findFirst().get();
-                    projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
-                    projects.getProjectToViaComponents().put(projectInfo, projectsDetails.getProjectToViaComponents().get(projectInfo));
-                }
-                // return on the first project that fails
-                if (!projectsDetails.getStatusCode().equals(StatusCode.SUCCESS)) {
-                    // return status code if there is a failure
-                    return new ProjectsDetails(new ArrayList<>(), projects.getStatusCode(), projects.getDetails());
-                }
-            }
-            return projects;
         } else {
-            projects = getProjects(dependencyDirs, config.getAppPathsToDependencyDirs());
-            if (projects.getProjects().size() > 0) {
-                AgentProjectInfo projectInfo = projects.getProjects().stream().findFirst().get();
-                if (projectInfo.getCoordinates() == null) {
-                    // use token or name + version
-                    String projectToken = config.getRequest().getProjectToken();
-                    if (StringUtils.isNotBlank(projectToken)) {
-                        projectInfo.setProjectToken(projectToken);
-                    } else {
-                        String projectName = config.getRequest().getProjectName();
-                        String projectVersion = config.getRequest().getProjectVersion();
-                        projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+            if (projectPerSubFolder) {
+                if (this.config.getSender().isEnableImpactAnalysis()) {
+                    logger.warn("Could not executing VIA impact analysis with the 'projectPerFolder' flag");
+                } else {
+                    for (String directory : dependencyDirs) {
+                        Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
+                        Set<String> setDirs = new HashSet<>();
+                        setDirs.add(directory);
+                        appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
+
+                        ProjectsDetails projectsDetails = getProjects(Collections.singletonList(directory), appPathsToDependencyDirs);
+                        String projectName = new File(directory).getName();
+                        addProjectDetailsToProjects(projectsDetails, projectName, projects);
+
+                        // return on the first project that fails
+                        if (!projectsDetails.getStatusCode().equals(StatusCode.SUCCESS)) {
+                            // return status code if there is a failure
+                            return new ProjectsDetails(new ArrayList<>(), projects.getStatusCode(), projects.getDetails());
+                        }
+                    }
+                }
+            } else {
+                projects = getProjects(dependencyDirs, config.getAppPathsToDependencyDirs());
+                if (!projects.getProjects().isEmpty()) {
+                    AgentProjectInfo projectInfo = projects.getProjects().stream().findFirst().get();
+                    if (projectInfo.getCoordinates() == null) {
+                        // use token or name + version
+                        String projectToken = config.getRequest().getProjectToken();
+                        if (StringUtils.isNotBlank(projectToken)) {
+                            projectInfo.setProjectToken(projectToken);
+                        } else {
+                            String projectName = config.getRequest().getProjectName();
+                            String projectVersion = config.getRequest().getProjectVersion();
+                            projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+                        }
                     }
                 }
             }
-
-            // todo: check for duplicates projects
-            return projects;
         }
+        // todo: check for duplicates projects
+        return projects;
     }
 
     /* --- Private methods --- */
+
+    private void addProjectDetailsToProjects(ProjectsDetails projectsDetails, String projectName, ProjectsDetails projects) {
+        if(projectsDetails == null || projects == null || projectName == null) {
+            logger.debug("projectsDetails {} , projects {} , projectName {}", projectsDetails, projectName, projects);
+            return;
+        }
+        if (projectsDetails.getProjects().size() == 1) {
+            String projectVersion = config.getRequest().getProjectVersion();
+            AgentProjectInfo projectInfo = projectsDetails.getProjects().stream().findFirst().get();
+            projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+            projects.getProjectToViaComponents().put(projectInfo, projectsDetails.getProjectToViaComponents().get(projectInfo));
+        }
+    }
 
     private ProjectsDetails getProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs) {
         // create getScm connector
@@ -191,22 +214,12 @@ public class FileSystemAgent {
             return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, config.getAgent().getError()); // TODO this is within a try frame. Throw an exception instead
         }
 
-        Collection<AgentProjectInfo> projects = null;
-        Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToAppPathAndLanguage = null;
-        ProjectsDetails projectsDetails;
-        // Use FSA a as a package manger extractor for Debian/RPM/Arch Linux/Alpine
-        if (config.isScanProjectManager()) {
-            projects = new PackageManagerExtractor().createProjects();
-            projectsDetails = new ProjectsDetails(projects, success[0], Constants.EMPTY_STRING);
-        } else if (config.isScanDockerImages()) {
-            projects = new DockerResolver(config).resolveDockerImages();
-            projectsDetails = new ProjectsDetails(projects, success[0], Constants.EMPTY_STRING);
-        } else {
-            ViaLanguage viaLanguage = getIaLanguage(config.getRequest().getIaLanguage());
-            projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis(), viaLanguage)
+        Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToAppPathAndLanguage;
+        ViaLanguage viaLanguage = getIaLanguage(config.getRequest().getIaLanguage());
+        projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis(), viaLanguage)
                     .createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnectors[0]);
-            projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], Constants.EMPTY_STRING);
-        }
+        ProjectsDetails projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], Constants.EMPTY_STRING);
+
         // delete all temp scm files
         scmPaths.forEach(directory -> {
             if (directory != null) {
