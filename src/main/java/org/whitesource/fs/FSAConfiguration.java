@@ -664,11 +664,12 @@ public class FSAConfiguration {
 
     private RemoteDockerConfiguration getRemoteDockerConfiguration(FSAConfigProperties config) {
         String[] empty = new String[0];
-        String[] dockerImages = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, null);
-        String[] dockerTags = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, null);
-        String[] dockerDigests = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, null);
+        String[] dockerImages   = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, null);
+        String[] dockerTags     = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, null);
+        String[] dockerDigests  = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, null);
         boolean forceDelete = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_DELETE_FORCE, false);
         boolean enablePulling = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_ENABLE, false);
+        boolean loginSudo = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_LOGIN_SUDO, true);
         List<String> dockerImagesList = null;
         if (dockerImages != null) {
             dockerImagesList = new LinkedList<>(Arrays.asList(dockerImages));
@@ -685,8 +686,8 @@ public class FSAConfiguration {
         int maxImagesScan = config.getIntProperty(ConfigPropertyKeys.DOCKER_SCAN_MAX_IMAGES, 0);
         int maxImagesPull = config.getIntProperty(ConfigPropertyKeys.DOCKER_PULL_MAX_IMAGES, 10);
         boolean pullForce = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_FORCE, false);
-        RemoteDockerConfiguration result = new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
-                dockerDigestsList, forceDelete, enablePulling, maxImagesScan, pullForce, maxImagesPull);
+        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
+                dockerDigestsList, forceDelete, enablePulling, maxImagesScan, pullForce, maxImagesPull, loginSudo);
 
         // Amazon configuration
         String[] dockerAmazonRegistryIds = config.getListProperty(ConfigPropertyKeys.DOCKER_AWS_REGISTRY_IDS, empty);
