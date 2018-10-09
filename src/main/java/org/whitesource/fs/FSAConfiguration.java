@@ -480,6 +480,9 @@ public class FSAConfiguration {
 
         boolean htmlResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
 
+        boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, true);
+        boolean cocoapodsRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RUN_PRE_STEP, false);
+
         boolean npmIgnoreSourceFiles;
         boolean bowerIgnoreSourceFiles;
         boolean nugetIgnoreSourceFiles;
@@ -490,6 +493,7 @@ public class FSAConfiguration {
         boolean sbtIgnoreSourceFiles;
         boolean goIgnoreSourceFiles;
         boolean rubyIgnoreSourceFiles;
+        boolean cocoapodsIgnoreSourceFiles;
         boolean ignoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.IGNORE_SOURCE_FILES, ConfigPropertyKeys.DEPENDENCIES_ONLY, false);
 
         if (ignoreSourceFiles == true) {
@@ -503,6 +507,7 @@ public class FSAConfiguration {
             goIgnoreSourceFiles = true;
             rubyIgnoreSourceFiles = true;
             pythonIgnoreSourceFiles = true;
+            cocoapodsIgnoreSourceFiles = true;
         } else {
             npmIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_SOURCE_FILES, ConfigPropertyKeys.NPM_IGNORE_JAVA_SCRIPT_FILES, true);
             bowerIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.BOWER_IGNORE_SOURCE_FILES, false);
@@ -514,6 +519,7 @@ public class FSAConfiguration {
             goIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.GO_IGNORE_SOURCE_FILES, false);
             pythonIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_SOURCE_FILES, true);
             rubyIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.RUBY_IGNORE_SOURCE_FILES, true);
+            cocoapodsIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_IGNORE_SOURCE_FILES, true);
         }
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreSourceFiles,
@@ -530,7 +536,7 @@ public class FSAConfiguration {
                 rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles,
                 phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies,
                 sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, sbtIgnoreSourceFiles,
-                htmlResolveDependencies);
+                htmlResolveDependencies, cocoapodsResolveDependencies, cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles);
     }
 
     private RequestConfiguration getRequest(FSAConfigProperties config, String apiToken, String userKey, String projectName, String projectToken, String scanComment) {

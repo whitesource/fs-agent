@@ -109,7 +109,10 @@ public class ResolverConfiguration {
             @JsonProperty(SBT_TARGET_FOLDER) String sbtTargetFolder,
             @JsonProperty(SBT_IGNORE_SOURCE_FILES) boolean sbtIgnoreSourceFiles,
 
-            @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies) {
+            @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies,
+            @JsonProperty(COCOAPODS_RESOLVE_DEPENDENCIES) boolean cocoapodsResolveDependencies,
+            @JsonProperty(COCOAPODS_RUN_PRE_STEP) boolean cocoapodsRunPreStep,
+            @JsonProperty(COCOAPODS_IGNORE_SOURCE_FILES) boolean cocoapodsIgnoreSourceFiles) {
         this.npmRunPreStep                      = npmRunPreStep;
         this.npmIgnoreScripts                   = npmIgnoreScripts;
         this.npmResolveDependencies             = npmResolveDependencies;
@@ -192,6 +195,10 @@ public class ResolverConfiguration {
         this.sbtIgnoreSourceFiles   = sbtIgnoreSourceFiles;
 
         this.htmlResolveDependencies = htmlResolveDependencies;
+
+        this.cocoapodsResolveDependencies = cocoapodsResolveDependencies;
+        this.cocoapodsRunPreStep = cocoapodsRunPreStep;
+        this.cocoapodsIgnoreSourceFiles   = cocoapodsIgnoreSourceFiles;
     }
 
     /* --- Members --- */
@@ -277,6 +284,10 @@ public class ResolverConfiguration {
     private boolean sbtIgnoreSourceFiles;
 
     private boolean htmlResolveDependencies;
+
+    private boolean cocoapodsResolveDependencies;
+    private boolean cocoapodsRunPreStep;
+    private boolean cocoapodsIgnoreSourceFiles;
 
     /* --- Public getters --- */
 
@@ -578,6 +589,19 @@ public class ResolverConfiguration {
     public boolean isHtmlResolveDependencies() {
         return htmlResolveDependencies;
     }
+
+    @JsonProperty(COCOAPODS_RESOLVE_DEPENDENCIES)
+    public boolean isCocoapodsResolveDependencies() {
+        return cocoapodsResolveDependencies;
+    }
+
+    @JsonProperty(COCOAPODS_RUN_PRE_STEP)
+    public boolean isCocoapodsRunPreStep() {
+        return cocoapodsRunPreStep;
+    }
+
+    @JsonProperty(COCOAPODS_IGNORE_SOURCE_FILES)
+    public boolean isCocoapodsIgnoreSourceFiles() { return cocoapodsIgnoreSourceFiles; }
 
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {
         this.npmResolveDependencies = npmResolveDependencies;

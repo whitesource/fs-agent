@@ -180,6 +180,10 @@ public final class ConfigPropertyKeys {
 
     public static final String HTML_RESOLVE_DEPENDENCIES    = "html.resolveDependencies";
 
+    public static final String COCOAPODS_RESOLVE_DEPENDENCIES    = "cocoapods.resolveDependencies";
+    public static final String COCOAPODS_RUN_PRE_STEP             = "cocoapods.runPreStep";
+    public static final String COCOAPODS_IGNORE_SOURCE_FILES      = "cocoapods.ignoreSourceFiles";
+
     public static final String DEPENDENCIES_ONLY            = "dependenciesOnly";
     public static final String WHITESOURCE_CONFIGURATION    = "whitesourceConfiguration";
 
