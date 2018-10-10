@@ -26,6 +26,7 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class ResolverConfiguration {
 
+
     /* --- Constructors --- */
 
     @JsonCreator
@@ -66,7 +67,9 @@ public class ResolverConfiguration {
             @JsonProperty(PYTHON_REQUIREMENTS_FILE_INCLUDES) String[] pythonRequirementsFileIncludes,
             @JsonProperty(PYTHON_RESOLVE_SETUP_PY_FILES) boolean pythonResolveSetupPyFiles,
             @JsonProperty(PYTHON_IGNORE_SOURCE_FILES) boolean pythonIgnoreSourceFiles,
-
+            @JsonProperty(PYTHON_IGNORE_PIPENV_INSTALL_ERRORS) boolean ignorePipEnvInstallErrors,
+            @JsonProperty(PYTHON_RUN_PIPENV_PRE_STEP) boolean runPipenvPreStep,
+            @JsonProperty(PYTHON_PIPENV_DEV_DEPENDENCIES) boolean pipenvInstallDevDependencies,
             @JsonProperty(IGNORE_SOURCE_FILES) boolean ignoreSourceFiles,
 //            @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
@@ -145,7 +148,9 @@ public class ResolverConfiguration {
         this.pythonRequirementsFileIncludes = pythonRequirementsFileIncludes;
         this.pythonResolveSetupPyFiles      = pythonResolveSetupPyFiles;
         this.pythonIgnoreSourceFiles        = pythonIgnoreSourceFiles;
-
+        this.ignorePipEnvInstallErrors      = ignorePipEnvInstallErrors;
+        this.runPipenvPreStep               = runPipenvPreStep;
+        this.pipenvInstallDevDependencies   = pipenvInstallDevDependencies;
         this.ignoreSourceFiles          = ignoreSourceFiles;
         this.whitesourceConfiguration   = whitesourceConfiguration;
 
@@ -232,7 +237,11 @@ public class ResolverConfiguration {
     private String[] pythonRequirementsFileIncludes;
     private boolean pythonResolveSetupPyFiles;
     private boolean pythonIgnoreSourceFiles;
+    private boolean ignorePipEnvInstallErrors;
 
+
+    private boolean pipenvInstallDevDependencies;
+    private boolean runPipenvPreStep;
     private boolean gradleResolveDependencies;
     private boolean gradleRunAssembleCommand;
     private boolean gradleAggregateModules;
@@ -436,6 +445,18 @@ public class ResolverConfiguration {
     @JsonProperty(PYTHON_IGNORE_SOURCE_FILES)
     public boolean isPythonIgnoreSourceFiles() { return pythonIgnoreSourceFiles; }
 
+    @JsonProperty(PYTHON_RUN_PIPENV_PRE_STEP)
+    public boolean IsRunPipenvPreStep() {
+        return this.runPipenvPreStep;
+    }
+    @JsonProperty(PYTHON_IGNORE_PIPENV_INSTALL_ERRORS)
+    public boolean isIgnorePipEnvInstallErrors() {
+        return this.ignorePipEnvInstallErrors;
+    }
+    @JsonProperty(PYTHON_PIPENV_DEV_DEPENDENCIES)
+    public boolean isPipenvInstallDevDependencies() {
+        return pipenvInstallDevDependencies;
+    }
     @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES)
     public boolean isGradleResolveDependencies() {
         return gradleResolveDependencies;
@@ -645,6 +666,7 @@ public class ResolverConfiguration {
         this.sbtTargetFolder = sbtTargetFolder;
     }
 
+
     @Override
     public String toString() {
 
@@ -674,6 +696,8 @@ public class ResolverConfiguration {
                 ", python.resolveSetupPyFiles=" + pythonResolveSetupPyFiles + '\n' +
                 ", pythonRequirementsFileIncludes=" + Arrays.toString(pythonRequirementsFileIncludes) + '\n' +
                 ", python.IgnoreSourceFiles=" + pythonIgnoreSourceFiles + '\n' +
+                ", python.ignorePipEnvInstallErrors=" + ignorePipEnvInstallErrors + '\n' +
+                ", python.runPipenvPreStep=" + runPipenvPreStep + '\n' +
                 ", gradleResolveDependencies=" + gradleResolveDependencies +
                 ", gradleRunAssembleCommand=" + gradleRunAssembleCommand +
                 ", gradle.aggregateModules=" + gradleAggregateModules + '\n' +
@@ -706,4 +730,5 @@ public class ResolverConfiguration {
                 ", sbt.IgnoreSourceFiles=" + sbtIgnoreSourceFiles + '\n' +
                 ", htmlResolveDependencies=" + htmlResolveDependencies;
     }
+
 }

@@ -5,5 +5,6 @@ package org.whitesource.agent.dependency.resolver.python;
  */
 public enum DependenciesFileType {
     REQUIREMENTS_TXT,
-    SETUP_PY
+    SETUP_PY,
+    PIPFILE
 }

@@ -17,7 +17,9 @@ package org.whitesource.fs;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.bcel.classfile.ConstantString;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.Constants;
@@ -203,6 +205,7 @@ public class FSAConfiguration {
                         requirements += requirementFileIncludes + Constants.WHITESPACE;
                     }
                 }
+                requirements += Constants.PIPFILE + Constants.WHITESPACE;
                 config.setProperty(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, requirements);
             }
             commandLineArgsOverride(commandLineArgs);
@@ -404,11 +407,15 @@ public class FSAConfiguration {
         boolean pythonResolveSetupPyFiles = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RESOLVE_SETUP_PY_FILES, false);
         String[] bomPatternForPython;
         if (pythonResolveSetupPyFiles) {
-            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.SETUP_PY};
+            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.SETUP_PY, Constants.PATTERN + Constants.PIPFILE};
         } else {
-            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS};
+            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.PIPFILE};
         }
-        String[] pythonRequirementsFileIncludes = config.getListProperty(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, bomPatternForPython);
+
+        String[] pythonRequirementsFileIncludes = config.getListProperty(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES + Constants.PATTERN + Constants.PIPFILE, bomPatternForPython);
+        boolean pythonRunPipenvPreStep = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RUN_PIPENV_PRE_STEP, false);
+        boolean pythonIgnorePipenvInstallErrors = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_PIPENV_INSTALL_ERRORS, false);
+        boolean pythonInstallDevDependencies =  config.getBooleanProperty(ConfigPropertyKeys.PYTHON_PIPENV_DEV_DEPENDENCIES, false);
 
         boolean gradleResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
@@ -490,6 +497,7 @@ public class FSAConfiguration {
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles, pythonIgnoreSourceFiles,
+                pythonIgnorePipenvInstallErrors, pythonRunPipenvPreStep, pythonInstallDevDependencies,
                 ignoreSourceFiles, whiteSourceConfiguration,
                 gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, gradleIgnoreSourceFiles, gradleRunPreStep, gradleIgnoredScopes,
                 paketResolveDependencies, paketIgnoredScopes, paketRunPreStep, paketPath, paketIgnoreSourceFiles,

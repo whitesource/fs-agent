@@ -33,12 +33,11 @@ public class PythonDependencyResolverTest {
     public void shouldFindDependecies() {
         File setupPyFile = TestHelper.getFileFromResources("resolver/python/sample/test.py");
 
-        PythonDependencyResolver pythonDependencyResolver = new PythonDependencyResolver("python.exe", "pip3.exe", false, false, false, new String[]{Constants.PYTHON_REQUIREMENTS}, true);
+        PythonDependencyResolver pythonDependencyResolver = new PythonDependencyResolver("python.exe", "pip3.exe", false, false, false, new String[]{Constants.PYTHON_REQUIREMENTS}, true, true, true, true);
         ResolutionResult projectsDetails = pythonDependencyResolver.resolveDependencies(setupPyFile.getParentFile().getParent(), setupPyFile.getParent(), Stream.of(setupPyFile.toString()).collect(Collectors.toSet()));
 
         Assert.assertNotNull(projectsDetails);
         Assert.assertTrue(projectsDetails.getResolvedProjects().size() == 1);
-
         Collection<DependencyInfo> dependecies = projectsDetails.getResolvedProjects().keySet().stream().findFirst().get().getDependencies();
         Assert.assertEquals(dependecies.stream().filter(x -> x.getDependencyType() != null && x.getDependencyType().equals(DependencyType.PYTHON)).count(), 6);
     }
