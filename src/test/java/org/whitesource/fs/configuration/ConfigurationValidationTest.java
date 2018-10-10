@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
+import org.whitesource.fs.CommandLineArgs;
 import org.whitesource.fs.FSAConfiguration;
 
 import java.io.*;
@@ -18,7 +19,7 @@ public class ConfigurationValidationTest {
         File tmpPath = TestHelper.getTempFileWithReplace("#projectPerFolder=true", "projectPerFolder=true");
 
         // act
-        Properties configProperties = FSAConfiguration.readWithError(tmpPath.toString()).getKey();
+        Properties configProperties = FSAConfiguration.readWithError(tmpPath.toString(), new CommandLineArgs()).getKey();
 
         // assert
         Assert.assertNotNull(configProperties);

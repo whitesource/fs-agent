@@ -21,6 +21,8 @@ public class GradleCli extends Cli {
     private final String GRADLE_COMMAND_W_WINDOWS = "gradlew";
     private final String GRADLE_COMMAND_W_LINUX = "./gradlew";
 
+    private String topLevelFolderGradlew = null;
+
     private String preferredEnvironment;
 
     public GradleCli(String preferredEnvironment) {
@@ -45,7 +47,7 @@ public class GradleCli extends Cli {
                 return lines;
             }
         } catch (IOException e) {
-            if (StringUtils.isNotBlank(params[0]) && GRADLE_COMMAND.equals(params[0])) {
+            if (StringUtils.isNotBlank(params[0]) && params[0].contains(GRADLE_COMMAND)) {
                 setGradleCommandByEnv(params);
                 return runGradleCmd(rootDirectory, params);
             } else {
@@ -76,11 +78,19 @@ public class GradleCli extends Cli {
         String gradleCommand;
         // WSE-753 - use the default gradle environment, set from the config file
         if (preferredEnvironment.equals(Constants.GRADLE_WRAPPER)) {
-            gradleCommand = DependencyCollector.isWindows() ? GRADLE_COMMAND_W_WINDOWS : GRADLE_COMMAND_W_LINUX;
+            if (this.topLevelFolderGradlew != null) {
+                gradleCommand = this.topLevelFolderGradlew + Constants.FORWARD_SLASH + GRADLE_COMMAND_W_WINDOWS;
+            } else {
+                gradleCommand = DependencyCollector.isWindows() ? GRADLE_COMMAND_W_WINDOWS : GRADLE_COMMAND_W_LINUX;
+            }
         } else {
             gradleCommand = GRADLE_COMMAND;
         }
         return super.getCommandParams(gradleCommand, command.getCommand());
+    }
+
+    public void setTopLevelFolderGradlew(String topLevelFolderGradlew) {
+        this.topLevelFolderGradlew = topLevelFolderGradlew;
     }
 }
 

@@ -29,6 +29,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.whitesource.agent.Constants.EMPTY_STRING;
+
 public class GoDependencyResolver extends AbstractDependencyResolver {
 
     public static final String GOPM_GEN_CMD = "gen";
@@ -155,7 +157,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     return new String[]{Constants.PATTERN + GOPM_FILE};
             }
         }
-        return new String[]{Constants.EMPTY_STRING};
+        return new String[]{EMPTY_STRING};
     }
 
     @Override
@@ -243,7 +245,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private void collectDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'dep'");
         File goPkgLock = new File(rootDirectory + fileSeparator + GOPKG_LOCK);
-        String error = Constants.EMPTY_STRING;
+        String error = EMPTY_STRING;
         if (goPkgLock.isFile()){
             if (runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.DEP.getType(), GO_ENSURE)) == false) {
                 logger.warn("Can't run 'dep ensure' command, output might be outdated.  Run the 'dep ensure' command manually.");
@@ -349,7 +351,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private void collectGoPMDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'GoPM'");
         File goPMFile = new File(rootDirectory + fileSeparator + GOPM_FILE);
-        String error = Constants.EMPTY_STRING;
+        String error = EMPTY_STRING;
         if (goPMFile.isFile()){
             dependencyInfos.addAll(parseGoPm(goPMFile));
         } else if (collectDependenciesAtRuntime) {
@@ -407,8 +409,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             } else if (line[1].contains(GOPM_BRANCH)) { //branch:master
                                 //toDo add branch
                                 //dependencyInfo.(line[1].substring(GOPM_BRANCH.length()));
-                                logger.warn("Using branch to define dependency is not supported currently, library {} will not be recognized by WSS", line[0]);
+                                logger.warn("Using branch to define dependency is not supported, library {} will not be recognized by WSS", line[0]);
                             }
+                        }
+                        if (line.length <= 1 || line[1].equals(EMPTY_STRING)) {
+                            logger.warn("Using dependency without tag/commit is not supported, library {}, will not be recognized by WSS", line[0]);
                         }
                         dependencyInfo.setDependencyType(DependencyType.GO);
                         dependencyInfo.setSystemPath(goPmFile.getPath());
@@ -497,7 +502,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     }
 
     private String getGroupId(String name){
-        String groupId =  Constants.EMPTY_STRING;
+        String groupId =  EMPTY_STRING;
         if (name.contains(Constants.FORWARD_SLASH)) {
             String[] split = name.split( Constants.FORWARD_SLASH);
             groupId = split[1];
@@ -714,12 +719,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     // WSE-823 - goGradle.lock file may contain quotation marks, apostrophes (probably - didn't meet any such example yet) or none
                     if (currLine.contains(NAME + Constants.COLON + Constants.WHITESPACE)) {
                         name = currLine.substring(currLine.indexOf(Constants.COLON) + 1).trim();
-                        name = name.replace(Constants.QUOTATION_MARK, Constants.EMPTY_STRING);
-                        name = name.replace(Constants.APOSTROPHE, Constants.EMPTY_STRING);
+                        name = name.replace(Constants.QUOTATION_MARK, EMPTY_STRING);
+                        name = name.replace(Constants.APOSTROPHE, EMPTY_STRING);
                     } else if (currLine.contains(COMMIT)) {
                         commit = currLine.substring(currLine.indexOf(Constants.COLON) + 1).trim();
-                        commit = commit.replace(Constants.QUOTATION_MARK, Constants.EMPTY_STRING);
-                        commit = commit.replace(Constants.APOSTROPHE, Constants.EMPTY_STRING);
+                        commit = commit.replace(Constants.QUOTATION_MARK, EMPTY_STRING);
+                        commit = commit.replace(Constants.APOSTROPHE, EMPTY_STRING);
                     }
                 }
                 if (name != null && commit != null){
