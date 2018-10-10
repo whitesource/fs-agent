@@ -97,14 +97,10 @@ public class FileSystemAgent {
             Collection<AgentProjectInfo> tempProjects = new PackageManagerExtractor().createProjects();
             ProjectsDetails projectsDetails = new ProjectsDetails(tempProjects, StatusCode.SUCCESS, Constants.EMPTY_STRING);
             String projectName = config.getRequest().getProjectName();
-            addProjectDetailsToProjects(projectsDetails, projectName, projects);
+            addSingleProjectToProjects(projectsDetails, projectName, projects);
         } else if (config.isScanDockerImages()) {
             Collection<AgentProjectInfo> tempProjects = new DockerResolver(config).resolveDockerImages();
-            ProjectsDetails projectsDetails = new ProjectsDetails(tempProjects, StatusCode.SUCCESS, Constants.EMPTY_STRING);
-            for (AgentProjectInfo projectInfo : projectsDetails.getProjects()) {
-                String projectName = projectInfo.getCoordinates().getArtifactId();
-                addProjectDetailsToProjects(projectsDetails, projectName, projects);
-            }
+            return new ProjectsDetails(tempProjects, StatusCode.SUCCESS, Constants.EMPTY_STRING);
         } else {
             if (projectPerSubFolder) {
                 if (this.config.getSender().isEnableImpactAnalysis()) {
@@ -118,7 +114,7 @@ public class FileSystemAgent {
 
                         ProjectsDetails projectsDetails = getProjects(Collections.singletonList(directory), appPathsToDependencyDirs);
                         String projectName = new File(directory).getName();
-                        addProjectDetailsToProjects(projectsDetails, projectName, projects);
+                        addSingleProjectToProjects(projectsDetails, projectName, projects);
 
                         // return on the first project that fails
                         if (!projectsDetails.getStatusCode().equals(StatusCode.SUCCESS)) {
@@ -151,7 +147,7 @@ public class FileSystemAgent {
 
     /* --- Private methods --- */
 
-    private void addProjectDetailsToProjects(ProjectsDetails projectsDetails, String projectName, ProjectsDetails projects) {
+    private void addSingleProjectToProjects(ProjectsDetails projectsDetails, String projectName, ProjectsDetails projects) {
         if(projectsDetails == null || projects == null || projectName == null) {
             logger.debug("projectsDetails {} , projects {} , projectName {}", projectsDetails, projectName, projects);
             return;
@@ -160,7 +156,8 @@ public class FileSystemAgent {
             String projectVersion = config.getRequest().getProjectVersion();
             AgentProjectInfo projectInfo = projectsDetails.getProjects().stream().findFirst().get();
             projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
-            projects.getProjectToViaComponents().put(projectInfo, projectsDetails.getProjectToViaComponents().get(projectInfo));
+            LinkedList<ViaComponents> viaComponents = projectsDetails.getProjectToViaComponents().get(projectInfo);
+            projects.getProjectToViaComponents().put(projectInfo, viaComponents);
         }
     }
 
