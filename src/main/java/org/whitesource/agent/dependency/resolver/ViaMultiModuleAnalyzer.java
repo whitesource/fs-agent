@@ -19,35 +19,35 @@ public class ViaMultiModuleAnalyzer {
 
     /* --- Static Members --- */
 
-    private final Collection<String> buildExtensions = new HashSet<>();
-    private final Logger logger = LoggerFactory.getLogger(ViaMultiModuleAnalyzer.class);
+    private static final String APP_PATH = "appPath";
+    private static final String DEPENDENCY_MANAGER_PATH = "dependencyManagerPath";
+    private static final String PROJECT_NAME = "projectName";
 
     /* --- Members --- */
 
+    private final Logger logger = LoggerFactory.getLogger(ViaMultiModuleAnalyzer.class);
+    private final Collection<String> buildExtensions = new HashSet<>(Arrays.asList(".jar", ".war", ".zip"));
     private AbstractDependencyResolver dependencyResolver;
     private String suffixOfBuild;
     private String scanDirectory;
     private String contentFileAppPaths;
+    private Collection<String> bomFiles = new HashSet<>();
 
     /* --- Constructor --- */
 
     public ViaMultiModuleAnalyzer(String scanDirectory, AbstractDependencyResolver dependencyResolver, String suffixOfBuild, String contentFileAppPaths) {
-        this.buildExtensions.add(".jar");
-        this.buildExtensions.add(".war");
-        this.buildExtensions.add(".zip");
         this.dependencyResolver = dependencyResolver;
         this.suffixOfBuild = suffixOfBuild;
         this.scanDirectory = scanDirectory;
         this.contentFileAppPaths = contentFileAppPaths;
+        findBomFiles();
     }
 
-    private Collection<String> findBomFiles() {
-        Collection<String> bomFiles = new HashSet<>();
+    private void findBomFiles() {
         Collection<String> scanDirectoryCollection = new LinkedList<>();
         scanDirectoryCollection.add(scanDirectory);
         Collection<ResolvedFolder> topFolders = new FilesScanner().findTopFolders(scanDirectoryCollection, dependencyResolver.getBomPattern(), dependencyResolver.getExcludes());
-        topFolders.forEach(topFolder -> topFolder.getTopFoldersFound().forEach((folder, bomFilesFound) -> bomFiles.addAll(bomFilesFound)));
-        return bomFiles;
+        topFolders.forEach(topFolder -> topFolder.getTopFoldersFound().forEach((folder, bomFilesFound) -> this.bomFiles.addAll(bomFilesFound)));
     }
 
     public void writeFile() {
@@ -55,13 +55,10 @@ public class ViaMultiModuleAnalyzer {
             File outputFile = new File(this.contentFileAppPaths);
             FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
             BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
-            bufferedWriter.write(this.scanDirectory);
+            bufferedWriter.write(DEPENDENCY_MANAGER_PATH + Constants.EQUALS + this.scanDirectory);
             bufferedWriter.write(System.lineSeparator());
-            // TODO CHANGE THE NAME OF THE PROJECT
-            bufferedWriter.write(this.scanDirectory);
-            bufferedWriter.write(System.lineSeparator());
-            Collection<String> bomFiles = findBomFiles();
-            bomFiles.forEach(bomFile -> {
+            int counter = 1;
+            for (String bomFile : bomFiles) {
                 File parentFileOfBom = new File(bomFile).getParentFile();
                 File buildFolder = new File(parentFileOfBom.getPath() + File.separator + this.suffixOfBuild);
                 if (buildFolder.exists() && buildFolder.isDirectory() && buildFolder.listFiles() != null) {
@@ -73,16 +70,24 @@ public class ViaMultiModuleAnalyzer {
                         }
                         return false;
                     }).collect(Collectors.toList());
-                    if (!filesWithBuildExtensions.isEmpty()) {
-                        File smallestFile = findSmallestFile(filesWithBuildExtensions);
-                        try {
-                            bufferedWriter.write(parentFileOfBom.getName() + Constants.COMMA + smallestFile.getAbsolutePath());
+                    try {
+                        if (filesWithBuildExtensions.size() >= 1) {
+                            bufferedWriter.write(PROJECT_NAME + counter + Constants.EQUALS + parentFileOfBom.getAbsolutePath());
                             bufferedWriter.write(System.lineSeparator());
-                        } catch (IOException e) {
-                            logger.warn("Failed to write to file: {}", this.contentFileAppPaths);
+                            String appPathProperty = APP_PATH + counter + Constants.EQUALS;
+                            if (filesWithBuildExtensions.size() == 1) {
+                                File appPath = filesWithBuildExtensions.stream().findFirst().get();
+                                appPathProperty += appPath.getAbsolutePath();
+                            }
+                            bufferedWriter.write(appPathProperty);
+                            bufferedWriter.write(System.lineSeparator());
+                            counter++;
                         }
+                    } catch (IOException e) {
+                        logger.warn("Failed to write to file: {}", this.contentFileAppPaths);
                     }
-                }});
+                }
+            }
             bufferedWriter.flush();
             bufferedWriter.close();
         } catch (IOException e) {
@@ -90,15 +95,7 @@ public class ViaMultiModuleAnalyzer {
         }
     }
 
-    private File findSmallestFile(Collection<File> files) {
-        File smallestFile = null;
-        long smallestSize = Long.MAX_VALUE;
-        for (File file : files) {
-            if (file.length() < smallestSize) {
-                smallestSize = file.length();
-                smallestFile = file;
-            }
-        }
-        return smallestFile;
+    public Collection<String> getBomFiles() {
+        return this.bomFiles;
     }
 }
