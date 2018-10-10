@@ -731,6 +731,7 @@ public class ResolverConfiguration {
                 ", python.IgnoreSourceFiles=" + pythonIgnoreSourceFiles + '\n' +
                 ", python.ignorePipEnvInstallErrors=" + ignorePipEnvInstallErrors + '\n' +
                 ", python.runPipenvPreStep=" + runPipenvPreStep + '\n' +
+                ", python.pipenvDevDependencies=" + pipenvInstallDevDependencies + '\n' +
                 ", gradleResolveDependencies=" + gradleResolveDependencies +
                 ", gradleRunAssembleCommand=" + gradleRunAssembleCommand +
                 ", gradle.aggregateModules=" + gradleAggregateModules + '\n' +
