@@ -1,10 +1,10 @@
 package org.whitesource.agent.dependency.resolver.python;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -13,29 +13,31 @@ import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.FilesUtils;
+import org.whitesource.agent.utils.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * @author raz.nitzan
  */
 public class PythonDependencyCollector extends DependencyCollector {
-
     /* -- Members -- */
 
     private boolean installVirtualEnv;
     private boolean resolveHierarchyTree;
     private boolean ignorePipInstallErrors;
+    private boolean ignorePipEnvInstallErrors;
+    private boolean runPipEnvPreStep;
+    private boolean pipenvInstallDevDependencies;
     private String requirementsTxtOrSetupPyPath;
     private String pythonPath;
     private String pipPath;
@@ -45,6 +47,7 @@ public class PythonDependencyCollector extends DependencyCollector {
     private AtomicInteger counterFolders = new AtomicInteger(0);
     private DependenciesFileType dependencyFileType;
     private String tempDirDirectPackages;
+
 
     private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver.class);
 
@@ -79,9 +82,14 @@ public class PythonDependencyCollector extends DependencyCollector {
     private static final String BIN_BASH = "#!/bin/bash";
     private static final String ARROW = ">";
     private static final String NO_DEPS = "--no-deps";
-    private static final String[] DEFAULT_PACKAGES_IN_PIPDEPTREE = new String[] {"pipdeptree", "setuptools", "wheel"};
+    private static final String[] DEFAULT_PACKAGES_IN_PIPDEPTREE = new String[] {PIPDEPTREE, "setuptools", "wheel"};
     private static final String APOSTROPHE = "'";
-
+    private static final String PIPENV = "pipenv";
+    private static final String GRAPH = "graph";
+    private static final String RUN = "run";
+    private static final String DEV = "--dev";
+    private static final String LOCK = "lock";
+    public static final  String RM_PARAMETER = "--rm";
     /* --- Constructors --- */
 
     public PythonDependencyCollector(String pythonPath, String pipPath, boolean installVirtualEnv, boolean resolveHierarchyTree, boolean ignorePipInstallErrors,
@@ -104,10 +112,34 @@ public class PythonDependencyCollector extends DependencyCollector {
         this.ignorePipInstallErrors = ignorePipInstallErrors;
     }
 
+    public PythonDependencyCollector(boolean ignorePipEnvInstallErrors, boolean runPipEnvPreStep, String tempDirPackages, String pythonPath, String pipPath, boolean pipenvInstallDevDependencies) {
+        super();
+        this.pythonPath = pythonPath;
+        this.pipPath = pipPath;
+        this.ignorePipEnvInstallErrors = ignorePipEnvInstallErrors;
+        this.dependencyFileType = DependenciesFileType.PIPFILE;
+        this.tempDirPackages = tempDirPackages;
+        this.runPipEnvPreStep = runPipEnvPreStep;
+        this.pipenvInstallDevDependencies = pipenvInstallDevDependencies;
+    }
+
     @Override
     public Collection<AgentProjectInfo> collectDependencies(String topLevelFolder) {
         this.topLevelFolder = topLevelFolder;
+        List<DependencyInfo> dependencies;
+        if (this.dependencyFileType.equals(DependenciesFileType.PIPFILE)) {
+            logger.debug("Found pipfile, running pipenv algorithm");
+           dependencies = runPipEnvAlgorithm();
+        } else {
+            logger.debug("Found requiremrents or setup file, running pip algorithm");
+           dependencies = runPipAlgorithm();
+        }
+        return getSingleProjectList(dependencies);
+    }
+
+    private List<DependencyInfo> runPipAlgorithm() {
         List<DependencyInfo> dependencies = new LinkedList<>();
+        boolean failed = false;
         boolean virtualEnvInstalled = true;
         if (this.installVirtualEnv && this.resolveHierarchyTree) {
             try {
@@ -117,12 +149,11 @@ public class PythonDependencyCollector extends DependencyCollector {
                 virtualEnvInstalled = false;
             }
         }
-        // FSA will run 'pip download -r requirements.txt -d TEMP_FOLDER_PATH'
+        //FSA will run 'pip download -r requirements.txt -d TEMP_FOLDER_PATH'
         if (virtualEnvInstalled) {
             try {
                 logger.debug("Collecting python dependencies. It might take a few minutes.");
                 boolean failedGetTree;
-                boolean failed = false;
                 if (this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
                     failed = processCommand(new String[]{pipPath, DOWNLOAD, R_PARAMETER, this.requirementsTxtOrSetupPyPath, D_PARAMETER, tempDirPackages}, true);
                 } else if (this.dependencyFileType == DependenciesFileType.SETUP_PY) {
@@ -135,7 +166,7 @@ public class PythonDependencyCollector extends DependencyCollector {
                     } else if (this.dependencyFileType == DependenciesFileType.SETUP_PY) {
                         error = "Fail to run 'pip install " + this.requirementsTxtOrSetupPyPath + APOSTROPHE;
                     }
-                    logger.warn(error + ". To see the full error, re-run the plugin with this parameter in the config file: log.level=debug");
+                    logger.warn("{}. To see the full error, re-run the plugin with this parameter in the config file: log.level=debug", error);
                 } else if (!failed && !this.resolveHierarchyTree) {
                     dependencies = collectDependencies(new File(tempDirPackages), this.requirementsTxtOrSetupPyPath);
                 } else if (!failed && this.resolveHierarchyTree) {
@@ -169,7 +200,88 @@ public class PythonDependencyCollector extends DependencyCollector {
         } else {
             logger.warn("Virutalenv package installation failed");
         }
-        return getSingleProjectList(dependencies);
+        return dependencies;
+    }
+
+    private List<DependencyInfo> runPipEnvAlgorithm() {
+        List<DependencyInfo> dependencies = new LinkedList<>();
+        boolean failed ;
+        Set<String> dependencyNamesVersions;
+        // if to run pipenv install
+        if (runPipEnvPreStep) {
+            // if to install dev dependencies or not
+            logger.debug("Running PipEnv PreStep");
+            if (pipenvInstallDevDependencies) {
+                runPipEnvInstallCommand(new String[]{PIPENV, INSTALL, DEV});
+            } else {
+                runPipEnvInstallCommand(new String[]{PIPENV, INSTALL});
+            }
+        }
+        logger.info("Running dependency tree with 'pipenv graph'");
+        //create requirements.txt temp file in order to be able to download packages
+        String requirementsTempFile = tempDirPackages + Constants.BACK_SLASH + Constants.PYTHON_REQUIREMENTS;
+        List<String> lines;
+        lines = commandLineRunner(topLevelFolder, new String[]{PIPENV, GRAPH});
+        if (!CollectionUtils.isEmpty(lines)) {
+            logger.info("Parsing dependency tree");
+            dependencyNamesVersions = parsePipEnvGraph(lines);
+        } else {
+            // (pipfile lock -r , pipfile lock -r --dev) = pipenv graph
+            //pipenv graph picks from the virtual environment, pipfile lock picks dependencies from the pipfile.lock
+            logger.warn("pipenv graph failed, getting dependencies directly from pipfile");
+            lines = commandLineRunner(topLevelFolder, new String[]{PIPENV, LOCK, R_PARAMETER, DEV});
+            List<String> lines1 = commandLineRunner(topLevelFolder, new String[]{PIPENV, LOCK, R_PARAMETER});
+            lines.addAll(lines1);
+            dependencyNamesVersions = parsePipFile(lines);
+        }
+
+        if (dependencyNamesVersions != null) {
+            try (FileWriter fw = new FileWriter(new File(requirementsTempFile))) {
+                for (String dependencyNamesVersion : dependencyNamesVersions) {
+                    fw.write(dependencyNamesVersion + "\n");
+                }
+            } catch (IOException e) {
+                logger.warn("Cannot create a file to write in temp folder {}", e.getMessage());
+                logger.debug("Cannot create a file to write in temp folder, Error: {}", e.getStackTrace());
+            }
+        } else {
+            logger.warn("pipenv graph anad pipfile.lock failed please try to turn python.runPipenvPreStep to run pipenv install");
+        }
+        //create a requirements.txt file from parsing pipenv graph
+        try {
+            logger.info("downloading packages");
+            failed = processCommand(new String[]{PIPENV, RUN, pipPath, DOWNLOAD, R_PARAMETER, requirementsTempFile, D_PARAMETER, tempDirPackages}, true);
+            if (failed && ignorePipEnvInstallErrors) {
+                logger.info("Failed to download all dependencies at once, Try to install dependencies one by one. It might take a few minutes.");
+                for (String dependencyNamesVersion : dependencyNamesVersions) {
+                    failed = processCommand(new String[]{PIPENV, RUN, pipPath, DOWNLOAD, dependencyNamesVersion, D_PARAMETER, tempDirPackages}, true);
+                    if (failed) {
+                        logger.warn("pipenv run pip download {} failed to execute", dependencyNamesVersion);
+                    }
+                }
+            }
+            dependencies = collectDependencies(new File(tempDirPackages), topLevelFolder);
+        } catch (IOException e) {
+            logger.warn("downloading dependencies failed: {}", e.getMessage());
+            logger.debug("downloading dependencies failed: {}", e.getStackTrace());
+        }
+        return dependencies;
+    }
+
+    private Set<String> parsePipEnvGraph(List<String> lines) {
+        Set<String> dependencyLines = new HashSet<>();
+        for (String line : lines) {
+            logger.debug(line);
+            if(line.contains(Constants.DOUBLE_EQUALS)) {
+                dependencyLines.add(line);
+            } else {
+                //- execnet [required: >=1.1, installed: 1.5.0] -> convert to execnet==1.5.0
+                String artifactId = line.substring(line.indexOf(Constants.DASH) + 2, line.indexOf(Constants.OPEN_SQUARE_BRACKET) - 1);
+                String version = line.substring(line.lastIndexOf(Constants.WHITESPACE) + 1, line.indexOf(Constants.CLOSE_SQUARE_BRACKET));
+                dependencyLines.add(artifactId + Constants.DOUBLE_EQUALS + version);
+            }
+        }
+        return dependencyLines;
     }
 
     private void fixDependencies(Collection<DependencyInfo> dependencies) {
@@ -195,7 +307,7 @@ public class PythonDependencyCollector extends DependencyCollector {
         File[] directDependenciesFiles = directDependenciesFolder.listFiles();
         if (directDependenciesFiles.length > dependencies.size()) {
             int missingDirectDependencies = directDependenciesFiles.length - dependencies.size();
-            logger.debug("There are " + missingDirectDependencies + "missing direct dependencies");
+            logger.debug("There are {} missing direct dependencies", missingDirectDependencies);
             int i = 0;
             while (missingDirectDependencies > 0) {
                 boolean found = false;
@@ -379,7 +491,7 @@ public class PythonDependencyCollector extends DependencyCollector {
         try {
             return ChecksumUtils.calculateSHA1(file);
         } catch (IOException e) {
-            logger.warn("Failed getting " + file + ". File will not be send to WhiteSource server.");
+            logger.warn("Failed getting. {} File will not be send to WhiteSource server.", file);
             return EMPTY_STRING;
         }
     }
@@ -409,11 +521,42 @@ public class PythonDependencyCollector extends DependencyCollector {
         return commandLineProcess.isErrorInProcess();
     }
 
+    private List<String> commandLineRunner(String rootDirectory, String[] params) {
+            try {
+                // run pipenv graph
+                CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, params);
+                List<String> lines = commandLineProcess.executeProcess();
+                if (commandLineProcess.isErrorInProcess()) {
+                    logger.warn("error in process after running command {} on {}", params, rootDirectory);
+                } else {
+                    return lines;
+                }
+            } catch (IOException e) {
+                    logger.warn("Error getting results after running command {} on {}, {}", params, rootDirectory, e.getMessage());
+                    logger.debug("Error: {}", e.getStackTrace());
+            }
+            return Collections.emptyList();
+    }
+
+    private Set<String> parsePipFile(List<String> lines) {
+        Set<String> DependencyLines = new HashSet<>();
+        for (String line : lines) {
+            if (!line.contains(Constants.WHITESPACE)) {
+                DependencyLines.add(line);
+            } else {
+                if (line.contains(Constants.DOUBLE_EQUALS)) {
+                    String artifactAndVersion = line.substring(0, line.indexOf(Constants.SEMI_COLON));
+                    DependencyLines.add(artifactAndVersion);
+                }
+            }
+        }
+        return DependencyLines;
+    }
+
     private void downloadLineByLine(String requirementsTxtPath) {
-        try {
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(new File(requirementsTxtPath)))){
             ExecutorService executorService = Executors.newWorkStealingPool(NUM_THREADS);
             Collection<DownloadDependency> threadsCollection = new LinkedList<>();
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(new File(requirementsTxtPath)));
             String line;
             while ((line = bufferedReader.readLine()) != null) {
                 if (StringUtils.isNotEmpty(line)) {
@@ -426,9 +569,6 @@ public class PythonDependencyCollector extends DependencyCollector {
                         threadsCollection.add(new DownloadDependency(packageNameToDownload));
                     }
                 }
-            }
-            if (bufferedReader != null) {
-                bufferedReader.close();
             }
             runThreadCollection(executorService, threadsCollection);
         } catch (IOException e) {
@@ -464,10 +604,9 @@ public class PythonDependencyCollector extends DependencyCollector {
         String scriptPath = null;
         if (path != null) {
             scriptPath = path + SCRIPT_SH;
-            try {
-                File file = new File(scriptPath);
-                FileOutputStream fos = new FileOutputStream(file);
-                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fos));
+            File file = new File(scriptPath);
+            try (   FileOutputStream fos = new FileOutputStream(file);
+                    BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fos))) {
                 bufferedWriter.write(BIN_BASH);
                 bufferedWriter.newLine();
                 bufferedWriter.write(SOURCE + Constants.WHITESPACE + this.tempDirVirtualenv + BIN_ACTIVATE);
@@ -483,8 +622,6 @@ public class PythonDependencyCollector extends DependencyCollector {
                 bufferedWriter.write(pipPath + Constants.WHITESPACE + INSTALL + Constants.WHITESPACE + PIPDEPTREE);
                 bufferedWriter.newLine();
                 bufferedWriter.write(PIPDEPTREE + Constants.WHITESPACE + JSON_TREE + Constants.WHITESPACE + ARROW + Constants.WHITESPACE + this.tempDirVirtualenv + HIERARCHY_TREE_TXT);
-                bufferedWriter.close();
-                fos.close();
                 file.setExecutable(true);
             } catch (IOException e) {
                 return null;
@@ -492,6 +629,7 @@ public class PythonDependencyCollector extends DependencyCollector {
         }
         return scriptPath;
     }
+
 
     /* --- Nested classes --- */
 
@@ -515,4 +653,48 @@ public class PythonDependencyCollector extends DependencyCollector {
             return null;
         }
     }
+    private void runPipEnvInstallCommand(String[] args){
+
+        try {
+            ProcessBuilder builder = new ProcessBuilder();
+            builder.command(args);
+            builder.directory(new File(this.topLevelFolder));
+            Process process = builder.start();
+            StreamGobbler streamGobbler = new StreamGobbler(process.getInputStream(), System.out::println);
+            Executors.newSingleThreadExecutor().submit(streamGobbler);
+            //for debug mode, to check errors
+            BufferedReader inputStreamPipEnvInstall = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader errorStreamPipEnvInstall = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String cmdOutput;
+            while ((cmdOutput = inputStreamPipEnvInstall.readLine()) != null) {
+                logger.debug(cmdOutput);
+            }
+            while ((cmdOutput = errorStreamPipEnvInstall.readLine()) != null) {
+                logger.debug(cmdOutput);
+            }
+            int exitCode = 0;
+            exitCode = process.waitFor();
+            logger.debug("Exit Code: {}", exitCode);
+        } catch (IOException e){
+            logger.warn("IOException: {}", e.getMessage());
+            logger.debug("IOException: {}", e.getStackTrace());
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted Exception: {}", e.getMessage());
+            logger.debug("Interrupted Exception: {}", e.getStackTrace());
+        }
+    }
+    private static class StreamGobbler implements Runnable {
+        private InputStream inputStream;
+        private Consumer<String> consumer;
+
+        public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
+            this.inputStream = inputStream;
+            this.consumer = consumer;
+        }
+        @Override
+        public void run() {
+            new BufferedReader(new InputStreamReader(inputStream)).lines().forEach(consumer);
+        }
+    }
 }
+

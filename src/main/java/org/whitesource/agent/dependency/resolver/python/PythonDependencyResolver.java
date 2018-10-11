@@ -24,22 +24,29 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.FilesUtils;
 
 import java.io.File;
+import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
 
 public class PythonDependencyResolver extends AbstractDependencyResolver {
+
+
 
     /* -- Members -- */
 
     private final String pythonPath;
     private final String pipPath;
     private final boolean ignoreSourceFiles;
+    private final boolean ignorePipEnvInstallErrors;
+    private final boolean runPipenvPreStep;
+    private final boolean pipenvInstallDevDependencies;
     private Collection<String> excludes = new ArrayList<>();
     private boolean ignorePipInstallErrors;
     private boolean installVirutalenv;
     private boolean resolveHierarchyTree;
     private String[] pythonRequirementsFileIncludes;
-
+    public String PYTHON_REGEX = "\\\\";
     /* --- Static members --- */
 
     //private static final String PYTHON_BOM = "requirements.txt";
@@ -50,7 +57,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     /* --- Constructors --- */
 
     public PythonDependencyResolver(String pythonPath, String pipPath, boolean ignorePipInstallErrors,
-                                    boolean installVirtualEnv, boolean resolveHierarchyTree, String[] pythonRequirementsFileIncludes,boolean ignoreSourceFiles) {
+                                    boolean installVirtualEnv, boolean resolveHierarchyTree, String[] pythonRequirementsFileIncludes, boolean ignoreSourceFiles, boolean ignorePipEnvInstallErrors, boolean runPipenvPreStep, boolean pipenvInstallDevDependencies) {
         super();
         this.pythonPath = pythonPath;
         this.pipPath = pipPath;
@@ -59,6 +66,9 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         this.resolveHierarchyTree = resolveHierarchyTree;
         this.pythonRequirementsFileIncludes = pythonRequirementsFileIncludes;
         this.ignoreSourceFiles =ignoreSourceFiles;
+        this.ignorePipEnvInstallErrors = ignorePipEnvInstallErrors; 
+        this.runPipenvPreStep = runPipenvPreStep;
+        this.pipenvInstallDevDependencies = pipenvInstallDevDependencies;
     }
 
     @Override
@@ -67,19 +77,30 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         if (ignoreSourceFiles) {
             this.excludes = Arrays.asList(Constants.PATTERN + PY_EXT);
         }
+        FilesUtils filesUtils = new FilesUtils();
         Collection<DependencyInfo> resultDependencies = new LinkedList<>();
+        Collection<DependencyInfo> dependencyInfos = new LinkedList<>();
+        String pipFilePath = projectFolder + Constants.BACK_SLASH + Constants.PIPFILE;
+        //check if Pipfile exists, then use pipenv, else use pip
+        if (Paths.get(pipFilePath).toFile().exists()) {
+            resultDependencies = runPipEnvAlgorithm(filesUtils, pipFilePath);
+        } else {
+            dependencyInfos = runPipAlgorithm(filesUtils, dependencyInfos, dependenciesFiles);
+            resultDependencies.addAll(dependencyInfos);
+        }
+        return new ResolutionResult(resultDependencies, getExcludes(), getDependencyType(), topLevelFolder);
+    }
+
+    private Collection<DependencyInfo> runPipAlgorithm(FilesUtils filesUtils, Collection<DependencyInfo> dependencies, Set<String> dependenciesFiles) {
         for (String dependencyFile : dependenciesFiles) {
-            FilesUtils filesUtils = new FilesUtils();
             String tempDirVirtualEnv = filesUtils.createTmpFolder(true, WHITESOURCE_PYTHON_TEMP_FOLDER);
             String tempDirPackages = filesUtils.createTmpFolder(false, WHITESOURCE_PYTHON_TEMP_FOLDER);
             String tempDirDirectPackages = filesUtils.createTmpFolder(false, WHITESOURCE_PYTHON_TEMP_FOLDER + DIRECT);
-
-            Collection<DependencyInfo> dependencies = new LinkedList<>();
             PythonDependencyCollector pythonDependencyCollector;
             if (tempDirVirtualEnv != null && tempDirPackages != null) {
                 pythonDependencyCollector = new PythonDependencyCollector(this.pythonPath, this.pipPath, this.installVirutalenv, this.resolveHierarchyTree, this.ignorePipInstallErrors,
                         dependencyFile, tempDirPackages, tempDirVirtualEnv, tempDirDirectPackages);
-                String currentTopLevelFolder = dependencyFile.substring(0, dependencyFile.replaceAll("\\\\",
+                String currentTopLevelFolder = dependencyFile.substring(0, dependencyFile.replaceAll(PYTHON_REGEX,
                         Constants.FORWARD_SLASH).lastIndexOf(Constants.FORWARD_SLASH));
                 Collection<AgentProjectInfo> projects = pythonDependencyCollector.collectDependencies(currentTopLevelFolder);
                 dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
@@ -88,9 +109,27 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
                 FilesUtils.deleteDirectory(new File(tempDirPackages));
                 FilesUtils.deleteDirectory(new File(tempDirDirectPackages));
             }
-            resultDependencies.addAll(dependencies);
         }
-        return new ResolutionResult(resultDependencies, getExcludes(), getDependencyType(), topLevelFolder);
+        return dependencies;
+    }
+
+    private Collection<DependencyInfo> runPipEnvAlgorithm(FilesUtils filesUtils, String pipfilePath) {
+        String tempDirPackages = null;
+        Collection<DependencyInfo> dependencies = new LinkedList<>();
+        try {
+            tempDirPackages = filesUtils.createTmpFolder(true, WHITESOURCE_PYTHON_TEMP_FOLDER);
+            String dependencyFile = pipfilePath;
+            PythonDependencyCollector pythonDependencyCollector;
+            pythonDependencyCollector = new PythonDependencyCollector(ignorePipEnvInstallErrors, runPipenvPreStep, tempDirPackages, pythonPath, pipPath, pipenvInstallDevDependencies);
+            String currentTopLevelFolder = dependencyFile.substring(0, dependencyFile.replaceAll(PYTHON_REGEX, Constants.FORWARD_SLASH).lastIndexOf(Constants.FORWARD_SLASH));
+            Collection<AgentProjectInfo> projects = pythonDependencyCollector.collectDependencies(currentTopLevelFolder);
+            dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
+        } finally {
+            if (tempDirPackages != null) {
+                FilesUtils.deleteDirectory(new File(tempDirPackages));
+            }
+        }
+        return dependencies;
     }
 
     @Override

@@ -180,6 +180,10 @@ public final class ConfigPropertyKeys {
 
     public static final String HTML_RESOLVE_DEPENDENCIES    = "html.resolveDependencies";
 
+    public static final String COCOAPODS_RESOLVE_DEPENDENCIES    = "cocoapods.resolveDependencies";
+    public static final String COCOAPODS_RUN_PRE_STEP             = "cocoapods.runPreStep";
+    public static final String COCOAPODS_IGNORE_SOURCE_FILES      = "cocoapods.ignoreSourceFiles";
+
     public static final String DEPENDENCIES_ONLY            = "dependenciesOnly";
     public static final String WHITESOURCE_CONFIGURATION    = "whitesourceConfiguration";
 
@@ -199,6 +203,7 @@ public final class ConfigPropertyKeys {
     public static final String DOCKER_PULL_DIGEST = "docker.pull.digest";
     public static final String DOCKER_PULL_MAX_IMAGES = "docker.pull.maxImages";
     public static final String DOCKER_DELETE_FORCE = "docker.delete.force";
+    public static final String DOCKER_LOGIN_SUDO = "docker.login.sudo";
     // TODO: Not implemented yet
     public static final String DOCKER_SCAN_MAX_IMAGES = "docker.scan.maxImages";
     // TODO: Not implemented yet
@@ -216,4 +221,7 @@ public final class ConfigPropertyKeys {
     public static final String DOCKER_AWS_SECRETKEY = "docker.aws.secretKey";
 
 
+    public static final String PYTHON_RUN_PIPENV_PRE_STEP = "python.runPipenvPreStep";
+    public static final String PYTHON_IGNORE_PIPENV_INSTALL_ERRORS = "python.IgnorePipenvInstallErrors";
+    public static final String PYTHON_PIPENV_DEV_DEPENDENCIES = "python.pipenvDevDependencies";
 }

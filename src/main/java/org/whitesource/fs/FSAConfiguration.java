@@ -17,7 +17,9 @@ package org.whitesource.fs;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.bcel.classfile.ConstantString;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.ConfigPropertyKeys;
@@ -211,6 +213,7 @@ public class FSAConfiguration {
                         requirements += requirementFileIncludes + Constants.WHITESPACE;
                     }
                 }
+                requirements += Constants.PIPFILE + Constants.WHITESPACE;
                 config.setProperty(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, requirements);
             }
             commandLineArgsOverride(commandLineArgs);
@@ -437,11 +440,15 @@ public class FSAConfiguration {
         boolean pythonResolveSetupPyFiles = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RESOLVE_SETUP_PY_FILES, false);
         String[] bomPatternForPython;
         if (pythonResolveSetupPyFiles) {
-            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.SETUP_PY};
+            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.SETUP_PY, Constants.PATTERN + Constants.PIPFILE};
         } else {
-            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS};
+            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.PIPFILE};
         }
-        String[] pythonRequirementsFileIncludes = config.getListProperty(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, bomPatternForPython);
+
+        String[] pythonRequirementsFileIncludes = config.getListProperty(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES + Constants.PATTERN + Constants.PIPFILE, bomPatternForPython);
+        boolean pythonRunPipenvPreStep = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RUN_PIPENV_PRE_STEP, false);
+        boolean pythonIgnorePipenvInstallErrors = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_PIPENV_INSTALL_ERRORS, false);
+        boolean pythonInstallDevDependencies =  config.getBooleanProperty(ConfigPropertyKeys.PYTHON_PIPENV_DEV_DEPENDENCIES, false);
 
         boolean gradleResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
         boolean gradleRunAssembleCommand = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
@@ -480,6 +487,9 @@ public class FSAConfiguration {
 
         boolean htmlResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
 
+        boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, true);
+        boolean cocoapodsRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RUN_PRE_STEP, false);
+
         boolean npmIgnoreSourceFiles;
         boolean bowerIgnoreSourceFiles;
         boolean nugetIgnoreSourceFiles;
@@ -490,6 +500,7 @@ public class FSAConfiguration {
         boolean sbtIgnoreSourceFiles;
         boolean goIgnoreSourceFiles;
         boolean rubyIgnoreSourceFiles;
+        boolean cocoapodsIgnoreSourceFiles;
         boolean ignoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.IGNORE_SOURCE_FILES, ConfigPropertyKeys.DEPENDENCIES_ONLY, false);
 
         if (ignoreSourceFiles == true) {
@@ -503,6 +514,7 @@ public class FSAConfiguration {
             goIgnoreSourceFiles = true;
             rubyIgnoreSourceFiles = true;
             pythonIgnoreSourceFiles = true;
+            cocoapodsIgnoreSourceFiles = true;
         } else {
             npmIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_SOURCE_FILES, ConfigPropertyKeys.NPM_IGNORE_JAVA_SCRIPT_FILES, true);
             bowerIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.BOWER_IGNORE_SOURCE_FILES, false);
@@ -514,6 +526,7 @@ public class FSAConfiguration {
             goIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.GO_IGNORE_SOURCE_FILES, false);
             pythonIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_SOURCE_FILES, true);
             rubyIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.RUBY_IGNORE_SOURCE_FILES, true);
+            cocoapodsIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_IGNORE_SOURCE_FILES, true);
         }
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreSourceFiles,
@@ -523,6 +536,7 @@ public class FSAConfiguration {
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles, mavenRunPreStep,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles, pythonIgnoreSourceFiles,
+                pythonIgnorePipenvInstallErrors, pythonRunPipenvPreStep, pythonInstallDevDependencies,
                 ignoreSourceFiles, whiteSourceConfiguration,
                 gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, gradleIgnoreSourceFiles, gradleRunPreStep, gradleIgnoredScopes,
                 paketResolveDependencies, paketIgnoredScopes, paketRunPreStep, paketPath, paketIgnoreSourceFiles,
@@ -530,7 +544,7 @@ public class FSAConfiguration {
                 rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles,
                 phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies,
                 sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, sbtIgnoreSourceFiles,
-                htmlResolveDependencies);
+                htmlResolveDependencies, cocoapodsResolveDependencies, cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles);
     }
 
     private RequestConfiguration getRequest(FSAConfigProperties config, String apiToken, String userKey, String projectName, String projectToken, String scanComment) {
@@ -664,11 +678,12 @@ public class FSAConfiguration {
 
     private RemoteDockerConfiguration getRemoteDockerConfiguration(FSAConfigProperties config) {
         String[] empty = new String[0];
-        String[] dockerImages = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, null);
-        String[] dockerTags = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, null);
-        String[] dockerDigests = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, null);
+        String[] dockerImages   = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, null);
+        String[] dockerTags     = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, null);
+        String[] dockerDigests  = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, null);
         boolean forceDelete = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_DELETE_FORCE, false);
         boolean enablePulling = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_ENABLE, false);
+        boolean loginSudo = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_LOGIN_SUDO, true);
         List<String> dockerImagesList = null;
         if (dockerImages != null) {
             dockerImagesList = new LinkedList<>(Arrays.asList(dockerImages));
@@ -685,8 +700,8 @@ public class FSAConfiguration {
         int maxImagesScan = config.getIntProperty(ConfigPropertyKeys.DOCKER_SCAN_MAX_IMAGES, 0);
         int maxImagesPull = config.getIntProperty(ConfigPropertyKeys.DOCKER_PULL_MAX_IMAGES, 10);
         boolean pullForce = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_FORCE, false);
-        RemoteDockerConfiguration result = new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
-                dockerDigestsList, forceDelete, enablePulling, maxImagesScan, pullForce, maxImagesPull);
+        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
+                dockerDigestsList, forceDelete, enablePulling, maxImagesScan, pullForce, maxImagesPull, loginSudo);
 
         // Amazon configuration
         String[] dockerAmazonRegistryIds = config.getListProperty(ConfigPropertyKeys.DOCKER_AWS_REGISTRY_IDS, empty);

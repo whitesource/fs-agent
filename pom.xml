@@ -141,7 +141,6 @@
         </dependency>
 
         <!-- VIA test -->
-        <!-- VIA test -->
         <dependency>
             <groupId>org.whitesource.analysis</groupId>
             <artifactId>whitesource-analysis-via</artifactId>
