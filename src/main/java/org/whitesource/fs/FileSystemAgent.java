@@ -18,6 +18,9 @@ package org.whitesource.fs;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
+import org.whitesource.agent.dependency.resolver.ViaMultiModuleAnalyzer;
+import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
+import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
@@ -105,6 +108,22 @@ public class FileSystemAgent {
                 String projectName = projectInfo.getCoordinates().getArtifactId();
                 addProjectDetailsToProjects(projectsDetails, projectName, projects);
             }
+        } else if (config.isSetUpMuiltiModuleFile()) {
+            ViaMultiModuleAnalyzer viaMultiModuleAnalyzer = new ViaMultiModuleAnalyzer(config.getDependencyDirs().get(0),
+                    new MavenDependencyResolver(false, new String[]{Constants.NONE}, false,
+                            false, false), Constants.TARGET, config.getAnalyzeMultiModule());
+            if (viaMultiModuleAnalyzer.getBomFiles().isEmpty()) {
+                viaMultiModuleAnalyzer = new ViaMultiModuleAnalyzer(config.getDependencyDirs().get(0),
+                        new GradleDependencyResolver(false, false, false, Constants.EMPTY_STRING, new String[]{Constants.NONE}, false),
+                        Constants.BUILD, config.getAnalyzeMultiModule());
+            }
+            if (!viaMultiModuleAnalyzer.getBomFiles().isEmpty()) {
+                viaMultiModuleAnalyzer.writeFile();
+            } else {
+                logger.error("Multi-module analysis could not establish the appPath based on the specified path. Please review the specified d path.");
+                Main.exit(StatusCode.ERROR.getValue());
+            }
+
         } else {
             if (projectPerSubFolder) {
                 if (this.config.getSender().isEnableImpactAnalysis()) {
@@ -152,7 +171,7 @@ public class FileSystemAgent {
     /* --- Private methods --- */
 
     private void addProjectDetailsToProjects(ProjectsDetails projectsDetails, String projectName, ProjectsDetails projects) {
-        if(projectsDetails == null || projects == null || projectName == null) {
+        if (projectsDetails == null || projects == null || projectName == null) {
             logger.debug("projectsDetails {} , projects {} , projectName {}", projectsDetails, projectName, projects);
             return;
         }
@@ -216,8 +235,8 @@ public class FileSystemAgent {
 
         Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToAppPathAndLanguage;
         ViaLanguage viaLanguage = getIaLanguage(config.getRequest().getIaLanguage());
-        projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis(), viaLanguage)
-                    .createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnectors[0]);
+        projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent(), config.getSender().isEnableImpactAnalysis(), viaLanguage)
+                .createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnectors[0]);
         ProjectsDetails projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], Constants.EMPTY_STRING);
 
         // delete all temp scm files

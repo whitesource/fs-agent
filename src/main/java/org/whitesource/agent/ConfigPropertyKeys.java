@@ -196,6 +196,10 @@ public final class ConfigPropertyKeys {
 
     public static final String REQUIRE_KNOWN_SHA1 = "requireKnownSha1";
 
+    // Analysis multi module project for via
+    public static final String ANALYZE_MULTI_MODULE = "analyzeMultiModule";
+    public static final String X_MODULE_PATH = "xModulePath";
+
     // Global values for remote Docker
     public static final String DOCKER_PULL_ENABLE = "docker.pull.enable";
     public static final String DOCKER_PULL_IMAGES = "docker.pull.images";
