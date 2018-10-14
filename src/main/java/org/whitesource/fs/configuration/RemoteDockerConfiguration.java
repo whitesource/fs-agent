@@ -14,6 +14,7 @@ public class RemoteDockerConfiguration {
     private int maxScanImages;
     private boolean forcePull;
     private int maxPullImages;
+    private boolean loginSudo;
 
     // Amazon ECR configurations
     private List<String> amazonRegistryIds;
@@ -31,12 +32,13 @@ public class RemoteDockerConfiguration {
         maxScanImages       = 0;
         amazonMaxPullImages = 0;
         forcePull           = false;
-        maxPullImages       = 3;
+        maxPullImages       = 10;
+        loginSudo           = true;
     }
 
     public RemoteDockerConfiguration(List<String> imageNames, List<String> imageTags, List<String> imageDigests,
                                      boolean forceDelete, boolean remoteDockerEnabled, int maxScanImages,
-                                     boolean forcePull, int maxPullImages) {
+                                     boolean forcePull, int maxPullImages, boolean loginSudo) {
         this.imageNames = imageNames;
         this.imageTags = imageTags;
         this.imageDigests = imageDigests;
@@ -46,6 +48,7 @@ public class RemoteDockerConfiguration {
         this.amazonMaxPullImages = 0;
         this.forcePull = forcePull;
         this.maxPullImages = maxPullImages;
+        this.loginSudo = loginSudo;
     }
 
     public List<String> getImageNames() {
@@ -144,5 +147,9 @@ public class RemoteDockerConfiguration {
 
     public void setMaxPullImages(int maxPullImages) {
         this.maxPullImages = maxPullImages;
+    }
+
+    public boolean isLoginSudo() {
+        return loginSudo;
     }
 }

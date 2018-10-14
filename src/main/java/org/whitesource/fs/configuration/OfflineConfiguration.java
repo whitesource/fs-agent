@@ -58,4 +58,9 @@ public class OfflineConfiguration {
     public String getWhiteSourceFolderPath() {
         return whiteSourceFolderPath;
     }
+
+    @Override
+    public String toString() {
+        return "offline=" + isEnabled() + ", zip=" + isZip() + ", prettyJson=" + isPrettyJson();
+    }
 }

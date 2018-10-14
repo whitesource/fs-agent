@@ -68,18 +68,20 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
+        // In order to use the gradle wrapper, we define the top folder that contains the wrapper
+        this.gradleCli.setTopLevelFolderGradlew(topLevelFolder);
         // each bom-file ( = build.gradle) represents a module - identify its folder and scan it using 'gradle dependencies'
         Map<AgentProjectInfo, Path> projectInfoPathMap = new HashMap<>();
         Collection<String> excludes = new HashSet<>();
 
-        // Get the list of projects as paths
-        List<String> projectsList = null;
-        if (bomFiles.size() > 1) {
-            projectsList = collectProjects(topLevelFolder);
-        }
-        if (projectsList == null) {
-            logger.warn("Command \"gradle projects\" did not return a list of projects");
-        }
+//        // Get the list of projects as paths
+//        List<String> projectsList = null;
+//        if (bomFiles.size() > 1) {
+//            projectsList = collectProjects(topLevelFolder);
+//        }
+//        if (projectsList == null) {
+//            logger.warn("Command \"gradle projects\" did not return a list of projects");
+//        }
         if (gradleRunPreStep) {
             downloadMissingDependencies(projectFolder);
         }
@@ -88,19 +90,19 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
             String bomFileFolder = new File(bomFile).getParent();
             File bomFolder = new File(new File(bomFile).getParent());
             String moduleName = bomFolder.getName();
-            String moduleRelativeName = Constants.EMPTY_STRING;
-            try {
-                String canonicalPath = bomFolder.getCanonicalPath();
-                // Relative name by replacing the root folder with "." - will look something like .\abc\def
-                moduleRelativeName = Constants.DOT + canonicalPath.replaceFirst(Pattern.quote(topLevelFolder), Constants.EMPTY_STRING);
-            } catch (Exception e) {
-                logger.debug("Error getting path - {} ", e.getMessage());
-            }
-            // making sure the module's folder was listed by "gradle projects" command
-            if (!moduleRelativeName.isEmpty() && projectsList != null && !projectsList.contains(moduleRelativeName)) {
-                logger.debug("Ignoring project at {} - because it was not listed by \"gradle projects\" command", moduleRelativeName);
-                continue;
-            }
+//            String moduleRelativeName = Constants.EMPTY_STRING;
+//            try {
+//                String canonicalPath = bomFolder.getCanonicalPath();
+//                // Relative name by replacing the root folder with "." - will look something like .\abc\def
+//                moduleRelativeName = Constants.DOT + canonicalPath.replaceFirst(Pattern.quote(topLevelFolder), Constants.EMPTY_STRING);
+//            } catch (Exception e) {
+//                logger.debug("Error getting path - {} ", e.getMessage());
+//            }
+//            // making sure the module's folder was listed by "gradle projects" command
+//            if (!moduleRelativeName.isEmpty() && projectsList != null && !projectsList.contains(moduleRelativeName)) {
+//                logger.debug("Ignoring project at {} - because it was not listed by \"gradle projects\" command", moduleRelativeName);
+//                continue;
+//            }
 
             List<DependencyInfo> dependencies = collectDependencies(bomFileFolder, bomFileFolder.equals(topLevelFolder));
             if (dependencies.size() > 0) {
@@ -167,18 +169,12 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private List<DependencyInfo> collectDependencies(String directory, boolean isParent) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
-        // running the gradle/gradlew command from the project's root folder, because when using gradlew the path must be
-        // kept (i.e. - the command 'gradlew' should only be called from the root's project).  In case of a multi-module
-        // project, adding the module's name before the 'dependencies' command, so it'll know which folder to refer to
         String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES);
         String directoryName = "";
         if (!isParent) {
             // TODO - test on linux
             String[] directoryPath = directory.split(Pattern.quote(fileSeparator));
             directoryName = directoryPath[directoryPath.length - 1];
-            int lastParamIndex = gradleCommandParams.length - 1;
-            gradleCommandParams[lastParamIndex] = directoryName + Constants.COLON + gradleCommandParams[lastParamIndex];
-            directory = String.join(fileSeparator, Arrays.copyOfRange(directoryPath, 0, directoryPath.length - 1));
         }
         directoryName = fileSeparator.concat(directoryName);
         List<String> lines = gradleCli.runGradleCmd(directory, gradleCommandParams);

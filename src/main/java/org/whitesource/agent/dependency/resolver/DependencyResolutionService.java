@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyType;
+import org.whitesource.agent.dependency.resolver.CocoaPods.CocoaPodsDependencyResolver;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.dotNet.DotNetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyResolver;
@@ -91,10 +92,15 @@ public class DependencyResolutionService {
         final boolean mavenAggregateModules = config.isMavenAggregateModules();
         final boolean mavenIgnorePomModules = config.isMavenIgnorePomModules();
         final boolean mavenIgnoreSourceFiles = config.isMavenIgnoreSourceFiles();
+        final boolean mavenRunPreStep = config.isMavenRunPreStep();
 
         boolean pythonResolveDependencies = config.isPythonResolveDependencies();
         final String[] pythonRequirementsFileIncludes = config.getPythonRequirementsFileIncludes();
         final boolean pythonIgnoreSourceFiles = config.isPythonIgnoreSourceFiles();
+        final boolean ignorePipEnvInstallErrors = config.isIgnorePipEnvInstallErrors();
+        final boolean runPipenvPreStep = config.IsRunPipenvPreStep();
+        final boolean pipenvInstallDevDependencies = config.isPipenvInstallDevDependencies();
+
 
         boolean gradleResolveDependencies = config.isGradleResolveDependencies();
         boolean gradleAggregateModules = config.isGradleAggregateModules();
@@ -130,6 +136,10 @@ public class DependencyResolutionService {
 
         final boolean htmlResolveDependencies = config.isHtmlResolveDependencies();
 
+        final boolean cocoapodsResolveDependencies = config.isCocoapodsResolveDependencies();
+        final boolean cocoapodsRunPreStep = config.isCocoapodsRunPreStep();
+        final boolean cocoapodsIgnoreSourceFiles = config.isCocoapodsIgnoreSourceFiles();
+
         ignoreSourceFiles = config.isIgnoreSourceFiles();
 
         fileScanner = new FilesScanner();
@@ -146,12 +156,12 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies, nugetIgnoreSourceFiles));
         }
         if (mavenResolveDependencies) {
-            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules));
+            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules, mavenRunPreStep));
             this.mavenAggregateModules = mavenAggregateModules;
         }
         if (pythonResolveDependencies) {
             dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(),
-                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree(), pythonRequirementsFileIncludes, pythonIgnoreSourceFiles));
+                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree(), pythonRequirementsFileIncludes, pythonIgnoreSourceFiles, ignorePipEnvInstallErrors, runPipenvPreStep, pipenvInstallDevDependencies));
         }
 
         if (gradleResolveDependencies) {
@@ -182,6 +192,10 @@ public class DependencyResolutionService {
         if (sbtResolveDependencies) {
             dependencyResolvers.add(new SbtDependencyResolver(sbtAggregateModules, sbtIgnoreSourceFiles, sbtRunPreStep, sbtTargetFolder));
             this.sbtAggregateModules = sbtAggregateModules;
+        }
+
+        if (cocoapodsResolveDependencies) {
+            dependencyResolvers.add(new CocoaPodsDependencyResolver(cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles));
         }
 
         this.separateProjects = false;
