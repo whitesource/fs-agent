@@ -27,7 +27,6 @@ public class CocoaPodsDependencyCollector extends DependencyCollector {
     private static final String DEPENDENCIES = "DEPENDENCIES";
     private static final String PATTERN_DIRECT_LINE = "  -";
     private static final String PATTERN_TRANSITIVE_DEPENDENCY = "    -";
-    private static final String COCOA_PODS = "CocoaPods";
 
     /* --- Members --- */
 
@@ -137,13 +136,11 @@ public class CocoaPodsDependencyCollector extends DependencyCollector {
         dependency.setGroupId(name);
         dependency.setFilename(name + Constants.DASH + version);
         dependency.setSystemPath(podFileLock);
-        // This is a fake sha1 - concatenation of name + _ + version + _ + CocoaPods, for example: QueryKit/QueryKit_0.10.0_CocoaPods => sha1: ed0b4691a4c3761232f07b544989b7f55b6826c3
         String sha1 = null;
-        String sha1ToCalc = name + Constants.UNDERSCORE + version + Constants.UNDERSCORE + COCOA_PODS;
         try {
-            sha1 = this.hashCalculator.calculateByteArraySHA1(sha1ToCalc.getBytes(StandardCharsets.UTF_8));
+            sha1 = this.hashCalculator.calculateSha1ByNameVersionAndType(name, version, DependencyType.COCOAPODS);
         } catch (IOException e) {
-            logger.debug("Failed to calculate sha1 of: {}", sha1ToCalc);
+            logger.debug("Failed to calculate sha1 of: {}", name);
         }
         if (sha1 != null) {
             dependency.setSha1(sha1);

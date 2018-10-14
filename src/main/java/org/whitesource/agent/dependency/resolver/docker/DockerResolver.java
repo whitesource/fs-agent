@@ -176,8 +176,12 @@ public class DockerResolver {
      */
     private void saveDockerImages(Collection<DockerImage> dockerImages, Collection<AgentProjectInfo> projects) throws IOException {
         logger.info("Saving {} docker images", dockerImages.size());
+        int counter = 1;
+        int imagesCount = dockerImages.size();
         for (DockerImage dockerImage : dockerImages) {
+            logger.info("Image {} of {} Images", counter, imagesCount);
             saveDockerImage(dockerImage, projects);
+            counter++;
         }
     }
 
