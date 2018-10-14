@@ -97,6 +97,10 @@ public class DependencyResolutionService {
         boolean pythonResolveDependencies = config.isPythonResolveDependencies();
         final String[] pythonRequirementsFileIncludes = config.getPythonRequirementsFileIncludes();
         final boolean pythonIgnoreSourceFiles = config.isPythonIgnoreSourceFiles();
+        final boolean ignorePipEnvInstallErrors = config.isIgnorePipEnvInstallErrors();
+        final boolean runPipenvPreStep = config.IsRunPipenvPreStep();
+        final boolean pipenvInstallDevDependencies = config.isPipenvInstallDevDependencies();
+
 
         boolean gradleResolveDependencies = config.isGradleResolveDependencies();
         boolean gradleAggregateModules = config.isGradleAggregateModules();
@@ -157,7 +161,7 @@ public class DependencyResolutionService {
         }
         if (pythonResolveDependencies) {
             dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(),
-                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree(), pythonRequirementsFileIncludes, pythonIgnoreSourceFiles));
+                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree(), pythonRequirementsFileIncludes, pythonIgnoreSourceFiles, ignorePipEnvInstallErrors, runPipenvPreStep, pipenvInstallDevDependencies));
         }
 
         if (gradleResolveDependencies) {
