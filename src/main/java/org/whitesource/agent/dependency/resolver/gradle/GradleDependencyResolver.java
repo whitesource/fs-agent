@@ -14,9 +14,7 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.fs.Main;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,6 +36,8 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     private static final String JAR_EXTENSION = ".jar";
     private static final String PROJECT = "--- Project";
     public static final String COPY_DEPENDENCIES_TASK_TXT = "copyDependenciesTask.txt";
+    private static final String DEPENDENCIES = "dependencies";
+    private static final String CURLY_BRACKETS = "{";
 
     /* --- Private Members --- */
 
@@ -234,8 +234,8 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
                 pathStream.forEach(path -> {
                     File buildGradleTmp = new File(path.toString());
                     if (buildGradleTmp.exists()) {
-                        appendTaskToBomFile(buildGradleTmp);
-                        runPreStepCommand(buildGradleTmp);
+                        if (appendTaskToBomFile(buildGradleTmp))
+                            runPreStepCommand(buildGradleTmp);
                     } else {
                         logger.warn("Could not find the path {}", buildGradleTmp.getPath());
                     }
@@ -261,19 +261,35 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     }
 
     // append new task to bom file
-    private void appendTaskToBomFile(File buildGradleTmp) {
-        ClassLoader classLoader = Main.class.getClassLoader();
+    private boolean appendTaskToBomFile(File buildGradleTmp)  {
+        FileReader fileReader = null;
         InputStream inputStream = null;
+        boolean hasDependencies = false;
         try {
-            inputStream = classLoader.getResourceAsStream(COPY_DEPENDENCIES_TASK_TXT);
-            byte[] bytes = IOUtils.toByteArray(inputStream);
-            if (bytes.length > 0) {
-                Files.write(Paths.get(buildGradleTmp.getPath()), bytes, StandardOpenOption.APPEND);
-            } else {
-                logger.warn("Could not read {}", COPY_DEPENDENCIES_TASK_TXT);
+            // appending the task only if the build.gradle file has 'dependencies {' node (only at the beginning of the line)
+            // otherwise, later when the task is ran it'll fail
+            fileReader = new FileReader(buildGradleTmp);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String currLine;
+            while ((currLine = bufferedReader.readLine()) != null) {
+                if (currLine.indexOf(DEPENDENCIES + Constants.WHITESPACE + CURLY_BRACKETS) == 0 || currLine.indexOf(DEPENDENCIES + CURLY_BRACKETS) == 0){
+                    hasDependencies = true;
+                    break;
+                }
+            }
+            if (hasDependencies) {
+                ClassLoader classLoader = Main.class.getClassLoader();
+                inputStream = classLoader.getResourceAsStream(COPY_DEPENDENCIES_TASK_TXT);
+                byte[] bytes = IOUtils.toByteArray(inputStream);
+                if (bytes.length > 0) {
+                    Files.write(Paths.get(buildGradleTmp.getPath()), bytes, StandardOpenOption.APPEND);
+                } else {
+                    logger.warn("Could not read {}", COPY_DEPENDENCIES_TASK_TXT);
+                }
             }
         } catch (IOException e) {
             logger.error("Could not write into the file {}, the cause {}", buildGradleTmp.getPath(), e.getMessage());
+            hasDependencies = false;
         }
         try {
             if (inputStream != null) {
@@ -282,6 +298,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         } catch (IOException e) {
             logger.error("Could close the file, cause", e.getMessage());
         }
+        return hasDependencies;
     }
 
     // run pre step command gradle copyDependencies
