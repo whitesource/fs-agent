@@ -39,6 +39,7 @@ public class SenderConfiguration {
     private final int connectionRetries;
     private final int connectionRetriesIntervals;
     private final boolean sendLogsToWss;
+    private final boolean updateInventory;
 
     public SenderConfiguration(
             @JsonProperty(CHECK_POLICIES_PROPERTY_KEY) boolean checkPolicies,
@@ -58,7 +59,8 @@ public class SenderConfiguration {
             @JsonProperty(IGNORE_CERTIFICATE_CHECK) boolean ignoreCertificateCheck,
             @JsonProperty(CONNECTION_RETRIES) int connectionRetries,
             @JsonProperty(CONNECTION_RETRIES_INTERVALS) int connectionRetriesIntervals,
-            @JsonProperty(SEND_LOGS_TO_WSS) boolean sendLogsToWss){
+            @JsonProperty(SEND_LOGS_TO_WSS) boolean sendLogsToWss,
+            @JsonProperty(UPDATE_INVENTORY) boolean updateInventory){
         this.checkPolicies = checkPolicies;
         this.serviceUrl = serviceUrl;
         this.proxyHost = proxyHost;
@@ -75,6 +77,7 @@ public class SenderConfiguration {
         this.connectionRetries = connectionRetries;
         this.connectionRetriesIntervals = connectionRetriesIntervals;
         this.sendLogsToWss = sendLogsToWss;
+        this.updateInventory = updateInventory;
     }
 
     @JsonProperty(SERVICE_URL_KEYWORD)
@@ -155,6 +158,11 @@ public class SenderConfiguration {
     @JsonProperty(SEND_LOGS_TO_WSS)
     public boolean isSendLogsToWss(){ return sendLogsToWss; }
 
+    @JsonProperty(UPDATE_INVENTORY)
+    public boolean isUpdateInventory() {
+        return updateInventory;
+    }
+
     public void setEnableImpactAnalysis(boolean enableImpactAnalysis) { this.enableImpactAnalysis = enableImpactAnalysis; }
 
     @Override
@@ -164,7 +172,8 @@ public class SenderConfiguration {
                 ", forceCheckAllDependencies=" + forceCheckAllDependencies + '\n' +
                 ", forceUpdate=" + forceUpdate + '\n' +
                 ", forceUpdate.failBuildOnPolicyViolation=" + forceUpdateFailBuildOnPolicyViolation + '\n' +
-                ", updateTypeValue='" + updateTypeValue + "'";
+                ", updateTypeValue='" + updateTypeValue + "'" +'\n' +
+                ", updateInventory=" + updateInventory;
 //                ", enableImpactAnalysis=" + enableImpactAnalysis;
     }
 }
