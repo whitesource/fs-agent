@@ -17,17 +17,13 @@ package org.whitesource.fs;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.bcel.classfile.ConstantString;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
-import org.whitesource.agent.dependency.resolver.go.GoDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.Pair;
