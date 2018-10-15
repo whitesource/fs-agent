@@ -1,3 +1,4 @@
+
 task copyDependencies(type: Copy) {
    from configurations.runtime
    from configurations.testCompile

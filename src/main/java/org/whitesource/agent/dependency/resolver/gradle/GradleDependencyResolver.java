@@ -14,9 +14,7 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.fs.Main;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,6 +23,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.whitesource.agent.TempFolders.BUILD_GRADLE_DIRECTORY;
 
@@ -37,6 +36,8 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     private static final String JAR_EXTENSION = ".jar";
     private static final String PROJECT = "--- Project";
     public static final String COPY_DEPENDENCIES_TASK_TXT = "copyDependenciesTask.txt";
+    private static final String DEPENDENCIES = "dependencies";
+    private static final String CURLY_BRACKETS = "{";
 
     /* --- Private Members --- */
 
@@ -82,7 +83,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 //            logger.warn("Command \"gradle projects\" did not return a list of projects");
 //        }
         if (gradleRunPreStep) {
-            downloadMissingDependencies(bomFiles);
+            downloadMissingDependencies(projectFolder);
         }
 
         for (String bomFile : bomFiles) {
@@ -219,51 +220,72 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     }
 
     // copy all the bom files (build.gradle) to temp folder and run the command "gradle copyDependencies"
-    private void downloadMissingDependencies(Set<String> bomFiles) {
+    private void downloadMissingDependencies(String projectFolder) {
+        logger.debug("running pre-steps on folder {}", projectFolder);
         File buildGradleTempDirectory = new File(BUILD_GRADLE_DIRECTORY);
         buildGradleTempDirectory.mkdir();
-        for (String bomFile : bomFiles) {
-            File buildGradleTmp = copyBomFile(bomFile, buildGradleTempDirectory);
-            if (buildGradleTmp.exists()) {
-                appendTaskToBomFile(buildGradleTmp);
-                runPreStepCommand(buildGradleTmp);
-                buildGradleTmp.delete();
-            } else {
-                logger.warn("Could not find the path {}", buildGradleTmp.getPath());
+        if (copyProjectFolder(projectFolder, buildGradleTempDirectory)) {
+            try {
+                Stream<Path> pathStream = Files.walk(Paths.get(buildGradleTempDirectory.getPath()), Integer.MAX_VALUE).filter(file -> file.getFileName().toString().equals(Constants.BUILD_GRADLE));
+                pathStream.forEach(path -> {
+                    File buildGradleTmp = new File(path.toString());
+                    if (buildGradleTmp.exists()) {
+                        if (appendTaskToBomFile(buildGradleTmp))
+                            runPreStepCommand(buildGradleTmp);
+                    } else {
+                        logger.warn("Could not find the path {}", buildGradleTmp.getPath());
+                    }
+                });
+            } catch (IOException e) {
+                logger.warn("Couldn't list all 'build.gradle' files, error: {}", e.getMessage());
+                logger.debug("Error: {}", e.getStackTrace());
             }
+            FileUtils.deleteQuietly(buildGradleTempDirectory);
         }
-        FileUtils.deleteQuietly(buildGradleTempDirectory);
-
     }
 
-    // copy bom file to local temp directory
-
-    private File copyBomFile(String bomFile, File buildGradleTempDirectory) {
-        File buildGradle = new File(bomFile);
-        logger.debug("Copy bom file from {} to {}", buildGradle.getPath(), buildGradleTempDirectory);
-        File buildGradleTmp = new File(buildGradleTempDirectory + fileSeparator + "build.gradle");
+    // copy project to local temp directory
+    private boolean copyProjectFolder(String projectFolder, File buildGradleTempDirectory) {
         try {
-            FileUtils.copyFile(buildGradle, buildGradleTmp);
+            FileUtils.copyDirectory(new File(projectFolder), buildGradleTempDirectory);
         } catch (IOException e) {
-            logger.error("Could not copy the file {} to {} , the cause {}", buildGradle.getPath(), buildGradleTempDirectory.getPath(), e.getMessage());
+            logger.error("Could not copy the folder {} to {} , the cause {}", projectFolder, buildGradleTempDirectory.getPath(), e.getMessage());
+            return false;
         }
-        return buildGradleTmp;
+        logger.debug("copied folder {} to temp folder successfully", projectFolder);
+        return true;
     }
 
     // append new task to bom file
-    private void appendTaskToBomFile(File buildGradleTmp) {
-        ClassLoader classLoader = Main.class.getClassLoader();
+    private boolean appendTaskToBomFile(File buildGradleTmp)  {
+        FileReader fileReader = null;
         InputStream inputStream = null;
+        boolean hasDependencies = false;
         try {
-            inputStream = classLoader.getResourceAsStream(COPY_DEPENDENCIES_TASK_TXT);
-            byte[] bytes = IOUtils.toByteArray(inputStream);
-            if (bytes.length > 0) {
-                Files.write(Paths.get(buildGradleTmp.getPath()), bytes, StandardOpenOption.APPEND);
-            } else {
-                logger.warn("Could not read {}", COPY_DEPENDENCIES_TASK_TXT);
+            // appending the task only if the build.gradle file has 'dependencies {' node (only at the beginning of the line)
+            // otherwise, later when the task is ran it'll fail
+            fileReader = new FileReader(buildGradleTmp);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String currLine;
+            while ((currLine = bufferedReader.readLine()) != null) {
+                if (currLine.indexOf(DEPENDENCIES + Constants.WHITESPACE + CURLY_BRACKETS) == 0 || currLine.indexOf(DEPENDENCIES + CURLY_BRACKETS) == 0){
+                    hasDependencies = true;
+                    break;
+                }
+            }
+            if (hasDependencies) {
+                ClassLoader classLoader = Main.class.getClassLoader();
+                inputStream = classLoader.getResourceAsStream(COPY_DEPENDENCIES_TASK_TXT);
+                byte[] bytes = IOUtils.toByteArray(inputStream);
+                if (bytes.length > 0) {
+                    Files.write(Paths.get(buildGradleTmp.getPath()), bytes, StandardOpenOption.APPEND);
+                } else {
+                    logger.warn("Could not read {}", COPY_DEPENDENCIES_TASK_TXT);
+                }
             }
         } catch (IOException e) {
             logger.error("Could not write into the file {}, the cause {}", buildGradleTmp.getPath(), e.getMessage());
+            hasDependencies = false;
         }
         try {
             if (inputStream != null) {
@@ -272,6 +294,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         } catch (IOException e) {
             logger.error("Could close the file, cause", e.getMessage());
         }
+        return hasDependencies;
     }
 
     // run pre step command gradle copyDependencies
