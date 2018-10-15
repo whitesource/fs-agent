@@ -112,4 +112,5 @@ public final class Constants {
     public static final String TARGET = "target";
     public static final String BUILD = "build";
     public static final String NONE = "None";
+    public static final String LIBS = "libs";
 }
