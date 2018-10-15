@@ -524,7 +524,7 @@ public class FSAConfiguration {
             bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.PIPFILE};
         }
 
-        String[] pythonRequirementsFileIncludes = config.getListProperty(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES + Constants.PATTERN + Constants.PIPFILE, bomPatternForPython);
+        String[] pythonRequirementsFileIncludes = config.getPythonIncludesWithPipfile(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, bomPatternForPython);
         boolean pythonRunPipenvPreStep = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RUN_PIPENV_PRE_STEP, false);
         boolean pythonIgnorePipenvInstallErrors = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_PIPENV_INSTALL_ERRORS, false);
         boolean pythonInstallDevDependencies =  config.getBooleanProperty(ConfigPropertyKeys.PYTHON_PIPENV_DEV_DEPENDENCIES, false);
@@ -646,6 +646,7 @@ public class FSAConfiguration {
         String updateTypeValue = config.getProperty(ConfigPropertyKeys.UPDATE_TYPE, UpdateType.OVERRIDE.toString());
         boolean checkPolicies = config.getBooleanProperty(ConfigPropertyKeys.CHECK_POLICIES_PROPERTY_KEY, false);
         boolean forceCheckAllDependencies = config.getBooleanProperty(ConfigPropertyKeys.FORCE_CHECK_ALL_DEPENDENCIES, false);
+        boolean updateInventory = config.getBooleanProperty(ConfigPropertyKeys.UPDATE_INVENTORY, true);
         boolean forceUpdate = config.getBooleanProperty(ConfigPropertyKeys.FORCE_UPDATE, false);
         boolean forceUpdateBuildFailed = config.getBooleanProperty(ConfigPropertyKeys.FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION, false);
         boolean enableImpactAnalysis = config.getBooleanProperty(ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false);
@@ -672,7 +673,7 @@ public class FSAConfiguration {
         return new SenderConfiguration(checkPolicies, serviceUrl, connectionTimeOut,
                 proxyHost, proxyPort, proxyUser, proxyPassword,
                 forceCheckAllDependencies, forceUpdate, forceUpdateBuildFailed, updateTypeValue,
-                enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals, isSendLogsToWss);
+                enableImpactAnalysis, ignoreCertificateCheck, connectionRetries, connectionRetriesIntervals, isSendLogsToWss, updateInventory);
     }
 
     private OfflineConfiguration getOffline(FSAConfigProperties config) {

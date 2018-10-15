@@ -27,6 +27,7 @@ public final class ConfigPropertyKeys {
     public static final String FORCE_UPDATE = "forceUpdate";
     public static final String FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION = "forceUpdate.failBuildOnPolicyViolation";
     public static final String FORCE_CHECK_ALL_DEPENDENCIES = "forceCheckAllDependencies"; // optional
+    public static final String UPDATE_INVENTORY = "updateInventory"; // optional
     public static final String ENABLE_IMPACT_ANALYSIS = "enableImpactAnalysis"; // optional
     public static final String IA_LANGUAGE = "iaLanguage"; // optional
     public static final String CONNECTION_RETRIES = "connectionRetries";

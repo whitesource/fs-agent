@@ -119,8 +119,10 @@ public class ProjectsSender {
             while (retries-- > -1) {
                 try {
                     statusCode = checkPolicies(service, projects);
-                    if (statusCode == StatusCode.SUCCESS || (senderConfig.isForceUpdate() && senderConfig.isForceUpdateFailBuildOnPolicyViolation())) {
-                        resultInfo = update(service, projects);
+                    if (senderConfig.isUpdateInventory()) {
+                        if (statusCode == StatusCode.SUCCESS || (senderConfig.isForceUpdate() && senderConfig.isForceUpdateFailBuildOnPolicyViolation())) {
+                            resultInfo = update(service, projects);
+                        }
                     }
                     break;
                 } catch (WssServiceException e) {
@@ -271,7 +273,7 @@ public class ProjectsSender {
 
     private StatusCode checkPolicies(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         boolean policyCompliance = true;
-        if (senderConfig.isCheckPolicies()) {
+        if (senderConfig.isCheckPolicies() || !senderConfig.isUpdateInventory()) {
             logger.info("Checking policies");
             CheckPolicyComplianceResult checkPoliciesResult;
             if (senderConfig.isSendLogsToWss()) {
