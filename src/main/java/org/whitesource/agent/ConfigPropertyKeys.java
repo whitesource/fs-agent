@@ -27,6 +27,7 @@ public final class ConfigPropertyKeys {
     public static final String FORCE_UPDATE = "forceUpdate";
     public static final String FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION = "forceUpdate.failBuildOnPolicyViolation";
     public static final String FORCE_CHECK_ALL_DEPENDENCIES = "forceCheckAllDependencies"; // optional
+    public static final String UPDATE_INVENTORY = "updateInventory"; // optional
     public static final String ENABLE_IMPACT_ANALYSIS = "enableImpactAnalysis"; // optional
     public static final String IA_LANGUAGE = "iaLanguage"; // optional
     public static final String CONNECTION_RETRIES = "connectionRetries";
@@ -195,6 +196,10 @@ public final class ConfigPropertyKeys {
     public static final String LOG_CONTEXT = "logContext";
 
     public static final String REQUIRE_KNOWN_SHA1 = "requireKnownSha1";
+
+    // Analysis multi module project for via
+    public static final String ANALYZE_MULTI_MODULE = "analyzeMultiModule";
+    public static final String X_MODULE_PATH = "xModulePath";
 
     // Global values for remote Docker
     public static final String DOCKER_PULL_ENABLE = "docker.pull.enable";

@@ -144,6 +144,13 @@ public class CommandLineArgs {
     @Parameter(names = "-requireKnownSha1", description = "User-entry of a flag that overrides default FSA process termination when sha1 is missing in case of via")
     String requireKnownSha1 = null;
 
+    @Parameter(names = "-analyzeMultiModule", description = "The parameter instructs the FSA to inspect the structure of a specified multi-module" +
+            " and save the project name for each sub-module in a setup file")
+    String analyzeMultiModule = null;
+
+    @Parameter(names = "-xModulePath", description = "The parameter get setup file and read the appPaths and -d parameter for via")
+    String xModulePath = null;
+
     /*
     @Parameter(names = "-aws_account_id", description = "AWS Account ID")
     String awsAccountId = null;

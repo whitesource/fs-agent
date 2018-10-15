@@ -19,9 +19,9 @@ public class ViaMultiModuleAnalyzer {
 
     /* --- Static Members --- */
 
-    private static final String APP_PATH = "appPath";
-    private static final String DEPENDENCY_MANAGER_PATH = "dependencyManagerPath";
-    private static final String PROJECT_NAME = "projectName";
+    private static final String APP_PATH = "AppPath";
+    private static final String DEPENDENCY_MANAGER_PATH = "DependencyManagerFilePath";
+    private static final String PROJECT_FOLDER_PATH = "ProjectFolderPath";
 
     /* --- Members --- */
 
@@ -55,9 +55,10 @@ public class ViaMultiModuleAnalyzer {
             File outputFile = new File(this.contentFileAppPaths);
             FileOutputStream fileOutputStream = new FileOutputStream(outputFile);
             BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
-            bufferedWriter.write(DEPENDENCY_MANAGER_PATH + Constants.EQUALS + this.scanDirectory);
+            bufferedWriter.write(replaceAllSlashes(DEPENDENCY_MANAGER_PATH + Constants.EQUALS + this.scanDirectory));
             bufferedWriter.write(System.lineSeparator());
             int counter = 1;
+            boolean printMessageAppPath = true;
             for (String bomFile : bomFiles) {
                 File parentFileOfBom = new File(bomFile).getParentFile();
                 File buildFolder = new File(parentFileOfBom.getPath() + File.separator + this.suffixOfBuild);
@@ -72,14 +73,17 @@ public class ViaMultiModuleAnalyzer {
                     }).collect(Collectors.toList());
                     try {
                         if (filesWithBuildExtensions.size() >= 1) {
-                            bufferedWriter.write(PROJECT_NAME + counter + Constants.EQUALS + parentFileOfBom.getAbsolutePath());
+                            bufferedWriter.write(replaceAllSlashes(PROJECT_FOLDER_PATH + counter + Constants.EQUALS + parentFileOfBom.getAbsolutePath()));
                             bufferedWriter.write(System.lineSeparator());
                             String appPathProperty = APP_PATH + counter + Constants.EQUALS;
                             if (filesWithBuildExtensions.size() == 1) {
                                 File appPath = filesWithBuildExtensions.stream().findFirst().get();
                                 appPathProperty += appPath.getAbsolutePath();
+                            } else if (printMessageAppPath) {
+                                logger.warn("Analysis found multiple candidates for one or more appPath settings that are listed in the multi-module analysis setup file. Please review the setup file and set the appropriate appPath parameters.");
+                                printMessageAppPath = false;
                             }
-                            bufferedWriter.write(appPathProperty);
+                            bufferedWriter.write(replaceAllSlashes(appPathProperty));
                             bufferedWriter.write(System.lineSeparator());
                             counter++;
                         }
@@ -97,5 +101,9 @@ public class ViaMultiModuleAnalyzer {
 
     public Collection<String> getBomFiles() {
         return this.bomFiles;
+    }
+
+    private String replaceAllSlashes(String line) {
+        return line.replaceAll("\\\\", "/");
     }
 }
