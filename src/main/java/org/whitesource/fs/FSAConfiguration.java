@@ -17,6 +17,7 @@ package org.whitesource.fs;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
@@ -33,6 +34,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -127,6 +129,9 @@ public class FSAConfiguration {
     private boolean useCommandLineProjectName;
     private List<String> appPaths;
     private Map<String, Set<String>> appPathsToDependencyDirs;
+    private String analyzeMultiModule;
+    private String xModulePath;
+    private boolean setUpMuiltiModuleFile;
 
     /* --- Constructors --- */
 
@@ -197,6 +202,50 @@ public class FSAConfiguration {
             if (StringUtils.isNotBlank(commandLineArgs.whiteSourceFolder)) {
                 config.setProperty(ConfigPropertyKeys.WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
             }
+            analyzeMultiModule = commandLineArgs.analyzeMultiModule;
+            if (StringUtils.isNotEmpty(analyzeMultiModule)) {
+                if (args.length == 4 && dependencyDirs.size() == 1) {
+                    Path path = Paths.get(analyzeMultiModule);
+                    try {
+                        if (!Files.exists(path)) {
+                            File setUpFile = new File(analyzeMultiModule);
+                            boolean fileCreated = setUpFile.createNewFile();
+                            if (fileCreated) {
+                                setUpMuiltiModuleFile = true;
+                            } else {
+                                errors.add("The system could not create the multi-project setup file. Please contact support.");
+                            }
+                        } else {
+                            errors.add("The file specified for storing multi-module analysis results already exists. Please specify a new file name.");
+                        }
+                    } catch (IOException e) {
+                        errors.add("The system could not create the multi-project setup file : " + path + " " + "Please contact support.");
+                    }
+                } else {
+                    errors.add("Multi-module analysis could not run due to specified invalid parameters.");
+                }
+            }
+           /* xModulePath = commandLineArgs.xModulePath;
+            if (StringUtils.isNotEmpty(xModulePath)) {
+                if (args.length == 2) {
+                    Path path = Paths.get(analyzeMultiModule);
+                    try {
+                        if (Files.exists(path) && Files.size(path) > 0) {
+                            Properties setUpPropertiesFile = new Properties();
+                            //setUpPropertiesFile.load(new FileInputStream(new File()));
+                            File xModuleFile = new File(xModulePath);
+                        }
+                        *//*if (xModuleFile.exists() && xModuleFile.length() > 0) {
+                            readSetupFile(xModuleFile);
+                        }*//*
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } else {
+                errors.add("Effective Usage Analysis of a multi-module configuration will not run unless a valid setup file is specified.");
+            }*/
+
 
             // requirements file includes
             requirementsFileIncludes.addAll(commandLineArgs.requirementsFileIncludes);
@@ -299,6 +348,42 @@ public class FSAConfiguration {
         checkPropertiesForVia(sender, resolver, appPathsToDependencyDirs, errors);
     }
 
+    private void readSetupFile(File xModuleFile) {
+        Map<String, HashSet<String>> appPathToModulesDependencyDirs = new HashMap<>();
+        String dependencyDir = null;
+        try {
+            List<String> lines = FileUtils.readLines(xModuleFile);
+            if (StringUtils.isNotEmpty(lines.get(0))) {
+                dependencyDir = lines.get(0);
+            }
+            for (int i = 2; i < lines.size(); i++) {
+                if (lines.get(i).contains(Constants.COMMA)) {
+                    String[] moduleLine = lines.get(i).split(Constants.COMMA);
+                    String appPath = moduleLine[1];
+                    if (StringUtils.isNotEmpty(appPath) && StringUtils.isNotEmpty(dependencyDir)) {
+                        File file = new File(appPath);
+                        if (file.exists()) {
+                            HashSet<String> dependencyModulesDirs = new HashSet<>();
+                            dependencyModulesDirs.add(dependencyDir);
+                            appPathToModulesDependencyDirs.put(appPath, dependencyModulesDirs);
+                        }
+                    }
+                } else {
+
+                    errors.add("Effective Usage Analysis of a multi-module configuration will not run unless a valid setup file is specified.");
+                }
+            }
+            if (!appPathToModulesDependencyDirs.isEmpty() && StringUtils.isNotEmpty(dependencyDir)) {
+                appPathToModulesDependencyDirs.clear();
+                appPathsToDependencyDirs.putAll(appPathToModulesDependencyDirs);
+            } else {
+                errors.add("Effective Usage Analysis of a multi-module configuration will not run unless a valid setup file is specified.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private String getToken(FSAConfigProperties config, String propertyKeyFile, String propertyKeyToken) {
         String token = null;
         String tokenFile = config.getProperty(propertyKeyFile);
@@ -323,9 +408,7 @@ public class FSAConfiguration {
         Set<String> viaAppPaths = appPathsToDependencyDirs.keySet();
         if (sender.isEnableImpactAnalysis()) {
             // the default appPath size is one (defaultKey = -d property), this one check if the user set more then one appPath
-            if (viaAppPaths.size() > 2) {
-                errors.add("Effective Usage Analysis will not run if the command line parameter 'appPath' is specified more than once");
-            } else if (viaAppPaths.size() == 1) {
+            if (viaAppPaths.size() == 1) {
                 errors.add("Effective Usage Analysis will not run if the command line parameter 'appPath' is not specified");
             } else {
                 boolean validViaAppPath = checkAppPathsForVia(viaAppPaths, errors);
@@ -675,9 +758,9 @@ public class FSAConfiguration {
 
     private RemoteDockerConfiguration getRemoteDockerConfiguration(FSAConfigProperties config) {
         String[] empty = new String[0];
-        String[] dockerImages   = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, null);
-        String[] dockerTags     = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, null);
-        String[] dockerDigests  = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, null);
+        String[] dockerImages = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_IMAGES, null);
+        String[] dockerTags = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_TAGS, null);
+        String[] dockerDigests = config.getListProperty(ConfigPropertyKeys.DOCKER_PULL_DIGEST, null);
         boolean forceDelete = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_DELETE_FORCE, false);
         boolean enablePulling = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_ENABLE, false);
         boolean loginSudo = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_LOGIN_SUDO, true);
@@ -697,7 +780,7 @@ public class FSAConfiguration {
         int maxImagesScan = config.getIntProperty(ConfigPropertyKeys.DOCKER_SCAN_MAX_IMAGES, 0);
         int maxImagesPull = config.getIntProperty(ConfigPropertyKeys.DOCKER_PULL_MAX_IMAGES, 10);
         boolean pullForce = config.getBooleanProperty(ConfigPropertyKeys.DOCKER_PULL_FORCE, false);
-        RemoteDockerConfiguration result =  new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
+        RemoteDockerConfiguration result = new RemoteDockerConfiguration(dockerImagesList, dockerTagsList,
                 dockerDigestsList, forceDelete, enablePulling, maxImagesScan, pullForce, maxImagesPull, loginSudo);
 
         // Amazon configuration
@@ -802,7 +885,7 @@ public class FSAConfiguration {
                 } else {
                     errors.add("Port must be set or greater than 0");
                 }
-            } else if (commandLineArgs.proxyHost != null){
+            } else if (commandLineArgs.proxyHost != null) {
                 authUser = commandLineArgs.proxyUser;
                 authPass = commandLineArgs.proxyPass;
                 proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(commandLineArgs.proxyHost, Integer.valueOf(commandLineArgs.proxyPort)));
@@ -810,7 +893,7 @@ public class FSAConfiguration {
             //if proxy is set, so open the connection with proxy
             if (proxy != null) {
                 //setting proxy authenticator and disable schemes for http connections
-                ProxyAuthenticator proxyAuthenticator = new ProxyAuthenticator(authUser,authPass);
+                ProxyAuthenticator proxyAuthenticator = new ProxyAuthenticator(authUser, authPass);
                 Authenticator.setDefault(proxyAuthenticator);
                 /*The 'jdk.http.auth.tunneling.disabledSchemes' property lists the authentication
                 schemes that will be disabled when tunneling HTTPS over a proxy, HTTP CONNECT.
@@ -918,6 +1001,18 @@ public class FSAConfiguration {
 
     public Map<String, Set<String>> getAppPathsToDependencyDirs() {
         return appPathsToDependencyDirs;
+    }
+
+    public String getAnalyzeMultiModule() {
+        return analyzeMultiModule;
+    }
+
+    public String getxModulePath() {
+        return xModulePath;
+    }
+
+    public boolean isSetUpMuiltiModuleFile() {
+        return setUpMuiltiModuleFile;
     }
 
     @JsonProperty(ConfigPropertyKeys.SCAN_PACKAGE_MANAGER)
@@ -1064,6 +1159,9 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, commandLineArgs.enableImpactAnalysis);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.IA_LANGUAGE, commandLineArgs.iaLanguage);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.X_PATHS, commandLineArgs.xPaths);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ANALYZE_MULTI_MODULE, commandLineArgs.analyzeMultiModule);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.X_MODULE_PATH, commandLineArgs.xModulePath);
+
         // proxy
         if (commandLineArgs.proxy == null) {
             readPropertyFromCommandLine(configProps, ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY, commandLineArgs.proxyHost);
@@ -1097,7 +1195,7 @@ public class FSAConfiguration {
     }
 
     //returns data of proxy url from command line parameter proxy
-    public static String[] parseProxy (String proxy, List<String> errors) {
+    public static String[] parseProxy(String proxy, List<String> errors) {
         String[] parsedProxyInfo = new String[4];
         if (proxy != null) {
             try {
@@ -1157,6 +1255,7 @@ public class FSAConfiguration {
                 this.password = EMPTY_STRING;
             }
         }
+
         //called when a request over proxy is executed
         protected PasswordAuthentication getPasswordAuthentication() {
             return new PasswordAuthentication(user, password.toCharArray());

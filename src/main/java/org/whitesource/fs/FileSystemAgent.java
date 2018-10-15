@@ -18,6 +18,9 @@ package org.whitesource.fs;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
+import org.whitesource.agent.dependency.resolver.ViaMultiModuleAnalyzer;
+import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
+import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
@@ -108,6 +111,25 @@ public class FileSystemAgent {
         if (config.isScanDockerImages()) {
             Collection<AgentProjectInfo> tempDockerProjects = new DockerResolver(config).resolveDockerImages();
             return new ProjectsDetails(tempDockerProjects, StatusCode.SUCCESS, Constants.EMPTY_STRING);
+        }
+
+        if (config.isSetUpMuiltiModuleFile()) {
+            ViaMultiModuleAnalyzer viaMultiModuleAnalyzer = new ViaMultiModuleAnalyzer(config.getDependencyDirs().get(0),
+                    new MavenDependencyResolver(false, new String[]{Constants.NONE}, false,
+                            false, false), Constants.TARGET, config.getAnalyzeMultiModule());
+            if (viaMultiModuleAnalyzer.getBomFiles().isEmpty()) {
+                viaMultiModuleAnalyzer = new ViaMultiModuleAnalyzer(config.getDependencyDirs().get(0),
+                        new GradleDependencyResolver(false, false, false, Constants.EMPTY_STRING, new String[]{Constants.NONE}, false),
+                        Constants.BUILD + File.separator + Constants.LIBS, config.getAnalyzeMultiModule());
+            }
+            if (!viaMultiModuleAnalyzer.getBomFiles().isEmpty()) {
+                viaMultiModuleAnalyzer.writeFile();
+            } else {
+                logger.error("Multi-module analysis could not establish the appPath based on the specified path. Please review the specified -d path.");
+                Main.exit(StatusCode.ERROR.getValue());
+            }
+            logger.info("The multi-module analysis setup file was created successfully.");
+            Main.exit(StatusCode.SUCCESS.getValue());
         }
 
         // Scan folders and create a project per folder
