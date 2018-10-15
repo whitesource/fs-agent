@@ -89,7 +89,6 @@ public class PythonDependencyCollector extends DependencyCollector {
     private static final String RUN = "run";
     private static final String DEV = "--dev";
     private static final String LOCK = "lock";
-    public static final  String RM_PARAMETER = "--rm";
     /* --- Constructors --- */
 
     public PythonDependencyCollector(String pythonPath, String pipPath, boolean installVirtualEnv, boolean resolveHierarchyTree, boolean ignorePipInstallErrors,

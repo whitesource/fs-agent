@@ -98,7 +98,11 @@ public class FSAConfigProperties extends Properties {
             return defaultValue;
         }
        property = property + Constants.WHITESPACE + Constants.PIPFILE;
-        return property.split(Constants.WHITESPACE) ;
+        String[] splitProperty=property.split(Constants.WHITESPACE);
+        for (int i = 0; i < splitProperty.length; i++) {
+            splitProperty[i] = Constants.PATTERN + splitProperty[i];
+        }
+        return splitProperty;
     }
 
 
