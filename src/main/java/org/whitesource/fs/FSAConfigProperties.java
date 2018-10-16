@@ -98,12 +98,7 @@ public class FSAConfigProperties extends Properties {
             return defaultValue;
         }
         property = property + Constants.WHITESPACE + Constants.PIPFILE;
-        //python.requirementsFileIncludes = requirements.txt devRequirements.txt  ->> will be **/*requirements.txt , **/*devRequirements.txt
-        String[] requirementsFilePattern = property.split(Constants.WHITESPACE);
-        for (int i = 0; i < requirementsFilePattern.length ; i++) {
-            requirementsFilePattern[i] = Constants.PATTERN + requirementsFilePattern[i];
-        }
-        return requirementsFilePattern;
+        return property.split(Constants.WHITESPACE);
     }
 
 
