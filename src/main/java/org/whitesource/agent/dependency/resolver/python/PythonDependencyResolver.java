@@ -21,12 +21,12 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
+import org.whitesource.agent.dependency.resolver.dotNet.RestoreCollector;
 import org.whitesource.agent.utils.FilesUtils;
 
 import java.io.File;
-import java.nio.file.*;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
 
 public class PythonDependencyResolver extends AbstractDependencyResolver {
@@ -80,7 +80,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         FilesUtils filesUtils = new FilesUtils();
         Collection<DependencyInfo> resultDependencies = new LinkedList<>();
         Collection<DependencyInfo> dependencyInfos = new LinkedList<>();
-        String pipFilePath = projectFolder + Constants.BACK_SLASH + Constants.PIPFILE;
+        String pipFilePath = projectFolder + RestoreCollector.BACK_SLASH + Constants.PIPFILE;
         //check if Pipfile exists, then use pipenv, else use pip
         if (Paths.get(pipFilePath).toFile().exists()) {
             resultDependencies = runPipEnvAlgorithm(filesUtils, pipFilePath);

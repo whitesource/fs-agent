@@ -285,13 +285,16 @@ public class ProjectsSender {
                         requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(), requestConfig.getRequesterEmail());
             }
             if (checkPoliciesResult.hasRejections()) {
-                if (senderConfig.isForceUpdate()) {
+                if (senderConfig.isForceUpdate() && senderConfig.isUpdateInventory()) {
                     logger.info("Some dependencies violate open source policies, however all were force " +
                             "updated to organization inventory.");
                     if (senderConfig.isForceUpdateFailBuildOnPolicyViolation()) {
                         policyCompliance = false;
                     }
-                } else {
+                } else if (!senderConfig.isUpdateInventory()) {
+                    logger.info("Some dependencies did not conform with open source policies, review report for details");
+                    policyCompliance = false;
+                }  else {
                     logger.info("Some dependencies did not conform with open source policies, review report for details");
                     logger.info("=== UPDATE ABORTED ===");
                     policyCompliance = false;
