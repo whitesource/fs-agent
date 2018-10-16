@@ -258,7 +258,7 @@ public class FSAConfiguration {
                         requirements += requirementFileIncludes + Constants.WHITESPACE;
                     }
                 }
-                requirements += Constants.PIPFILE + Constants.WHITESPACE;
+                requirements = requirements.substring(0, requirements.length() - 1);
                 config.setProperty(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, requirements);
             }
             commandLineArgsOverride(commandLineArgs);
