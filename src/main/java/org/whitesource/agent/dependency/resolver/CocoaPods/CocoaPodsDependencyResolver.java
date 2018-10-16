@@ -87,6 +87,7 @@ public class CocoaPodsDependencyResolver extends AbstractDependencyResolver {
     private boolean executePodInstall(String folderToInstall) {
         boolean processFailed = false;
         CommandLineProcess commandLineProcess = new CommandLineProcess(folderToInstall, new String[]{POD, Constants.INSTALL});
+        
         try {
             commandLineProcess.executeProcess();
             if (commandLineProcess.isErrorInProcess()) {

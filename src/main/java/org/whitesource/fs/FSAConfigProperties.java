@@ -92,6 +92,20 @@ public class FSAConfigProperties extends Properties {
         return property.split(Constants.WHITESPACE);
     }
 
+    public String[] getPythonIncludesWithPipfile(String propertyName, String[] defaultValue) {
+        String property = getProperty(propertyName);
+        if (property == null) {
+            return defaultValue;
+        }
+        property = property + Constants.WHITESPACE + Constants.PIPFILE;
+        //python.requirementsFileIncludes = requirements.txt devRequirements.txt  ->> will be **/*requirements.txt , **/*devRequirements.txt
+        String[] requirementsFilePattern = property.split(Constants.WHITESPACE);
+        for (int i = 0; i < requirementsFilePattern.length ; i++) {
+            requirementsFilePattern[i] = Constants.PATTERN + requirementsFilePattern[i];
+        }
+        return requirementsFilePattern;
+    }
+
 
     public int getArchiveDepth() {
         return getIntProperty(ConfigPropertyKeys.ARCHIVE_EXTRACTION_DEPTH_KEY, FSAConfiguration.DEFAULT_ARCHIVE_DEPTH);

@@ -622,6 +622,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             // for each dependency - matching its full commit id
                             dependencyInfos.stream().forEach(dependencyInfo -> dependencyInfo.setCommit(gradleLockFile.get(dependencyInfo.getArtifactId())));
                             // removing dependencies without commit-id and version
+                            dependencyInfos.stream().forEach(dependencyInfo -> {
+                                if (dependencyInfo.getVersion() == null && dependencyInfo.getCommit() == null){
+                                    logger.debug("{}/{} has no version nor commit-id; removing it from the dependencies' list", dependencyInfo.getArtifactId(), dependencyInfo.getGroupId());
+                                }
+                            });
                             dependencyInfos.removeIf(dependencyInfo -> dependencyInfo.getCommit() == null && dependencyInfo.getVersion() == null);
                         } else {
                             logger.warn("Can't find {} and verify dependencies commit-ids; make sure 'collectDependenciesAtRuntime' is set to true or run 'gradlew lock' manually", goGradleLock.getPath());
@@ -700,6 +705,32 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         }
     }
 
+    /*
+     parsing such lines -
+     apiVersion: "0.10"
+     dependencies:
+       build:
+       - name: "golang.org/x/crypto"
+         host:
+           name: "github.com/astaxie/beego"
+           commit: "053a075344c118a5cc41981b29ef612bb53d20ca"
+           urls:
+             - "https://github.com/astaxie/beego.git"
+             - "git@github.com:astaxie/beego.git"
+           vcs: "git"
+         vendorPath: "vendor/golang.org/x/crypto"
+         transitive: false
+       - urls:
+         - "https://github.com/google/go-querystring.git"
+         - "git@github.com:google/go-querystring.git"
+         vcs: "git"
+         name: "github.com/google/go-querystring"
+         commit: "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
+         transitive: false
+
+     ignore lines not starting with 2 white-spaces or starting with 4 white-spaces & a dash or 6 white-spaces (meaning indentation)
+     extract only the name and commit
+     */
     private HashMap<String, String> parseGoGradleLockFile(File file){
         HashMap<String, String> dependenciesCommits = new HashMap<>();
         if (file.isFile()){
@@ -710,18 +741,19 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 String currLine;
                 String name = null;
                 String commit = null;
+                String WS = Constants.WHITESPACE;
                 while ((currLine = bufferedReader.readLine()) != null) {
-                    if (currLine.startsWith(Constants.WHITESPACE + Constants.WHITESPACE) == false)
+                    if (currLine.startsWith(WS + WS) == false || currLine.startsWith(WS + WS + WS + WS + Constants.DASH) || currLine.startsWith(WS + WS + WS + WS + WS + WS))
                         continue;
-                    if (currLine.startsWith(Constants.WHITESPACE + Constants.WHITESPACE + Constants.DASH + Constants.WHITESPACE)) {
+                    if (currLine.startsWith(WS + WS + Constants.DASH + WS)) { // start of a block
                         if (name != null && commit != null){
-                            dependenciesCommits.put(name, commit);
+                            dependenciesCommits.put(name, commit); // add previous block (if found)
                         }
                         name = null;
                         commit = null;
                     }
                     // WSE-823 - goGradle.lock file may contain quotation marks, apostrophes (probably - didn't meet any such example yet) or none
-                    if (currLine.contains(NAME + Constants.COLON + Constants.WHITESPACE)) {
+                    if (currLine.contains(NAME + Constants.COLON + WS)) {
                         name = currLine.substring(currLine.indexOf(Constants.COLON) + 1).trim();
                         name = name.replace(Constants.QUOTATION_MARK, EMPTY_STRING);
                         name = name.replace(Constants.APOSTROPHE, EMPTY_STRING);
@@ -731,7 +763,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         commit = commit.replace(Constants.APOSTROPHE, EMPTY_STRING);
                     }
                 }
-                if (name != null && commit != null){
+                if (name != null && commit != null){ // finished last block
                     dependenciesCommits.put(name, commit);
                 }
             } catch (FileNotFoundException e) {

@@ -343,8 +343,22 @@ public class FileSystemScanner {
                 }
             }*/
         } else {
+            // Sort the projects by length of paths (from the longest to the shortest) in order to add filesDependencies to the most appropriate project
+            // Example: project1 path: C:\Users\file\Data; project2 path: C:\Users\file\Data\folder; file dependency path: C:\Users\file\Data\folder\a.jar
+            // Before sorting, the file dependency will be in project1. After sorting, the file dependency will be in project2.
+            List<Map.Entry<AgentProjectInfo, Path>> entriesList = new ArrayList<>();
+            allProjects.entrySet().forEach(entry -> {
+                if (entry.getValue() != null) {
+                    entriesList.add(entry);
+                }
+            });
+            entriesList.sort(Map.Entry.comparingByValue());
+            Collections.reverse(entriesList);
+            Map<AgentProjectInfo, Path> result = new LinkedHashMap<>();
+            entriesList.forEach(entry -> result.put(entry.getKey(), entry.getValue()));
+
             // remove files from handled projects
-            allProjects.entrySet().forEach(project -> {
+            result.entrySet().forEach(project -> {
                 Collection<DependencyInfo> projectDependencies = filesDependencies.stream()
                         .filter(dependencyInfo -> project.getValue() != null && dependencyInfo.getSystemPath().contains(project.getValue().toString())).collect(Collectors.toList());
                 project.getKey().getDependencies().addAll(projectDependencies);
