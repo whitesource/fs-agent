@@ -222,17 +222,21 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             } catch (Exception e1){
                 try {
                     collectVndrDependencies(rootDirectory, dependencyInfos);
-                } catch (Exception e2){
+                } catch (Exception e2) {
                     try {
-                        collectGlideDependencies(rootDirectory, dependencyInfos);
+                        collectGoGradleDependencies(rootDirectory, dependencyInfos);
                     } catch (Exception e3) {
                         try {
-                            collectGoVendorDependencies(rootDirectory, dependencyInfos);
+                            collectGlideDependencies(rootDirectory, dependencyInfos);
                         } catch (Exception e4) {
                             try {
-                                collectGoPMDependencies(rootDirectory, dependencyInfos);
+                                collectGoVendorDependencies(rootDirectory, dependencyInfos);
                             } catch (Exception e5) {
-                                error = "Couldn't collect dependencies - no dependency manager is installed";
+                                try {
+                                    collectGoPMDependencies(rootDirectory, dependencyInfos);
+                                } catch (Exception e6) {
+                                    error = "Couldn't collect dependencies - no dependency manager is installed";
+                                }
                             }
                         }
                     }

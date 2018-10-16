@@ -239,8 +239,9 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
             } catch (IOException e) {
                 logger.warn("Couldn't list all 'build.gradle' files, error: {}", e.getMessage());
                 logger.debug("Error: {}", e.getStackTrace());
+            } finally {
+                FileUtils.deleteQuietly(buildGradleTempDirectory);
             }
-            FileUtils.deleteQuietly(buildGradleTempDirectory);
         }
     }
 
@@ -258,14 +259,15 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     // append new task to bom file
     private boolean appendTaskToBomFile(File buildGradleTmp)  {
-        FileReader fileReader = null;
+        FileReader fileReader;
+        BufferedReader bufferedReader = null;
         InputStream inputStream = null;
         boolean hasDependencies = false;
         try {
             // appending the task only if the build.gradle file has 'dependencies {' node (only at the beginning of the line)
             // otherwise, later when the task is ran it'll fail
             fileReader = new FileReader(buildGradleTmp);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            bufferedReader = new BufferedReader(fileReader);
             String currLine;
             while ((currLine = bufferedReader.readLine()) != null) {
                 if (currLine.indexOf(DEPENDENCIES + Constants.WHITESPACE + CURLY_BRACKETS) == 0 || currLine.indexOf(DEPENDENCIES + CURLY_BRACKETS) == 0){
@@ -290,6 +292,9 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         try {
             if (inputStream != null) {
                 inputStream.close();
+            }
+            if (bufferedReader != null){
+                bufferedReader.close();
             }
         } catch (IOException e) {
             logger.error("Could close the file, cause", e.getMessage());
