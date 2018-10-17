@@ -170,12 +170,13 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     private List<DependencyInfo> collectDependencies(String directory, boolean isParent) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
         String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES);
-        String directoryName = "";
+        String directoryName = Constants.EMPTY_STRING;
         if (!isParent) {
-            // TODO - test on linux
+            // get the name of the directory
             String[] directoryPath = directory.split(Pattern.quote(fileSeparator));
             directoryName = directoryPath[directoryPath.length - 1];
         }
+        // get gradle dependencies, if the command runs successfully parse the dependencies
         directoryName = fileSeparator.concat(directoryName);
         List<String> lines = gradleCli.runGradleCmd(directory, gradleCommandParams);
         if (lines != null) {
