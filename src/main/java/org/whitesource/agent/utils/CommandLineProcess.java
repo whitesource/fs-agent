@@ -165,7 +165,7 @@ public class CommandLineProcess {
         boolean continueReadingLines = true;
         try {
             if (!includeErrorLines) {
-                logger.debug("trying to read lines using '{}'", args);
+                logger.debug("trying to read lines using '{}'", args.toString());
             }
             int lineIndex = 1;
             String line = Constants.EMPTY_STRING;

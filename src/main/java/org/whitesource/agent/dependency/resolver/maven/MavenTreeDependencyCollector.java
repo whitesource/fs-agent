@@ -62,6 +62,10 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String VERSION_PARAMETER = "-v";
     private static final String TEST_JAR = "test-jar";
     private static final String JAR = "jar";
+    private static final String MVN_CLEAN = "clean";
+    private static final String MVN_INSTALL = "install";
+    private static final String MVN_SKIP_TESTS = "-DskipTests";
+
 
     /* --- Members --- */
 
@@ -69,11 +73,12 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private final Set<String> mavenIgnoredScopes;
     private boolean showMavenTreeError;
     private boolean ignorePomModules;
+    private boolean runPreStep;
     private MavenLinesParser mavenLinesParser;
 
     /* --- Constructors --- */
 
-    public MavenTreeDependencyCollector(String[] mavenIgnoredScopes, boolean ignorePomModules) {
+    public MavenTreeDependencyCollector(String[] mavenIgnoredScopes, boolean ignorePomModules, boolean runPreStep) {
         mavenLinesParser = new MavenLinesParser();
         this.mavenIgnoredScopes = new HashSet<>();
         if (mavenIgnoredScopes == null) {
@@ -88,6 +93,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             }
         }
         this.ignorePomModules = ignorePomModules;
+        this.runPreStep = runPreStep;
     }
 
     /* --- Public methods --- */
@@ -98,6 +104,20 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         if (!this.isMavenExist(rootDirectory)) {
             logger.warn("Please install maven");
         } else {
+            if (runPreStep) {
+                try {
+                    CommandLineProcess mvnCleanInstall = new CommandLineProcess(rootDirectory, getCleanInstallCommandParams());
+                    mvnCleanInstall.executeProcess();
+                    if (mvnCleanInstall.isErrorInProcess()) {
+                        logger.warn("Failed to execute the command {}", getCleanInstallCommandParams());
+                    }
+
+                } catch (Exception e) {
+                    logger.warn("Error while execute dependencies after running {} on {}, {}", getCleanInstallCommandParams(), rootDirectory, e.getMessage());
+                    logger.debug("Error: {}", e.getStackTrace());
+                }
+            }
+
             if (StringUtils.isBlank(M2Path)) {
                 this.M2Path = getMavenM2Path(Constants.DOT);
             }
@@ -221,6 +241,14 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
 
     /* --- Private methods --- */
+
+    private String[] getCleanInstallCommandParams() {
+        if (isWindows()) {
+            return new String[]{Constants.CMD, C_CHAR_WINDOWS, MVN_COMMAND, MVN_CLEAN, MVN_INSTALL, MVN_SKIP_TESTS};
+        } else {
+            return new String[]{MVN_COMMAND, MVN_CLEAN, MVN_INSTALL, MVN_SKIP_TESTS};
+        }
+    }
 
     private String[] getLsCommandParams() {
         if (isWindows()) {

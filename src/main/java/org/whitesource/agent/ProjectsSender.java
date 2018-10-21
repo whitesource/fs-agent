@@ -23,6 +23,8 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.api.dispatch.*;
 import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.Coordinates;
+import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.client.WhitesourceService;
 import org.whitesource.agent.client.WssServiceException;
 import org.whitesource.agent.report.OfflineUpdateRequest;
@@ -87,7 +89,7 @@ public class ProjectsSender {
         logger.info("Initializing WhiteSource Client");
         Collection<AgentProjectInfo> projects = projectsDetails.getProjects();
 
-        if(checkDependenciesUpbound(projects)){
+        if (checkDependenciesUpbound(projects)) {
             return new Pair<>("Number of dependencies exceeded the maximum supported", StatusCode.SERVER_FAILURE);
         }
 
@@ -117,8 +119,10 @@ public class ProjectsSender {
             while (retries-- > -1) {
                 try {
                     statusCode = checkPolicies(service, projects);
-                    if (statusCode == StatusCode.SUCCESS || (senderConfig.isForceUpdate() && senderConfig.isForceUpdateFailBuildOnPolicyViolation())) {
-                        resultInfo = update(service, projects);
+                    if (senderConfig.isUpdateInventory()) {
+                        if (statusCode == StatusCode.SUCCESS || (senderConfig.isForceUpdate() && senderConfig.isForceUpdateFailBuildOnPolicyViolation())) {
+                            resultInfo = update(service, projects);
+                        }
                     }
                     break;
                 } catch (WssServiceException e) {
@@ -174,6 +178,7 @@ public class ProjectsSender {
                 }
                 for (ViaComponents viaComponents : viaComponentsList) {
                     logger.info("Starting VIA impact analysis");
+                    checkDependenciesSha1(viaComponents);
                     String appPath = viaComponents.getAppPath();
                     ViaLanguage language = viaComponents.getLanguage();
                     try {
@@ -214,6 +219,34 @@ public class ProjectsSender {
         }
     }
 
+    private void checkDependenciesSha1(ViaComponents viaComponents) {
+        Collection<DependencyInfo> dependencyWithoutSha1 = new LinkedList<>();
+        int unknownDependencyCounter = 0;
+        for (DependencyInfo dependencyInfo : viaComponents.getDependencies()) {
+            if (StringUtils.isEmpty(dependencyInfo.getSha1())) {
+                unknownDependencyCounter++;
+                dependencyWithoutSha1.add(dependencyInfo);
+            }
+        }
+        if (unknownDependencyCounter > 0) {
+            if (requestConfig.isRequireKnownSha1()) {
+                logger.warn("The system found {} with an unknown SHA1 value. Default processing was terminated.", unknownDependencyCounter);
+                printDependenciesWithoutSha1(dependencyWithoutSha1);
+                Main.exit(StatusCode.ERROR.getValue());
+            } else {
+                logger.warn("The system found {} with an unknown SHA1 value. Default processing termination was overridden by parameter.", unknownDependencyCounter);
+                printDependenciesWithoutSha1(dependencyWithoutSha1);
+            }
+        }
+    }
+
+    private void printDependenciesWithoutSha1(Collection<DependencyInfo> dependencyWithoutSha1) {
+        logger.warn("Found dependencies with an unknown SHA1 value:");
+        for (DependencyInfo dependencyInfo : dependencyWithoutSha1) {
+            logger.warn(new Coordinates(dependencyInfo.getGroupId(), dependencyInfo.getArtifactId(), dependencyInfo.getVersion()).toString());
+        }
+    }
+
     private boolean checkDependenciesUpbound(Collection<AgentProjectInfo> projects) {
         int numberOfDependencies = projects.stream().map(x -> x.getDependencies()).mapToInt(x -> x.size()).sum();
         if (numberOfDependencies > Constants.MAX_NUMBER_OF_DEPENDENCIES) {
@@ -240,7 +273,7 @@ public class ProjectsSender {
 
     private StatusCode checkPolicies(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         boolean policyCompliance = true;
-        if (senderConfig.isCheckPolicies()) {
+        if (senderConfig.isCheckPolicies() || !senderConfig.isUpdateInventory()) {
             logger.info("Checking policies");
             CheckPolicyComplianceResult checkPoliciesResult;
             if (senderConfig.isSendLogsToWss()) {
@@ -252,13 +285,16 @@ public class ProjectsSender {
                         requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(), requestConfig.getRequesterEmail());
             }
             if (checkPoliciesResult.hasRejections()) {
-                if (senderConfig.isForceUpdate()) {
+                if (senderConfig.isForceUpdate() && senderConfig.isUpdateInventory()) {
                     logger.info("Some dependencies violate open source policies, however all were force " +
                             "updated to organization inventory.");
                     if (senderConfig.isForceUpdateFailBuildOnPolicyViolation()) {
                         policyCompliance = false;
                     }
-                } else {
+                } else if (!senderConfig.isUpdateInventory()) {
+                    logger.info("Some dependencies did not conform with open source policies, review report for details");
+                    policyCompliance = false;
+                }  else {
                     logger.info("Some dependencies did not conform with open source policies, review report for details");
                     logger.info("=== UPDATE ABORTED ===");
                     policyCompliance = false;

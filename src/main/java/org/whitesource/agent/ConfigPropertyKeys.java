@@ -27,12 +27,15 @@ public final class ConfigPropertyKeys {
     public static final String FORCE_UPDATE = "forceUpdate";
     public static final String FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION = "forceUpdate.failBuildOnPolicyViolation";
     public static final String FORCE_CHECK_ALL_DEPENDENCIES = "forceCheckAllDependencies"; // optional
+    public static final String UPDATE_INVENTORY = "updateInventory"; // optional
     public static final String ENABLE_IMPACT_ANALYSIS = "enableImpactAnalysis"; // optional
     public static final String IA_LANGUAGE = "iaLanguage"; // optional
     public static final String CONNECTION_RETRIES = "connectionRetries";
     public static final String CONNECTION_RETRIES_INTERVALS = "connectionRetriesInterval";
     public static final String ORG_TOKEN_PROPERTY_KEY = "apiKey";
+    public static final String ORG_TOKEN_FILE = "apiKeyFile";
     public static final String USER_KEY_PROPERTY_KEY = "userKey";
+    public static final String USER_KEY_FILE = "userKeyFile";
     public static final String PARTIAL_SHA1_MATCH_KEY = "partialSha1Match";
     public static final String PRODUCT_TOKEN_PROPERTY_KEY = "productToken"; // optional
     public static final String PRODUCT_NAME_PROPERTY_KEY = "productName"; // optional
@@ -118,6 +121,7 @@ public final class ConfigPropertyKeys {
     public static final String MAVEN_AGGREGATE_MODULES      = "maven.aggregateModules";
     public static final String MAVEN_IGNORE_POM_MODULES     = "maven.ignorePomModules";
     public static final String MAVEN_IGNORE_SOURCE_FILES    = "maven.ignoreSourceFiles";
+    public static final String MAVEN_RUN_PRE_STEP           = "maven.runPreStep";
 
     public static final String IGNORE_SOURCE_FILES          = "ignoreSourceFiles";
 
@@ -177,6 +181,10 @@ public final class ConfigPropertyKeys {
 
     public static final String HTML_RESOLVE_DEPENDENCIES    = "html.resolveDependencies";
 
+    public static final String COCOAPODS_RESOLVE_DEPENDENCIES    = "cocoapods.resolveDependencies";
+    public static final String COCOAPODS_RUN_PRE_STEP             = "cocoapods.runPreStep";
+    public static final String COCOAPODS_IGNORE_SOURCE_FILES      = "cocoapods.ignoreSourceFiles";
+
     public static final String DEPENDENCIES_ONLY            = "dependenciesOnly";
     public static final String WHITESOURCE_CONFIGURATION    = "whitesourceConfiguration";
 
@@ -187,6 +195,12 @@ public final class ConfigPropertyKeys {
 
     public static final String LOG_CONTEXT = "logContext";
 
+    public static final String REQUIRE_KNOWN_SHA1 = "requireKnownSha1";
+
+    // Analysis multi module project for via
+    public static final String ANALYZE_MULTI_MODULE = "analyzeMultiModule";
+    public static final String X_MODULE_PATH = "xModulePath";
+
     // Global values for remote Docker
     public static final String DOCKER_PULL_ENABLE = "docker.pull.enable";
     public static final String DOCKER_PULL_IMAGES = "docker.pull.images";
@@ -194,6 +208,7 @@ public final class ConfigPropertyKeys {
     public static final String DOCKER_PULL_DIGEST = "docker.pull.digest";
     public static final String DOCKER_PULL_MAX_IMAGES = "docker.pull.maxImages";
     public static final String DOCKER_DELETE_FORCE = "docker.delete.force";
+    public static final String DOCKER_LOGIN_SUDO = "docker.login.sudo";
     // TODO: Not implemented yet
     public static final String DOCKER_SCAN_MAX_IMAGES = "docker.scan.maxImages";
     // TODO: Not implemented yet
@@ -211,4 +226,7 @@ public final class ConfigPropertyKeys {
     public static final String DOCKER_AWS_SECRETKEY = "docker.aws.secretKey";
 
 
+    public static final String PYTHON_RUN_PIPENV_PRE_STEP = "python.runPipenvPreStep";
+    public static final String PYTHON_IGNORE_PIPENV_INSTALL_ERRORS = "python.IgnorePipenvInstallErrors";
+    public static final String PYTHON_PIPENV_DEV_DEPENDENCIES = "python.pipenvDevDependencies";
 }

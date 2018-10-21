@@ -14,9 +14,7 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.fs.Main;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,6 +23,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.whitesource.agent.TempFolders.BUILD_GRADLE_DIRECTORY;
 
@@ -37,6 +36,8 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     private static final String JAR_EXTENSION = ".jar";
     private static final String PROJECT = "--- Project";
     public static final String COPY_DEPENDENCIES_TASK_TXT = "copyDependenciesTask.txt";
+    private static final String DEPENDENCIES = "dependencies";
+    private static final String CURLY_BRACKETS = "{";
 
     /* --- Private Members --- */
 
@@ -67,39 +68,41 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
+        // In order to use the gradle wrapper, we define the top folder that contains the wrapper
+        this.gradleCli.setTopLevelFolderGradlew(topLevelFolder);
         // each bom-file ( = build.gradle) represents a module - identify its folder and scan it using 'gradle dependencies'
         Map<AgentProjectInfo, Path> projectInfoPathMap = new HashMap<>();
         Collection<String> excludes = new HashSet<>();
 
-        // Get the list of projects as paths
-        List<String> projectsList = null;
-        if (bomFiles.size() > 1) {
-            projectsList = collectProjects(topLevelFolder);
-        }
-        if (projectsList == null) {
-            logger.warn("Command \"gradle projects\" did not return a list of projects");
-        }
+//        // Get the list of projects as paths
+//        List<String> projectsList = null;
+//        if (bomFiles.size() > 1) {
+//            projectsList = collectProjects(topLevelFolder);
+//        }
+//        if (projectsList == null) {
+//            logger.warn("Command \"gradle projects\" did not return a list of projects");
+//        }
         if (gradleRunPreStep) {
-            downloadMissingDependencies(bomFiles);
+            downloadMissingDependencies(projectFolder);
         }
 
         for (String bomFile : bomFiles) {
             String bomFileFolder = new File(bomFile).getParent();
             File bomFolder = new File(new File(bomFile).getParent());
             String moduleName = bomFolder.getName();
-            String moduleRelativeName = Constants.EMPTY_STRING;
-            try {
-                String canonicalPath = bomFolder.getCanonicalPath();
-                // Relative name by replacing the root folder with "." - will look something like .\abc\def
-                moduleRelativeName = Constants.DOT + canonicalPath.replaceFirst(Pattern.quote(topLevelFolder), Constants.EMPTY_STRING);
-            } catch (Exception e) {
-                logger.debug("Error getting path - {} ", e.getMessage());
-            }
-            // making sure the module's folder was listed by "gradle projects" command
-            if (!moduleRelativeName.isEmpty() && projectsList != null && !projectsList.contains(moduleRelativeName)) {
-                logger.debug("Ignoring project at {} - because it was not listed by \"gradle projects\" command", moduleRelativeName);
-                continue;
-            }
+//            String moduleRelativeName = Constants.EMPTY_STRING;
+//            try {
+//                String canonicalPath = bomFolder.getCanonicalPath();
+//                // Relative name by replacing the root folder with "." - will look something like .\abc\def
+//                moduleRelativeName = Constants.DOT + canonicalPath.replaceFirst(Pattern.quote(topLevelFolder), Constants.EMPTY_STRING);
+//            } catch (Exception e) {
+//                logger.debug("Error getting path - {} ", e.getMessage());
+//            }
+//            // making sure the module's folder was listed by "gradle projects" command
+//            if (!moduleRelativeName.isEmpty() && projectsList != null && !projectsList.contains(moduleRelativeName)) {
+//                logger.debug("Ignoring project at {} - because it was not listed by \"gradle projects\" command", moduleRelativeName);
+//                continue;
+//            }
 
             List<DependencyInfo> dependencies = collectDependencies(bomFileFolder, bomFileFolder.equals(topLevelFolder));
             if (dependencies.size() > 0) {
@@ -166,18 +169,12 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private List<DependencyInfo> collectDependencies(String directory, boolean isParent) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
-        // running the gradle/gradlew command from the project's root folder, because when using gradlew the path must be
-        // kept (i.e. - the command 'gradlew' should only be called from the root's project).  In case of a multi-module
-        // project, adding the module's name before the 'dependencies' command, so it'll know which folder to refer to
         String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES);
         String directoryName = Constants.EMPTY_STRING;
         if (!isParent) {
             // get the name of the directory
             String[] directoryPath = directory.split(Pattern.quote(fileSeparator));
             directoryName = directoryPath[directoryPath.length - 1];
-            int lastParamIndex = gradleCommandParams.length - 1;
-            gradleCommandParams[lastParamIndex] = directoryName + Constants.COLON + gradleCommandParams[lastParamIndex];
-            directory = String.join(fileSeparator, Arrays.copyOfRange(directoryPath, 0, directoryPath.length - 1));
         }
         // get gradle dependencies, if the command runs successfully parse the dependencies
         directoryName = fileSeparator.concat(directoryName);
@@ -224,59 +221,86 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     }
 
     // copy all the bom files (build.gradle) to temp folder and run the command "gradle copyDependencies"
-    private void downloadMissingDependencies(Set<String> bomFiles) {
+    private void downloadMissingDependencies(String projectFolder) {
+        logger.debug("running pre-steps on folder {}", projectFolder);
         File buildGradleTempDirectory = new File(BUILD_GRADLE_DIRECTORY);
         buildGradleTempDirectory.mkdir();
-        for (String bomFile : bomFiles) {
-            File buildGradleTmp = copyBomFile(bomFile, buildGradleTempDirectory);
-            if (buildGradleTmp.exists()) {
-                appendTaskToBomFile(buildGradleTmp);
-                runPreStepCommand(buildGradleTmp);
-                buildGradleTmp.delete();
-            } else {
-                logger.warn("Could not find the path {}", buildGradleTmp.getPath());
+        if (copyProjectFolder(projectFolder, buildGradleTempDirectory)) {
+            try {
+                Stream<Path> pathStream = Files.walk(Paths.get(buildGradleTempDirectory.getPath()), Integer.MAX_VALUE).filter(file -> file.getFileName().toString().equals(Constants.BUILD_GRADLE));
+                pathStream.forEach(path -> {
+                    File buildGradleTmp = new File(path.toString());
+                    if (buildGradleTmp.exists()) {
+                        if (appendTaskToBomFile(buildGradleTmp))
+                            runPreStepCommand(buildGradleTmp);
+                    } else {
+                        logger.warn("Could not find the path {}", buildGradleTmp.getPath());
+                    }
+                });
+            } catch (IOException e) {
+                logger.warn("Couldn't list all 'build.gradle' files, error: {}", e.getMessage());
+                logger.debug("Error: {}", e.getStackTrace());
+            } finally {
+                FileUtils.deleteQuietly(buildGradleTempDirectory);
             }
         }
-        FileUtils.deleteQuietly(buildGradleTempDirectory);
-
     }
 
-    // copy bom file to local temp directory
-
-    private File copyBomFile(String bomFile, File buildGradleTempDirectory) {
-        File buildGradle = new File(bomFile);
-        logger.debug("Copy bom file from {} to {}", buildGradle.getPath(), buildGradleTempDirectory);
-        File buildGradleTmp = new File(buildGradleTempDirectory + fileSeparator + "build.gradle");
+    // copy project to local temp directory
+    private boolean copyProjectFolder(String projectFolder, File buildGradleTempDirectory) {
         try {
-            FileUtils.copyFile(buildGradle, buildGradleTmp);
+            FileUtils.copyDirectory(new File(projectFolder), buildGradleTempDirectory);
         } catch (IOException e) {
-            logger.error("Could not copy the file {} to {} , the cause {}", buildGradle.getPath(), buildGradleTempDirectory.getPath(), e.getMessage());
+            logger.error("Could not copy the folder {} to {} , the cause {}", projectFolder, buildGradleTempDirectory.getPath(), e.getMessage());
+            return false;
         }
-        return buildGradleTmp;
+        logger.debug("copied folder {} to temp folder successfully", projectFolder);
+        return true;
     }
 
     // append new task to bom file
-    private void appendTaskToBomFile(File buildGradleTmp) {
-        ClassLoader classLoader = Main.class.getClassLoader();
+    private boolean appendTaskToBomFile(File buildGradleTmp)  {
+        FileReader fileReader;
+        BufferedReader bufferedReader = null;
         InputStream inputStream = null;
+        boolean hasDependencies = false;
         try {
-            inputStream = classLoader.getResourceAsStream(COPY_DEPENDENCIES_TASK_TXT);
-            byte[] bytes = IOUtils.toByteArray(inputStream);
-            if (bytes.length > 0) {
-                Files.write(Paths.get(buildGradleTmp.getPath()), bytes, StandardOpenOption.APPEND);
-            } else {
-                logger.warn("Could not read {}", COPY_DEPENDENCIES_TASK_TXT);
+            // appending the task only if the build.gradle file has 'dependencies {' node (only at the beginning of the line)
+            // otherwise, later when the task is ran it'll fail
+            fileReader = new FileReader(buildGradleTmp);
+            bufferedReader = new BufferedReader(fileReader);
+            String currLine;
+            while ((currLine = bufferedReader.readLine()) != null) {
+                if (currLine.indexOf(DEPENDENCIES + Constants.WHITESPACE + CURLY_BRACKETS) == 0 || currLine.indexOf(DEPENDENCIES + CURLY_BRACKETS) == 0){
+                    hasDependencies = true;
+                    break;
+                }
+            }
+            if (hasDependencies) {
+                ClassLoader classLoader = Main.class.getClassLoader();
+                inputStream = classLoader.getResourceAsStream(COPY_DEPENDENCIES_TASK_TXT);
+                byte[] bytes = IOUtils.toByteArray(inputStream);
+                if (bytes.length > 0) {
+                    Files.write(Paths.get(buildGradleTmp.getPath()), bytes, StandardOpenOption.APPEND);
+                } else {
+                    logger.warn("Could not read {}", COPY_DEPENDENCIES_TASK_TXT);
+                }
             }
         } catch (IOException e) {
             logger.error("Could not write into the file {}, the cause {}", buildGradleTmp.getPath(), e.getMessage());
+            hasDependencies = false;
         }
         try {
             if (inputStream != null) {
                 inputStream.close();
             }
+            if (bufferedReader != null){
+                bufferedReader.close();
+            }
         } catch (IOException e) {
             logger.error("Could close the file, cause", e.getMessage());
         }
+        return hasDependencies;
     }
 
     // run pre step command gradle copyDependencies

@@ -3,7 +3,6 @@ package org.whitesource.agent.dependency.resolver.docker.remotedocker;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
-import org.whitesource.agent.dependency.resolver.docker.DockerImage;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.RemoteDockerConfiguration;
@@ -20,6 +19,9 @@ public abstract class AbstractRemoteDocker {
     private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteDocker.class);
     private static String DOCKER_CLI_VERSION = "docker --version";
     static String DOCKER_CLI_LOGIN  = "docker login";
+    static String DOCKER_CLI_REMOVE_IMAGE = "docker rmi ";
+    private static String DOCKER_CLI_PULL = "docker pull ";
+    static String LINUX_PREFIX_SUDO = "sudo ";
     private static final String WS_SCANNED_TAG = "WS.Scanned";
 
     // This is a set of the pulled images only - Users may require to pull existing images - but they are not saved
@@ -48,7 +50,7 @@ public abstract class AbstractRemoteDocker {
 
     /* --- Public methods --- */
 
-    public void pullRemoteDockerImages() {
+    public Set<AbstractRemoteDockerImage> pullRemoteDockerImages() {
         if (isAllSoftwareRequiredInstalled()) {
              if (loginToRemoteRegistry()) {
                  imagesFound = listImagesOnRemoteRegistry();
@@ -59,12 +61,13 @@ public abstract class AbstractRemoteDocker {
                  logger.info("{} Images are up to date (not pulled)", existingImagesCount);
              }
         }
+        return imagesPulled;
     }
 
     public void removePulledRemoteDockerImages() {
         if (imagesPulled != null) {
             for(AbstractRemoteDockerImage image: imagesPulled) {
-                String command = "docker rmi ";
+                String command = DOCKER_CLI_REMOVE_IMAGE;
                 // Use force delete
                 if (config.isForceDelete()) {
                     command += "-f ";
@@ -268,8 +271,7 @@ public abstract class AbstractRemoteDocker {
         boolean result = false;
         if (!StringUtils.isBlank(imageURL)) {
             logger.info("Trying to pull image : {}", imageURL);
-            String command = "docker pull";
-            command += Constants.WHITESPACE;
+            String command = DOCKER_CLI_PULL;
             command += imageURL;
             try {
                 // TODO: check if can use CommandLineProcess
@@ -348,11 +350,12 @@ public abstract class AbstractRemoteDocker {
     }
 
     private boolean isDockerInstalled() {
-         boolean installed = isCommandSuccessful(DOCKER_CLI_VERSION);
-         if (!installed) {
-             logger.error("Docker is not installed or its path is not configured correctly");
-         }
-         return installed;
+        String command = DOCKER_CLI_VERSION;
+        boolean installed = isCommandSuccessful(command);
+        if (!installed) {
+            logger.error("Docker is not installed or its path is not configured correctly");
+        }
+        return installed;
     }
 
     private boolean isMatchStringInList(String toMatch, List<String> stringsList) {

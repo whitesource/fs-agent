@@ -18,6 +18,9 @@ package org.whitesource.fs;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
+import org.whitesource.agent.dependency.resolver.ViaMultiModuleAnalyzer;
+import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
+import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
@@ -80,7 +83,7 @@ public class FileSystemAgent {
                 } else if (file.isFile()) {
                     this.dependencyDirs.add(directory);
                 } else {
-                    logger.warn(directory + "is not a file nor a directory .");
+                    logger.warn("{} is not a file nor a directory .", directory);
                 }
             }
         } else {
@@ -91,35 +94,75 @@ public class FileSystemAgent {
     /* --- Overridden methods --- */
 
     public ProjectsDetails createProjects() {
-        ProjectsDetails projects;
+        ProjectsDetails projects = new ProjectsDetails(new ArrayList<>(), StatusCode.SUCCESS, Constants.EMPTY_STRING);
+        // Use FSA a as a package manger extractor for Debian/RPM/Arch Linux/Alpine
+
+        // Check if scanPackageManager==true - This is the first priority and overrides other scans
+        if (config.isScanProjectManager()) {
+            Collection<AgentProjectInfo> tempProjects = new PackageManagerExtractor().createProjects();
+            ProjectsDetails projectsDetails = new ProjectsDetails(tempProjects, StatusCode.SUCCESS, Constants.EMPTY_STRING);
+            String projectName = config.getRequest().getProjectName();
+            addSingleProjectToProjects(projectsDetails, projectName, projects);
+            return projects;
+        }
+
+        // Check if docker.scanImages==true - This scans Docker Images, and should not scan any folders, so we exit
+        // after the scan is done
+        if (config.isScanDockerImages()) {
+            Collection<AgentProjectInfo> tempDockerProjects = new DockerResolver(config).resolveDockerImages();
+            return new ProjectsDetails(tempDockerProjects, StatusCode.SUCCESS, Constants.EMPTY_STRING);
+        }
+
+        if (config.isSetUpMuiltiModuleFile()) {
+            ViaMultiModuleAnalyzer viaMultiModuleAnalyzer = new ViaMultiModuleAnalyzer(config.getDependencyDirs().get(0),
+                    new MavenDependencyResolver(false, new String[]{Constants.NONE}, false,
+                            false, false), Constants.TARGET, config.getAnalyzeMultiModule());
+            if (viaMultiModuleAnalyzer.getBomFiles().isEmpty()) {
+                viaMultiModuleAnalyzer = new ViaMultiModuleAnalyzer(config.getDependencyDirs().get(0),
+                        new GradleDependencyResolver(false, false, false, Constants.EMPTY_STRING, new String[]{Constants.NONE}, false),
+                        Constants.BUILD + File.separator + Constants.LIBS, config.getAnalyzeMultiModule());
+            }
+            if (!viaMultiModuleAnalyzer.getBomFiles().isEmpty()) {
+                viaMultiModuleAnalyzer.writeFile();
+            } else {
+                logger.error("Multi-module analysis could not establish the appPath based on the specified path. Please review the specified -d path.");
+                Main.exit(StatusCode.ERROR.getValue());
+            }
+            logger.info("The multi-module analysis setup file was created successfully.");
+            Main.exit(StatusCode.SUCCESS.getValue());
+        }
+
+        // Scan folders and create a project per folder
         if (projectPerSubFolder) {
             if (this.config.getSender().isEnableImpactAnalysis()) {
                 logger.warn("Could not executing VIA impact analysis with the 'projectPerFolder' flag");
+                return projects;
             }
-            projects = new ProjectsDetails(new ArrayList<>(), StatusCode.SUCCESS, Constants.EMPTY_STRING);
+            Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
+            Set<String> setDirs = new HashSet<>(1);
+
             for (String directory : dependencyDirs) {
-                Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
-                Set<String> setDirs = new HashSet<>();
                 setDirs.add(directory);
                 appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
+
                 ProjectsDetails projectsDetails = getProjects(Collections.singletonList(directory), appPathsToDependencyDirs);
-                if (projectsDetails.getProjects().size() == 1) {
-                    String projectName = new File(directory).getName();
-                    String projectVersion = config.getRequest().getProjectVersion();
-                    AgentProjectInfo projectInfo = projectsDetails.getProjects().stream().findFirst().get();
-                    projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
-                    projects.getProjectToViaComponents().put(projectInfo, projectsDetails.getProjectToViaComponents().get(projectInfo));
-                }
+                String projectName = new File(directory).getName();
+                addSingleProjectToProjects(projectsDetails, projectName, projects);
+
                 // return on the first project that fails
                 if (!projectsDetails.getStatusCode().equals(StatusCode.SUCCESS)) {
                     // return status code if there is a failure
                     return new ProjectsDetails(new ArrayList<>(), projects.getStatusCode(), projects.getDetails());
                 }
+                appPathsToDependencyDirs.clear();
+                setDirs.clear();
             }
             return projects;
-        } else {
+        }
+        // Scan folders and create one project for all folders together
+        if (!projectPerSubFolder) { // This 'if' is always true now, but keep it maybe we will do other checks in the future...
             projects = getProjects(dependencyDirs, config.getAppPathsToDependencyDirs());
-            if (projects.getProjects().size() > 0) {
+            if (!projects.getProjects().isEmpty()) {
                 AgentProjectInfo projectInfo = projects.getProjects().stream().findFirst().get();
                 if (projectInfo.getCoordinates() == null) {
                     // use token or name + version
@@ -133,13 +176,32 @@ public class FileSystemAgent {
                     }
                 }
             }
-
-            // todo: check for duplicates projects
             return projects;
         }
+
+        // todo: check for duplicates projects
+        return projects;
     }
 
     /* --- Private methods --- */
+
+    private void addSingleProjectToProjects(ProjectsDetails projectsDetails, String projectName, ProjectsDetails projects) {
+        if(projectsDetails == null || projects == null || projectName == null) {
+            logger.debug("projectsDetails {} , projects {} , projectName {}", projectsDetails, projectName, projects);
+            return;
+        }
+        if (projectsDetails.getProjects().size() == 1) {
+            String projectVersion = config.getRequest().getProjectVersion();
+            AgentProjectInfo projectInfo = projectsDetails.getProjects().stream().findFirst().get();
+            projectInfo.setCoordinates(new Coordinates(null, projectName, projectVersion));
+            LinkedList<ViaComponents> viaComponents = projectsDetails.getProjectToViaComponents().get(projectInfo);
+            projects.getProjectToViaComponents().put(projectInfo, viaComponents);
+        } else {
+            for(AgentProjectInfo projectInfo : projectsDetails.getProjects()) {
+                logger.debug("Project not added - {}",projectInfo);
+            }
+        }
+    }
 
     private ProjectsDetails getProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs) {
         // create getScm connector
@@ -191,22 +253,12 @@ public class FileSystemAgent {
             return new ProjectsDetails(new ArrayList<>(), StatusCode.ERROR, config.getAgent().getError()); // TODO this is within a try frame. Throw an exception instead
         }
 
-        Collection<AgentProjectInfo> projects = null;
-        Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToAppPathAndLanguage = null;
-        ProjectsDetails projectsDetails;
-        // Use FSA a as a package manger extractor for Debian/RPM/Arch Linux/Alpine
-        if (config.isScanProjectManager()) {
-            projects = new PackageManagerExtractor().createProjects();
-            projectsDetails = new ProjectsDetails(projects, success[0], Constants.EMPTY_STRING);
-        } else if (config.isScanDockerImages()) {
-            projects = new DockerResolver(config).resolveDockerImages();
-            projectsDetails = new ProjectsDetails(projects, success[0], Constants.EMPTY_STRING);
-        } else {
-            ViaLanguage viaLanguage = getIaLanguage(config.getRequest().getIaLanguage());
-            projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis(), viaLanguage)
+        Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToAppPathAndLanguage;
+        ViaLanguage viaLanguage = getIaLanguage(config.getRequest().getIaLanguage());
+        projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis(), viaLanguage)
                     .createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnectors[0]);
-            projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], Constants.EMPTY_STRING);
-        }
+        ProjectsDetails projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], Constants.EMPTY_STRING);
+
         // delete all temp scm files
         scmPaths.forEach(directory -> {
             if (directory != null) {

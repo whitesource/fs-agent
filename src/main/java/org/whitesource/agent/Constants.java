@@ -82,7 +82,8 @@ public final class Constants {
     public static final String LIB                  = "lib";
     public static final String YUM_DB               = "yumdb";
     public static final String YUM                  = "yum";
-    public static final String PYTHON_REQUIREMENTS = "requirements.txt";
+    public static final String PYTHON_REQUIREMENTS  = "requirements.txt";
+    public static final String PIPFILE              = "Pipfile";
     public static final String TXT_EXTENSION        = ".txt";
     public static final String SETUP_PY             = "setup.py";
     public static final int MAX_EXTRACTION_DEPTH    = 7;
@@ -97,6 +98,10 @@ public final class Constants {
     public static final char OPEN_BRACKET           = '(';
     public static final char CLOSE_BRACKET          = ')';
     public static final char EQUALS_CHAR            = '=';
+    public static final char OPEN_SQUARE_BRACKET    = '[';
+    public static final char CLOSE_SQUARE_BRACKET   = ']';
+    public static final String DOUBLE_EQUALS        = "==";
+    public static final char SEMI_COLON             = ';';
 
     public static final int MAX_NUMBER_OF_DEPENDENCIES = 1000000;
 
@@ -104,4 +109,8 @@ public final class Constants {
     public static final String MAP_APPENDER_NAME = "collectToMap";
     public static final String HELP_ARG1 = "-help";
     public static final String HELP_ARG2 = "-h";
+    public static final String TARGET = "target";
+    public static final String BUILD = "build";
+    public static final String NONE = "None";
+    public static final String LIBS = "libs";
 }
