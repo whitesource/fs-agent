@@ -97,8 +97,8 @@ public class FSAConfigProperties extends Properties {
         if (property == null) {
             return defaultValue;
         }
-       property = property + Constants.WHITESPACE + Constants.PIPFILE;
-        return property.split(Constants.WHITESPACE) ;
+        property = property + Constants.WHITESPACE + Constants.PIPFILE;
+        return property.split(Constants.WHITESPACE);
     }
 
 

@@ -71,9 +71,11 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     private static final String SHASUM = "shasum";
 
     private static final String EXCLUDE_TOP_FOLDER = "node_modules";
-    public static final String AUTHORIZATION = "Authorization";
-    public static final String BEARER = "Bearer";
+    private static final String AUTHORIZATION = "Authorization";
+    private static final String BEARER = "Bearer";
+    private static final String BASIC = "Basic";
     private static final int NUM_THREADS = 8;
+    private static final String URL_SLASH = "%2F";
 
     /* --- Members --- */
 
@@ -264,7 +266,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         URI uriScopeDep = null;
         if (isScopeDep) {
             try {
-                uriScopeDep = new URI(registryPackageUrl.replace(BomFile.DUMMY_PARAMETER_SCOPE_PACKAGE, "%2F"));
+                uriScopeDep = new URI(registryPackageUrl.replace(BomFile.DUMMY_PARAMETER_SCOPE_PACKAGE, URL_SLASH));
             } catch (Exception e) {
                 logger.warn("Failed creating uri of {}", registryPackageUrl);
                 return Constants.EMPTY_STRING;
@@ -275,10 +277,17 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         try {
             if (isScopeDep) {
                 HttpHeaders httpHeaders = new HttpHeaders();
-                httpHeaders.set(AUTHORIZATION, BEARER + Constants.WHITESPACE + npmAccessToken);
+                if (StringUtils.isEmptyOrNull(npmAccessToken)) {
+                    logger.debug("npm.accessToken is not defined");
+                } else {
+                    logger.debug("npm.accessToken is defined");
+                    String userCredentials = BEARER + Constants.COLON + npmAccessToken;
+                    String basicAuth = BASIC + Constants.WHITESPACE + new String(Base64.getEncoder().encode(userCredentials.getBytes()));
+                    httpHeaders.set(AUTHORIZATION, basicAuth);
+                }
+
                 HttpEntity entity = new HttpEntity(httpHeaders);
                 responseFromRegistry = restTemplate.exchange(uriScopeDep, HttpMethod.GET, entity,String.class).getBody();
-                //responseFromRegistry = restTemplate.getForObject(uriScopeDep, String.class);
             } else {
                 responseFromRegistry = restTemplate.getForObject(registryPackageUrl, String.class);
             }
@@ -309,7 +318,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
                 // do not add new dependencies if 'npm ls' already returned all
                 DependencyInfo dependency = new DependencyInfo();
                 dependencies.add(dependency);
-                threadsCollection.add(new EnrichDependency(packageJson, dependency, dependencyPackageJsonMap));
+                threadsCollection.add(new EnrichDependency(packageJson, dependency, dependencyPackageJsonMap, npmAccessToken));
                 logger.debug("Collect package.json of the dependency in the file: {}", dependency.getFilename());
             }
         }
@@ -426,10 +435,12 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
             this.npmAccessToken = npmAccessToken;
         }
 
-        public EnrichDependency(BomFile packageJson, DependencyInfo dependency, ConcurrentHashMap<DependencyInfo, BomFile> dependencyPackageJsonMap) {
+        public EnrichDependency(BomFile packageJson, DependencyInfo dependency,
+                                ConcurrentHashMap<DependencyInfo, BomFile> dependencyPackageJsonMap, String npmAccessToken) {
             this.packageJson = packageJson;
             this.dependency = dependency;
             this.dependencyPackageJsonMap = dependencyPackageJsonMap;
+            this.npmAccessToken = npmAccessToken;
         }
 
         /* --- Overridden methods --- */

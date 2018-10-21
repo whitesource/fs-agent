@@ -91,8 +91,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private boolean ignoreSourceFiles;
     private boolean ignoreTestPackages;
     private boolean goGradleEnableTaskAlias;
+    private String gradlePreferredEnvironment;
 
-    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean ignoreSourceFiles, boolean ignoreTestPackages, boolean goGradleEnableTaskAlias){
+    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean ignoreSourceFiles, boolean ignoreTestPackages, boolean goGradleEnableTaskAlias, String gradlePreferredEnvironment){
         super();
         this.cli = new Cli();
         this.goDependencyManager = goDependencyManager;
@@ -100,6 +101,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         this.ignoreSourceFiles = ignoreSourceFiles;
         this.ignoreTestPackages = ignoreTestPackages;
         this.goGradleEnableTaskAlias = goGradleEnableTaskAlias;
+        this.gradlePreferredEnvironment = gradlePreferredEnvironment;
     }
 
     @Override
@@ -222,17 +224,21 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             } catch (Exception e1){
                 try {
                     collectVndrDependencies(rootDirectory, dependencyInfos);
-                } catch (Exception e2){
+                } catch (Exception e2) {
                     try {
-                        collectGlideDependencies(rootDirectory, dependencyInfos);
+                        collectGoGradleDependencies(rootDirectory, dependencyInfos);
                     } catch (Exception e3) {
                         try {
-                            collectGoVendorDependencies(rootDirectory, dependencyInfos);
+                            collectGlideDependencies(rootDirectory, dependencyInfos);
                         } catch (Exception e4) {
                             try {
-                                collectGoPMDependencies(rootDirectory, dependencyInfos);
+                                collectGoVendorDependencies(rootDirectory, dependencyInfos);
                             } catch (Exception e5) {
-                                error = "Couldn't collect dependencies - no dependency manager is installed";
+                                try {
+                                    collectGoPMDependencies(rootDirectory, dependencyInfos);
+                                } catch (Exception e6) {
+                                    error = "Couldn't collect dependencies - no dependency manager is installed";
+                                }
                             }
                         }
                     }
@@ -602,7 +608,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoGradleDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) {
         logger.debug("collecting dependencies using 'GoGradle'");
-        GradleCli gradleCli = new GradleCli(Constants.GRADLE_WRAPPER);
+        GradleCli gradleCli = new GradleCli(this.gradlePreferredEnvironment);
         try {
             Stream<Path> pathStream = Files.walk(Paths.get(rootDirectory), Integer.MAX_VALUE).filter(file -> file.getFileName().toString().equals(Constants.BUILD_GRADLE));
             pathStream.forEach(file -> {

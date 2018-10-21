@@ -37,7 +37,10 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     private static final String PROJECT = "--- Project";
     public static final String COPY_DEPENDENCIES_TASK_TXT = "copyDependenciesTask.txt";
     private static final String DEPENDENCIES = "dependencies";
-    private static final String CURLY_BRACKETS = "{";
+    private static final String CURLY_BRACKETS_OPEN = "{";
+    private static final String CURLY_BRACKTES_CLOSE = "}";
+    private static final String TASK_COPY_DEPENDENCIES_HEADER = "task copyDependencies(type: Copy) {";
+    private static final String TASK_COPY_DEPENDENCIES_FOOTER = "    into \"lib\"";
 
     /* --- Private Members --- */
 
@@ -48,6 +51,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     private boolean ignoreSourceCode;
     private boolean gradleAggregateModules;
     private boolean gradleRunPreStep;
+    private HashMap<String, List<String>> dependencyTrees;
 
     private final Logger logger = LoggerFactory.getLogger(GradleDependencyResolver.class);
 
@@ -62,6 +66,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         this.ignoreSourceCode = ignoreSourceCode;
         this.gradleAggregateModules = gradleAggregateModules;
         this.gradleRunPreStep = gradleRunPreStep;
+        this.dependencyTrees = new HashMap<>();
     }
 
     /* --- Overridden methods --- */
@@ -103,19 +108,21 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 //                logger.debug("Ignoring project at {} - because it was not listed by \"gradle projects\" command", moduleRelativeName);
 //                continue;
 //            }
-
-            List<DependencyInfo> dependencies = collectDependencies(bomFileFolder, bomFileFolder.equals(topLevelFolder));
-            if (dependencies.size() > 0) {
-                AgentProjectInfo agentProjectInfo = new AgentProjectInfo();
-                agentProjectInfo.getDependencies().addAll(dependencies);
-                if (!gradleAggregateModules) {
-                    Coordinates coordinates = new Coordinates();
-                    coordinates.setArtifactId(moduleName);
-                    agentProjectInfo.setCoordinates(coordinates);
-                }
-                projectInfoPathMap.put(agentProjectInfo, bomFolder.toPath());
-                if (ignoreSourceCode) {
-                    excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, extensionPattern(GRADLE_SCRIPT_EXTENSION), null));
+            List<String> lines = getDependenciesTree(bomFileFolder, moduleName);
+            if (lines != null) {
+                List<DependencyInfo> dependencies = collectDependencies(lines, bomFileFolder, bomFileFolder.equals(topLevelFolder));
+                if (dependencies.size() > 0) {
+                    AgentProjectInfo agentProjectInfo = new AgentProjectInfo();
+                    agentProjectInfo.getDependencies().addAll(dependencies);
+                    if (!gradleAggregateModules) {
+                        Coordinates coordinates = new Coordinates();
+                        coordinates.setArtifactId(moduleName);
+                        agentProjectInfo.setCoordinates(coordinates);
+                    }
+                    projectInfoPathMap.put(agentProjectInfo, bomFolder.toPath());
+                    if (ignoreSourceCode) {
+                        excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, extensionPattern(GRADLE_SCRIPT_EXTENSION), null));
+                    }
                 }
             }
         }
@@ -167,20 +174,29 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Private methods --- */
 
-    private List<DependencyInfo> collectDependencies(String directory, boolean isParent) {
+    private List<String> getDependenciesTree(String directory, String directoryName){
+        List<String> lines;
+        if (dependencyTrees.get(directoryName) == null) {
+            String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES);
+            lines = gradleCli.runGradleCmd(directory, gradleCommandParams);
+            dependencyTrees.put(directoryName,lines);
+        } else {
+            lines = dependencyTrees.get(directoryName);
+        }
+        return lines;
+    }
+
+    private List<DependencyInfo> collectDependencies(List<String> lines, String directory, boolean isParent) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
-        String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES);
-        String directoryName = "";
+        String directoryName = Constants.EMPTY_STRING;
         if (!isParent) {
-            // TODO - test on linux
+            // get the name of the directory
             String[] directoryPath = directory.split(Pattern.quote(fileSeparator));
             directoryName = directoryPath[directoryPath.length - 1];
         }
+        // get gradle dependencies, if the command runs successfully parse the dependencies
         directoryName = fileSeparator.concat(directoryName);
-        List<String> lines = gradleCli.runGradleCmd(directory, gradleCommandParams);
-        if (lines != null) {
-            dependencyInfos.addAll(gradleLinesParser.parseLines(lines, directory, directoryName, ignoredScopes));
-        }
+        dependencyInfos.addAll(gradleLinesParser.parseLines(lines, directory, directoryName, ignoredScopes));
         return dependencyInfos;
     }
 
@@ -230,8 +246,10 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
                 pathStream.forEach(path -> {
                     File buildGradleTmp = new File(path.toString());
                     if (buildGradleTmp.exists()) {
-                        if (appendTaskToBomFile(buildGradleTmp))
+                        if (appendTaskToBomFile(buildGradleTmp)) {
                             runPreStepCommand(buildGradleTmp);
+                            removeTaskFromBomFile(buildGradleTmp);
+                        }
                     } else {
                         logger.warn("Could not find the path {}", buildGradleTmp.getPath());
                     }
@@ -239,8 +257,9 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
             } catch (IOException e) {
                 logger.warn("Couldn't list all 'build.gradle' files, error: {}", e.getMessage());
                 logger.debug("Error: {}", e.getStackTrace());
+            } finally {
+                FileUtils.deleteQuietly(buildGradleTempDirectory);
             }
-            FileUtils.deleteQuietly(buildGradleTempDirectory);
         }
     }
 
@@ -258,29 +277,44 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     // append new task to bom file
     private boolean appendTaskToBomFile(File buildGradleTmp)  {
-        FileReader fileReader = null;
+        FileReader fileReader;
+        BufferedReader bufferedReader = null;
         InputStream inputStream = null;
         boolean hasDependencies = false;
         try {
             // appending the task only if the build.gradle file has 'dependencies {' node (only at the beginning of the line)
             // otherwise, later when the task is ran it'll fail
             fileReader = new FileReader(buildGradleTmp);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            bufferedReader = new BufferedReader(fileReader);
             String currLine;
             while ((currLine = bufferedReader.readLine()) != null) {
-                if (currLine.indexOf(DEPENDENCIES + Constants.WHITESPACE + CURLY_BRACKETS) == 0 || currLine.indexOf(DEPENDENCIES + CURLY_BRACKETS) == 0){
+                if (currLine.indexOf(DEPENDENCIES + Constants.WHITESPACE + CURLY_BRACKETS_OPEN) == 0 || currLine.indexOf(DEPENDENCIES + CURLY_BRACKETS_OPEN) == 0){
                     hasDependencies = true;
                     break;
                 }
             }
             if (hasDependencies) {
-                ClassLoader classLoader = Main.class.getClassLoader();
-                inputStream = classLoader.getResourceAsStream(COPY_DEPENDENCIES_TASK_TXT);
-                byte[] bytes = IOUtils.toByteArray(inputStream);
+                byte[] bytes;
+                List<String> lines = getDependenciesTree(buildGradleTmp.getParent(), buildGradleTmp.getParentFile().getName());
+                if (lines != null) {
+                    List<String> scopes = getScopes(lines);
+                    String copyDependenciesTask = Constants.NEW_LINE + TASK_COPY_DEPENDENCIES_HEADER + Constants.NEW_LINE;
+                    for (String scope : scopes) {
+                        copyDependenciesTask = copyDependenciesTask.concat("   from configurations." + scope + Constants.NEW_LINE);
+                    }
+                    copyDependenciesTask = copyDependenciesTask.concat(TASK_COPY_DEPENDENCIES_FOOTER + Constants.NEW_LINE + CURLY_BRACKTES_CLOSE);
+                    bytes = copyDependenciesTask.getBytes();
+                } else {
+                    ClassLoader classLoader = Main.class.getClassLoader();
+                    inputStream = classLoader.getResourceAsStream(COPY_DEPENDENCIES_TASK_TXT);
+                    bytes = IOUtils.toByteArray(inputStream);
+                }
                 if (bytes.length > 0) {
                     Files.write(Paths.get(buildGradleTmp.getPath()), bytes, StandardOpenOption.APPEND);
-                } else {
+                } else if (lines == null) {
                     logger.warn("Could not read {}", COPY_DEPENDENCIES_TASK_TXT);
+                } else {
+                    logger.warn("Could not read dependencies' tree");
                 }
             }
         } catch (IOException e) {
@@ -291,10 +325,27 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
             if (inputStream != null) {
                 inputStream.close();
             }
+            if (bufferedReader != null){
+                bufferedReader.close();
+            }
         } catch (IOException e) {
             logger.error("Could close the file, cause", e.getMessage());
         }
         return hasDependencies;
+    }
+
+    private List<String> getScopes(List<String> lines){
+        List<String> scopes = new ArrayList<>();
+        for (int i = 1; i < lines.size(); i++){
+            String currLine = lines.get(i);
+            String prevLine = lines.get(i-1);
+            if ((currLine.startsWith(Constants.PLUS) || currLine.startsWith(Constants.BACK_SLASH)) &&
+                    (!prevLine.startsWith(Constants.WHITESPACE) && !prevLine.startsWith(Constants.PIPE) && !prevLine.startsWith(Constants.PLUS) && !prevLine.startsWith(Constants.BACK_SLASH))){
+                String scope = prevLine.split(" - ")[0];
+                scopes.add(scope);
+            }
+        }
+        return scopes;
     }
 
     // run pre step command gradle copyDependencies
@@ -306,6 +357,40 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         } else {
             logger.warn("Could not run gradle command");
         }
+    }
 
+    // there are cases where modules are connected to each other, and in such cases some scopes inside the copy-dependencies task interfere with other modules;
+    // therefore, after running the copy-dependencies task removing it from the build.gradle file
+    private void removeTaskFromBomFile(File buildGradleTmp){
+        FileReader fileReader;
+        BufferedReader bufferedReader = null;
+        try {
+            fileReader = new FileReader(buildGradleTmp);
+            bufferedReader = new BufferedReader(fileReader);
+            String currLine;
+            String originalLines = "";
+            while ((currLine = bufferedReader.readLine()) != null) {
+                if (currLine.equals(TASK_COPY_DEPENDENCIES_HEADER)){
+                    break;
+                } else {
+                    originalLines = originalLines.concat(currLine + Constants.NEW_LINE);
+                }
+            }
+            if (!originalLines.isEmpty()){
+                byte[] bytes = originalLines.getBytes();
+                Files.write(Paths.get(buildGradleTmp.getPath()), bytes, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+            }
+        } catch (IOException e){
+            logger.warn("Couldn't remove 'copyDependencies' task from {}, error: {}", buildGradleTmp.getPath(), e.getMessage());
+            logger.debug("Error: {}", e.getStackTrace());
+        } finally {
+            try {
+                if (bufferedReader != null) {
+                    bufferedReader.close();
+                }
+            } catch (IOException e) {
+                logger.error("Could close the file, cause", e.getMessage());
+            }
+        }
     }
 }

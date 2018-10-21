@@ -119,8 +119,10 @@ public class ProjectsSender {
             while (retries-- > -1) {
                 try {
                     statusCode = checkPolicies(service, projects);
-                    if (statusCode == StatusCode.SUCCESS || (senderConfig.isForceUpdate() && senderConfig.isForceUpdateFailBuildOnPolicyViolation())) {
-                        resultInfo = update(service, projects);
+                    if (senderConfig.isUpdateInventory()) {
+                        if (statusCode == StatusCode.SUCCESS || (senderConfig.isForceUpdate() && senderConfig.isForceUpdateFailBuildOnPolicyViolation())) {
+                            resultInfo = update(service, projects);
+                        }
                     }
                     break;
                 } catch (WssServiceException e) {
@@ -271,7 +273,7 @@ public class ProjectsSender {
 
     private StatusCode checkPolicies(WhitesourceService service, Collection<AgentProjectInfo> projects) throws WssServiceException {
         boolean policyCompliance = true;
-        if (senderConfig.isCheckPolicies()) {
+        if (senderConfig.isCheckPolicies() || !senderConfig.isUpdateInventory()) {
             logger.info("Checking policies");
             CheckPolicyComplianceResult checkPoliciesResult;
             if (senderConfig.isSendLogsToWss()) {
@@ -283,13 +285,16 @@ public class ProjectsSender {
                         requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(), requestConfig.getRequesterEmail());
             }
             if (checkPoliciesResult.hasRejections()) {
-                if (senderConfig.isForceUpdate()) {
+                if (senderConfig.isForceUpdate() && senderConfig.isUpdateInventory()) {
                     logger.info("Some dependencies violate open source policies, however all were force " +
                             "updated to organization inventory.");
                     if (senderConfig.isForceUpdateFailBuildOnPolicyViolation()) {
                         policyCompliance = false;
                     }
-                } else {
+                } else if (!senderConfig.isUpdateInventory()) {
+                    logger.info("Some dependencies did not conform with open source policies, review report for details");
+                    policyCompliance = false;
+                }  else {
                     logger.info("Some dependencies did not conform with open source policies, review report for details");
                     logger.info("=== UPDATE ABORTED ===");
                     policyCompliance = false;
