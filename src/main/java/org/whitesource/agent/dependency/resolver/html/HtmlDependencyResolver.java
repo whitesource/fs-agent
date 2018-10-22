@@ -44,7 +44,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     public static final String URL_PATH = "://";
     private final Pattern patternOfFirstLetter = Pattern.compile("[a-zA-Z].*");
     private final Pattern patternOfLegitSrcUrl = Pattern.compile("<%.*%>");
-
+    private Map<String, String> myMap = new HashMap<>();
     /* --- Constructors --- */
 
     public HtmlDependencyResolver() {
@@ -59,7 +59,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         Collection<DependencyInfo> dependencies = new LinkedList<>();
-        Map<String, String> myMap = new HashMap<>();
+
         for (String htmlFile : bomFiles) {
             Document htmlFileDocument;
             try {
@@ -77,7 +77,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                         }
                     }
                 }
-                dependencies.addAll(collectJsFilesAndCalcHashes(scriptUrls, htmlFile, myMap));
+                dependencies.addAll(collectJsFilesAndCalcHashes(scriptUrls, htmlFile, this.myMap));
             } catch (IOException e) {
                 logger.debug("Cannot parse the html file: {}", htmlFile);
             }
@@ -115,7 +115,6 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
         String tempFolder = new FilesUtils().createTmpFolder(false, WHITESOURCE_HTML_RESOLVER);
         File tempFolderFile = new File(tempFolder);
         String dependencyFileName = null;
-        PrintWriter writer = null;
         if (tempFolder != null) {
             for (String scriptUrl : scriptUrls) {
                 try {
@@ -128,12 +127,12 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                         if (response.getStatus() != 200) {
                             logger.debug("Could not reach the registry using the URL: {}.", scriptUrl);
                         } else {
-                            logger.debug("Was able to reach the registry using the URL: {}", scriptUrl);
+                            logger.debug("Found a dependency in html file {}, URL: {}", htmlFilePath, scriptUrl);
                             body = response.getEntity(String.class);
 
                             String fileName = scriptUrl.substring(scriptUrl.lastIndexOf(Constants.FORWARD_SLASH) + 1);
                             dependencyFileName = tempFolder + File.separator + fileName;
-                            writer = new PrintWriter(dependencyFileName, Constants.UTF8);
+                            PrintWriter writer = new PrintWriter(dependencyFileName, Constants.UTF8);
                             if (writer != null) {
                                 writer.println(body);
                                 writer.close();
@@ -149,7 +148,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                 } catch (IOException e) {
                     logger.debug("Failed writing to file {}", dependencyFileName);
                 } catch (Exception e){
-                    logger.debug("An exception occurred :{}" , e.getMessage());
+                    logger.debug("Could not reach the registry using the URL: {}.", scriptUrl);
                 } finally {
                     if (StringUtils.isNotBlank(scriptUrl)) {
                         myMap.put(scriptUrl, body);
