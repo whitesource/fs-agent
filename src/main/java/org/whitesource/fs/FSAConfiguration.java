@@ -166,9 +166,17 @@ public class FSAConfiguration {
             commandLineArgs.parseCommandLine(args);
 
             if (config == null) {
-                Pair<FSAConfigProperties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath, commandLineArgs);
-                errors.addAll(propertiesWithErrors.getValue());
-                config = propertiesWithErrors.getKey();
+                analyzeMultiModule = commandLineArgs.analyzeMultiModule;
+
+                // The config file is not necessary if there is the analyzeMultiModule parameter
+                if (StringUtils.isEmpty(analyzeMultiModule)) {
+                    Pair<FSAConfigProperties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath, commandLineArgs);
+                    errors.addAll(propertiesWithErrors.getValue());
+                    config = propertiesWithErrors.getKey();
+                } else {
+                    config = new FSAConfigProperties();
+                }
+
                 if (StringUtils.isNotEmpty(commandLineArgs.project)) {
                     config.setProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, commandLineArgs.project);
                 }
@@ -202,29 +210,7 @@ public class FSAConfiguration {
             if (StringUtils.isNotBlank(commandLineArgs.whiteSourceFolder)) {
                 config.setProperty(ConfigPropertyKeys.WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
             }
-            analyzeMultiModule = commandLineArgs.analyzeMultiModule;
-            if (StringUtils.isNotEmpty(analyzeMultiModule)) {
-                if (args.length == 4 && dependencyDirs.size() == 1) {
-                    Path path = Paths.get(analyzeMultiModule);
-                    try {
-                        if (!Files.exists(path)) {
-                            File setUpFile = new File(analyzeMultiModule);
-                            boolean fileCreated = setUpFile.createNewFile();
-                            if (fileCreated) {
-                                setUpMuiltiModuleFile = true;
-                            } else {
-                                errors.add("The system could not create the multi-project setup file. Please contact support.");
-                            }
-                        } else {
-                            errors.add("The file specified for storing multi-module analysis results already exists. Please specify a new file name.");
-                        }
-                    } catch (IOException e) {
-                        errors.add("The system could not create the multi-project setup file : " + path + " " + "Please contact support.");
-                    }
-                } else {
-                    errors.add("Multi-module analysis could not run due to specified invalid parameters.");
-                }
-            }
+
            /* xModulePath = commandLineArgs.xModulePath;
             if (StringUtils.isNotEmpty(xModulePath)) {
                 if (args.length == 2) {
@@ -344,8 +330,33 @@ public class FSAConfiguration {
         endpoint = getEndpoint(config);
         remoteDockerConfiguration = getRemoteDockerConfiguration(config);
 
-        // check properties to ensure via is ready to run
-        checkPropertiesForVia(sender, resolver, appPathsToDependencyDirs, errors);
+        // The config file is not necessary if there is the analyzeMultiModule parameter
+        if (StringUtils.isEmpty(analyzeMultiModule)) {
+            // check properties to ensure via is ready to run
+            checkPropertiesForVia(sender, resolver, appPathsToDependencyDirs, errors);
+        } else {
+            errors.clear();
+            if (args.length == 4 && dependencyDirs.size() == 1) {
+                Path path = Paths.get(analyzeMultiModule);
+                try {
+                    if (!Files.exists(path)) {
+                        File setUpFile = new File(analyzeMultiModule);
+                        boolean fileCreated = setUpFile.createNewFile();
+                        if (fileCreated) {
+                            setUpMuiltiModuleFile = true;
+                        } else {
+                            errors.add("The system could not create the multi-project setup file. Please contact support.");
+                        }
+                    } else {
+                        errors.add("The file specified for storing multi-module analysis results already exists. Please specify a new file name.");
+                    }
+                } catch (IOException e) {
+                    errors.add("The system could not create the multi-project setup file : " + path + " " + "Please contact support.");
+                }
+            } else {
+                errors.add("Multi-module analysis could not run due to specified invalid parameters.");
+            }
+        }
     }
 
     private void readSetupFile(File xModuleFile) {
