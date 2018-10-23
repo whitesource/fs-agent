@@ -44,7 +44,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     public static final String URL_PATH = "://";
     private final Pattern patternOfFirstLetter = Pattern.compile("[a-zA-Z].*");
     private final Pattern patternOfLegitSrcUrl = Pattern.compile("<%.*%>");
-    private Map<String, String> myMap = new HashMap<>();
+    private Map<String, String> urlResponseMap = new HashMap<>();
     /* --- Constructors --- */
 
     public HtmlDependencyResolver() {
@@ -77,7 +77,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                         }
                     }
                 }
-                dependencies.addAll(collectJsFilesAndCalcHashes(scriptUrls, htmlFile, this.myMap));
+                dependencies.addAll(collectJsFilesAndCalcHashes(scriptUrls, htmlFile, this.urlResponseMap));
             } catch (IOException e) {
                 logger.debug("Cannot parse the html file: {}", htmlFile);
             }
@@ -109,7 +109,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
         return false;
     }
 
-    private List<DependencyInfo> collectJsFilesAndCalcHashes(List<String> scriptUrls, String htmlFilePath, Map<String, String> myMap) {
+    private List<DependencyInfo> collectJsFilesAndCalcHashes(List<String> scriptUrls, String htmlFilePath, Map<String, String> urlResponseMap) {
         List<DependencyInfo> dependencies = new LinkedList<>();
         String body = null;
         String tempFolder = new FilesUtils().createTmpFolder(false, WHITESOURCE_HTML_RESOLVER);
@@ -118,8 +118,8 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
         if (tempFolder != null) {
             for (String scriptUrl : scriptUrls) {
                 try {
-                    if (myMap.containsKey(scriptUrl)) {
-                        body = myMap.get(scriptUrl);
+                    if (urlResponseMap.containsKey(scriptUrl)) {
+                        body = urlResponseMap.get(scriptUrl);
                     } else {
                         Client client = Client.create();
                         WebResource webResource = client.resource(scriptUrl);
@@ -151,7 +151,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                     logger.debug("Could not reach the registry using the URL: {}.", scriptUrl);
                 } finally {
                     if (StringUtils.isNotBlank(scriptUrl)) {
-                        myMap.put(scriptUrl, body);
+                        urlResponseMap.put(scriptUrl, body);
                     }
                 }
             }
