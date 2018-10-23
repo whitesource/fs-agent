@@ -118,10 +118,9 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
         if (tempFolder != null) {
             for (String scriptUrl : scriptUrls) {
                 try {
-//                    if (myMap.containsKey(scriptUrl)) {
-//                        body = myMap.get(scriptUrl);
-//                    } else {
-
+                    if (myMap.containsKey(scriptUrl)) {
+                        body = myMap.get(scriptUrl);
+                    } else {
                         Client client = Client.create();
                         WebResource webResource = client.resource(scriptUrl);
                         ClientResponse response = webResource.accept("application/json").get(ClientResponse.class);
@@ -145,7 +144,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                                 dependencyInfo.setSystemPath(htmlFilePath);
                             }
                         }
-//                    }
+                    }
                 } catch (IOException e) {
                     logger.debug("Failed writing to file {}", dependencyFileName);
                 } catch (Exception e){
