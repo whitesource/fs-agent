@@ -23,6 +23,7 @@ import java.util.List;
  * @author raz.nitzan
  */
 abstract class AbstractPaketDependencyCollector extends DependencyCollector {
+    public final String DEPENDECYERROR = "Dependency {} was not updated, please try change paket.runPreStep to true, or run 'paket install' manually to fix issue";
 
     /* --- Statics Members --- */
 
@@ -62,7 +63,7 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
                     dependency.setGroupId(dependencyName);
                     dependency.setChildren(collectChildrenDependencies(dependency, groupLines));
                     if(dependency.getSha1() == null && dependency.getArtifactId() == null) {
-                        logger.warn("Dependency {} was not updated, please try changing flag paket.runPreStep to true, or run 'paket install' manually to fix issue", dependency.getGroupId());
+                        logger.warn(DEPENDECYERROR, dependency.getGroupId());
                     } else {
                         dependencies.add(dependency);
                     }
@@ -89,7 +90,7 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
                     childDependency.setGroupId(lineWithoutSpaces.substring(0, lineWithoutSpaces.indexOf(Constants.WHITESPACE)));
                     childDependency.setChildren(collectChildrenDependencies(childDependency, groupLines));
                     if(dependency.getSha1() == null && dependency.getArtifactId() == null) {
-                        logger.warn("Dependency {} was not updated, please try changing flag paket.runPreStep to true, or run 'paket install' manually to fix issue", dependency.getGroupId());
+                        logger.warn(DEPENDECYERROR, dependency.getGroupId());
                     } else {
                         dependencies.add(childDependency);
                     }
