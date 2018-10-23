@@ -60,8 +60,12 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
                 for (String dependencyName : this.directDependenciesNames) {
                     DependencyInfo dependency = new DependencyInfo();
                     dependency.setGroupId(dependencyName);
-                    dependencies.add(dependency);
                     dependency.setChildren(collectChildrenDependencies(dependency, groupLines));
+                    if(dependency.getSha1() == null && dependency.getArtifactId() == null) {
+                        logger.warn("Dependency {} was not updated, please try changing flag paket.runPreStep to true, or run 'paket install' manually to fix issue", dependency.getGroupId());
+                    } else {
+                        dependencies.add(dependency);
+                    }
                 }
             }
         }
@@ -84,7 +88,11 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
                     String lineWithoutSpaces = line.substring(SIX_SPACES.length());
                     childDependency.setGroupId(lineWithoutSpaces.substring(0, lineWithoutSpaces.indexOf(Constants.WHITESPACE)));
                     childDependency.setChildren(collectChildrenDependencies(childDependency, groupLines));
-                    dependencies.add(childDependency);
+                    if(dependency.getSha1() == null && dependency.getArtifactId() == null) {
+                        logger.warn("Dependency {} was not updated, please try changing flag paket.runPreStep to true, or run 'paket install' manually to fix issue", dependency.getGroupId());
+                    } else {
+                        dependencies.add(childDependency);
+                    }
                 } else {
                     // move to the next dependency parent with its children
                     break;
