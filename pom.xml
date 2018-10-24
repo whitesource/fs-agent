@@ -59,13 +59,13 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-core</artifactId>
-            <version>3.5.0</version>
+            <version>3.5.4</version>
         </dependency>
 
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
-            <version>3.5.0</version>
+            <version>3.5.4</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.maven/maven-model-builder -->
@@ -144,7 +144,7 @@
         <dependency>
             <groupId>org.whitesource.analysis</groupId>
             <artifactId>whitesource-analysis-via</artifactId>
-            <version>18.9.1.146</version>
+            <version>18.10.1.152</version>
          </dependency>
 
         <!-- end VIA -->
@@ -153,7 +153,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.8.1</version>
+            <version>1.18</version>
         </dependency>
 
         <!-- RAR -->
