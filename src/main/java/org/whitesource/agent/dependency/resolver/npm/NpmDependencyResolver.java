@@ -276,12 +276,11 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         String responseFromRegistry = null;
         try {
             Client client = Client.create();
-            WebResource resource;
+            WebResource resource = client.resource(uriScopeDep);
             ClientResponse response;
             if (isScopeDep) {
-                resource = client.resource(uriScopeDep);
-                response = resource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
                 if (StringUtils.isEmptyOrNull(npmAccessToken)) {
+                    response= resource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
                     logger.debug("npm.accessToken is not defined");
                 } else {
                     logger.debug("npm.accessToken is defined");
@@ -301,6 +300,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
             }
         } catch (Exception e) {
             logger.warn("Could not reach the registry using the URL: {}. Got an error: {}", registryPackageUrl, e.getMessage());
+            return Constants.EMPTY_STRING;
+        }
+        if (responseFromRegistry == null) {
             return Constants.EMPTY_STRING;
         }
         JSONObject jsonRegistry = new JSONObject(responseFromRegistry);
