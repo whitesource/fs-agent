@@ -89,6 +89,7 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
                     String lineWithoutSpaces = line.substring(SIX_SPACES.length());
                     childDependency.setGroupId(lineWithoutSpaces.substring(0, lineWithoutSpaces.indexOf(Constants.WHITESPACE)));
                     childDependency.setChildren(collectChildrenDependencies(childDependency, groupLines));
+                    // prevent adding dependencies without sha1 or artifact id version and dependency type.
                     if(dependency.getSha1() == null && dependency.getArtifactId() == null) {
                         logger.warn(DEPENDECYERROR, dependency.getGroupId());
                     } else {
