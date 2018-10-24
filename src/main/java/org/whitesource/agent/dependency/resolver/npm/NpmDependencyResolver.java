@@ -18,7 +18,6 @@ package org.whitesource.agent.dependency.resolver.npm;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.eclipse.jgit.util.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -34,7 +33,6 @@ import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.fs.StatusCode;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.nio.file.Paths;
@@ -277,31 +275,29 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
         String responseFromRegistry = null;
         try {
-            Client client = Client.create(new DefaultClientConfig());
+            Client client = Client.create();
             WebResource resource;
-            WebResource.Builder builder;
-
-            isScopeDep=false;//todo remove
+            ClientResponse response;
             if (isScopeDep) {
-
                 resource = client.resource(uriScopeDep);
-                builder = resource.accept(MediaType.APPLICATION_JSON);
-                builder.type(MediaType.APPLICATION_JSON);
+                response = resource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
                 if (StringUtils.isEmptyOrNull(npmAccessToken)) {
                     logger.debug("npm.accessToken is not defined");
                 } else {
                     logger.debug("npm.accessToken is defined");
                     String userCredentials = BEARER + Constants.COLON + npmAccessToken;
                     String basicAuth = BASIC + Constants.WHITESPACE + new String(Base64.getEncoder().encode(userCredentials.getBytes()));
-                    builder.header(HttpHeaders.AUTHORIZATION, basicAuth);
+                    response = resource.accept(MediaType.APPLICATION_JSON).header("Authorization", basicAuth).get(ClientResponse.class);
                 }
-                builder.method("GET");
-                responseFromRegistry = builder.get(String.class);
+                if (response.getStatus() == 200) {
+                    responseFromRegistry = response.getEntity(String.class);
+                }
             } else {
                 resource = client.resource(registryPackageUrl);
-                builder = resource.accept(MediaType.APPLICATION_JSON);
-                builder.type(MediaType.APPLICATION_JSON);
-                responseFromRegistry = builder.get(String.class);
+                response = resource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+                if (response.getStatus() == 200) {
+                    responseFromRegistry = response.getEntity(String.class);
+                }
             }
         } catch (Exception e) {
             logger.warn("Could not reach the registry using the URL: {}. Got an error: {}", registryPackageUrl, e.getMessage());
