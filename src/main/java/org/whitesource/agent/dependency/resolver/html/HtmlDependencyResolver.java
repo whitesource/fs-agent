@@ -19,6 +19,7 @@ import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.LoggerFactory;
 
+import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -123,7 +124,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                     } else {
                         Client client = Client.create();
                         WebResource webResource = client.resource(scriptUrl);
-                        ClientResponse response = webResource.accept("application/json").get(ClientResponse.class);
+                        ClientResponse response = webResource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
                         if (response.getStatus() != 200) {
                             logger.debug("Could not reach the registry using the URL: {}.", scriptUrl);
                         } else {
