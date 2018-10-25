@@ -81,6 +81,7 @@ public class FileSystemAgent {
                     List<Path> directories = new FilesUtils().getSubDirectories(directory, config.getAgent().getProjectPerFolderIncludes(),
                             config.getAgent().getProjectPerFolderExcludes(), config.getAgent().isFollowSymlinks(), config.getAgent().getGlobCaseSensitive());
                     directories.forEach(subDir -> this.dependencyDirs.add(subDir.toString()));
+                    //In case no sub-folders were found, put the top folder path as the dependencyDirs.
                     if (CollectionUtils.isEmpty(directories)) {
                         this.dependencyDirs = dependencyDirs;
                     }
@@ -162,7 +163,7 @@ public class FileSystemAgent {
                 setDirs.clear();
             }
             if (CollectionUtils.isEmpty(projects.getProjects())) {
-                logger.warn("projectPerFolder flag is true, No sub-folders were found in project folder, scanning main project folder");
+                logger.warn("projectPerFolder = true, No sub-folders were found in project folder, scanning main project folder");
                 projectPerSubFolder = false;
             } else {
                 return projects;

@@ -143,10 +143,8 @@ public class DependencyInfoFactory {
                     logger.debug("Failed to calculate javaScript hash for file: {}, error: {}", dependencyFile.getPath(), e.getStackTrace());
                 }
             }
-
             // other platform SHA1
             ChecksumUtils.calculateOtherPlatformSha1(dependency, dependencyFile);
-
             // super hash
             ChecksumUtils.calculateSuperHash(dependency, dependencyFile);
         } catch (IOException e) {
