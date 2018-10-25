@@ -430,6 +430,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         }
                         if (line.length <= 1 || line[1].equals(EMPTY_STRING)) {
                             logger.warn("Using dependency without tag/commit is not supported, library {}, will not be recognized by WSS", line[0]);
+                            continue;
                         }
                         dependencyInfo.setDependencyType(DependencyType.GO);
                         dependencyInfo.setSystemPath(goPmFile.getPath());
@@ -530,6 +531,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoVendorDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'govendor'");
+        // TODO verify with Hasan why he didn't add 'vendor' to the path
         File goVendorJson = new File(rootDirectory  + fileSeparator + "vendor" + fileSeparator + GOVENDOR_JSON);
         if (goVendorJson.isFile()){
             dependencyInfos.addAll(parseGoVendor(goVendorJson));
