@@ -174,7 +174,7 @@ public class DependencyResolutionService {
         }
 
         if (goResolveDependencies) {
-            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles, config.isGoIgnoreTestPackages(), config.isGoGradleEnableTaskAlias(), config.getGradlePreferredEnvironment()));
+            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles, config.isGoIgnoreTestPackages(), config.isGoGradleEnableTaskAlias(), config.getGradlePreferredEnvironment(), config.isAddSha1()));
         }
 
         if (rubyResolveDependencies) {
@@ -182,7 +182,7 @@ public class DependencyResolutionService {
         }
 
         if (phpResolveDependencies) {
-            dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies));
+            dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies, config.isAddSha1()));
         }
 
         if (htmlResolveDependencies) {
