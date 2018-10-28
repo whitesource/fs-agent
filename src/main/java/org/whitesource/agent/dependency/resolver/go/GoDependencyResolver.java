@@ -36,6 +36,8 @@ import static org.whitesource.agent.Constants.EMPTY_STRING;
 public class GoDependencyResolver extends AbstractDependencyResolver {
 
     public static final String GOPM_GEN_CMD = "gen";
+    private static final String GODEPS = "Godeps";
+    private static final String VENDOR = "vendor";
     private final Logger logger = LoggerFactory.getLogger(GoDependencyResolver.class);
 
     private static final String PROJECTS        = "[[projects]]";
@@ -470,7 +472,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'godep'");
-        File goDepJson = new File(rootDirectory + fileSeparator + "Godeps" + fileSeparator +  GODEPS_JSON);
+        // apparently when go.collectDependenciesAtRuntime=false, the rootDirectory includes the 'Godeps' folder as well - in such case removing it from the path
+        File goDepJson = new File(rootDirectory + (!collectDependenciesAtRuntime && rootDirectory.endsWith(GODEPS) ? "" : fileSeparator + GODEPS) + fileSeparator +  GODEPS_JSON);
         if (goDepJson.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GO_DEP.getType(), GO_SAVE)))){
             dependencyInfos.addAll(parseGoDeps(goDepJson));
         } else {
@@ -531,8 +534,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoVendorDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'govendor'");
-        // TODO verify with Hasan why he didn't add 'vendor' to the path
-        File goVendorJson = new File(rootDirectory  + fileSeparator + "vendor" + fileSeparator + GOVENDOR_JSON);
+        // apparently when go.collectDependenciesAtRuntime=false, the rootDirectory includes the 'vendor' folder as well - in such case removing it from the path
+        File goVendorJson = new File(rootDirectory  + (!collectDependenciesAtRuntime && rootDirectory.endsWith(VENDOR) ? "" : fileSeparator + VENDOR ) + fileSeparator + GOVENDOR_JSON);
         if (goVendorJson.isFile()){
             dependencyInfos.addAll(parseGoVendor(goVendorJson));
         } else {
