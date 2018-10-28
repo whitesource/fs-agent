@@ -63,6 +63,7 @@ public class FileSystemScanner {
     private boolean enableImpactAnalysis;
     private ViaLanguage iaLanguage;
     private DependencyResolutionService dependencyResolutionService;
+    private String sha1;
 
     /* --- Constructors --- */
 
@@ -289,7 +290,8 @@ public class FileSystemScanner {
                             }
                             impactAnalysisLanguage = null;
                             totalDependencies[0] += dependencies.size();
-                            dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies));
+                            List<String> usedSha1 = new LinkedList<>();
+                            dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies, usedSha1));
                         }
                     }
                     if (viaComponents != null) {
@@ -477,10 +479,14 @@ public class FileSystemScanner {
         return pathsToScan;
     }
 
-    // TODO check for infinite loop
-    private void increaseCount(DependencyInfo dependency, int[] totalDependencies) {
+    private void increaseCount(DependencyInfo dependency, int[] totalDependencies, List<String> usedSha1) {
+        sha1 = dependency.getSha1();
+        if (usedSha1.contains(sha1)) {
+            return;
+        }
+        usedSha1.add(sha1);
         totalDependencies[0] += dependency.getChildren().size();
-        dependency.getChildren().forEach(dependencyInfo -> increaseCount(dependencyInfo, totalDependencies));
+        dependency.getChildren().forEach(dependencyInfo -> increaseCount(dependencyInfo, totalDependencies, usedSha1));
     }
 
     private String[] excludeFileSystemAgent(String[] excludes) {
