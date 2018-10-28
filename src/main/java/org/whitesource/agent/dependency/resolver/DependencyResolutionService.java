@@ -276,14 +276,16 @@ public class DependencyResolutionService {
                     logger.error(e.getMessage());
                     logger.debug("{}", e.getStackTrace());
                 }
-                resolutionResults.add(result);
+                if (result != null) {
+                    resolutionResults.add(result);
 
-                // create lists in order to match htmlResolver dependencies to their original project (Maven/Gradle/Sbt)
-                if (multiModuleDependencyTypes.contains(dependencyResolver.getDependencyType())) {
-                    multiModuleResults.add(result);
+                    // create lists in order to match htmlResolver dependencies to their original project (Maven/Gradle/Sbt)
+                    if (multiModuleDependencyTypes.contains(dependencyResolver.getDependencyType())) {
+                        multiModuleResults.add(result);
 
-                } else if (Constants.HTML.toUpperCase().equals(dependencyResolver.getDependencyTypeName())) {
-                    htmlResults.add(result);
+                    } else if (Constants.HTML.toUpperCase().equals(dependencyResolver.getDependencyTypeName())) {
+                        htmlResults.add(result);
+                    }
                 }
             });
         });
