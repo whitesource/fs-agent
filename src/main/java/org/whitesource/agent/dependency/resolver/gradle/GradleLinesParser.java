@@ -285,7 +285,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 for (File folder : dependencyFolder.listFiles()) {
                     if (folder.isDirectory()) {
                         for (File file : folder.listFiles()) {
-                            if ((file.getName().contains(JAR_EXTENSION) || file.getName().contains(AAR_EXTENTION)) && !file.getName().contains("-sources")) {
+                            if ((file.getName().contains(JAR_EXTENSION) || file.getName().contains(AAR_EXTENTION) || file.getName().endsWith(".exe")) && !file.getName().contains("-sources")) {
                                 String sha1 = getSha1(file.getPath());
                                 dependencyFile = new DependencyFile(sha1,file);
                                 break outerloop;
