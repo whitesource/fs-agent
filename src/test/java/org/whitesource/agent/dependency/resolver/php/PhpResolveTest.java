@@ -20,7 +20,7 @@ public class PhpResolveTest {
 
     @Before
     public void setUp() throws Exception {
-        phpDependencyResolver = new PhpDependencyResolver(false, true, true);
+        phpDependencyResolver = new PhpDependencyResolver(false, true, false);
     }
 
     @Ignore
