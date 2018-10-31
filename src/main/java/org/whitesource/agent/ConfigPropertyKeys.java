@@ -229,4 +229,6 @@ public final class ConfigPropertyKeys {
     public static final String PYTHON_RUN_PIPENV_PRE_STEP = "python.runPipenvPreStep";
     public static final String PYTHON_IGNORE_PIPENV_INSTALL_ERRORS = "python.IgnorePipenvInstallErrors";
     public static final String PYTHON_PIPENV_DEV_DEPENDENCIES = "python.pipenvDevDependencies";
+
+    public static final String ADD_SHA1 = "addSha1";
 }

@@ -15,14 +15,12 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 import org.eclipse.jgit.util.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.web.client.RestTemplate;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -32,10 +30,11 @@ import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.utils.FilesScanner;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.fs.StatusCode;
 
+import javax.ws.rs.core.MediaType;
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -262,37 +261,48 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     /* --- Private methods --- */
 
     private String getSha1FromRegistryPackageUrl(String registryPackageUrl, boolean isScopeDep, String versionOfPackage, String npmAccessToken) {
-        RestTemplate restTemplate = new RestTemplate();
-        URI uriScopeDep = null;
+
+        String uriScopeDep = null;
         if (isScopeDep) {
             try {
-                uriScopeDep = new URI(registryPackageUrl.replace(BomFile.DUMMY_PARAMETER_SCOPE_PACKAGE, URL_SLASH));
+                uriScopeDep = registryPackageUrl.replace(BomFile.DUMMY_PARAMETER_SCOPE_PACKAGE, URL_SLASH);
             } catch (Exception e) {
                 logger.warn("Failed creating uri of {}", registryPackageUrl);
                 return Constants.EMPTY_STRING;
             }
         }
 
+
         String responseFromRegistry = null;
         try {
+            Client client = Client.create();
+            WebResource resource = client.resource(uriScopeDep);
+            ClientResponse response;
             if (isScopeDep) {
-                HttpHeaders httpHeaders = new HttpHeaders();
                 if (StringUtils.isEmptyOrNull(npmAccessToken)) {
+                    response= resource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
                     logger.debug("npm.accessToken is not defined");
                 } else {
                     logger.debug("npm.accessToken is defined");
                     String userCredentials = BEARER + Constants.COLON + npmAccessToken;
                     String basicAuth = BASIC + Constants.WHITESPACE + new String(Base64.getEncoder().encode(userCredentials.getBytes()));
-                    httpHeaders.set(AUTHORIZATION, basicAuth);
+                    response = resource.accept(MediaType.APPLICATION_JSON).header("Authorization", basicAuth).get(ClientResponse.class);
                 }
-
-                HttpEntity entity = new HttpEntity(httpHeaders);
-                responseFromRegistry = restTemplate.exchange(uriScopeDep, HttpMethod.GET, entity,String.class).getBody();
+                if (response.getStatus() == 200) {
+                    responseFromRegistry = response.getEntity(String.class);
+                }
             } else {
-                responseFromRegistry = restTemplate.getForObject(registryPackageUrl, String.class);
+                resource = client.resource(registryPackageUrl);
+                response = resource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+                if (response.getStatus() == 200) {
+                    responseFromRegistry = response.getEntity(String.class);
+                }
             }
         } catch (Exception e) {
             logger.warn("Could not reach the registry using the URL: {}. Got an error: {}", registryPackageUrl, e.getMessage());
+            return Constants.EMPTY_STRING;
+        }
+        if (responseFromRegistry == null) {
             return Constants.EMPTY_STRING;
         }
         JSONObject jsonRegistry = new JSONObject(responseFromRegistry);

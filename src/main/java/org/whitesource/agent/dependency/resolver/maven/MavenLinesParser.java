@@ -52,7 +52,7 @@ public class MavenLinesParser {
                              line.trim().startsWith(Constants.PIPE) ||
                              line.split(Constants.COLON).length == 4) &&
                              !line.contains(Constants.DASH + Constants.WHITESPACE + Constants.OPEN_BRACKET) &&
-                             !line.endsWith(Character.toString(Constants.CLOSE_BRACKET))
+                            (!line.endsWith(Character.toString(Constants.CLOSE_BRACKET)) || line.endsWith(Character.toString(Constants.CLOSE_BRACKET) + Character.toString(Constants.CLOSE_BRACKET)))
             ).collect(Collectors.toList());
 
             String mvnLines = String.join(System.lineSeparator(), currentBlock);
@@ -76,7 +76,7 @@ public class MavenLinesParser {
         });
         return nodes;
     }
-
+    
     // so : 29095967
     private static Collector<String, List<List<String>>, List<List<String>>> splitBySeparator(Predicate<String> sep) {
         return Collector.of(() -> new ArrayList<List<String>>(Arrays.asList(new ArrayList<>())),

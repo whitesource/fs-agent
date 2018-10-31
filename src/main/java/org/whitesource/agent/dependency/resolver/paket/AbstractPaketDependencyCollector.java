@@ -23,6 +23,7 @@ import java.util.List;
  * @author raz.nitzan
  */
 abstract class AbstractPaketDependencyCollector extends DependencyCollector {
+    public final String DEPENDECYERROR = "Dependency {} was not updated, please try change paket.runPreStep to true, or run 'paket install' manually to fix issue";
 
     /* --- Statics Members --- */
 
@@ -60,8 +61,12 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
                 for (String dependencyName : this.directDependenciesNames) {
                     DependencyInfo dependency = new DependencyInfo();
                     dependency.setGroupId(dependencyName);
-                    dependencies.add(dependency);
                     dependency.setChildren(collectChildrenDependencies(dependency, groupLines));
+                    if(dependency.getSha1() == null && dependency.getArtifactId() == null) {
+                        logger.warn(DEPENDECYERROR, dependency.getGroupId());
+                    } else {
+                        dependencies.add(dependency);
+                    }
                 }
             }
         }
@@ -84,7 +89,12 @@ abstract class AbstractPaketDependencyCollector extends DependencyCollector {
                     String lineWithoutSpaces = line.substring(SIX_SPACES.length());
                     childDependency.setGroupId(lineWithoutSpaces.substring(0, lineWithoutSpaces.indexOf(Constants.WHITESPACE)));
                     childDependency.setChildren(collectChildrenDependencies(childDependency, groupLines));
-                    dependencies.add(childDependency);
+                    // prevent adding dependencies without sha1 or artifact id version and dependency type.
+                    if(dependency.getSha1() == null && dependency.getArtifactId() == null) {
+                        logger.warn(DEPENDECYERROR, dependency.getGroupId());
+                    } else {
+                        dependencies.add(childDependency);
+                    }
                 } else {
                     // move to the next dependency parent with its children
                     break;

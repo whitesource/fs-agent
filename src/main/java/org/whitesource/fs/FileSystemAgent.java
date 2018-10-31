@@ -15,6 +15,7 @@
  */
 package org.whitesource.fs;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -62,7 +63,7 @@ public class FileSystemAgent {
 
     /* --- Members --- */
 
-    private final List<String> dependencyDirs;
+    private List<String> dependencyDirs;
     private final FSAConfiguration config;
 
     private boolean projectPerSubFolder;
@@ -80,6 +81,10 @@ public class FileSystemAgent {
                     List<Path> directories = new FilesUtils().getSubDirectories(directory, config.getAgent().getProjectPerFolderIncludes(),
                             config.getAgent().getProjectPerFolderExcludes(), config.getAgent().isFollowSymlinks(), config.getAgent().getGlobCaseSensitive());
                     directories.forEach(subDir -> this.dependencyDirs.add(subDir.toString()));
+                    //In case no sub-folders were found, put the top folder path as the dependencyDirs.
+                    if (CollectionUtils.isEmpty(directories)) {
+                        this.dependencyDirs = dependencyDirs;
+                    }
                 } else if (file.isFile()) {
                     this.dependencyDirs.add(directory);
                 } else {
@@ -157,7 +162,12 @@ public class FileSystemAgent {
                 appPathsToDependencyDirs.clear();
                 setDirs.clear();
             }
-            return projects;
+            if (CollectionUtils.isEmpty(projects.getProjects())) {
+                logger.warn("projectPerFolder = true, No sub-folders were found in project folder, scanning main project folder");
+                projectPerSubFolder = false;
+            } else {
+                return projects;
+            }
         }
         // Scan folders and create one project for all folders together
         if (!projectPerSubFolder) { // This 'if' is always true now, but keep it maybe we will do other checks in the future...

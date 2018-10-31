@@ -278,11 +278,13 @@ public class ProjectsSender {
             CheckPolicyComplianceResult checkPoliciesResult;
             if (senderConfig.isSendLogsToWss()) {
                 String logData = getLogData();
-                checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(),
-                        requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(), requestConfig.getRequesterEmail(), logData);
+                checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductName(),
+                        requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(),
+                        requestConfig.getRequesterEmail(), logData, requestConfig.getProductToken());
             } else {
-                checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(),
-                        requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(), requestConfig.getRequesterEmail());
+                checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductName(),
+                        requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(),
+                        requestConfig.getRequesterEmail(), null, requestConfig.getProductToken());
             }
             if (checkPoliciesResult.hasRejections()) {
                 if (senderConfig.isForceUpdate() && senderConfig.isUpdateInventory()) {
@@ -331,10 +333,12 @@ public class ProjectsSender {
         if (senderConfig.isSendLogsToWss()) {
             String logData = getLogData();
             updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
-                    requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), logData, requestConfig.getScanComment());
+                    requestConfig.getProductName(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(),
+                    logData, requestConfig.getScanComment(), requestConfig.getProductToken());
         } else {
             updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
-                    requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), null, requestConfig.getScanComment());
+                    requestConfig.getProductName(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), null,
+                    requestConfig.getScanComment(), requestConfig.getProductToken());
         }
         String resultInfo = logResult(updateResult);
         // remove line separators
@@ -348,8 +352,8 @@ public class ProjectsSender {
         RequestFactory requestFactory = new RequestFactory(pluginInfo.getAgentType(), pluginInfo.getAgentVersion(), pluginInfo.getPluginVersion());
         String updateJson = new Gson().toJson(requestFactory.newUpdateInventoryRequest(requestConfig.getApiToken(),
                 UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getRequesterEmail(),
-                requestConfig.getProductNameOrToken(), requestConfig.getProductVersion(), projects,
-                requestConfig.getUserKey(), (String) null));
+                requestConfig.getProductName(), requestConfig.getProductVersion(), projects,
+                requestConfig.getUserKey(), (String) null, (String)null, (String) requestConfig.getProductToken()));
         Path path = Paths.get(fileName);
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             writer.write(updateJson);
@@ -362,12 +366,15 @@ public class ProjectsSender {
         String resultInfo = Constants.EMPTY_STRING;
         logger.info("Generating offline update request");
         // generate offline request
-        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductNameOrToken(),
+        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductName(),
                 requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), requestConfig.getScanComment());
         if (senderConfig.isSendLogsToWss()) {
             updateRequest.setLogData(getLogData());
         }
         updateRequest.setRequesterEmail(requestConfig.getRequesterEmail());
+        if (requestConfig.getProductToken().isEmpty()) {
+            updateRequest.setProductToken(requestConfig.getProductToken());
+        }
         try {
             OfflineUpdateRequest offlineUpdateRequest = new OfflineUpdateRequest(updateRequest);
             UpdateType updateTypeFinal;
