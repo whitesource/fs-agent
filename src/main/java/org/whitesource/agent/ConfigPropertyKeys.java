@@ -146,15 +146,14 @@ public final class ConfigPropertyKeys {
     public static final String GRADLE_AGGREGATE_MODULES     = "gradle.aggregateModules";
     public static final String GRADLE_PREFERRED_ENVIRONMENT = "gradle.preferredEnvironment";
     public static final String GRADLE_IGNORE_SOURCE_FILES   = "gradle.ignoreSourceFiles";
-    public static final String GRADLE_IGNORE_SCOPES   = "gradle.ignoredScopes";
-
+    public static final String GRADLE_IGNORE_SCOPES         = "gradle.ignoredScopes";
 
     public static final String PAKET_RESOLVE_DEPENDENCIES   = "paket.resolveDependencies";
     public static final String PAKET_IGNORED_GROUPS         = "paket.ignoredGroups";
     public static final String PAKET_RUN_PRE_STEP           = "paket.runPreStep";
     public static final String PAKET_EXE_PATH               = "paket.exePath";
-    public static final String PAKET_IGNORE_FILES               = "paket.ignoreFiles";
-    public static final String PAKET_IGNORE_SOURCE_FILES       = "paket.ignoreSourceFiles";
+    public static final String PAKET_IGNORE_FILES           = "paket.ignoreFiles";
+    public static final String PAKET_IGNORE_SOURCE_FILES    = "paket.ignoreSourceFiles";
 
     public static final String GO_RESOLVE_DEPENDENCIES              = "go.resolveDependencies";
     public static final String GO_DEPENDENCY_MANAGER                = "go.dependencyManager";
@@ -181,9 +180,13 @@ public final class ConfigPropertyKeys {
 
     public static final String HTML_RESOLVE_DEPENDENCIES    = "html.resolveDependencies";
 
-    public static final String COCOAPODS_RESOLVE_DEPENDENCIES    = "cocoapods.resolveDependencies";
+    public static final String COCOAPODS_RESOLVE_DEPENDENCIES     = "cocoapods.resolveDependencies";
     public static final String COCOAPODS_RUN_PRE_STEP             = "cocoapods.runPreStep";
     public static final String COCOAPODS_IGNORE_SOURCE_FILES      = "cocoapods.ignoreSourceFiles";
+
+    public static final String HEX_RESOLVE_DEPENDENECIES    = "hex.resolveDependencies";
+    public static final String HEX_RUN_PRE_STEP             = "hex.runPreStep";
+    public static final String HEX_IGNORE_SOURCE_FILES      = "hex.ignoreSourceFiles";
 
     public static final String DEPENDENCIES_ONLY            = "dependenciesOnly";
     public static final String WHITESOURCE_CONFIGURATION    = "whitesourceConfiguration";
