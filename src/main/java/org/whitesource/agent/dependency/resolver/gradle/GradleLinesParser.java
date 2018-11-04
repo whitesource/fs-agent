@@ -58,6 +58,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private boolean removeMainDir;
     private boolean removeSrcDir;
     private boolean removeJavaFile;
+    private boolean mavenFound = true;
 
     GradleLinesParser(boolean runAssembleCommand, GradleCli gradleCli){
         // send maven.runPreStep default value "false", irrelevant for gradle dependency resolution. (WSE-860)
@@ -305,6 +306,8 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     }
 
     private DependencyFile getSha1FromM2(DependencyInfo dependencyInfo){
+        if (!mavenFound)
+            return null;
         String groupId = dependencyInfo.getGroupId();
         String artifactId = dependencyInfo.getArtifactId();
         String version = dependencyInfo.getVersion();
@@ -312,6 +315,11 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         DependencyFile dependencyFile = null;
         if (StringUtils.isBlank(M2Path)){
             this.M2Path = getMavenM2Path(Constants.DOT);
+            if (M2Path == null){
+                logger.debug("Couldn't find .m2 path - maven is not installed");
+                mavenFound = false;
+                return null;
+            }
         }
 
         String pathToDependency = M2Path.concat(fileSeparator + String.join(fileSeparator,groupId.split("\\.")) +
