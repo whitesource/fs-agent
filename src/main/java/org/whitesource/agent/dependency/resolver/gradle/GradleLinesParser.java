@@ -38,9 +38,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private static final String EXE_EXTENSION = ".exe";
     private static final String PLUS = "+---";
     private static final String SLASH = "\\---";
-    private static final String USER_HOME = "user.home";
     private static final int INDENTETION_SPACE = 5;
-    private static final String JAR_EXTENSION = ".jar";
     private static final String ASTERIX = "(*)";
 
     private String fileSeparator;
@@ -239,7 +237,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     }
 
     private String getDotGradleFolderPath() {
-        String currentUsersHomeDir = System.getProperty(USER_HOME);
+        String currentUsersHomeDir = System.getProperty(Constants.USER_HOME);
         File dotGradle = Paths.get(currentUsersHomeDir, ".gradle", "caches","modules-2","files-2.1").toFile();
 
         if (dotGradle.exists()) {
@@ -289,7 +287,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 for (File folder : dependencyFolder.listFiles()) {
                     if (folder.isDirectory()) {
                         for (File file : folder.listFiles()) {
-                            if ((file.getName().endsWith(JAR_EXTENSION) || file.getName().endsWith(AAR_EXTENSION) || file.getName().endsWith(EXE_EXTENSION)) && !file.getName().contains("-sources")) {
+                            if ((file.getName().endsWith(Constants.JAR_EXTENSION) || file.getName().endsWith(AAR_EXTENSION) || file.getName().endsWith(EXE_EXTENSION)) && !file.getName().contains("-sources")) {
                                 String sha1 = getSha1(file.getPath());
                                 dependencyFile = new DependencyFile(sha1,file);
                                 break outerloop;
@@ -324,7 +322,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
 
         String pathToDependency = M2Path.concat(fileSeparator + String.join(fileSeparator,groupId.split("\\.")) +
                 fileSeparator + artifactId + fileSeparator + version
-                + fileSeparator + artifactId + Constants.DASH + version + JAR_EXTENSION);
+                + fileSeparator + artifactId + Constants.DASH + version + Constants.JAR_EXTENSION);
         File file = new File(pathToDependency);
         if (file.isFile()) {
             String sha1 = getSha1(pathToDependency);

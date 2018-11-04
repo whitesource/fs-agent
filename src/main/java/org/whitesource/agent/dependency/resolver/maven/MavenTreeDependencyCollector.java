@@ -52,7 +52,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String MVN_COMMAND = "mvn";
     private static final String SCOPE_TEST = "test";
     private static final String SCOPE_PROVIDED = "provided";
-    private static final String USER_HOME = "user.home";
     private static final String M2 = ".m2";
     private static final String REPOSITORY = "repository";
     public static final String ALL = "All";
@@ -277,7 +276,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     }
 
     protected String getMavenM2Path(String rootDirectory) {
-        String currentUsersHomeDir = System.getProperty(USER_HOME);
+        String currentUsersHomeDir = System.getProperty(Constants.USER_HOME);
         File m2Path = Paths.get(currentUsersHomeDir, M2, REPOSITORY).toFile();
 
         if (m2Path.exists()) {

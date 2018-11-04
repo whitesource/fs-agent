@@ -86,6 +86,7 @@ public final class Constants {
     public static final String PIPFILE              = "Pipfile";
     public static final String TXT_EXTENSION        = ".txt";
     public static final String SETUP_PY             = "setup.py";
+    public static final String JAR_EXTENSION        = ".jar";
     public static final int MAX_EXTRACTION_DEPTH    = 7;
     public static final int COMMENT_MAX_LENGTH      = 1000;
     public static final int ZERO                    = 0;
@@ -113,4 +114,5 @@ public final class Constants {
     public static final String BUILD = "build";
     public static final String NONE = "None";
     public static final String LIBS = "libs";
+    public static final String USER_HOME = "user.home";
 }
