@@ -24,7 +24,8 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
     private static final String DEPS_GET = "deps.get";
     private static final String DEPS_TREE = "deps.tree";
     private static final String ACCENT = "`";
-    private static final String REGEX = "\"(\\w+)\": \\{:hex, :\\w+, \"(\\d+\\.\\d+\\.\\d+(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?)\", \"(\\w+)\"";
+    private static final String HEX_REGEX = "\"(\\w+)\": \\{:hex, :\\w+, \"(\\d+\\.\\d+\\.\\d+(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?)\", \"(\\w+)\"";
+    private static final String GIT_REGEX = "\"(\\w+)\": \\{:git, \"(https|http|):\\/\\/github.com\\/\\w+\\/\\w+.git\", \"(\\w+)\"";
 
     private final Logger logger = LoggerFactory.getLogger(HexDependencyResolver.class);
     private boolean ignoreSourceFiles;
@@ -44,7 +45,8 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         }
         File mixLock = new File (topLevelFolder + fileSeparator + MIX_LOCK_FILE);
         if (mixLock.exists()){
-            parseTree(topLevelFolder);
+            HashMap<String, DependencyInfo> dependencyInfoMap = parseMixLoc(mixLock);
+            parseTree(topLevelFolder, dependencyInfoMap);
         }
         return null;
     }
@@ -56,7 +58,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         }
     }
 
-    private void parseTree(String folderPath){
+    private void parseTree(String folderPath, HashMap<String, DependencyInfo> dependencyInfoMap){
         List<String> lines = cli.runCmd(folderPath, cli.getCommandParams(MIX, DEPS_TREE));
         int currentLevel = 0;
         int prevLevel = 0;
@@ -74,11 +76,13 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         }
     }
 
-    public void parseMixLoc(File mixLock){
+    public HashMap<String, DependencyInfo> parseMixLoc(File mixLock){
+        HashMap<String, DependencyInfo> dependencyInfoHashMap = new HashMap<>();
         FileReader fileReader = null;
         BufferedReader bufferedReader = null;
         try {
-            Pattern pattern = Pattern.compile(REGEX);
+            Pattern hexPattern = Pattern.compile(HEX_REGEX);
+            Pattern gitPattern = Pattern.compile(GIT_REGEX);
             Matcher matcher;
             fileReader = new FileReader(mixLock);
             bufferedReader = new BufferedReader(fileReader);
@@ -88,9 +92,17 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
             while ((currLine = bufferedReader.readLine()) != null) {
                 if (currLine.startsWith(Constants.WHITESPACE)) {
                     if (currLine.contains("git")) {
-
+                        matcher = gitPattern.matcher(currLine);
+                        if (matcher.find()){
+                            String name = matcher.group(1);
+                            String commitId = matcher.group(3);
+                            DependencyInfo dependencyInfo = new DependencyInfo();
+                            dependencyInfo.setArtifactId(name);
+                            dependencyInfo.setCommit(commitId);
+                            dependencyInfoHashMap.put(name,dependencyInfo);
+                        }
                     } else {
-                        matcher = pattern.matcher(currLine);
+                        matcher = hexPattern.matcher(currLine);
                         if (matcher.find()) {
                             String name = matcher.group(1);
                             String version = matcher.group(2);
@@ -107,6 +119,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                             }
                             dependencyInfo.setArtifactId(name);
                             dependencyInfo.setVersion(version);
+                            dependencyInfoHashMap.put(name,dependencyInfo);
                         }
                     }
                 }
@@ -116,7 +129,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        String currLine;
+        return dependencyInfoHashMap;
     }
 
     protected String getSha1(String filePath) {
