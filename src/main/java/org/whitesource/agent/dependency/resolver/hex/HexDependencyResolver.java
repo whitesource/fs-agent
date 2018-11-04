@@ -46,12 +46,12 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected DependencyType getDependencyType() {
-        return DependencyType.HEX;
+        return null; //DependencyType.HEX;
     }
 
     @Override
     protected String getDependencyTypeName() {
-        return DependencyType.HEX.name();
+        return null;//DependencyType.HEX.name();
     }
 
     @Override

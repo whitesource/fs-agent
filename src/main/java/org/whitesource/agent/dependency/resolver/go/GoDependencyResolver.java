@@ -632,7 +632,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             Stream<Path> pathStream = Files.walk(Paths.get(rootDirectory), Integer.MAX_VALUE).filter(file -> file.getFileName().toString().equals(Constants.BUILD_GRADLE));
             pathStream.forEach(file -> {
                 GradleMvnCommand command = this.goGradleEnableTaskAlias ? GradleMvnCommand.GO_DEPENDENCIES : GradleMvnCommand.DEPENDENCIES;
-                List<String> lines = gradleCli.runGradleCmd(file.getParent().toString(), gradleCli.getGradleCommandParams(command));
+                List<String> lines = gradleCli.runGradleCmd(file.getParent().toString(), gradleCli.getGradleCommandParams(command), true);
                 if (lines != null) {
                     parseGoGradleDependencies(lines, dependencyInfos, rootDirectory);
                     if (dependencyInfos.size() > 0) {
