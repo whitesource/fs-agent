@@ -63,6 +63,7 @@ public class FileSystemScanner {
     private boolean enableImpactAnalysis;
     private ViaLanguage iaLanguage;
     private DependencyResolutionService dependencyResolutionService;
+    private String sha1;
 
     /* --- Constructors --- */
 
@@ -221,9 +222,8 @@ public class FileSystemScanner {
                 Collection<ResolutionResult> resolutionResult = new LinkedList<>();
                 LinkedList<String> pathsList = new LinkedList<>();
                 pathsList.addAll(appPathsToDependencyDirs.get(appPath));
-                if (appPath.equals(FSAConfiguration.DEFAULT_KEY) && appPathsToDependencyDirs.keySet().size() == 1) {
-                    resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, excludes);
-                } else if (!appPath.equals(FSAConfiguration.DEFAULT_KEY) && appPathsToDependencyDirs.keySet().size() > 1) {
+                if ((appPath.equals(FSAConfiguration.DEFAULT_KEY) && appPathsToDependencyDirs.keySet().size() == 1) ||
+                        (!appPath.equals(FSAConfiguration.DEFAULT_KEY) && appPathsToDependencyDirs.keySet().size() > 1)) {
                     resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, excludes);
                 }
                 if (resolutionResult.size() == 1 && !appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
@@ -259,8 +259,7 @@ public class FileSystemScanner {
                     viaComponents = new ViaComponents(appPath, impactAnalysisLanguage);
                 }
                 // TODO: Check why is result = null in the loop
-                //resolutionResult.removeIf(Objects::isNull);
-
+                resolutionResult.removeIf(Objects::isNull);
                 for (ResolutionResult result : resolutionResult) {
                     Map<AgentProjectInfo, Path> projects = result.getResolvedProjects();
                     Collection<DependencyInfo> dependenciesToVia = new ArrayList<>();
@@ -291,7 +290,8 @@ public class FileSystemScanner {
                             }
                             impactAnalysisLanguage = null;
                             totalDependencies[0] += dependencies.size();
-                            dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies));
+                            List<String> usedSha1 = new LinkedList<>();
+                            dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies, usedSha1));
                         }
                     }
                     if (viaComponents != null) {
@@ -479,9 +479,14 @@ public class FileSystemScanner {
         return pathsToScan;
     }
 
-    private void increaseCount(DependencyInfo dependency, int[] totalDependencies) {
+    private void increaseCount(DependencyInfo dependency, int[] totalDependencies, List<String> usedSha1) {
+        sha1 = dependency.getSha1();
+        if (usedSha1.contains(sha1)) {
+            return;
+        }
+        usedSha1.add(sha1);
         totalDependencies[0] += dependency.getChildren().size();
-        dependency.getChildren().forEach(dependencyInfo -> increaseCount(dependencyInfo, totalDependencies));
+        dependency.getChildren().forEach(dependencyInfo -> increaseCount(dependencyInfo, totalDependencies, usedSha1));
     }
 
     private String[] excludeFileSystemAgent(String[] excludes) {

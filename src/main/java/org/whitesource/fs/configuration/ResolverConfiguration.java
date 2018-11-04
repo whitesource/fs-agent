@@ -115,7 +115,8 @@ public class ResolverConfiguration {
             @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies,
             @JsonProperty(COCOAPODS_RESOLVE_DEPENDENCIES) boolean cocoapodsResolveDependencies,
             @JsonProperty(COCOAPODS_RUN_PRE_STEP) boolean cocoapodsRunPreStep,
-            @JsonProperty(COCOAPODS_IGNORE_SOURCE_FILES) boolean cocoapodsIgnoreSourceFiles) {
+            @JsonProperty(COCOAPODS_IGNORE_SOURCE_FILES) boolean cocoapodsIgnoreSourceFiles,
+            @JsonProperty("addSha1") boolean addSha1) {
         this.npmRunPreStep                      = npmRunPreStep;
         this.npmIgnoreScripts                   = npmIgnoreScripts;
         this.npmResolveDependencies             = npmResolveDependencies;
@@ -204,6 +205,8 @@ public class ResolverConfiguration {
         this.cocoapodsResolveDependencies = cocoapodsResolveDependencies;
         this.cocoapodsRunPreStep = cocoapodsRunPreStep;
         this.cocoapodsIgnoreSourceFiles   = cocoapodsIgnoreSourceFiles;
+
+        this.addSha1 = addSha1;
     }
 
     /* --- Members --- */
@@ -297,6 +300,8 @@ public class ResolverConfiguration {
     private boolean cocoapodsResolveDependencies;
     private boolean cocoapodsRunPreStep;
     private boolean cocoapodsIgnoreSourceFiles;
+
+    private boolean addSha1;
 
     /* --- Public getters --- */
 
@@ -697,6 +702,8 @@ public class ResolverConfiguration {
     public void setSbtTargetFolder(String sbtTargetFolder) {
         this.sbtTargetFolder = sbtTargetFolder;
     }
+
+    public boolean isAddSha1(){ return addSha1; }
 
 
     @Override

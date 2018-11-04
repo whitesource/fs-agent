@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -13,6 +14,7 @@ import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.gradle.GradleCli;
 import org.whitesource.agent.dependency.resolver.gradle.GradleMvnCommand;
+import org.whitesource.agent.hash.HashCalculator;
 import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.LoggerFactory;
@@ -34,6 +36,8 @@ import static org.whitesource.agent.Constants.EMPTY_STRING;
 public class GoDependencyResolver extends AbstractDependencyResolver {
 
     public static final String GOPM_GEN_CMD = "gen";
+    private static final String GODEPS = "Godeps";
+    private static final String VENDOR = "vendor";
     private final Logger logger = LoggerFactory.getLogger(GoDependencyResolver.class);
 
     private static final String PROJECTS        = "[[projects]]";
@@ -92,8 +96,10 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private boolean ignoreTestPackages;
     private boolean goGradleEnableTaskAlias;
     private String gradlePreferredEnvironment;
+    private HashCalculator hashCalculator = new HashCalculator();
+    private boolean addSha1;
 
-    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean ignoreSourceFiles, boolean ignoreTestPackages, boolean goGradleEnableTaskAlias, String gradlePreferredEnvironment){
+    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean ignoreSourceFiles, boolean ignoreTestPackages, boolean goGradleEnableTaskAlias, String gradlePreferredEnvironment, boolean addSha1){
         super();
         this.cli = new Cli();
         this.goDependencyManager = goDependencyManager;
@@ -102,6 +108,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         this.ignoreTestPackages = ignoreTestPackages;
         this.goGradleEnableTaskAlias = goGradleEnableTaskAlias;
         this.gradlePreferredEnvironment = gradlePreferredEnvironment;
+        this.addSha1 = addSha1;
     }
 
     @Override
@@ -350,7 +357,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
             }
         }
-        dependencyInfos.stream().forEach(dependencyInfo -> {dependencyInfo.setSystemPath(goPckLock.getPath()); dependencyInfo.setDependencyType(DependencyType.GO);});
+        dependencyInfos.stream().forEach(dependencyInfo -> {
+            dependencyInfo.setSystemPath(goPckLock.getPath());
+            dependencyInfo.setDependencyType(DependencyType.GO);
+            setSha1(dependencyInfo);
+
+        });
         return dependencyInfos;
     }
 
@@ -420,9 +432,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         }
                         if (line.length <= 1 || line[1].equals(EMPTY_STRING)) {
                             logger.warn("Using dependency without tag/commit is not supported, library {}, will not be recognized by WSS", line[0]);
+                            continue;
                         }
                         dependencyInfo.setDependencyType(DependencyType.GO);
                         dependencyInfo.setSystemPath(goPmFile.getPath());
+                        setSha1(dependencyInfo);
                         dependencyInfos.add(dependencyInfo);
                     }
                 } else if (currLine.contains(OPENNING_BRACKET + GOPM_DEPS + BRACKET)){ //if the current line contains [deps]
@@ -458,7 +472,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'godep'");
-        File goDepJson = new File(rootDirectory + fileSeparator + "Godeps" + fileSeparator +  GODEPS_JSON);
+        // apparently when go.collectDependenciesAtRuntime=false, the rootDirectory includes the 'Godeps' folder as well - in such case removing it from the path
+        File goDepJson = new File(rootDirectory + (!collectDependenciesAtRuntime && rootDirectory.endsWith(GODEPS) ? "" : fileSeparator + GODEPS) + fileSeparator +  GODEPS_JSON);
         if (goDepJson.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GO_DEP.getType(), GO_SAVE)))){
             dependencyInfos.addAll(parseGoDeps(goDepJson));
         } else {
@@ -485,6 +500,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     dependencyInfo.setCommit(dep.get(REV).getAsString());
                     dependencyInfo.setDependencyType(DependencyType.GO);
                     dependencyInfo.setSystemPath(goDeps.getPath());
+                    setSha1(dependencyInfo);
                     JsonElement commentElement = dep.get(COMMENT);
                     if (commentElement != null){
                         String comment = commentElement.getAsString();
@@ -518,7 +534,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoVendorDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'govendor'");
-        File goVendorJson = new File(rootDirectory  + fileSeparator +  GOVENDOR_JSON);
+        // apparently when go.collectDependenciesAtRuntime=false, the rootDirectory includes the 'vendor' folder as well - in such case removing it from the path
+        File goVendorJson = new File(rootDirectory  + (!collectDependenciesAtRuntime && rootDirectory.endsWith(VENDOR) ? "" : fileSeparator + VENDOR ) + fileSeparator + GOVENDOR_JSON);
         if (goVendorJson.isFile()){
             dependencyInfos.addAll(parseGoVendor(goVendorJson));
         } else {
@@ -550,6 +567,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         dependencyInfo.setCommit(pck.get(REVISION_GOV).getAsString());
                         dependencyInfo.setDependencyType(DependencyType.GO);
                         dependencyInfo.setSystemPath(goVendor.getPath());
+                        setSha1(dependencyInfo);
                         if (pck.get(VERSION_GOV) != null) {
                             dependencyInfo.setVersion(pck.get(VERSION_GOV).getAsString());
                         }
@@ -596,6 +614,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 dependencyInfo.setCommit(split[1]);
                 dependencyInfo.setDependencyType(DependencyType.GO);
                 dependencyInfo.setSystemPath(vendorConf.getPath());
+                setSha1(dependencyInfo);
                 dependencyInfos.add(dependencyInfo);
             }
         } catch (FileNotFoundException e) {
@@ -627,6 +646,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             dependencyInfos.stream().forEach(dependencyInfo -> {
                                 if (dependencyInfo.getVersion() == null && dependencyInfo.getCommit() == null){
                                     logger.debug("{}/{} has no version nor commit-id; removing it from the dependencies' list", dependencyInfo.getArtifactId(), dependencyInfo.getGroupId());
+                                } else {
+                                    setSha1(dependencyInfo);
                                 }
                             });
                             dependencyInfos.removeIf(dependencyInfo -> dependencyInfo.getCommit() == null && dependencyInfo.getVersion() == null);
@@ -881,7 +902,30 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         dependency.setCommit(commit);
         dependency.setDependencyType(DependencyType.GO);
         dependency.setSystemPath(systemPath);
+        setSha1(dependency);
         return dependency;
+    }
+
+    private void setSha1(DependencyInfo dependencyInfo){
+        if (this.addSha1) {
+            String artifactId = dependencyInfo.getArtifactId();
+            String version = dependencyInfo.getVersion();
+            String commit = dependencyInfo.getCommit();
+            if (StringUtils.isBlank(version) && StringUtils.isBlank(commit)) {
+                logger.debug("Unable to calcluate SHA1 for {}, it has no version nor commit-id", artifactId);
+                return;
+            }
+            String sha1 = null;
+            String sha1Source = StringUtils.isNotBlank(version) ? version : commit;
+            try {
+                sha1 = this.hashCalculator.calculateSha1ByNameVersionAndType(artifactId, sha1Source, DependencyType.GO);
+            } catch (IOException e) {
+                logger.debug("Failed to calculate sha1 of: {}", artifactId);
+            }
+            if (sha1 != null) {
+                dependencyInfo.setSha1(sha1);
+            }
+        }
     }
 
     private boolean runCmd(String rootDirectory, String[] params){

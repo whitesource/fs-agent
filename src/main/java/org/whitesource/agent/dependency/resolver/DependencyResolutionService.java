@@ -174,7 +174,7 @@ public class DependencyResolutionService {
         }
 
         if (goResolveDependencies) {
-            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles, config.isGoIgnoreTestPackages(), config.isGoGradleEnableTaskAlias(), config.getGradlePreferredEnvironment()));
+            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles, config.isGoIgnoreTestPackages(), config.isGoGradleEnableTaskAlias(), config.getGradlePreferredEnvironment(), config.isAddSha1()));
         }
 
         if (rubyResolveDependencies) {
@@ -182,7 +182,7 @@ public class DependencyResolutionService {
         }
 
         if (phpResolveDependencies) {
-            dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies));
+            dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies, config.isAddSha1()));
         }
 
         if (htmlResolveDependencies) {
@@ -276,14 +276,16 @@ public class DependencyResolutionService {
                     logger.error(e.getMessage());
                     logger.debug("{}", e.getStackTrace());
                 }
-                resolutionResults.add(result);
+                if (result != null) {
+                    resolutionResults.add(result);
 
-                // create lists in order to match htmlResolver dependencies to their original project (Maven/Gradle/Sbt)
-                if (multiModuleDependencyTypes.contains(dependencyResolver.getDependencyType())) {
-                    multiModuleResults.add(result);
+                    // create lists in order to match htmlResolver dependencies to their original project (Maven/Gradle/Sbt)
+                    if (multiModuleDependencyTypes.contains(dependencyResolver.getDependencyType())) {
+                        multiModuleResults.add(result);
 
-                } else if (Constants.HTML.toUpperCase().equals(dependencyResolver.getDependencyTypeName())) {
-                    htmlResults.add(result);
+                    } else if (Constants.HTML.toUpperCase().equals(dependencyResolver.getDependencyTypeName())) {
+                        htmlResults.add(result);
+                    }
                 }
             });
         });

@@ -6,6 +6,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
+import org.whitesource.agent.hash.HashCalculator;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -48,13 +49,16 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
 
     private boolean phpPreStep;
     private boolean includeDevDependencies;
+    private HashCalculator hashCalculator = new HashCalculator();
+    private boolean addSha1;
 
     /* --- Constructors --- */
 
-    public PhpDependencyResolver(boolean phpPreStep, boolean includeDevDependencies) {
+    public PhpDependencyResolver(boolean phpPreStep, boolean includeDevDependencies, boolean addSha1) {
         super();
         this.phpPreStep = phpPreStep;
         this.includeDevDependencies = includeDevDependencies;
+        this.addSha1 = addSha1;
     }
 
     /* --- Overridden methods --- */
@@ -196,6 +200,18 @@ public class PhpDependencyResolver extends AbstractDependencyResolver {
             DependencyInfo dependencyInfo = new DependencyInfo(groupId, artifactId, version);
             dependencyInfo.setCommit(commit);
             dependencyInfo.setDependencyType(getDependencyType());
+            if (this.addSha1) {
+                String sha1 = null;
+                String sha1Source = StringUtils.isNotBlank(version) ? version : commit;
+                try {
+                    sha1 = this.hashCalculator.calculateSha1ByNameVersionAndType(artifactId, sha1Source, DependencyType.PHP);
+                } catch (IOException e) {
+                    logger.debug("Failed to calculate sha1 of: {}", artifactId);
+                }
+                if (sha1 != null) {
+                    dependencyInfo.setSha1(sha1);
+                }
+            }
             return dependencyInfo;
         } else {
             logger.debug("The parameters version and commit of {} are null", phpPackage.getName());

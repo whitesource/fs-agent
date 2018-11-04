@@ -34,7 +34,8 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private static final String MAIN = "main";
     private static final String JAVA = "java";
     private static final String JAVA_EXTENSION = ".java";
-    private static final String AAR_EXTENTION = ".aar";
+    private static final String AAR_EXTENSION = ".aar";
+    private static final String EXE_EXTENSION = ".exe";
     private static final String PLUS = "+---";
     private static final String SLASH = "\\---";
     private static final String USER_HOME = "user.home";
@@ -285,7 +286,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 for (File folder : dependencyFolder.listFiles()) {
                     if (folder.isDirectory()) {
                         for (File file : folder.listFiles()) {
-                            if ((file.getName().contains(JAR_EXTENSION) || file.getName().contains(AAR_EXTENTION)) && !file.getName().contains("-sources")) {
+                            if ((file.getName().endsWith(JAR_EXTENSION) || file.getName().endsWith(AAR_EXTENSION) || file.getName().endsWith(EXE_EXTENSION)) && !file.getName().contains("-sources")) {
                                 String sha1 = getSha1(file.getPath());
                                 dependencyFile = new DependencyFile(sha1,file);
                                 break outerloop;
