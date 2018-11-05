@@ -578,7 +578,8 @@ public class FSAConfiguration {
 
         boolean htmlResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
 
-        boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, true);
+        // TODO change default value to true on the next release 18.10.3 - support for backward compatibility
+        boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, false);
         boolean cocoapodsRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RUN_PRE_STEP, false);
 
         boolean npmIgnoreSourceFiles;
@@ -617,7 +618,9 @@ public class FSAConfiguration {
             goIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.GO_IGNORE_SOURCE_FILES, false);
             pythonIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_SOURCE_FILES, true);
             rubyIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.RUBY_IGNORE_SOURCE_FILES, true);
-            cocoapodsIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_IGNORE_SOURCE_FILES, true);
+
+            // TODO change default value to true on the next release 18.10.3 - support for backward compatibility
+            cocoapodsIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_IGNORE_SOURCE_FILES, false);
         }
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreSourceFiles,
