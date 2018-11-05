@@ -578,8 +578,7 @@ public class FSAConfiguration {
 
         boolean htmlResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
 
-        // TODO change default value to true on the next release 18.10.3 - support for backward compatibility
-        boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, false);
+        boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, true);
         boolean cocoapodsRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RUN_PRE_STEP, false);
 
         boolean npmIgnoreSourceFiles;
