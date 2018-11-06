@@ -57,7 +57,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private final String REPOSITORY = "repository";
     public static final String ALL = "All";
     public static final String NONE = "None";
-    private final String POM = "pom";
     private final String B_PARAMETER = "-B";
     private final String VERSION_PARAMETER = "-v";
     private final String TEST_JAR = "test-jar";
@@ -143,7 +142,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                             nodes.stream().map(node -> node.getArtifactId()).collect(Collectors.toList())));
 
                     projects = nodes.stream()
-                            .filter(node -> !this.ignorePomModules || (ignorePomModules && !node.getPackaging().equals(POM)))
+                            .filter(node -> !this.ignorePomModules || (ignorePomModules && !node.getPackaging().equals(Constants.POM)))
                             .map(tree -> {
                                 Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
                                 List<DependencyInfo> dependencies = new LinkedList<>();

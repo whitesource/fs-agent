@@ -46,17 +46,18 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
     private final boolean mavenAggregateModules;
     private final boolean ignoreSourceFiles;
     private final boolean mavenIgnoreDependencyTreeErrors;
-
+    private final boolean ignorePomModules;
 
     /* --- Constructor --- */
 
     public MavenDependencyResolver(boolean mavenAggregateModules, String[] mavenIgnoredScopes, boolean ignoreSourceFiles, boolean ignorePomModules, boolean runPreStep,boolean mavenIgnoreDependencyTreeErrors) {
         super();
         this.dependencyCollector = new MavenTreeDependencyCollector(mavenIgnoredScopes, ignorePomModules, runPreStep, mavenIgnoreDependencyTreeErrors);
-        this.bomParser = new MavenPomParser();
+        this.bomParser = new MavenPomParser(ignorePomModules);
         this.mavenAggregateModules = mavenAggregateModules;
         this.ignoreSourceFiles = ignoreSourceFiles;
         this.mavenIgnoreDependencyTreeErrors = mavenIgnoreDependencyTreeErrors;
+        this.ignorePomModules = ignorePomModules;
     }
 
     /* --- Members --- */
@@ -108,13 +109,13 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
     }
 
     private void collectDependenciesFromPomXml(String topLevelFolder, Set<String> bomFiles, Collection<AgentProjectInfo> projects) {
-        MavenPomParser pomParser = new MavenPomParser();
+        MavenPomParser pomParser = new MavenPomParser(ignorePomModules);
         List<BomFile> bomFileList = new LinkedList<>();
         HashMap<String, String> bomArtifactPathMap = new HashMap<>();
-        for (String bomFile : bomFiles) {
-                BomFile bomfile1 = pomParser.parseBomFile(bomFile);
-                bomFileList.add(bomfile1);
-                bomArtifactPathMap.put(bomfile1.getName(), bomFile);
+        for (String bomFileName : bomFiles) {
+            BomFile bomfile = pomParser.parseBomFile(bomFileName);
+            bomFileList.add(bomfile);
+            bomArtifactPathMap.put(bomfile.getName(), bomFileName);
         }
 
         for (AgentProjectInfo project : projects) {

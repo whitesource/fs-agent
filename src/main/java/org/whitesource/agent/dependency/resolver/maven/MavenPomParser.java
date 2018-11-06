@@ -45,11 +45,13 @@ public class MavenPomParser implements IBomParser {
     /* --- Static members --- */
 
     private final Logger logger = LoggerFactory.getLogger(MavenPomParser.class);
+    private boolean ignorePomModules;
 
     /* --- Constructor --- */
 
-    public MavenPomParser() {
+    public MavenPomParser(boolean ignorePomModules) {
         reader = new MavenXpp3Reader();
+        this.ignorePomModules = ignorePomModules;
     }
 
     /* --- Members --- */
@@ -58,7 +60,6 @@ public class MavenPomParser implements IBomParser {
 
     @Override
     public BomFile parseBomFile(String bomPath) {
-
         Model model = null;
         try {
             try(FileReader fileReader = new FileReader(bomPath)) {
@@ -76,26 +77,26 @@ public class MavenPomParser implements IBomParser {
     }
 
     public List<DependencyInfo> parseDependenciesFromPomXml(String bomPath) {
-                Model model = null;
-                try {
-                    try(FileReader fileReader = new FileReader(bomPath)) {
-                        model = reader.read(fileReader);
-                    }
-                } catch (IOException e) {
-                    logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
-                } catch (XmlPullParserException e) {
-                    logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
-                }
-                if(model != null && model.getArtifactId() != null) {
-                    List<Dependency> directDependencies = Collections.emptyList();
-                    List<Dependency> managementDependencies = Collections.emptyList();
+        Model model = null;
+        try {
+            try(FileReader fileReader = new FileReader(bomPath)) {
+                model = reader.read(fileReader);
+            }
+        } catch (IOException e) {
+            logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
+        } catch (XmlPullParserException e) {
+            logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
+        }
+        if(model != null && model.getArtifactId() != null && (!ignorePomModules || !model.getPackaging().equals(Constants.POM))) {
+            List<Dependency> directDependencies = Collections.emptyList();
+            List<Dependency> managementDependencies = Collections.emptyList();
 
-                    if(model.getDependencyManagement() != null && model.getDependencyManagement().getDependencies() != null) {
-                        managementDependencies = model.getDependencyManagement().getDependencies();
-                    }
-                    if(model.getDependencies() != null) {
-                        directDependencies = model.getDependencies();
-                    }
+            if(model.getDependencyManagement() != null && model.getDependencyManagement().getDependencies() != null) {
+                managementDependencies = model.getDependencyManagement().getDependencies();
+            }
+            if(model.getDependencies() != null) {
+                directDependencies = model.getDependencies();
+            }
             List<Dependency> dependencies = new LinkedList<>();
             dependencies.addAll(directDependencies);
             dependencies.addAll(managementDependencies);
@@ -122,6 +123,7 @@ public class MavenPomParser implements IBomParser {
                 dependencyInfo.setDependencyType(DependencyType.MAVEN);
                 dependencyInfo.setScope(dependency.getScope());
                 dependencyInfo.setType(dependency.getType());
+                dependencyInfo.setSystemPath(bomPath);
                 dependenciesInfo.add(dependencyInfo);
             }
             return dependenciesInfo;
