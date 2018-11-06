@@ -791,12 +791,15 @@ public class ResolverConfiguration {
                 ", php.ResolveDependencies=" + phpResolveDependencies +
                 ", php.RunPreStep=" + phpRunPreStep +
                 ", php.IncludeDevDependenices=" + phpIncludeDevDependencies + '\n' +
-                ", sbt.ResolveDependencies=" + sbtResolveDependencies +
-                ", sbt.AggregateModules=" + sbtAggregateModules + '\n' +
-                ", sbt.RunPreStep=" + sbtRunPreStep + '\n' +
+                ", sbt.resolveDependencies=" + sbtResolveDependencies +
+                ", sbt.aggregateModules=" + sbtAggregateModules + '\n' +
+                ", sbt.runPreStep=" + sbtRunPreStep + '\n' +
                 ", sbt.TargetFolder=" + sbtTargetFolder + '\n' +
-                ", sbt.IgnoreSourceFiles=" + sbtIgnoreSourceFiles + '\n' +
-                ", html.ResolveDependencies=" + htmlResolveDependencies;
+                ", sbt.ignoreSourceFiles=" + sbtIgnoreSourceFiles + '\n' +
+                ", html.resolveDependencies=" + htmlResolveDependencies + '\n' +
+                ", cocoapods.resolveDependencies=" + cocoapodsResolveDependencies + '\n' +
+                ", cocoapods.ignoreSourceFiles=" + cocoapodsIgnoreSourceFiles + '\n' +
+                ", cocoapods.runPreStep=" + cocoapodsRunPreStep;
     }
 
 }
