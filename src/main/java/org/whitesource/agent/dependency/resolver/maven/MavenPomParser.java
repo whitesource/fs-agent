@@ -17,10 +17,7 @@ package org.whitesource.agent.dependency.resolver.maven;
 
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
-import org.apache.maven.model.building.DefaultModelBuildingRequest;
-import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -29,9 +26,7 @@ import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.IBomParser;
 import org.whitesource.agent.utils.LoggerFactory;
 
-import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -60,41 +55,24 @@ public class MavenPomParser implements IBomParser {
 
     @Override
     public BomFile parseBomFile(String bomPath) {
-        Model model = null;
-        try {
-            try(FileReader fileReader = new FileReader(bomPath)) {
-                model = reader.read(fileReader);
-            }
-        } catch (IOException e) {
-            logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
-        } catch (XmlPullParserException e) {
-            logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
-        }
-        if(model != null && model.getArtifactId() != null) {
+        Model model = getModel(bomPath);
+        if (model != null && model.getArtifactId() != null) {
             return new BomFile(model.getGroupId(), model.getArtifactId(),model.getVersion(),bomPath);
         }
         return null;
     }
 
     public List<DependencyInfo> parseDependenciesFromPomXml(String bomPath) {
-        Model model = null;
-        try {
-            try(FileReader fileReader = new FileReader(bomPath)) {
-                model = reader.read(fileReader);
-            }
-        } catch (IOException e) {
-            logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
-        } catch (XmlPullParserException e) {
-            logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
-        }
-        if(model != null && model.getArtifactId() != null && (!ignorePomModules || !model.getPackaging().equals(Constants.POM))) {
+        Model model = getModel(bomPath);
+        if (model != null && model.getArtifactId() != null && (!ignorePomModules || !model.getPackaging().equals(Constants.POM))) {
+            // ignoring POM modules if 'ignorePosModule=true'
             List<Dependency> directDependencies = Collections.emptyList();
             List<Dependency> managementDependencies = Collections.emptyList();
 
-            if(model.getDependencyManagement() != null && model.getDependencyManagement().getDependencies() != null) {
+            if (model.getDependencyManagement() != null && model.getDependencyManagement().getDependencies() != null) {
                 managementDependencies = model.getDependencyManagement().getDependencies();
             }
-            if(model.getDependencies() != null) {
+            if (model.getDependencies() != null) {
                 directDependencies = model.getDependencies();
             }
             List<Dependency> dependencies = new LinkedList<>();
@@ -103,12 +81,11 @@ public class MavenPomParser implements IBomParser {
             List<DependencyInfo> dependenciesInfo = new LinkedList<>();
             //extract Dependency:Version map
             HashMap<String,String> versionDependencyMap = new HashMap<>();
-            String key;
-            String value;
+            String key, value;
             for (Map.Entry<Object, Object> versionDependency : model.getProperties().entrySet()) {
-                key = Constants.DOLLAR + Constants.OPEN_CURVY_BRACKET + String.valueOf(versionDependency.getKey()) + Constants.CLOSE_CURVY_BRACKET;
+                key = Constants.DOLLAR + Constants.OPEN_CURLY_BRACKET + String.valueOf(versionDependency.getKey()) + Constants.CLOSE_CURLY_BRACKET;
                 value = String.valueOf(versionDependency.getValue());
-                if(!value.contains(Constants.DOLLAR)) {
+                if (!value.contains(Constants.DOLLAR)) {
                     versionDependencyMap.put(key, value);
                 }
             }
@@ -129,5 +106,17 @@ public class MavenPomParser implements IBomParser {
             return dependenciesInfo;
         }
         return Collections.emptyList();
+    }
+
+    private Model getModel(String bomPath){
+        Model model = null;
+        try {
+            try (FileReader fileReader = new FileReader(bomPath)) {
+                model = reader.read(fileReader);
+            }
+        } catch (Exception e) {
+            logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
+        }
+        return model;
     }
 }

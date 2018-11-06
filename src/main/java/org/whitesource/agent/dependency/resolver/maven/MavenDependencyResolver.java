@@ -21,7 +21,6 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
-import org.whitesource.agent.dependency.resolver.dotNet.RestoreCollector;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -69,7 +68,7 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
          // try to collect dependencies via 'mvn dependency tree and parse'
           Collection<AgentProjectInfo> projects = dependencyCollector.collectDependencies(topLevelFolder);
          if (mavenIgnoreDependencyTreeErrors && dependencyCollector.isErrorsRunningDependencyTree()) {
-             collectDependenciesFromPomXml(topLevelFolder, bomFiles, projects);
+             collectDependenciesFromPomXml(bomFiles, projects);
          }
           List<BomFile> files = bomFiles.stream().map(bomParser::parseBomFile)
                 .filter(Objects::nonNull).filter(bom -> !bom.getLocalFileName().contains(TEST))
@@ -108,7 +107,7 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
         return resolutionResult;
     }
 
-    private void collectDependenciesFromPomXml(String topLevelFolder, Set<String> bomFiles, Collection<AgentProjectInfo> projects) {
+    private void collectDependenciesFromPomXml(Set<String> bomFiles, Collection<AgentProjectInfo> projects) {
         MavenPomParser pomParser = new MavenPomParser(ignorePomModules);
         List<BomFile> bomFileList = new LinkedList<>();
         HashMap<String, String> bomArtifactPathMap = new HashMap<>();

@@ -133,7 +133,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 }
                 // set flag of errors, in case we do not have errors  we do not want to parse direct dependencies from pom later on.
                 if (mvnDependencies.isErrorInProcess()) {
-                    setErrorsRunningDependencyTree(true);
+                    this.errorsRunningDependencyTree = true;
                 }
                 if (!mvnDependencies.isErrorInProcess() || mavenIgnoreDependencyTreeErrors ) {
                     List<Node> nodes = mavenLinesParser.parseLines(lines);
@@ -237,11 +237,9 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 dependency.setFilename(jarFile.getName());
             }
         }
-
         node.getChildNodes().forEach(childNode -> dependency.getChildren().add(getDependencyFromNode(childNode, paths)));
         return dependency;
     }
-
 
     /* --- Private methods --- */
 
@@ -319,7 +317,5 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     public boolean isErrorsRunningDependencyTree() {
         return errorsRunningDependencyTree;
     }
-    public void setErrorsRunningDependencyTree(boolean errorsRunningDependencyTree) {
-        this.errorsRunningDependencyTree = errorsRunningDependencyTree;
-    }
+
 }
