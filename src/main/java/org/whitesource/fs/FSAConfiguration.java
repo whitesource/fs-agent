@@ -583,6 +583,7 @@ public class FSAConfiguration {
 
         boolean hexResolveDependencies  = config.getBooleanProperty(ConfigPropertyKeys.HEX_RESOLVE_DEPENDENECIES, true);
         boolean hexRunPreStep           = config.getBooleanProperty(ConfigPropertyKeys.HEX_RUN_PRE_STEP, false);
+        boolean hexAggregateModules     = config.getBooleanProperty(ConfigPropertyKeys.HEX_AGGREGATE_MODULES, false);
 
         boolean npmIgnoreSourceFiles;
         boolean bowerIgnoreSourceFiles;
@@ -642,7 +643,7 @@ public class FSAConfiguration {
                 phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies,
                 sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, sbtIgnoreSourceFiles,
                 htmlResolveDependencies, cocoapodsResolveDependencies, cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles,
-                hexResolveDependencies, hexRunPreStep, hexIgnoreSourceFiles, addSha1);
+                hexResolveDependencies, hexRunPreStep, hexIgnoreSourceFiles, hexAggregateModules, addSha1);
     }
 
     private RequestConfiguration getRequest(FSAConfigProperties config, String apiToken, String userKey, String projectName, String projectToken, String scanComment) {

@@ -4,12 +4,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.whitesource.agent.api.model.DependencyInfo;
-import org.whitesource.agent.dependency.resolver.ruby.RubyDependencyResolver;
 
 import java.io.File;
 import java.util.HashMap;
-
-import static org.junit.Assert.*;
+import java.util.List;
 
 public class HexDependencyResolverTest {
 
@@ -17,11 +15,18 @@ public class HexDependencyResolverTest {
 
     @Before
     public void setUp() throws Exception {
-        hexDependencyResolver = new HexDependencyResolver(true, true);
+        hexDependencyResolver = new HexDependencyResolver(true, true,true);
     }
     @Test
     public void parseMixLoc() {
         HashMap<String, DependencyInfo> stringDependencyInfoHashMap = hexDependencyResolver.parseMixLoc(new File("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\imager-master\\mix.lock"));
         Assert.assertTrue(stringDependencyInfoHashMap != null);
+    }
+
+    @Test
+    public void parseTree(){
+        HashMap<String, DependencyInfo> stringDependencyInfoHashMap = hexDependencyResolver.parseMixLoc(new File("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\imager-master\\mix.lock"));
+        List<DependencyInfo> dependencyInfoList = hexDependencyResolver.parseMixTree("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\imager-master", stringDependencyInfoHashMap);
+        Assert.assertTrue(dependencyInfoList != null);
     }
 }

@@ -187,6 +187,7 @@ public final class ConfigPropertyKeys {
     public static final String HEX_RESOLVE_DEPENDENECIES    = "hex.resolveDependencies";
     public static final String HEX_RUN_PRE_STEP             = "hex.runPreStep";
     public static final String HEX_IGNORE_SOURCE_FILES      = "hex.ignoreSourceFiles";
+    public static final String HEX_AGGREGATE_MODULES        = "hex.aggregateModules";
 
     public static final String DEPENDENCIES_ONLY            = "dependenciesOnly";
     public static final String WHITESOURCE_CONFIGURATION    = "whitesourceConfiguration";

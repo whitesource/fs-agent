@@ -120,6 +120,7 @@ public class ResolverConfiguration {
             @JsonProperty(HEX_RESOLVE_DEPENDENECIES) boolean hexResolveDependencies,
             @JsonProperty(HEX_RUN_PRE_STEP) boolean hexRunPreStep,
             @JsonProperty(HEX_IGNORE_SOURCE_FILES) boolean hexIgnoreSourceFiles,
+            @JsonProperty(HEX_AGGREGATE_MODULES) boolean hexAggregateModules,
             @JsonProperty("addSha1") boolean addSha1) {
         this.npmRunPreStep                      = npmRunPreStep;
         this.npmIgnoreScripts                   = npmIgnoreScripts;
@@ -213,6 +214,7 @@ public class ResolverConfiguration {
         this.hexResolveDependencies = hexResolveDependencies;
         this.hexRunPreStep          = hexRunPreStep;
         this.hexIgnoreSourceFiles   = hexIgnoreSourceFiles;
+        this.hexAggregateModules    = hexAggregateModules;
 
         this.addSha1 = addSha1;
     }
@@ -311,6 +313,7 @@ public class ResolverConfiguration {
 
     private boolean hexResolveDependencies;
     private boolean hexRunPreStep;
+    private boolean hexAggregateModules;
     private boolean hexIgnoreSourceFiles;
 
     private boolean addSha1;
@@ -654,6 +657,11 @@ public class ResolverConfiguration {
     @JsonProperty(HEX_RUN_PRE_STEP)
     public boolean isHexRunPreStep(){
         return hexRunPreStep;
+    }
+
+    @JsonProperty(HEX_AGGREGATE_MODULES)
+    public boolean isHexAggregateModules(){
+        return hexAggregateModules;
     }
 
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {

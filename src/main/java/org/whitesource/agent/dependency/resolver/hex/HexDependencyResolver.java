@@ -2,6 +2,8 @@ package org.whitesource.agent.dependency.resolver.hex;
 
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
+import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
@@ -11,15 +13,18 @@ import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.LoggerFactory;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class HexDependencyResolver extends AbstractDependencyResolver {
 
-    private static final List<String> HEX_SCRIPT_EXTENSION = Arrays.asList(".ex", ".exs");
-    private static final String MIX_LOCK_FILE = "mix.lock";
+    private static final List<String> HEX_SCRIPT_EXTENSION = Arrays.asList(".ex");
+    private static final String MIX_EXS = "mix.exs";
+    private static final String MIX_LOCK = "mix.lock";
     private static final String MIX = "mix";
     private static final String DEPS_GET = "deps.get";
     private static final String DEPS_TREE = "deps.tree";
@@ -27,17 +32,20 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
     private static final String HEX_REGEX = "\"(\\w+)\": \\{:hex, :\\w+, \"(\\d+\\.\\d+\\.\\d+(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?)\", \"(\\w+)\"";
     private static final String GIT_REGEX = "\"(\\w+)\": \\{:git, \"(https|http|):/\\/github.com\\/\\w+\\/\\w+.git\", \"(\\w+)\"";
     private static final String TREE_REGEX = "--\\s(\\w+)\\s(~>\\s(\\d+\\.\\d+(\\.\\d+)?(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?))?";
+    private static final String VERSION_REGEX = "(\\d+\\.\\d+(\\.\\d+)?(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?)";
     public static final String TAR_EXTENSION = ".tar";
 
     private final Logger logger = LoggerFactory.getLogger(HexDependencyResolver.class);
     private boolean ignoreSourceFiles;
     private boolean runPreStep;
+    private boolean aggregateModules;
     private Cli cli;
     private String dotHexCachePath;
 
-    public HexDependencyResolver(boolean ignoreSourceFiles, boolean runPreStep){
+    public HexDependencyResolver(boolean ignoreSourceFiles, boolean runPreStep, boolean aggregateModules){
         this.ignoreSourceFiles = ignoreSourceFiles;
         this.runPreStep = runPreStep;
+        this.aggregateModules = aggregateModules;
         cli = new Cli();
         String currentUsersHomeDir = System.getProperty(Constants.USER_HOME);
         File dotHexCache = Paths.get(currentUsersHomeDir, ".hex", "packages","hexpm").toFile();
@@ -48,18 +56,49 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) throws FileNotFoundException {
-        if (this.runPreStep){
-            runPreStep(topLevelFolder);
+        Map<AgentProjectInfo, Path> projectInfoPathMap = new HashMap<>();
+        Collection<String> excludes = new HashSet<>();
+
+        for (String bomFileName : bomFiles) {
+            File bomFile = new File(bomFileName);
+            if (bomFile.getParent().equals(topLevelFolder) || bomFile.getParentFile().getParent().endsWith("apps")) {
+                String bomFileFolder = bomFile.getParent();
+                String moduleName = bomFile.getParentFile().getName();
+                if (this.runPreStep) {
+                    runPreStep(bomFileFolder);
+                }
+                List<DependencyInfo> dependencies = new ArrayList<>();
+                File mixLock = new File(bomFileFolder + fileSeparator + MIX_LOCK);
+                if (mixLock.exists()) {
+                    HashMap<String, DependencyInfo> dependencyInfoMap = parseMixLoc(mixLock);
+                    dependencies = parseMixTree(bomFileFolder, dependencyInfoMap);
+                    if (dependencies.size() > 0) {
+                        AgentProjectInfo agentProjectInfo = new AgentProjectInfo();
+                        agentProjectInfo.getDependencies().addAll(dependencies);
+                        if (!aggregateModules) {
+                            Coordinates coordinates = new Coordinates();
+                            coordinates.setArtifactId(moduleName);
+                            agentProjectInfo.setCoordinates(coordinates);
+                        }
+                        projectInfoPathMap.put(agentProjectInfo, bomFile.getParentFile().toPath());
+                        if (ignoreSourceFiles) {
+                            excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, extensionPattern(HEX_SCRIPT_EXTENSION), null));
+                        }
+                    }
+                } else {
+                    logger.warn("Can't find {}", mixLock.getPath());
+                }
+            }
         }
-        List<DependencyInfo> dependencies = new ArrayList<>();
-        File mixLock = new File (topLevelFolder + fileSeparator + MIX_LOCK_FILE);
-        if (mixLock.exists()){
-            HashMap<String, DependencyInfo> dependencyInfoMap = parseMixLoc(mixLock);
-            dependencies = parseMixTree(topLevelFolder, dependencyInfoMap);
+        excludes.addAll(getExcludes());
+        ResolutionResult resolutionResult;
+        if (!aggregateModules) {
+            resolutionResult = new ResolutionResult(projectInfoPathMap, excludes, getDependencyType(), topLevelFolder);
         } else {
-            logger.warn("Can't find {}", mixLock.getPath());
+            resolutionResult = new ResolutionResult(projectInfoPathMap.keySet().stream()
+                    .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes, getDependencyType(), topLevelFolder);
         }
-        return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
+        return resolutionResult;
     }
 
     private void runPreStep(String folderPath){
@@ -76,6 +115,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         List<DependencyInfo> dependenciesList = new ArrayList<>();
         Stack<DependencyInfo> parentDependencies = new Stack<>();
         Pattern treePattern = Pattern.compile(TREE_REGEX);
+
         Matcher matcher;
         if (lines != null){
             for (String line : lines){
@@ -87,23 +127,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                         String version = matcher.group(3);
                         DependencyInfo dependencyInfo = dependencyInfoMap.get(name);
                         if (dependencyInfo != null){
-                            if (dependencyInfo.getSha1() == null){
-                                String sha1;
-                                if (version != null) {
-                                    sha1 = getSha1(name, version);
-                                } else {
-                                    sha1 = getSha1(name);
-                                }
-                                if (sha1 != null){
-                                    dependencyInfo.setSha1(sha1);
-                                }
-                            }
-                            if (version != null) {
-                                dependencyInfo.setFilename(dotHexCachePath + fileSeparator + name + Constants.DASH + version + TAR_EXTENSION);
-                                if (dependencyInfo.getVersion() == null) {
-                                    dependencyInfo.setVersion(version);
-                                }
-                            }
+                            getSha1AndVersion(dependencyInfo, version);
                             if (currentLevel == prevLevel){
                                 if (!parentDependencies.isEmpty()) {
                                     parentDependencies.pop();
@@ -198,6 +222,40 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         return dependencyInfoHashMap;
     }
 
+    private void getSha1AndVersion(DependencyInfo dependencyInfo, String version){
+        String name = dependencyInfo.getArtifactId();
+        if (dependencyInfo.getSha1() == null){
+            String sha1 = null;
+            if (version != null) {
+                sha1 = getSha1(name, version);
+            } else {
+                File tarFile = getTarFile(name);
+                if (tarFile != null){
+                    try {
+                        sha1 = ChecksumUtils.calculateSHA1(tarFile);
+                        Pattern versionPattern = Pattern.compile(VERSION_REGEX);
+                        Matcher matcher = versionPattern.matcher(tarFile.getName());
+                        if (matcher.find()) {
+                            version = matcher.group(1);
+                        }
+                    } catch (IOException e){
+                        logger.warn("Failed calculating SHA1 of {}", tarFile.getPath());
+                        logger.debug("Error: {}", e.getStackTrace());
+                    }
+                }
+            }
+            if (sha1 != null){
+                dependencyInfo.setSha1(sha1);
+            }
+        }
+        if (version != null) {
+            dependencyInfo.setFilename(dotHexCachePath + fileSeparator + name + Constants.DASH + version + TAR_EXTENSION);
+            if (dependencyInfo.getVersion() == null) {
+                dependencyInfo.setVersion(version);
+            }
+        }
+    }
+
     // this method is used when there's a known version
     private String getSha1(String name, String version) {
         if (dotHexCachePath == null || name == null || version == null){
@@ -216,17 +274,12 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
 
     // this method is used when there's no known version. in such case finding in the cache all the tar files with the relevant name
     // and then finding the most recent one (according to the version)
-    private String getSha1(String name) {
-        try {
-            File hexCache = new File(dotHexCachePath);
-            File[] files = hexCache.listFiles(new HexFileNameFilter(name));
-            if (files != null && files.length > 0) {
-                Arrays.sort(files, Collections.reverseOrder());
-                return ChecksumUtils.calculateSHA1(files[0]);
-            }
-        } catch (IOException e) {
-            logger.warn("Error calculating sha1 {}, error:  {}", name, e.getMessage());
-            logger.debug("Error: {}", e.getStackTrace());
+    private File getTarFile(String name) {
+        File hexCache = new File(dotHexCachePath);
+        File[] files = hexCache.listFiles(new HexFileNameFilter(name));
+        if (files != null && files.length > 0) {
+            Arrays.sort(files, Collections.reverseOrder());
+            return files[0];
         }
         logger.warn("Couldn't find tar file of {}", name);
         return null;
@@ -255,7 +308,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String[] getBomPattern() {
-        return new String[]{Constants.PATTERN + MIX_LOCK_FILE};
+        return new String[]{Constants.PATTERN + MIX_EXS};
     }
 
     @Override

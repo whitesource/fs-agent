@@ -143,6 +143,7 @@ public class DependencyResolutionService {
 
         final boolean hexResolveDependencies    = config.isHexResolveDependencies();
         final boolean hexRunPreStep             = config.isHexRunPreStep();
+        final boolean hexAggregateModules       = config.isHexAggregateModules();
         final boolean hexIgnoreSourceFiles      = config.isHexIgnoreSourceFiles();
 
         ignoreSourceFiles = config.isIgnoreSourceFiles();
@@ -204,7 +205,7 @@ public class DependencyResolutionService {
         }
 
         if (hexResolveDependencies){
-            dependencyResolvers.add(new HexDependencyResolver(hexIgnoreSourceFiles, hexRunPreStep));
+            dependencyResolvers.add(new HexDependencyResolver(hexIgnoreSourceFiles, hexRunPreStep, hexAggregateModules));
         }
 
         this.separateProjects = false;
