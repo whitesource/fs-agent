@@ -102,6 +102,9 @@ public final class Constants {
     public static final char CLOSE_SQUARE_BRACKET   = ']';
     public static final String DOUBLE_EQUALS        = "==";
     public static final char SEMI_COLON             = ';';
+    public static final String DOLLAR               = "$";
+    public static final String OPEN_CURVY_BRACKET   = "{";
+    public static final String CLOSE_CURVY_BRACKET  = "}";
 
     public static final int MAX_NUMBER_OF_DEPENDENCIES = 1000000;
 

@@ -46,26 +46,26 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
 
     private static final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector.class);
 
-    private static final String MVN_PARAMS_M2PATH_PATH = "help:evaluate";
-    private static final String MVN_PARAMS_M2PATH_LOCAL = "-Dexpression=settings.localRepository";
-    private static final String MVN_PARAMS_TREE = "dependency:tree";
-    private static final String MVN_COMMAND = "mvn";
-    private static final String SCOPE_TEST = "test";
-    private static final String SCOPE_PROVIDED = "provided";
-    private static final String USER_HOME = "user.home";
-    private static final String M2 = ".m2";
-    private static final String REPOSITORY = "repository";
+    private final String MVN_PARAMS_M2PATH_PATH = "help:evaluate";
+    private final String MVN_PARAMS_M2PATH_LOCAL = "-Dexpression=settings.localRepository";
+    private final String MVN_PARAMS_TREE = "dependency:tree";
+    private final String MVN_COMMAND = "mvn";
+    private final String SCOPE_TEST = "test";
+    private final String SCOPE_PROVIDED = "provided";
+    private final String USER_HOME = "user.home";
+    private final String M2 = ".m2";
+    private final String REPOSITORY = "repository";
     public static final String ALL = "All";
     public static final String NONE = "None";
-    private static final String POM = "pom";
-    private static final String B_PARAMETER = "-B";
-    private static final String VERSION_PARAMETER = "-v";
-    private static final String TEST_JAR = "test-jar";
-    private static final String JAR = "jar";
-    private static final String MVN_CLEAN = "clean";
-    private static final String MVN_INSTALL = "install";
-    private static final String MVN_SKIP_TESTS = "-DskipTests";
-
+    private final String POM = "pom";
+    private final String B_PARAMETER = "-B";
+    private final String VERSION_PARAMETER = "-v";
+    private final String TEST_JAR = "test-jar";
+    private final String JAR = "jar";
+    private final String MVN_CLEAN = "clean";
+    private final String MVN_INSTALL = "install";
+    private final String MVN_SKIP_TESTS = "-DskipTests";
+    private boolean errorsRunningDependencyTree = false;
 
     /* --- Members --- */
 
@@ -75,10 +75,10 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private boolean ignorePomModules;
     private boolean runPreStep;
     private MavenLinesParser mavenLinesParser;
-
+    private boolean mavenIgnoreDependencyTreeErrors;
     /* --- Constructors --- */
 
-    public MavenTreeDependencyCollector(String[] mavenIgnoredScopes, boolean ignorePomModules, boolean runPreStep) {
+    public MavenTreeDependencyCollector(String[] mavenIgnoredScopes, boolean ignorePomModules, boolean runPreStep, boolean mavenIgnoreDependencyTreeErrors) {
         mavenLinesParser = new MavenLinesParser();
         this.mavenIgnoredScopes = new HashSet<>();
         if (mavenIgnoredScopes == null) {
@@ -94,6 +94,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         }
         this.ignorePomModules = ignorePomModules;
         this.runPreStep = runPreStep;
+        this.mavenIgnoreDependencyTreeErrors = mavenIgnoreDependencyTreeErrors;
     }
 
     /* --- Public methods --- */
@@ -131,7 +132,11 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                     mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParams());
                     lines = mvnDependencies.executeProcess();
                 }
-                if (!mvnDependencies.isErrorInProcess()) {
+                // set flag of errors, in case we do not have errors  we do not want to parse direct dependencies from pom later on.
+                if (mvnDependencies.isErrorInProcess()) {
+                    setErrorsRunningDependencyTree(true);
+                }
+                if (!mvnDependencies.isErrorInProcess() || mavenIgnoreDependencyTreeErrors ) {
                     List<Node> nodes = mavenLinesParser.parseLines(lines);
 
                     logger.info("End parsing pom files , found : " + String.join(Constants.COMMA,
@@ -149,7 +154,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                                     dependency.setSha1(pathSha1Pair.getValue());
                                     dependency.setSystemPath(pathSha1Pair.getKey());
                                 }));
-
                                 AgentProjectInfo projectInfo = new AgentProjectInfo();
                                 projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
                                 logger.debug("Project/Module coordinates: {}", projectInfo.getCoordinates().toString());
@@ -161,6 +165,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                                 logger.debug("ProjectInfo direct dependency added : {}", projectInfo.getDependencies().size());
                                 return projectInfo;
                             }).collect(Collectors.toList());
+
                 } else {
                     logger.warn("Failed to scan and send {}", getLsCommandParams()); //either dead code? supposed to be up there..
                 }
@@ -168,7 +173,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 logger.warn("Error getting dependencies after running {} on {}, {}", getLsCommandParams(), rootDirectory, e.getMessage());
                 logger.debug("Error: {}", e.getStackTrace());
             }
-
             if (projects != null && projects.isEmpty()) {
                 if (!showMavenTreeError) {
                     logger.warn("Failed to getting dependencies after running '{}'", getLsCommandParams());
@@ -310,5 +314,13 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             showMavenTreeError = true;
             return null;
         }
+    }
+
+
+    public boolean isErrorsRunningDependencyTree() {
+        return errorsRunningDependencyTree;
+    }
+    public void setErrorsRunningDependencyTree(boolean errorsRunningDependencyTree) {
+        this.errorsRunningDependencyTree = errorsRunningDependencyTree;
     }
 }

@@ -121,7 +121,7 @@ public class FileSystemAgent {
         if (config.isSetUpMuiltiModuleFile()) {
             ViaMultiModuleAnalyzer viaMultiModuleAnalyzer = new ViaMultiModuleAnalyzer(config.getDependencyDirs().get(0),
                     new MavenDependencyResolver(false, new String[]{Constants.NONE}, false,
-                            false, false), Constants.TARGET, config.getAnalyzeMultiModule());
+                            false, false, false), Constants.TARGET, config.getAnalyzeMultiModule());
             if (viaMultiModuleAnalyzer.getBomFiles().isEmpty()) {
                 viaMultiModuleAnalyzer = new ViaMultiModuleAnalyzer(config.getDependencyDirs().get(0),
                         new GradleDependencyResolver(false, false, false, Constants.EMPTY_STRING, new String[]{Constants.NONE}, false),

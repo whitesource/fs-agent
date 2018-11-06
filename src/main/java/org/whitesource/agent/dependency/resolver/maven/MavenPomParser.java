@@ -15,16 +15,24 @@
  */
 package org.whitesource.agent.dependency.resolver.maven;
 
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.building.DefaultModelBuildingRequest;
+import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.agent.Constants;
+import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.IBomParser;
+import org.whitesource.agent.utils.LoggerFactory;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.*;
 
 /**
  * This class represents an MAVEN pom.xml file.
@@ -32,6 +40,7 @@ import java.io.IOException;
  * @author eugen.horovitz
  */
 public class MavenPomParser implements IBomParser {
+    public final String COULD_NOT_PARSE_POM_FILE = "Could not parse pom file ";
 
     /* --- Static members --- */
 
@@ -56,14 +65,67 @@ public class MavenPomParser implements IBomParser {
                 model = reader.read(fileReader);
             }
         } catch (IOException e) {
-            logger.debug("Could not parse pom file " + bomPath);
+            logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
         } catch (XmlPullParserException e) {
-            logger.debug("Could not parse pom file " + bomPath);
+            logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
         }
-        if(model!=null && model.getArtifactId()!=null) {
+        if(model != null && model.getArtifactId() != null) {
             return new BomFile(model.getGroupId(), model.getArtifactId(),model.getVersion(),bomPath);
         }
         return null;
     }
 
+    public List<DependencyInfo> parseDependenciesFromPomXml(String bomPath) {
+                Model model = null;
+                try {
+                    try(FileReader fileReader = new FileReader(bomPath)) {
+                        model = reader.read(fileReader);
+                    }
+                } catch (IOException e) {
+                    logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
+                } catch (XmlPullParserException e) {
+                    logger.debug(COULD_NOT_PARSE_POM_FILE + bomPath);
+                }
+                if(model != null && model.getArtifactId() != null) {
+                    List<Dependency> directDependencies = Collections.emptyList();
+                    List<Dependency> managementDependencies = Collections.emptyList();
+
+                    if(model.getDependencyManagement() != null && model.getDependencyManagement().getDependencies() != null) {
+                        managementDependencies = model.getDependencyManagement().getDependencies();
+                    }
+                    if(model.getDependencies() != null) {
+                        directDependencies = model.getDependencies();
+                    }
+            List<Dependency> dependencies = new LinkedList<>();
+            dependencies.addAll(directDependencies);
+            dependencies.addAll(managementDependencies);
+            List<DependencyInfo> dependenciesInfo = new LinkedList<>();
+            //extract Dependency:Version map
+            HashMap<String,String> versionDependencyMap = new HashMap<>();
+            String key;
+            String value;
+            for (Map.Entry<Object, Object> versionDependency : model.getProperties().entrySet()) {
+                key = Constants.DOLLAR + Constants.OPEN_CURVY_BRACKET + String.valueOf(versionDependency.getKey()) + Constants.CLOSE_CURVY_BRACKET;
+                value = String.valueOf(versionDependency.getValue());
+                if(!value.contains(Constants.DOLLAR)) {
+                    versionDependencyMap.put(key, value);
+                }
+            }
+            for (Dependency dependency : dependencies) {
+                String version;
+                if (versionDependencyMap.containsKey(dependency.getVersion())){
+                    version = versionDependencyMap.get(dependency.getVersion());
+                } else {
+                    version = dependency.getVersion();
+                }
+                DependencyInfo dependencyInfo = new DependencyInfo(dependency.getGroupId(), dependency.getArtifactId(),version);
+                dependencyInfo.setDependencyType(DependencyType.MAVEN);
+                dependencyInfo.setScope(dependency.getScope());
+                dependencyInfo.setType(dependency.getType());
+                dependenciesInfo.add(dependencyInfo);
+            }
+            return dependenciesInfo;
+        }
+        return Collections.emptyList();
+    }
 }

@@ -60,7 +60,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
 
     GradleLinesParser(boolean runAssembleCommand, String preferredEnvironment){
         // send maven.runPreStep default value "false", irrelevant for gradle dependency resolution. (WSE-860)
-        super(null, true, false);
+        super(null, true, false, false);
         this.runAssembleCommand = runAssembleCommand;
         gradleCli = new GradleCli(preferredEnvironment);
         fileSeparator = System.getProperty(Constants.FILE_SEPARATOR);

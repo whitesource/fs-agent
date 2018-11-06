@@ -16,10 +16,12 @@
 package org.whitesource.agent.dependency.resolver.maven;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
+import org.whitesource.agent.dependency.resolver.dotNet.RestoreCollector;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -40,17 +42,21 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
     private static final String POM_XML = "**/pom.xml";
     private static final List<String> JAVA_EXTENSIONS = Arrays.asList(".java", ".jar", ".war", ".ear", ".car", ".class");
     private static final String TEST = String.join(File.separator, new String[]{Constants.SRC, "test"});
+    private final String MAIN_FOLDER = "Main_Folder";
     private final boolean mavenAggregateModules;
     private final boolean ignoreSourceFiles;
+    private final boolean mavenIgnoreDependencyTreeErrors;
+
 
     /* --- Constructor --- */
 
-    public MavenDependencyResolver(boolean mavenAggregateModules, String[] mavenIgnoredScopes, boolean ignoreSourceFiles, boolean ignorePomModules, boolean runPreStep) {
+    public MavenDependencyResolver(boolean mavenAggregateModules, String[] mavenIgnoredScopes, boolean ignoreSourceFiles, boolean ignorePomModules, boolean runPreStep,boolean mavenIgnoreDependencyTreeErrors) {
         super();
-        this.dependencyCollector = new MavenTreeDependencyCollector(mavenIgnoredScopes, ignorePomModules, runPreStep);
+        this.dependencyCollector = new MavenTreeDependencyCollector(mavenIgnoredScopes, ignorePomModules, runPreStep, mavenIgnoreDependencyTreeErrors);
         this.bomParser = new MavenPomParser();
         this.mavenAggregateModules = mavenAggregateModules;
         this.ignoreSourceFiles = ignoreSourceFiles;
+        this.mavenIgnoreDependencyTreeErrors = mavenIgnoreDependencyTreeErrors;
     }
 
     /* --- Members --- */
@@ -59,16 +65,18 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
-        // try to collect dependencies via 'mvn dependency tree and parse'
-        Collection<AgentProjectInfo> projects = dependencyCollector.collectDependencies(topLevelFolder);
-
-        List<BomFile> files = bomFiles.stream().map(bomParser::parseBomFile)
+         // try to collect dependencies via 'mvn dependency tree and parse'
+          Collection<AgentProjectInfo> projects = dependencyCollector.collectDependencies(topLevelFolder);
+         if (mavenIgnoreDependencyTreeErrors && dependencyCollector.isErrorsRunningDependencyTree()) {
+             collectDependenciesFromPomXml(topLevelFolder, bomFiles, projects);
+         }
+          List<BomFile> files = bomFiles.stream().map(bomParser::parseBomFile)
                 .filter(Objects::nonNull).filter(bom -> !bom.getLocalFileName().contains(TEST))
                 .collect(Collectors.toList());
         // create excludes for .JAVA files upon finding MAVEN dependencies
-        Set<String> excludes = new HashSet<>();
+            Set<String> excludes = new HashSet<>();
 
-        Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
+         Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
 
             // map each pom file to specific project
             Optional<BomFile> folderPath = files.stream().filter(file -> projectInfo.getCoordinates().getArtifactId().equals(file.getName())).findFirst();
@@ -97,6 +105,38 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
                     .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes, getDependencyType(), topLevelFolder);
         }
         return resolutionResult;
+    }
+
+    private void collectDependenciesFromPomXml(String topLevelFolder, Set<String> bomFiles, Collection<AgentProjectInfo> projects) {
+        MavenPomParser pomParser = new MavenPomParser();
+        List<BomFile> bomFileList = new LinkedList<>();
+        HashMap<String, String> bomArtifactPathMap = new HashMap<>();
+        for (String bomFile : bomFiles) {
+                BomFile bomfile1 = pomParser.parseBomFile(bomFile);
+                bomFileList.add(bomfile1);
+                bomArtifactPathMap.put(bomfile1.getName(), bomFile);
+        }
+
+        for (AgentProjectInfo project : projects) {
+            //add dependencies from pom to the current projects
+            String pomLocationPerProject = bomArtifactPathMap.get(project.getCoordinates().getArtifactId());
+            if(pomLocationPerProject != null) {
+                bomArtifactPathMap.remove(project.getCoordinates().getArtifactId());
+                project.getDependencies().addAll(pomParser.parseDependenciesFromPomXml(pomLocationPerProject));
+            }
+        }
+
+        for (String artifactId : bomArtifactPathMap.keySet()) {
+            for (BomFile missingProject : bomFileList) {
+                //if project was not created due to failure
+                if (artifactId.equals(missingProject.getName())) {
+                    AgentProjectInfo projectInfo = new AgentProjectInfo();
+                    projectInfo.setCoordinates(new Coordinates(missingProject.getGroupId(), missingProject.getName(), missingProject.getVersion()));
+                    projectInfo.getDependencies().addAll(pomParser.parseDependenciesFromPomXml(bomArtifactPathMap.get(missingProject.getName())));
+                    projects.add(projectInfo);
+                }
+            }
+        }
     }
 
     @Override
@@ -130,4 +170,5 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
     protected Collection<String> getLanguageExcludes() {
         return new HashSet<>();
     }
+
 }
