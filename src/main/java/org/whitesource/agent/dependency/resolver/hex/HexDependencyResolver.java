@@ -34,6 +34,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
     private static final String TREE_REGEX = "--\\s(\\w+)\\s(~>\\s(\\d+\\.\\d+(\\.\\d+)?(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?))?";
     private static final String VERSION_REGEX = "(\\d+\\.\\d+(\\.\\d+)?(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?)";
     public static final String TAR_EXTENSION = ".tar";
+    private static final String GIT = "git";
 
     private final Logger logger = LoggerFactory.getLogger(HexDependencyResolver.class);
     private boolean ignoreSourceFiles;
@@ -56,49 +57,18 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) throws FileNotFoundException {
-        Map<AgentProjectInfo, Path> projectInfoPathMap = new HashMap<>();
-        Collection<String> excludes = new HashSet<>();
-
-        for (String bomFileName : bomFiles) {
-            File bomFile = new File(bomFileName);
-            if (bomFile.getParent().equals(topLevelFolder) || bomFile.getParentFile().getParent().endsWith("apps")) {
-                String bomFileFolder = bomFile.getParent();
-                String moduleName = bomFile.getParentFile().getName();
-                if (this.runPreStep) {
-                    runPreStep(bomFileFolder);
-                }
-                List<DependencyInfo> dependencies = new ArrayList<>();
-                File mixLock = new File(bomFileFolder + fileSeparator + MIX_LOCK);
-                if (mixLock.exists()) {
-                    HashMap<String, DependencyInfo> dependencyInfoMap = parseMixLoc(mixLock);
-                    dependencies = parseMixTree(bomFileFolder, dependencyInfoMap);
-                    if (dependencies.size() > 0) {
-                        AgentProjectInfo agentProjectInfo = new AgentProjectInfo();
-                        agentProjectInfo.getDependencies().addAll(dependencies);
-                        if (!aggregateModules) {
-                            Coordinates coordinates = new Coordinates();
-                            coordinates.setArtifactId(moduleName);
-                            agentProjectInfo.setCoordinates(coordinates);
-                        }
-                        projectInfoPathMap.put(agentProjectInfo, bomFile.getParentFile().toPath());
-                        if (ignoreSourceFiles) {
-                            excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, extensionPattern(HEX_SCRIPT_EXTENSION), null));
-                        }
-                    }
-                } else {
-                    logger.warn("Can't find {}", mixLock.getPath());
-                }
-            }
+        if (this.runPreStep){
+            runPreStep(topLevelFolder);
         }
-        excludes.addAll(getExcludes());
-        ResolutionResult resolutionResult;
-        if (!aggregateModules) {
-            resolutionResult = new ResolutionResult(projectInfoPathMap, excludes, getDependencyType(), topLevelFolder);
+        List<DependencyInfo> dependencies = new ArrayList<>();
+        File mixLock = new File (topLevelFolder + fileSeparator + MIX_LOCK);
+        if (mixLock.exists()){
+            HashMap<String, DependencyInfo> dependencyInfoMap = parseMixLoc(mixLock);
+            dependencies = parseMixTree(topLevelFolder, dependencyInfoMap);
         } else {
-            resolutionResult = new ResolutionResult(projectInfoPathMap.keySet().stream()
-                    .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes, getDependencyType(), topLevelFolder);
+            logger.warn("Can't find {}", mixLock.getPath());
         }
-        return resolutionResult;
+        return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
     }
 
     private void runPreStep(String folderPath){
@@ -180,7 +150,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                 if (currLine.startsWith(Constants.WHITESPACE)) {
                     DependencyInfo dependencyInfo = null;
                     String name = null;
-                    if (currLine.contains("git")) {
+                    if (currLine.contains(GIT)) {
                         matcher = gitPattern.matcher(currLine);
                         if (matcher.find()){
                             name = matcher.group(1);
