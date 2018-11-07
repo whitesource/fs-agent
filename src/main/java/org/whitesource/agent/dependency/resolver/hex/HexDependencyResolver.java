@@ -77,7 +77,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                             coordinates.setArtifactId(moduleName);
                             agentProjectInfo.setCoordinates(coordinates);
                         }
-                        File bomFolder = new File(topLevelFolder + fileSeparator + "apps" + fileSeparator + moduleName);
+                        File bomFolder = new File(moduleName.equals(topLevelFolder) ? moduleName : topLevelFolder + fileSeparator + "apps" + fileSeparator + moduleName);
                         projectInfoPathMap.put(agentProjectInfo, bomFolder.toPath());
                     }
                 }
@@ -139,7 +139,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                                     if (!parentDependencies.isEmpty()) {
                                         parentDependencies.pop();
                                         if (!parentDependencies.isEmpty()) {
-                                            parentDependencies.peek().getChildren().add(dependencyInfo);
+                                            addTransitiveDependency(parentDependencies.peek(), dependencyInfo);
                                         }
                                     }
                                     if (parentDependencies.isEmpty()) {
@@ -148,7 +148,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                                     parentDependencies.push(dependencyInfo);
                                 } else if (currentLevel > prevLevel) { // transitive dependency
                                     if (!parentDependencies.isEmpty()) {
-                                        parentDependencies.peek().getChildren().add(dependencyInfo);
+                                        addTransitiveDependency(parentDependencies.peek(), dependencyInfo);
                                     }
                                     parentDependencies.push(dependencyInfo);
                                 } else { // dependency with higher hierarchy level than previous one
@@ -157,7 +157,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                                         prevLevel--;
                                     }
                                     if (!parentDependencies.isEmpty()) {
-                                        parentDependencies.peek().getChildren().add(dependencyInfo); // transitive dependency - adding to its parent
+                                        addTransitiveDependency(parentDependencies.peek(), dependencyInfo);
                                     } else {
                                         (moduleName == null ? dependenciesList : modulesMap.get(moduleName)).add(dependencyInfo); // root dependency
                                     }
@@ -294,6 +294,23 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         }
         logger.warn("Couldn't find tar file of {}", name);
         return null;
+    }
+
+    private void addTransitiveDependency(DependencyInfo parentDependency, DependencyInfo childDependency){
+        if (parentDependency != childDependency && !parentDependency.getChildren().contains(childDependency) &&
+                !childDependency.getChildren().contains(parentDependency) && !isDescendant(parentDependency, childDependency)) {
+            parentDependency.getChildren().add(childDependency);
+        }
+    }
+
+    // avoiding circular-dependencies
+    private boolean isDescendant(DependencyInfo parentDependency, DependencyInfo childDependency){
+        for (DependencyInfo dependencyInfo : childDependency.getChildren()){
+            if (dependencyInfo.equals(parentDependency))
+                return true;
+            return isDescendant(dependencyInfo, childDependency);
+        }
+        return false;
     }
 
     @Override
