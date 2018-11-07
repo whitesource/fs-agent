@@ -80,7 +80,7 @@ public class MavenPomParser implements IBomParser {
             dependencies.addAll(managementDependencies);
             List<DependencyInfo> dependenciesInfo = new LinkedList<>();
             //extract Dependency:Version map
-            HashMap<String,String> versionDependencyMap = new HashMap<>();
+            HashMap<String, String> versionDependencyMap = new HashMap<>();
             String key, value;
             for (Map.Entry<Object, Object> versionDependency : model.getProperties().entrySet()) {
                 key = Constants.DOLLAR + Constants.OPEN_CURLY_BRACKET + String.valueOf(versionDependency.getKey()) + Constants.CLOSE_CURLY_BRACKET;
@@ -96,7 +96,7 @@ public class MavenPomParser implements IBomParser {
                 } else {
                     version = dependency.getVersion();
                 }
-                DependencyInfo dependencyInfo = new DependencyInfo(dependency.getGroupId(), dependency.getArtifactId(),version);
+                DependencyInfo dependencyInfo = new DependencyInfo(dependency.getGroupId(), dependency.getArtifactId(), version);
                 dependencyInfo.setDependencyType(DependencyType.MAVEN);
                 dependencyInfo.setScope(dependency.getScope());
                 dependencyInfo.setType(dependency.getType());

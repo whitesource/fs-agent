@@ -17,6 +17,7 @@ package org.whitesource.agent.dependency.resolver.maven;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
+import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.BomFile;
@@ -122,18 +123,20 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
             String pomLocationPerProject = bomArtifactPathMap.get(project.getCoordinates().getArtifactId());
             if(pomLocationPerProject != null) {
                 bomArtifactPathMap.remove(project.getCoordinates().getArtifactId());
-                project.getDependencies().addAll(pomParser.parseDependenciesFromPomXml(pomLocationPerProject));
+                List<DependencyInfo> dependencyInfoList = pomParser.parseDependenciesFromPomXml(pomLocationPerProject);
+                project.getDependencies().addAll(dependencyInfoList);
             }
         }
 
         for (String artifactId : bomArtifactPathMap.keySet()) {
             for (BomFile missingProject : bomFileList) {
-                //if project was not created due to failure
+                //if project was not created due to failure add its dependencies
                 if (artifactId.equals(missingProject.getName())) {
                     AgentProjectInfo projectInfo = new AgentProjectInfo();
                     projectInfo.setCoordinates(new Coordinates(missingProject.getGroupId(), missingProject.getName(), missingProject.getVersion()));
                     projectInfo.getDependencies().addAll(pomParser.parseDependenciesFromPomXml(bomArtifactPathMap.get(missingProject.getName())));
                     projects.add(projectInfo);
+                    break;
                 }
             }
         }
