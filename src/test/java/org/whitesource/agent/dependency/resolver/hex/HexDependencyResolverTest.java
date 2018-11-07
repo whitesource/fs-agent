@@ -25,8 +25,26 @@ public class HexDependencyResolverTest {
 
     @Test
     public void parseTree(){
-        HashMap<String, DependencyInfo> stringDependencyInfoHashMap = hexDependencyResolver.parseMixLoc(new File("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\imager-master\\mix.lock"));
-        HashMap<String, List<DependencyInfo>> modulesMap = hexDependencyResolver.parseMixTree("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\imager-master", stringDependencyInfoHashMap);
+        HashMap<String, DependencyInfo> stringDependencyInfoHashMap = hexDependencyResolver.parseMixLoc(new File("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\avia-develop\\mix.lock"));
+        HashMap<String, List<DependencyInfo>> modulesMap = hexDependencyResolver.parseMixTree("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\avia-develop", stringDependencyInfoHashMap);
+        printTree(modulesMap);
         Assert.assertTrue(modulesMap != null);
+    }
+
+    private void printTree(HashMap<String, List<DependencyInfo>> map){
+        for (String name : map.keySet()){
+            System.out.println(name + ":");
+            List<DependencyInfo> dependencyInfoList = map.get(name);
+            for (DependencyInfo dependencyInfo : dependencyInfoList){
+                printDependencyInfo(dependencyInfo,"");
+            }
+        }
+    }
+
+    private void printDependencyInfo(DependencyInfo dependencyInfo, String level){
+        System.out.println(level + dependencyInfo.getArtifactId() + ":" + dependencyInfo.getVersion());
+        for (DependencyInfo child : dependencyInfo.getChildren()){
+            printDependencyInfo(child, "--" + level);
+        }
     }
 }
