@@ -26,7 +26,7 @@ public class HexDependencyResolverTest {
     @Test
     public void parseTree(){
         HashMap<String, DependencyInfo> stringDependencyInfoHashMap = hexDependencyResolver.parseMixLoc(new File("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\imager-master\\mix.lock"));
-        List<DependencyInfo> dependencyInfoList = hexDependencyResolver.parseMixTree("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\imager-master", stringDependencyInfoHashMap);
-        Assert.assertTrue(dependencyInfoList != null);
+        HashMap<String, List<DependencyInfo>> modulesMap = hexDependencyResolver.parseMixTree("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\imager-master", stringDependencyInfoHashMap);
+        Assert.assertTrue(modulesMap != null);
     }
 }

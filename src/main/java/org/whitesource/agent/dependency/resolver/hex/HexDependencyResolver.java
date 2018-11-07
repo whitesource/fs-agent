@@ -56,19 +56,49 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) throws FileNotFoundException {
+    protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         if (this.runPreStep){
             runPreStep(topLevelFolder);
         }
-        List<DependencyInfo> dependencies = new ArrayList<>();
+        //List<DependencyInfo> dependencies = new ArrayList<>();
+        Map<AgentProjectInfo, Path> projectInfoPathMap = new HashMap<>();
         File mixLock = new File (topLevelFolder + fileSeparator + MIX_LOCK);
         if (mixLock.exists()){
+            Collection<String> excludes = new HashSet<>();
             HashMap<String, DependencyInfo> dependencyInfoMap = parseMixLoc(mixLock);
-            dependencies = parseMixTree(topLevelFolder, dependencyInfoMap);
+            HashMap<String, List<DependencyInfo>> modulesMap = parseMixTree(topLevelFolder, dependencyInfoMap);
+            if (!modulesMap.isEmpty()){
+                for (String moduleName : modulesMap.keySet()){
+                    if (modulesMap.get(moduleName).size() > 0) {
+                        AgentProjectInfo agentProjectInfo = new AgentProjectInfo();
+                        agentProjectInfo.getDependencies().addAll(modulesMap.get(moduleName));
+                        if (!aggregateModules && (modulesMap.size() > 1 || !moduleName.equals(topLevelFolder))) {
+                            Coordinates coordinates = new Coordinates();
+                            coordinates.setArtifactId(moduleName);
+                            agentProjectInfo.setCoordinates(coordinates);
+                        }
+                        File bomFolder = new File(topLevelFolder + fileSeparator + "apps" + fileSeparator + moduleName);
+                        projectInfoPathMap.put(agentProjectInfo, bomFolder.toPath());
+                    }
+                }
+                if (ignoreSourceFiles) {
+                    excludes.addAll(normalizeLocalPath(projectFolder, topLevelFolder, extensionPattern(HEX_SCRIPT_EXTENSION), null));
+                }
+            }
         } else {
             logger.warn("Can't find {}", mixLock.getPath());
         }
-        return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
+        Collection<String> excludes = new HashSet<>();
+        excludes.addAll(getExcludes());
+        ResolutionResult resolutionResult;
+        if (!aggregateModules) {
+            resolutionResult = new ResolutionResult(projectInfoPathMap, excludes, getDependencyType(), topLevelFolder);
+        } else {
+            resolutionResult = new ResolutionResult(projectInfoPathMap.keySet().stream()
+                    .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes, getDependencyType(), topLevelFolder);
+        }
+        return resolutionResult;
+        //return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
     }
 
     private void runPreStep(String folderPath){
@@ -78,61 +108,72 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         }
     }
 
-    public List<DependencyInfo> parseMixTree(String folderPath, HashMap<String, DependencyInfo> dependencyInfoMap){
+    public HashMap<String, List<DependencyInfo>> parseMixTree(String folderPath, HashMap<String, DependencyInfo> dependencyInfoMap){
         List<String> lines = cli.runCmd(folderPath, cli.getCommandParams(MIX, DEPS_TREE));
         int currentLevel;
         int prevLevel = 0;
+        HashMap<String, List<DependencyInfo>> modulesMap = new HashMap<>();
         List<DependencyInfo> dependenciesList = new ArrayList<>();
         Stack<DependencyInfo> parentDependencies = new Stack<>();
         Pattern treePattern = Pattern.compile(TREE_REGEX);
 
         Matcher matcher;
+        String moduleName = null;
         if (lines != null){
             for (String line : lines){
-                if (line.startsWith(Constants.PIPE) || line.startsWith(ACCENT) || line.startsWith(Constants.WHITESPACE)){
-                    currentLevel = (line.indexOf(Constants.DASH) - 1)/4;
-                    matcher = treePattern.matcher(line);
-                    if (matcher.find()) {
-                        String name = matcher.group(1);
-                        String version = matcher.group(3);
-                        DependencyInfo dependencyInfo = dependencyInfoMap.get(name);
-                        if (dependencyInfo != null){
-                            getSha1AndVersion(dependencyInfo, version);
-                            if (currentLevel == prevLevel){
-                                if (!parentDependencies.isEmpty()) {
-                                    parentDependencies.pop();
+                if (line.startsWith("==>")){
+                    moduleName = line.split(Constants.WHITESPACE)[1];
+                    modulesMap.put(moduleName, new ArrayList<>());
+                    parentDependencies.clear();
+                } else {
+                    if (line.startsWith(Constants.PIPE) || line.startsWith(ACCENT) || line.startsWith(Constants.WHITESPACE)) {
+                        currentLevel = (line.indexOf(Constants.DASH) - 1) / 4;
+                        matcher = treePattern.matcher(line);
+                        if (matcher.find()) {
+                            String name = matcher.group(1);
+                            String version = matcher.group(3);
+                            DependencyInfo dependencyInfo = dependencyInfoMap.get(name);
+                            if (dependencyInfo != null) {
+                                getSha1AndVersion(dependencyInfo, version);
+                                if (currentLevel == prevLevel) {
+                                    if (!parentDependencies.isEmpty()) {
+                                        parentDependencies.pop();
+                                        if (!parentDependencies.isEmpty()) {
+                                            parentDependencies.peek().getChildren().add(dependencyInfo);
+                                        }
+                                    }
+                                    if (parentDependencies.isEmpty()) {
+                                        (moduleName == null ? dependenciesList : modulesMap.get(moduleName)).add(dependencyInfo);
+                                    }
+                                    parentDependencies.push(dependencyInfo);
+                                } else if (currentLevel > prevLevel) { // transitive dependency
                                     if (!parentDependencies.isEmpty()) {
                                         parentDependencies.peek().getChildren().add(dependencyInfo);
                                     }
+                                    parentDependencies.push(dependencyInfo);
+                                } else { // dependency with higher hierarchy level than previous one
+                                    while (prevLevel > currentLevel - 1 && !parentDependencies.isEmpty()) {
+                                        parentDependencies.pop();
+                                        prevLevel--;
+                                    }
+                                    if (!parentDependencies.isEmpty()) {
+                                        parentDependencies.peek().getChildren().add(dependencyInfo); // transitive dependency - adding to its parent
+                                    } else {
+                                        (moduleName == null ? dependenciesList : modulesMap.get(moduleName)).add(dependencyInfo); // root dependency
+                                    }
+                                    parentDependencies.push(dependencyInfo);
                                 }
-                                if (parentDependencies.isEmpty()) {
-                                    dependenciesList.add(dependencyInfo);
-                                }
-                                parentDependencies.push(dependencyInfo);
-                            } else if (currentLevel > prevLevel){ // transitive dependency
-                                if (!parentDependencies.isEmpty()){
-                                    parentDependencies.peek().getChildren().add(dependencyInfo);
-                                }
-                                parentDependencies.push(dependencyInfo);
-                            } else { // dependency with higher hierarchy level than previous one
-                                while (prevLevel > currentLevel - 1 && !parentDependencies.isEmpty()){
-                                    parentDependencies.pop();
-                                    prevLevel--;
-                                }
-                                if (!parentDependencies.isEmpty()){
-                                    parentDependencies.peek().getChildren().add(dependencyInfo); // transitive dependency - adding to its parent
-                                } else {
-                                    dependenciesList.add(dependencyInfo); // root dependency
-                                }
-                                parentDependencies.push(dependencyInfo);
                             }
+                            prevLevel = currentLevel;
                         }
-                        prevLevel = currentLevel;
                     }
                 }
             }
         }
-        return dependenciesList;
+        if (modulesMap.isEmpty()){
+            modulesMap.put(folderPath,dependenciesList);
+        }
+        return modulesMap;
     }
 
     public HashMap<String, DependencyInfo> parseMixLoc(File mixLock){
