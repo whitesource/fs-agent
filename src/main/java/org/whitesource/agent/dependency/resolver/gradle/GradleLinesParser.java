@@ -39,7 +39,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private static final String SLASH = "\\---";
     private static final String USER_HOME = "user.home";
     private static final int INDENTETION_SPACE = 5;
-    private static final String JAR_EXTENSION = ".jar";
+    private static final String JAR_EXTENSION = Constants.DOT + Constants.JAR;
     private static final String ASTERIX = "(*)";
 
     private String fileSeparator;

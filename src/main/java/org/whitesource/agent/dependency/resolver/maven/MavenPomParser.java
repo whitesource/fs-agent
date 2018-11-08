@@ -15,6 +15,7 @@
  */
 package org.whitesource.agent.dependency.resolver.maven;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -26,18 +27,23 @@ import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.IBomParser;
 import org.whitesource.agent.utils.LoggerFactory;
 
+import java.io.File;
 import java.io.FileReader;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class represents an MAVEN pom.xml file.
  *
  * @author eugen.horovitz
  */
-public class MavenPomParser implements IBomParser {
+public class MavenPomParser extends MavenTreeDependencyCollector implements IBomParser {
     public final String COULD_NOT_PARSE_POM_FILE = "Could not parse pom file ";
 
     /* --- Static members --- */
+    private static final String VERSION_REGEX = "(\\d+\\.\\d+(\\.\\d+)?(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?)";
 
     private final Logger logger = LoggerFactory.getLogger(MavenPomParser.class);
     private boolean ignorePomModules;
@@ -79,7 +85,7 @@ public class MavenPomParser implements IBomParser {
             dependencies.addAll(directDependencies);
             dependencies.addAll(managementDependencies);
             List<DependencyInfo> dependenciesInfo = new LinkedList<>();
-            //extract Dependency:Version map
+            //in case the 'properties' node contains version data - extract it to be used later
             HashMap<String, String> versionDependencyMap = new HashMap<>();
             String key, value;
             for (Map.Entry<Object, Object> versionDependency : model.getProperties().entrySet()) {
@@ -89,6 +95,8 @@ public class MavenPomParser implements IBomParser {
                     versionDependencyMap.put(key, value);
                 }
             }
+            Pattern versionPattern = Pattern.compile(VERSION_REGEX);
+            Matcher matcher;
             for (Dependency dependency : dependencies) {
                 String version;
                 if (versionDependencyMap.containsKey(dependency.getVersion())){
@@ -96,15 +104,43 @@ public class MavenPomParser implements IBomParser {
                 } else {
                     version = dependency.getVersion();
                 }
+                // ignoring dependencies without version or not a valid version (e.g.  <version>${dependency.alfresco-messaging-repo.version}</version>)
                 if (version == null){
                     continue;
+                } else {
+                    matcher = versionPattern.matcher(version);
+                    if (matcher.find() == false){
+                        continue;
+                    }
                 }
-                DependencyInfo dependencyInfo = new DependencyInfo(dependency.getGroupId(), dependency.getArtifactId(), version);
-                dependencyInfo.setDependencyType(DependencyType.MAVEN);
-                dependencyInfo.setScope(dependency.getScope());
-                dependencyInfo.setType(dependency.getType());
-                dependencyInfo.setSystemPath(bomPath);
-                dependenciesInfo.add(dependencyInfo);
+
+                // extracting the dependency's JAR (or WAR, TGZ, ect) file
+                String shortName;
+                if (StringUtils.isBlank(dependency.getClassifier())) {
+                    shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DOT + dependency.getType();
+                } else {
+                    String nodePackaging = dependency.getType();
+                    if (nodePackaging.equals(TEST_JAR)) {
+                        nodePackaging = Constants.JAR;
+                    }
+                    shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DASH + dependency.getClassifier() + Constants.DOT + nodePackaging;
+                }
+                if (StringUtils.isBlank(M2Path)){
+                    this.M2Path = getMavenM2Path(Constants.DOT);
+                }
+                String filePath = Paths.get(M2Path, dependency.getGroupId().replace(Constants.DOT, File.separator), dependency.getArtifactId(), dependency.getVersion(), shortName).toString();
+                if (new File(filePath).exists()) {
+                    String sha1 = getSha1(filePath);
+                    if (!sha1.isEmpty()) {
+                        DependencyInfo dependencyInfo = new DependencyInfo(dependency.getGroupId(), dependency.getArtifactId(), version);
+                        dependencyInfo.setDependencyType(DependencyType.MAVEN);
+                        dependencyInfo.setScope(dependency.getScope());
+                        dependencyInfo.setType(dependency.getType());
+                        dependencyInfo.setSystemPath(filePath);
+                        dependencyInfo.setSha1(sha1);
+                        dependenciesInfo.add(dependencyInfo);
+                    }
+                }
             }
             return dependenciesInfo;
         }

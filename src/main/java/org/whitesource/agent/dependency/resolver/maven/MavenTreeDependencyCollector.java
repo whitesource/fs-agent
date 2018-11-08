@@ -59,8 +59,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     public static final String NONE = "None";
     private final String B_PARAMETER = "-B";
     private final String VERSION_PARAMETER = "-v";
-    private final String TEST_JAR = "test-jar";
-    private final String JAR = "jar";
+    protected final String TEST_JAR = "test-jar";
     private final String MVN_CLEAN = "clean";
     private final String MVN_INSTALL = "install";
     private final String MVN_SKIP_TESTS = "-DskipTests";
@@ -69,13 +68,16 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     /* --- Members --- */
 
     protected String M2Path;
-    private final Set<String> mavenIgnoredScopes;
+    private Set<String> mavenIgnoredScopes;
     private boolean showMavenTreeError;
     private boolean ignorePomModules;
     private boolean runPreStep;
     private MavenLinesParser mavenLinesParser;
     private boolean mavenIgnoreDependencyTreeErrors;
     /* --- Constructors --- */
+
+    // this constructor was added only to allow MavenPomParser to extend this class
+    public MavenTreeDependencyCollector(){}
 
     public MavenTreeDependencyCollector(String[] mavenIgnoredScopes, boolean ignorePomModules, boolean runPreStep, boolean mavenIgnoreDependencyTreeErrors) {
         mavenLinesParser = new MavenLinesParser();
@@ -221,7 +223,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         } else {
             String nodePackaging = node.getPackaging();
             if (nodePackaging.equals(TEST_JAR)) {
-                nodePackaging = JAR;
+                nodePackaging = Constants.JAR;
             }
             shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DASH + node.getClassifier() + Constants.DOT + nodePackaging;
         }
