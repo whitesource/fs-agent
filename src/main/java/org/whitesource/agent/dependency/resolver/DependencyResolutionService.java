@@ -24,6 +24,7 @@ import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.dotNet.DotNetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyResolver;
 import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
+import org.whitesource.agent.dependency.resolver.hex.HexDependencyResolver;
 import org.whitesource.agent.dependency.resolver.html.HtmlDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
@@ -141,6 +142,10 @@ public class DependencyResolutionService {
         final boolean cocoapodsRunPreStep = config.isCocoapodsRunPreStep();
         final boolean cocoapodsIgnoreSourceFiles = config.isCocoapodsIgnoreSourceFiles();
 
+        final boolean hexResolveDependencies    = config.isHexResolveDependencies();
+        final boolean hexRunPreStep             = config.isHexRunPreStep();
+        final boolean hexIgnoreSourceFiles      = config.isHexIgnoreSourceFiles();
+
         ignoreSourceFiles = config.isIgnoreSourceFiles();
 
         fileScanner = new FilesScanner();
@@ -175,7 +180,7 @@ public class DependencyResolutionService {
         }
 
         if (goResolveDependencies) {
-            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles, config.isGoIgnoreTestPackages(), config.isGoGradleEnableTaskAlias(), config.getGradlePreferredEnvironment()));
+            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles, config.isGoIgnoreTestPackages(), config.isGoGradleEnableTaskAlias(), config.getGradlePreferredEnvironment(), config.isAddSha1()));
         }
 
         if (rubyResolveDependencies) {
@@ -183,7 +188,7 @@ public class DependencyResolutionService {
         }
 
         if (phpResolveDependencies) {
-            dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies));
+            dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies, config.isAddSha1()));
         }
 
         if (htmlResolveDependencies) {
@@ -197,6 +202,10 @@ public class DependencyResolutionService {
 
         if (cocoapodsResolveDependencies) {
             dependencyResolvers.add(new CocoaPodsDependencyResolver(cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles));
+        }
+
+        if (hexResolveDependencies){
+            dependencyResolvers.add(new HexDependencyResolver(hexIgnoreSourceFiles, hexRunPreStep));
         }
 
         this.separateProjects = false;

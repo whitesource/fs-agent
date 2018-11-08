@@ -108,6 +108,7 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
         return resolutionResult;
     }
 
+    // when failing to read data from 'mvn dependency:tree' output - trying to read directly from POM files
     private void collectDependenciesFromPomXml(Set<String> bomFiles, Collection<AgentProjectInfo> projects) {
         MavenPomParser pomParser = new MavenPomParser(ignorePomModules);
         List<BomFile> bomFileList = new LinkedList<>();
@@ -119,12 +120,13 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
         }
 
         for (AgentProjectInfo project : projects) {
-            //add dependencies from pom to the current projects
+            //add dependencies from pom to the modules that didn't fail (or failed partially)
             String pomLocationPerProject = bomArtifactPathMap.get(project.getCoordinates().getArtifactId());
             if(pomLocationPerProject != null) {
                 bomArtifactPathMap.remove(project.getCoordinates().getArtifactId());
                 List<DependencyInfo> dependencyInfoList = pomParser.parseDependenciesFromPomXml(pomLocationPerProject);
-                project.getDependencies().addAll(dependencyInfoList);
+                // making sure not to add duplication of already existing dependencies
+                project.getDependencies().addAll(dependencyInfoList.stream().filter(dependencyInfo -> project.getDependencies().contains(dependencyInfo) == false).collect(Collectors.toList()));
             }
         }
 

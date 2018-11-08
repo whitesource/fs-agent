@@ -155,6 +155,9 @@ public class CommandLineArgs {
     String scanDockerImages = null;
 
 
+    @Parameter(names = "-addSha1", description = "for developement only; false by default")
+    String addSha1 = null;
+
     /*
     @Parameter(names = "-aws_account_id", description = "AWS Account ID")
     String awsAccountId = null;

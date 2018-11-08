@@ -52,7 +52,8 @@ public final class Constants {
     public static final String WINDOWS              = "Windows";
     public static final String GRADLE_WRAPPER       = "wrapper";
     public static final String GRADLE               = "gradle";
-    public static String POM                        = "pom";
+    public static final String POM                  = "pom";
+    public static final String JAR                  = "jar";
     public static final String DOT                  = ".";
     public static final String DIRECTORY            = "d";
     public static final String BACK_SLASH           = "\\";
