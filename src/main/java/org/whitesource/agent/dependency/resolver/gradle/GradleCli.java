@@ -15,7 +15,6 @@ public class GradleCli extends Cli {
     private final Logger logger = LoggerFactory.getLogger(org.whitesource.agent.dependency.resolver.gradle.GradleCli.class);
 
     protected static final String GRADLE_ASSEMBLE = "assemble";
-    protected static final String GRADLE_LOCK = "lock";
     protected static final String GRADLE_PROJECTS = "projects";
     private final String GRADLE_COMMAND = "gradle";
     private final String GRADLE_COMMAND_W_WINDOWS = "gradlew";
@@ -30,14 +29,15 @@ public class GradleCli extends Cli {
         this.preferredEnvironment = preferredEnvironment;
     }
 
-    public List<String> runGradleCmd(String rootDirectory, String[] params) {
+    public List<String> runGradleCmd(String rootDirectory, String[] params, boolean firstTime) {
         try {
             // run gradle dependencies to get dependency tree
             CommandLineProcess commandLineProcess = new CommandLineProcess(rootDirectory, params);
             List<String> lines = commandLineProcess.executeProcess();
             if (commandLineProcess.isErrorInProcess()) {
                 // in case gradle is not installed on the local machine, using 'gradlew' command, which uses local gradle wrapper
-                setGradleCommandByEnv(params);
+                this.preferredEnvironment = this.preferredEnvironment.equals(Constants.GRADLE_WRAPPER) ? Constants.GRADLE : Constants.GRADLE_WRAPPER;
+                params = getGradleCommandParams(GradleMvnCommand.DEPENDENCIES);
                 commandLineProcess = new CommandLineProcess(rootDirectory, params);
                 lines = commandLineProcess.executeProcess();
                 if (!commandLineProcess.isErrorInProcess()) {
@@ -47,31 +47,17 @@ public class GradleCli extends Cli {
                 return lines;
             }
         } catch (IOException e) {
-            if (StringUtils.isNotBlank(params[0]) && params[0].contains(GRADLE_COMMAND)) {
-                setGradleCommandByEnv(params);
-                return runGradleCmd(rootDirectory, params);
+            if (firstTime && StringUtils.isNotBlank(params[0]) && params[0].contains(GRADLE_COMMAND)) {
+                this.preferredEnvironment = this.preferredEnvironment.equals(Constants.GRADLE_WRAPPER) ? Constants.GRADLE : Constants.GRADLE_WRAPPER;
+                params = getGradleCommandParams(GradleMvnCommand.DEPENDENCIES);
+                // calling 'runGradleCmd' recursively only once, for otherwise there will be a stack-over-flow error
+                return runGradleCmd(rootDirectory, params, false);
             } else {
                 logger.warn("Error getting results after running Gradle command {} on {}, {}", params, rootDirectory, e.getMessage());
                 logger.debug("Error: {}", e.getStackTrace());
             }
         }
         return null;
-    }
-
-    // WSE-753 - replace the params' default-environment to the other possibility
-    private void setGradleCommandByEnv(String[] params) {
-        for (int i = 0; i < params.length; i++) {
-            if (params[i].contains(GRADLE_COMMAND)) {
-                if (preferredEnvironment.equals(Constants.GRADLE_WRAPPER)) {
-                    params[i] = GRADLE_COMMAND;
-                } else if (DependencyCollector.isWindows()) {
-                    params[i] = GRADLE_COMMAND_W_WINDOWS;
-                } else {
-                    params[i] = GRADLE_COMMAND_W_LINUX;
-                }
-                break;
-            }
-        }
     }
 
     public String[] getGradleCommandParams(GradleMvnCommand command) {
@@ -93,5 +79,3 @@ public class GradleCli extends Cli {
         this.topLevelFolderGradlew = topLevelFolderGradlew;
     }
 }
-
-

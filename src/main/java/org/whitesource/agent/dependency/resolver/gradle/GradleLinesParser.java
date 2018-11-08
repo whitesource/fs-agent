@@ -34,7 +34,8 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private static final String MAIN = "main";
     private static final String JAVA = "java";
     private static final String JAVA_EXTENSION = ".java";
-    private static final String AAR_EXTENTION = ".aar";
+    private static final String AAR_EXTENSION = ".aar";
+    private static final String EXE_EXTENSION = ".exe";
     private static final String PLUS = "+---";
     private static final String SLASH = "\\---";
     private static final String USER_HOME = "user.home";
@@ -57,12 +58,15 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private boolean removeMainDir;
     private boolean removeSrcDir;
     private boolean removeJavaFile;
+    private boolean mavenFound = true;
 
-    GradleLinesParser(boolean runAssembleCommand, String preferredEnvironment){
+    GradleLinesParser(boolean runAssembleCommand, GradleCli gradleCli){
         // send maven.runPreStep default value "false", irrelevant for gradle dependency resolution. (WSE-860)
         super(null, true, false, false);
         this.runAssembleCommand = runAssembleCommand;
-        gradleCli = new GradleCli(preferredEnvironment);
+        // using the same 'gradleCli' object as the GradleDependencyResolver for if the value of 'preferredEnvironment' changes,
+        // it should change for both GradleLInesParser and GradleDependencyResolver
+        this.gradleCli = gradleCli;
         fileSeparator = System.getProperty(Constants.FILE_SEPARATOR);
         srcDirPath = fileSeparator + Constants.SRC;
         mainDirPath = srcDirPath + fileSeparator + MAIN;
@@ -251,7 +255,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             // if dependency not found in .gradle cache - looking for it in .m2 cache
             dependencyFile = getSha1FromM2(dependencyInfo);
             if (dependencyFile == null || dependencyFile.getSha1().equals(Constants.EMPTY_STRING)){
-                // if dependency not found in .m2 cache - running 'gradel assemble' command which should download the dependency to .grade cache
+                // if dependency not found in .m2 cache - running 'gradle assemble' command which should download the dependency to .grade cache
                 // making sure the download attempt is performed only once for a directory, otherwise there might be an infinite loop
                 if(!rootDirectory.concat(directoryName).equals(prevRootDirectory)){
                     dependenciesDownloadAttemptPerformed = false;
@@ -285,7 +289,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 for (File folder : dependencyFolder.listFiles()) {
                     if (folder.isDirectory()) {
                         for (File file : folder.listFiles()) {
-                            if ((file.getName().contains(JAR_EXTENSION) || file.getName().contains(AAR_EXTENTION)) && !file.getName().contains("-sources")) {
+                            if ((file.getName().endsWith(JAR_EXTENSION) || file.getName().endsWith(AAR_EXTENSION) || file.getName().endsWith(EXE_EXTENSION)) && !file.getName().contains("-sources")) {
                                 String sha1 = getSha1(file.getPath());
                                 dependencyFile = new DependencyFile(sha1,file);
                                 break outerloop;
@@ -302,6 +306,8 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     }
 
     private DependencyFile getSha1FromM2(DependencyInfo dependencyInfo){
+        if (!mavenFound)
+            return null;
         String groupId = dependencyInfo.getGroupId();
         String artifactId = dependencyInfo.getArtifactId();
         String version = dependencyInfo.getVersion();
@@ -309,6 +315,11 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         DependencyFile dependencyFile = null;
         if (StringUtils.isBlank(M2Path)){
             this.M2Path = getMavenM2Path(Constants.DOT);
+            if (M2Path == null){
+                logger.debug("Couldn't find .m2 path - maven is not installed");
+                mavenFound = false;
+                return null;
+            }
         }
 
         String pathToDependency = M2Path.concat(fileSeparator + String.join(fileSeparator,groupId.split("\\.")) +
@@ -334,14 +345,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             try {
                 logger.info("running 'gradle assemble' command");
                 validateJavaFileExistence();
-                // running the gradle/gradlew command from the project's root folder, because when using gradlew the path must be
-                // kept (i.e. - the command 'gradlew' should only be called from the root's project).  In case of a multi-module
-                // project, adding the module's name before the 'assemble' command, so it'll know which folder to refer to
                 String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.ASSEMBLE);
-                if (directoryName.equals(fileSeparator) == false){
-                    int lastParamIndex = gradleCommandParams.length - 1;
-                    gradleCommandParams[lastParamIndex] = directoryName.substring(1) + Constants.COLON + gradleCommandParams[lastParamIndex];
-                }
                 List<String> lines = gradleCli.runCmd(rootDirectory, gradleCommandParams);
                 removeTempJavaFolder();
                 if (!lines.isEmpty()) {
@@ -362,7 +366,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     }
 
     private void validateJavaFileExistence() throws IOException{
-        // the 'gradle assemble' command, existence of a java file (even empty) inside 'src/java/main' is required.
+        // the 'gradle assemble' command, existence of a java file (even empty) inside 'src/main/java' is required.
         // therefore, verifying the file and the path exist - if not creating it, and after running the assemble command removing the item that was added
         String javaDirPath = rootDirectory + directoryName + this.javaDirPath;
         File javaDir = new File(javaDirPath);

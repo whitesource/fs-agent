@@ -222,9 +222,8 @@ public class FileSystemScanner {
                 Collection<ResolutionResult> resolutionResult = new LinkedList<>();
                 LinkedList<String> pathsList = new LinkedList<>();
                 pathsList.addAll(appPathsToDependencyDirs.get(appPath));
-                if (appPath.equals(FSAConfiguration.DEFAULT_KEY) && appPathsToDependencyDirs.keySet().size() == 1) {
-                    resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, excludes);
-                } else if (!appPath.equals(FSAConfiguration.DEFAULT_KEY) && appPathsToDependencyDirs.keySet().size() > 1) {
+                if ((appPath.equals(FSAConfiguration.DEFAULT_KEY) && appPathsToDependencyDirs.keySet().size() == 1) ||
+                        (!appPath.equals(FSAConfiguration.DEFAULT_KEY) && appPathsToDependencyDirs.keySet().size() > 1)) {
                     resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, excludes);
                 }
                 if (resolutionResult.size() == 1 && !appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
@@ -260,8 +259,7 @@ public class FileSystemScanner {
                     viaComponents = new ViaComponents(appPath, impactAnalysisLanguage);
                 }
                 // TODO: Check why is result = null in the loop
-                //resolutionResult.removeIf(Objects::isNull);
-
+                resolutionResult.removeIf(Objects::isNull);
                 for (ResolutionResult result : resolutionResult) {
                     Map<AgentProjectInfo, Path> projects = result.getResolvedProjects();
                     Collection<DependencyInfo> dependenciesToVia = new ArrayList<>();

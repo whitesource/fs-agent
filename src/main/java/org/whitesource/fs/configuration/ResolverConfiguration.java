@@ -18,6 +18,7 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyManager;
 
 import java.util.Arrays;
@@ -116,7 +117,11 @@ public class ResolverConfiguration {
             @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies,
             @JsonProperty(COCOAPODS_RESOLVE_DEPENDENCIES) boolean cocoapodsResolveDependencies,
             @JsonProperty(COCOAPODS_RUN_PRE_STEP) boolean cocoapodsRunPreStep,
-            @JsonProperty(COCOAPODS_IGNORE_SOURCE_FILES) boolean cocoapodsIgnoreSourceFiles) {
+            @JsonProperty(COCOAPODS_IGNORE_SOURCE_FILES) boolean cocoapodsIgnoreSourceFiles,
+            @JsonProperty(HEX_RESOLVE_DEPENDENECIES) boolean hexResolveDependencies,
+            @JsonProperty(HEX_RUN_PRE_STEP) boolean hexRunPreStep,
+            @JsonProperty(HEX_IGNORE_SOURCE_FILES) boolean hexIgnoreSourceFiles,
+            @JsonProperty("addSha1") boolean addSha1) {
         this.npmRunPreStep                      = npmRunPreStep;
         this.npmIgnoreScripts                   = npmIgnoreScripts;
         this.npmResolveDependencies             = npmResolveDependencies;
@@ -203,9 +208,15 @@ public class ResolverConfiguration {
 
         this.htmlResolveDependencies = htmlResolveDependencies;
 
-        this.cocoapodsResolveDependencies = cocoapodsResolveDependencies;
-        this.cocoapodsRunPreStep = cocoapodsRunPreStep;
-        this.cocoapodsIgnoreSourceFiles   = cocoapodsIgnoreSourceFiles;
+        this.cocoapodsResolveDependencies   = cocoapodsResolveDependencies;
+        this.cocoapodsRunPreStep            = cocoapodsRunPreStep;
+        this.cocoapodsIgnoreSourceFiles     = cocoapodsIgnoreSourceFiles;
+
+        this.hexResolveDependencies = hexResolveDependencies;
+        this.hexRunPreStep          = hexRunPreStep;
+        this.hexIgnoreSourceFiles   = hexIgnoreSourceFiles;
+
+        this.addSha1 = addSha1;
     }
 
     /* --- Members --- */
@@ -301,6 +312,12 @@ public class ResolverConfiguration {
     private boolean cocoapodsResolveDependencies;
     private boolean cocoapodsRunPreStep;
     private boolean cocoapodsIgnoreSourceFiles;
+
+    private boolean hexResolveDependencies;
+    private boolean hexRunPreStep;
+    private boolean hexIgnoreSourceFiles;
+
+    private boolean addSha1;
 
     /* --- Public getters --- */
 
@@ -631,6 +648,21 @@ public class ResolverConfiguration {
     @JsonProperty(COCOAPODS_IGNORE_SOURCE_FILES)
     public boolean isCocoapodsIgnoreSourceFiles() { return cocoapodsIgnoreSourceFiles; }
 
+    @JsonProperty(HEX_RESOLVE_DEPENDENECIES)
+    public boolean isHexResolveDependencies(){
+        return hexResolveDependencies;
+    }
+
+    @JsonProperty(HEX_IGNORE_SOURCE_FILES)
+    public boolean isHexIgnoreSourceFiles(){
+        return hexIgnoreSourceFiles;
+    }
+
+    @JsonProperty(HEX_RUN_PRE_STEP)
+    public boolean isHexRunPreStep(){
+        return hexRunPreStep;
+    }
+
     public void setNpmResolveDependencies(boolean npmResolveDependencies) {
         this.npmResolveDependencies = npmResolveDependencies;
     }
@@ -705,6 +737,8 @@ public class ResolverConfiguration {
         this.sbtTargetFolder = sbtTargetFolder;
     }
 
+    public boolean isAddSha1(){ return addSha1; }
+
 
     @Override
     public String toString() {
@@ -764,12 +798,15 @@ public class ResolverConfiguration {
                 ", php.ResolveDependencies=" + phpResolveDependencies +
                 ", php.RunPreStep=" + phpRunPreStep +
                 ", php.IncludeDevDependenices=" + phpIncludeDevDependencies + '\n' +
-                ", sbt.ResolveDependencies=" + sbtResolveDependencies +
-                ", sbt.AggregateModules=" + sbtAggregateModules + '\n' +
-                ", sbt.RunPreStep=" + sbtRunPreStep + '\n' +
+                ", sbt.resolveDependencies=" + sbtResolveDependencies +
+                ", sbt.aggregateModules=" + sbtAggregateModules + '\n' +
+                ", sbt.runPreStep=" + sbtRunPreStep + '\n' +
                 ", sbt.TargetFolder=" + sbtTargetFolder + '\n' +
-                ", sbt.IgnoreSourceFiles=" + sbtIgnoreSourceFiles + '\n' +
-                ", html.ResolveDependencies=" + htmlResolveDependencies;
+                ", sbt.ignoreSourceFiles=" + sbtIgnoreSourceFiles + '\n' +
+                ", html.resolveDependencies=" + htmlResolveDependencies + '\n' +
+                ", cocoapods.resolveDependencies=" + cocoapodsResolveDependencies + '\n' +
+                ", cocoapods.ignoreSourceFiles=" + cocoapodsIgnoreSourceFiles + '\n' +
+                ", cocoapods.runPreStep=" + cocoapodsRunPreStep;
     }
 
 }

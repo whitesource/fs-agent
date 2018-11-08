@@ -151,6 +151,9 @@ public class CommandLineArgs {
     @Parameter(names = "-xModulePath", description = "The parameter get setup file and read the appPaths and -d parameter for via")
     String xModulePath = null;
 
+    @Parameter(names = "-addSha1", description = "for developement only; false by default")
+    String addSha1 = null;
+
     /*
     @Parameter(names = "-aws_account_id", description = "AWS Account ID")
     String awsAccountId = null;
