@@ -1202,6 +1202,9 @@ public class FSAConfiguration {
         // User-entry of a flag that overrides default FSA process termination
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.REQUIRE_KNOWN_SHA1, commandLineArgs.requireKnownSha1);
 
+        // docker flag to scan docker images instead of folder
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_DOCKER_IMAGES, commandLineArgs.scanDockerImages);
+
         return offlineRequestFiles;
     }
 
