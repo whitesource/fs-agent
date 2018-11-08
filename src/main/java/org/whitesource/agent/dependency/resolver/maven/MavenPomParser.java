@@ -96,6 +96,9 @@ public class MavenPomParser implements IBomParser {
                 } else {
                     version = dependency.getVersion();
                 }
+                if (version == null){
+                    continue;
+                }
                 DependencyInfo dependencyInfo = new DependencyInfo(dependency.getGroupId(), dependency.getArtifactId(), version);
                 dependencyInfo.setDependencyType(DependencyType.MAVEN);
                 dependencyInfo.setScope(dependency.getScope());
