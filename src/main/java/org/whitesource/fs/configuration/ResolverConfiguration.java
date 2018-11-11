@@ -57,6 +57,7 @@ public class ResolverConfiguration {
             @JsonProperty(MAVEN_IGNORE_POM_MODULES) boolean mavenIgnorePomModules,
             @JsonProperty(MAVEN_IGNORE_SOURCE_FILES) boolean mavenIgnoreSourceFiles,
             @JsonProperty(MAVEN_RUN_PRE_STEP) boolean mavenRunPreStep,
+            @JsonProperty(MAVEN_IGNORE_DEPENDENCY_TREE_ERRORS) boolean mavenIgnoreDependencyTreeErrors,
 
             @JsonProperty(PYTHON_RESOLVE_DEPENDENCIES) boolean pythonResolveDependencies,
             @JsonProperty(PYTHON_PIP_PATH) String pipPath,
@@ -147,6 +148,7 @@ public class ResolverConfiguration {
         this.mavenIgnorePomModules      = mavenIgnorePomModules;
         this.mavenIgnoreSourceFiles     = mavenIgnoreSourceFiles;
         this.mavenRunPreStep            = mavenRunPreStep;
+        this.mavenIgnoreDependencyTreeErrors = mavenIgnoreDependencyTreeErrors;
 
         this.pythonResolveDependencies      = pythonResolveDependencies;
         this.pipPath                        = pipPath;
@@ -247,6 +249,8 @@ public class ResolverConfiguration {
     private boolean mavenIgnorePomModules;
     private boolean mavenIgnoreSourceFiles;
     private boolean mavenRunPreStep;
+
+    private boolean mavenIgnoreDependencyTreeErrors;
 
 //    private boolean dependenciesOnly;
     private boolean ignoreSourceFiles;
@@ -417,6 +421,9 @@ public class ResolverConfiguration {
 
     @JsonProperty(MAVEN_RUN_PRE_STEP)
     public boolean isMavenRunPreStep() { return mavenRunPreStep; }
+
+    @JsonProperty(MAVEN_IGNORE_DEPENDENCY_TREE_ERRORS)
+    public boolean isMavenIgnoreDependencyTreeErrors() { return mavenIgnoreDependencyTreeErrors; }
 
     @JsonProperty(IGNORE_SOURCE_FILES)
     public boolean isIgnoreSourceFiles() {
@@ -799,12 +806,15 @@ public class ResolverConfiguration {
                 ", php.ResolveDependencies=" + phpResolveDependencies +
                 ", php.RunPreStep=" + phpRunPreStep +
                 ", php.IncludeDevDependenices=" + phpIncludeDevDependencies + '\n' +
-                ", sbt.ResolveDependencies=" + sbtResolveDependencies +
-                ", sbt.AggregateModules=" + sbtAggregateModules + '\n' +
-                ", sbt.RunPreStep=" + sbtRunPreStep + '\n' +
+                ", sbt.resolveDependencies=" + sbtResolveDependencies +
+                ", sbt.aggregateModules=" + sbtAggregateModules + '\n' +
+                ", sbt.runPreStep=" + sbtRunPreStep + '\n' +
                 ", sbt.TargetFolder=" + sbtTargetFolder + '\n' +
-                ", sbt.IgnoreSourceFiles=" + sbtIgnoreSourceFiles + '\n' +
-                ", html.ResolveDependencies=" + htmlResolveDependencies;
+                ", sbt.ignoreSourceFiles=" + sbtIgnoreSourceFiles + '\n' +
+                ", html.resolveDependencies=" + htmlResolveDependencies + '\n' +
+                ", cocoapods.resolveDependencies=" + cocoapodsResolveDependencies + '\n' +
+                ", cocoapods.ignoreSourceFiles=" + cocoapodsIgnoreSourceFiles + '\n' +
+                ", cocoapods.runPreStep=" + cocoapodsRunPreStep;
     }
 
 }

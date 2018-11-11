@@ -39,6 +39,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private static final String PLUS = "+---";
     private static final String SLASH = "\\---";
     private static final int INDENTETION_SPACE = 5;
+    private static final String JAR_EXTENSION = Constants.DOT + Constants.JAR;
     private static final String ASTERIX = "(*)";
 
     private String fileSeparator;
@@ -60,7 +61,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
 
     GradleLinesParser(boolean runAssembleCommand, GradleCli gradleCli){
         // send maven.runPreStep default value "false", irrelevant for gradle dependency resolution. (WSE-860)
-        super(null, true, false);
+        super(null, true, false, false);
         this.runAssembleCommand = runAssembleCommand;
         // using the same 'gradleCli' object as the GradleDependencyResolver for if the value of 'preferredEnvironment' changes,
         // it should change for both GradleLInesParser and GradleDependencyResolver

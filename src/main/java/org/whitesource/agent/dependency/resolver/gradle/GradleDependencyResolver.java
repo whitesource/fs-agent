@@ -33,6 +33,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private static final List<String> GRADLE_SCRIPT_EXTENSION = Arrays.asList(".gradle", ".groovy", ".java", ".jar", ".war", ".ear", ".car", ".class");
 
+    private static final String JAR_EXTENSION = Constants.DOT + Constants.JAR;
     private static final String PROJECT = "--- Project";
     public static final String COPY_DEPENDENCIES_TASK_TXT = "copyDependenciesTask.txt";
     private static final String DEPENDENCIES = "dependencies";

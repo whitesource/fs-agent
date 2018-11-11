@@ -122,6 +122,7 @@ public final class ConfigPropertyKeys {
     public static final String MAVEN_IGNORE_POM_MODULES     = "maven.ignorePomModules";
     public static final String MAVEN_IGNORE_SOURCE_FILES    = "maven.ignoreSourceFiles";
     public static final String MAVEN_RUN_PRE_STEP           = "maven.runPreStep";
+    public static final String MAVEN_IGNORE_DEPENDENCY_TREE_ERRORS = "maven.ignoreDependencyTreeErrors";
 
     public static final String IGNORE_SOURCE_FILES          = "ignoreSourceFiles";
 
