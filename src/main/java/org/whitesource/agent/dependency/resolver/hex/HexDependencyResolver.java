@@ -34,7 +34,8 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
     private static final String TREE_REGEX = "--\\s(\\w+)\\s(~>\\s(\\d+\\.\\d+(\\.\\d+)?(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?))?";
     private static final String VERSION_REGEX = "(\\d+\\.\\d+(\\.\\d+)?(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?)";
     public static final String TAR_EXTENSION = ".tar";
-    private static final String GIT = "git";
+    private static final String GIT = ":git,";
+    private static final String MODULE_START = "==>";
 
     private final Logger logger = LoggerFactory.getLogger(HexDependencyResolver.class);
     private boolean ignoreSourceFiles;
@@ -112,6 +113,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         List<String> lines = cli.runCmd(folderPath, cli.getCommandParams(MIX, DEPS_TREE));
         int currentLevel;
         int prevLevel = 0;
+        boolean insideModule = false;
         HashMap<String, List<DependencyInfo>> modulesMap = new HashMap<>();
         List<DependencyInfo> dependenciesList = new ArrayList<>();
         Stack<DependencyInfo> parentDependencies = new Stack<>();
@@ -121,7 +123,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         String moduleName = null;
         if (lines != null){
             for (String line : lines){
-                if (line.startsWith("==>")){
+                if (line.startsWith(MODULE_START)){
                     moduleName = line.split(Constants.WHITESPACE)[1];
                     modulesMap.put(moduleName, new ArrayList<>());
                     parentDependencies.clear();
@@ -130,6 +132,10 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                         currentLevel = (line.indexOf(Constants.DASH) - 1) / 4;
                         matcher = treePattern.matcher(line);
                         if (matcher.find()) {
+                            if (insideModule && currentLevel > 0){
+                                continue;
+                            }
+                            insideModule = false;
                             String name = matcher.group(1);
                             String version = matcher.group(3);
                             DependencyInfo dependencyInfo = dependencyInfoMap.get(name);
@@ -163,6 +169,9 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                                     }
                                     parentDependencies.push(dependencyInfo);
                                 }
+                            } else if (modulesMap.keySet().contains(name)){
+                                insideModule = true;
+                                parentDependencies.clear();
                             }
                             prevLevel = currentLevel;
                         }
