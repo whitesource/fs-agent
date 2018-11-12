@@ -50,6 +50,8 @@ public class ResolverConfiguration {
             @JsonProperty(NUGET_RESTORE_DEPENDENCIES) boolean nugetRestoreDependencies,
             @JsonProperty(NUGET_RUN_PRE_STEP) boolean nugetRunPreStep,
             @JsonProperty(NUGET_IGNORE_SOURCE_FILES) boolean nugetIgnoreSourceFiles,
+            @JsonProperty(NUGET_RESOLVE_PACKAGES_CONFIG_FILES) boolean nugetResolvePackagesConfigFiles,
+            @JsonProperty(NUGET_RESOLVE_CS_PROJ_FILES) boolean nugetResolveCsProjFiles,
 
             @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES) boolean mavenResolveDependencies,
             @JsonProperty(MAVEN_IGNORED_SCOPES) String[] mavenIgnoredScopes,
@@ -141,6 +143,8 @@ public class ResolverConfiguration {
         this.nugetRestoreDependencies = nugetRestoreDependencies;
         this.nugetRunPreStep          = nugetRunPreStep;
         this.nugetIgnoreSourceFiles   = nugetIgnoreSourceFiles;
+        this.nugetResolveCsProjFiles  = nugetResolveCsProjFiles;
+        this.nugetResolvePackagesConfigFiles = nugetResolvePackagesConfigFiles;
 
         this.mavenResolveDependencies   = mavenResolveDependencies;
         this.mavenIgnoredScopes         = mavenIgnoredScopes;
@@ -242,6 +246,8 @@ public class ResolverConfiguration {
     private boolean nugetRestoreDependencies;
     private boolean nugetRunPreStep;
     private boolean nugetIgnoreSourceFiles;
+    private boolean nugetResolvePackagesConfigFiles;
+    private boolean nugetResolveCsProjFiles;
 
     private boolean mavenResolveDependencies;
     private String[] mavenIgnoredScopes;
@@ -393,6 +399,16 @@ public class ResolverConfiguration {
     @JsonProperty(NUGET_RUN_PRE_STEP)
     public boolean isNugetRunPreStep() {
         return nugetRunPreStep;
+    }
+
+    @JsonProperty(NUGET_RESOLVE_CS_PROJ_FILES)
+    public boolean isNugetResolveCsProjFiles(){
+        return nugetResolveCsProjFiles;
+    }
+
+    @JsonProperty(NUGET_RESOLVE_PACKAGES_CONFIG_FILES)
+    public boolean isNugetResolvePackagesConfigFiles(){
+        return nugetResolvePackagesConfigFiles;
     }
 
     @JsonProperty(NUGET_IGNORE_SOURCE_FILES)
@@ -699,8 +715,10 @@ public class ResolverConfiguration {
                 "NUGET:\n" +
                 "nuget.resolveDependencies=" + nugetResolveDependencies +
                 ", nuget.ignoreSourceFiles=" + nugetIgnoreSourceFiles +
-                ", nuget.restoreDependencies=" + nugetRestoreDependencies +
-                ", nuget.runPreStep=" + nugetRunPreStep + '\n' +
+                ", nuget.restoreDependencies=" + nugetRestoreDependencies + '\n' +
+                "nuget.runPreStep=" + nugetRunPreStep +
+                ", nuget.resolveCsProjFiles=" + nugetResolveCsProjFiles +
+                ", nuget.resolvePackagesConfigFiles=" + nugetResolvePackagesConfigFiles + '\n' +
 
                 "MAVEN:\n" +
                 "maven.resolveDependencies=" + mavenResolveDependencies +

@@ -83,10 +83,12 @@ public class DependencyResolutionService {
         final boolean bowerRunPreStep = config.isBowerRunPreStep();
         final boolean bowerIgnoreSourceFiles = config.isBowerIgnoreSourceFiles();
 
-        final boolean nugetResolveDependencies = config.isNugetResolveDependencies();
-        final boolean nugetRestoreDependencies = config.isNugetRestoreDependencies();
-        final boolean nugetRunPreStep = config.isNugetRunPreStep();
-        final boolean nugetIgnoreSourceFiles = config.isNugetIgnoreSourceFiles();
+        final boolean nugetResolveDependencies  = config.isNugetResolveDependencies();
+        final boolean nugetRestoreDependencies  = config.isNugetRestoreDependencies();
+        final boolean nugetRunPreStep           = config.isNugetRunPreStep();
+        final boolean nugetIgnoreSourceFiles    = config.isNugetIgnoreSourceFiles();
+        final boolean nugetResolveCsProjFiles   = config.isNugetResolveCsProjFiles();
+        final boolean nugetResolvePackagesConfigFiles = config.isNugetResolvePackagesConfigFiles();
 
         final boolean mavenResolveDependencies = config.isMavenResolveDependencies();
         final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
@@ -159,8 +161,12 @@ public class DependencyResolutionService {
         }
         if (nugetResolveDependencies) {
             String whitesourceConfiguration = config.getWhitesourceConfiguration();
-            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE, nugetRunPreStep, nugetIgnoreSourceFiles));
-            dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies, nugetIgnoreSourceFiles));
+            if (nugetResolvePackagesConfigFiles) {
+                dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE, nugetRunPreStep, nugetIgnoreSourceFiles));
+            }
+            if (nugetResolveCsProjFiles) {
+                dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies, nugetIgnoreSourceFiles));
+            }
         }
         if (mavenResolveDependencies) {
             dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules, mavenRunPreStep, mavenIgnoreDependencyTreeErrors));
