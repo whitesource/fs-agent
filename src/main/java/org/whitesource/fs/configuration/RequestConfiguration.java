@@ -162,17 +162,17 @@ public class RequestConfiguration {
 
     @Override
     public String toString() {
-        return  ", projectVersion='" + projectVersion + '\n' +
-                ", projectToken='" + projectToken + '\n' +
-                ", projectPerSubFolder=" + projectPerSubFolder + '\n' +
-                ", apiToken='" + "*******" + '\n' +
-                ", userKey='" + "*******" + '\n' +
-                ", requesterEmail='" + requesterEmail + "'" + '\n' +
-                ", productToken='" + productToken + '\n' +
-                ", productName='" + productName + '\n' +
-                ", productVersion='" + productVersion + '\n' +
-                ", projectName='" + projectName + '\n' +
-                ", requireKnownSha1=" + requireKnownSha1 + '\n' +
-                ", scanComment ='" + scanComment;
+        return  "projectVersion='" + projectVersion + '\n' +
+                "projectToken='" + projectToken + '\n' +
+                "projectPerSubFolder=" + projectPerSubFolder + '\n' +
+                "apiToken='" + "*******" + '\n' +
+                "userKey='" + "*******" + '\n' +
+                "requesterEmail='" + requesterEmail + "'" + '\n' +
+                "productToken='" + productToken + '\n' +
+                "productName='" + productName + '\n' +
+                "productVersion='" + productVersion + '\n' +
+                "projectName='" + projectName + '\n' +
+                "requireKnownSha1=" + requireKnownSha1 + '\n' +
+                "scanComment ='" + scanComment;
     }
 }

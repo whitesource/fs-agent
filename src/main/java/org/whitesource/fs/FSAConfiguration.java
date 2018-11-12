@@ -75,12 +75,12 @@ public class FSAConfiguration {
                 sender.toString() + '\n' +
                 resolver.toString() + '\n' +
                 request.toString() + '\n' +
-                ", scanPackageManager=" + scanPackageManager + '\n' +
-                ", " + offline.toString() + '\n' +
-                ", projectPerFolder=" + projectPerFolder + '\n' +
-                ", wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
-                ", scanPackageManager=" + scanPackageManager + '\n' +
-                ", scanDockerImages=" + scanDockerImages + '\n' +
+                "scanPackageManager=" + scanPackageManager + '\n' +
+                offline.toString() + '\n' +
+                "projectPerFolder=" + projectPerFolder + '\n' +
+                "wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
+                "scanPackageManager=" + scanPackageManager + '\n' +
+                "scanDockerImages=" + scanDockerImages + '\n' +
                 getAgent().toString() + '\n' +
                 '}';
     }

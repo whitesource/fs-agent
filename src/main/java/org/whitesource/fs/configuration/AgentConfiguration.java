@@ -193,15 +193,15 @@ public class AgentConfiguration {
 
     @Override
     public String toString() {
-        return ", includes=" + Arrays.toString(includes) + "\n" +
-                ", excludes=" + Arrays.toString(excludes) + "\n" +
-                ", dockerScan=" + dockerScan +
+        return "includes=" + Arrays.toString(includes) + "\n" +
+                "excludes=" + Arrays.toString(excludes) + "\n" +
+                "dockerScan=" + dockerScan +
                 ", dockerIncludes=" + Arrays.toString(dockerIncludes) +
                 ", dockerExcludes=" + Arrays.toString(dockerExcludes) + "\n" +
-                ", archiveExtractionDepth=" + archiveExtractionDepth +
+                "archiveExtractionDepth=" + archiveExtractionDepth +
                 ", archiveIncludes=" + Arrays.toString(archiveIncludes) +
                 ", archiveExcludes=" + Arrays.toString(archiveExcludes) + "\n" +
-                ", followSymlinks=" + followSymlinks +
+                "followSymlinks=" + followSymlinks +
                 ", globCaseSensitive=" + globCaseSensitive +
                 ", projectPerFolderIncludes=" + Arrays.toString(projectPerFolderIncludes) +
                 ", projectPerFolderExcludes=" + Arrays.toString(projectPerFolderExcludes) +

@@ -100,16 +100,20 @@ public final class ConfigPropertyKeys {
     public static final String BOWER_RUN_PRE_STEP           = "bower.runPreStep";
     public static final String BOWER_IGNORE_SOURCE_FILES    = "bower.ignoreSourceFiles";
 
-    public static final String PYTHON_RESOLVE_DEPENDENCIES      = "python.resolveDependencies";
-    public static final String PYTHON_PIP_PATH                  = "python.pipPath";
-    public static final String PYTHON_PATH                      = "python.path";
-    public static final String PYTHON_IS_WSS_PLUGIN_INSTALLED   = "python.isWssPluginInstalled";
-    public static final String PYTHON_UNINSTALL_WSS_PLUGIN      = "python.uninstallWssPlugin";
-    public static final String PYTHON_IGNORE_PIP_INSTALL_ERRORS = "python.ignorePipInstallErrors";
-    public static final String PYTHON_INSTALL_VIRTUALENV        = "python.installVirtualenv";
-    public static final String PYTHON_RESOLVE_HIERARCHY_TREE    = "python.resolveHierarchyTree";
-    public static final String PYTHON_RESOLVE_SETUP_PY_FILES    = "python.resolveSetupPyFiles";
-    public static final String PYTHON_IGNORE_SOURCE_FILES       = "python.ignoreSourceFiles";
+    public static final String PYTHON_RESOLVE_DEPENDENCIES       = "python.resolveDependencies";
+    public static final String PYTHON_PIP_PATH                   = "python.pipPath";
+    public static final String PYTHON_PATH                       = "python.path";
+    public static final String PYTHON_IS_WSS_PLUGIN_INSTALLED    = "python.isWssPluginInstalled";
+    public static final String PYTHON_UNINSTALL_WSS_PLUGIN       = "python.uninstallWssPlugin";
+    public static final String PYTHON_IGNORE_PIP_INSTALL_ERRORS  = "python.ignorePipInstallErrors";
+    public static final String PYTHON_INSTALL_VIRTUALENV         = "python.installVirtualenv";
+    public static final String PYTHON_RESOLVE_HIERARCHY_TREE     = "python.resolveHierarchyTree";
+    public static final String PYTHON_RESOLVE_SETUP_PY_FILES     = "python.resolveSetupPyFiles";
+    public static final String PYTHON_IGNORE_SOURCE_FILES        = "python.ignoreSourceFiles";
+    public static final String PYTHON_REQUIREMENTS_FILE_INCLUDES = "python.requirementsFileIncludes";
+    public static final String PYTHON_RUN_PIPENV_PRE_STEP        = "python.runPipenvPreStep";
+    public static final String PYTHON_IGNORE_PIPENV_INSTALL_ERRORS = "python.IgnorePipenvInstallErrors";
+    public static final String PYTHON_PIPENV_DEV_DEPENDENCIES    = "python.pipenvDevDependencies";
 
     public static final String NUGET_RESOLVE_DEPENDENCIES   = "nuget.resolveDependencies";
     public static final String NUGET_RESTORE_DEPENDENCIES   = "nuget.restoreDependencies";
@@ -133,7 +137,6 @@ public final class ConfigPropertyKeys {
     public static final String PROJECT_CONFIGURATION_PATH   = "configFilePath";
     public static final String SCAN_PACKAGE_MANAGER         = "scanPackageManager";
     public static final String WHITESOURCE_FOLDER_PATH      = "whiteSourceFolderPath";
-    public static final String PYTHON_REQUIREMENTS_FILE_INCLUDES = "python.requirementsFileIncludes";
 
     public static final String ENDPOINT_ENABLED         = "endpoint.enabled";
     public static final String ENDPOINT_PORT            = "endpoint.port";
@@ -231,9 +234,6 @@ public final class ConfigPropertyKeys {
     public static final String DOCKER_AWS_SECRETKEY = "docker.aws.secretKey";
 
 
-    public static final String PYTHON_RUN_PIPENV_PRE_STEP = "python.runPipenvPreStep";
-    public static final String PYTHON_IGNORE_PIPENV_INSTALL_ERRORS = "python.IgnorePipenvInstallErrors";
-    public static final String PYTHON_PIPENV_DEV_DEPENDENCIES = "python.pipenvDevDependencies";
 
     public static final String ADD_SHA1 = "addSha1";
 }
