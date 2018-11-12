@@ -36,6 +36,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
     public static final String TAR_EXTENSION = ".tar";
     private static final String GIT = ":git,";
     private static final String MODULE_START = "==>";
+    private static final String APPS = "apps";
 
     private final Logger logger = LoggerFactory.getLogger(HexDependencyResolver.class);
     private boolean ignoreSourceFiles;
@@ -61,7 +62,6 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         if (this.runPreStep){
             runPreStep(topLevelFolder);
         }
-        //List<DependencyInfo> dependencies = new ArrayList<>();
         Map<AgentProjectInfo, Path> projectInfoPathMap = new HashMap<>();
         File mixLock = new File (topLevelFolder + fileSeparator + MIX_LOCK);
         if (mixLock.exists()){
@@ -78,7 +78,8 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                             coordinates.setArtifactId(moduleName);
                             agentProjectInfo.setCoordinates(coordinates);
                         }
-                        File bomFolder = new File(moduleName.equals(topLevelFolder) ? moduleName : topLevelFolder + fileSeparator + "apps" + fileSeparator + moduleName);
+                        File bomFolder = new File(moduleName.equals(topLevelFolder) ? moduleName : topLevelFolder +
+                                fileSeparator + APPS + fileSeparator + moduleName);
                         projectInfoPathMap.put(agentProjectInfo, bomFolder.toPath());
                     }
                 }
@@ -99,17 +100,19 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                     .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes, getDependencyType(), topLevelFolder);
         }
         return resolutionResult;
-        //return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
     }
 
     private void runPreStep(String folderPath){
+        logger.info("running hex pre-step");
         List<String> compileOutput = cli.runCmd(folderPath, cli.getCommandParams(MIX, DEPS_GET));
         if (compileOutput.isEmpty()) {
             logger.warn("Can't run '{} {}'", MIX, DEPS_GET);
         }
     }
 
+    // this method is public only for testing purposes
     public HashMap<String, List<DependencyInfo>> parseMixTree(String folderPath, HashMap<String, DependencyInfo> dependencyInfoMap){
+        logger.info("Hex - parsing mix tree");
         List<String> lines = cli.runCmd(folderPath, cli.getCommandParams(MIX, DEPS_TREE));
         int currentLevel;
         int prevLevel = 0;
@@ -123,59 +126,79 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         String moduleName = null;
         if (lines != null){
             for (String line : lines){
-                if (line.startsWith(MODULE_START)){
-                    moduleName = line.split(Constants.WHITESPACE)[1];
-                    modulesMap.put(moduleName, new ArrayList<>());
-                    parentDependencies.clear();
-                } else {
-                    if (line.startsWith(Constants.PIPE) || line.startsWith(ACCENT) || line.startsWith(Constants.WHITESPACE)) {
-                        currentLevel = (line.indexOf(Constants.DASH) - 1) / 4;
-                        matcher = treePattern.matcher(line);
-                        if (matcher.find()) {
-                            if (insideModule && currentLevel > 0){
-                                continue;
-                            }
-                            insideModule = false;
-                            String name = matcher.group(1);
-                            String version = matcher.group(3);
-                            DependencyInfo dependencyInfo = dependencyInfoMap.get(name);
-                            if (dependencyInfo != null) {
-                                getSha1AndVersion(dependencyInfo, version);
-                                if (currentLevel == prevLevel) {
-                                    if (!parentDependencies.isEmpty()) {
-                                        parentDependencies.pop();
+                try {
+                    if (line.startsWith(MODULE_START)) {
+                        moduleName = line.split(Constants.WHITESPACE)[1];
+                        modulesMap.put(moduleName, new ArrayList<>());
+                        parentDependencies.clear();
+                    } else {
+                        if (line.startsWith(Constants.PIPE) || line.startsWith(ACCENT) || line.startsWith(Constants.WHITESPACE)) {
+                        /*
+                         - dependency's line starts with either |, ` or white-space.
+                         - each level is has 4 more spaces than its parent level, therefore by dividing the index of dash by 4
+                         code example:
+
+                        telemetry
+                        |-- erlang_pmp ~> 0.1 (Hex package)
+                        |-- dialyxir ~> 1.0.0-rc.1 (Hex package)
+                        `-- ex_doc ~> 0.19 (Hex package)
+                            |-- earmark ~> 1.1 (Hex package)
+                            `-- makeup_elixir ~> 0.7 (Hex package)
+                                |-- makeup ~> 0.5.0 (Hex package)
+                                |   `-- nimble_parsec ~> 0.2.2 (Hex package)
+                                `-- nimble_parsec ~> 0.2.2 (Hex package)
+                        * */
+                            currentLevel = (line.indexOf(Constants.DASH) - 1) / 4;
+                            matcher = treePattern.matcher(line);
+                            if (matcher.find()) {
+                                if (insideModule && currentLevel > 0) {
+                                    continue;
+                                }
+                                insideModule = false;
+                                String name = matcher.group(1);
+                                String version = matcher.group(3);
+                                DependencyInfo dependencyInfo = dependencyInfoMap.get(name);
+                                if (dependencyInfo != null) {
+                                    getSha1AndVersion(dependencyInfo, version);
+                                    if (currentLevel == prevLevel) { // siblings dependencies
+                                        if (!parentDependencies.isEmpty()) {
+                                            parentDependencies.pop();
+                                            if (!parentDependencies.isEmpty()) {
+                                                addTransitiveDependency(parentDependencies.peek(), dependencyInfo);
+                                            }
+                                        }
+                                        if (parentDependencies.isEmpty()) {
+                                            (moduleName == null ? dependenciesList : modulesMap.get(moduleName)).add(dependencyInfo);
+                                        }
+                                        parentDependencies.push(dependencyInfo);
+                                    } else if (currentLevel > prevLevel) { // transitive dependency
                                         if (!parentDependencies.isEmpty()) {
                                             addTransitiveDependency(parentDependencies.peek(), dependencyInfo);
                                         }
+                                        parentDependencies.push(dependencyInfo);
+                                    } else { // dependency with higher hierarchy level than previous one
+                                        while (prevLevel > currentLevel - 1 && !parentDependencies.isEmpty()) {
+                                            parentDependencies.pop();
+                                            prevLevel--;
+                                        }
+                                        if (!parentDependencies.isEmpty()) {
+                                            addTransitiveDependency(parentDependencies.peek(), dependencyInfo);
+                                        } else {
+                                            (moduleName == null ? dependenciesList : modulesMap.get(moduleName)).add(dependencyInfo); // root dependency
+                                        }
+                                        parentDependencies.push(dependencyInfo);
                                     }
-                                    if (parentDependencies.isEmpty()) {
-                                        (moduleName == null ? dependenciesList : modulesMap.get(moduleName)).add(dependencyInfo);
-                                    }
-                                    parentDependencies.push(dependencyInfo);
-                                } else if (currentLevel > prevLevel) { // transitive dependency
-                                    if (!parentDependencies.isEmpty()) {
-                                        addTransitiveDependency(parentDependencies.peek(), dependencyInfo);
-                                    }
-                                    parentDependencies.push(dependencyInfo);
-                                } else { // dependency with higher hierarchy level than previous one
-                                    while (prevLevel > currentLevel - 1 && !parentDependencies.isEmpty()) {
-                                        parentDependencies.pop();
-                                        prevLevel--;
-                                    }
-                                    if (!parentDependencies.isEmpty()) {
-                                        addTransitiveDependency(parentDependencies.peek(), dependencyInfo);
-                                    } else {
-                                        (moduleName == null ? dependenciesList : modulesMap.get(moduleName)).add(dependencyInfo); // root dependency
-                                    }
-                                    parentDependencies.push(dependencyInfo);
+                                } else if (modulesMap.keySet().contains(name)) {
+                                    insideModule = true;
+                                    parentDependencies.clear();
                                 }
-                            } else if (modulesMap.keySet().contains(name)){
-                                insideModule = true;
-                                parentDependencies.clear();
+                                prevLevel = currentLevel;
                             }
-                            prevLevel = currentLevel;
                         }
                     }
+                } catch (Exception e){
+                    logger.warn("Failed parsing line '{}', error: {}", line, e.getMessage());
+                    logger.debug("Exception: {}", e.getStackTrace());
                 }
             }
         }
@@ -185,10 +208,19 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
         return modulesMap;
     }
 
+    // this method is public only for testing purposes
     public HashMap<String, DependencyInfo> parseMixLoc(File mixLock){
+        logger.info("Hex - parsing " + mixLock.getPath());
         HashMap<String, DependencyInfo> dependencyInfoHashMap = new HashMap<>();
         FileReader fileReader;
         BufferedReader bufferedReader;
+        /*
+        lines of the mix.lock file can be of 2 types - hex of git
+        "artificery": {:hex, :artificery, "0.2.6", "f602909757263f7897130cbd006b0e40514a541b148d366ad65b89236b93497a", [:mix], [], "hexpm"},
+        "aruspex": {:git, "https://github.com/oyeb/aruspex.git", "5ca5ca6057b61b2bc19a58abd3a5a656c39d0249", [branch: "tweaks"]},
+
+        using regex to identify the name, version in case of hex, and commit id in case git
+        * */
         try {
             Pattern hexPattern = Pattern.compile(HEX_REGEX);
             Pattern gitPattern = Pattern.compile(GIT_REGEX);
@@ -198,37 +230,47 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
             String currLine;
             while ((currLine = bufferedReader.readLine()) != null) {
                 if (currLine.startsWith(Constants.WHITESPACE)) {
-                    DependencyInfo dependencyInfo = null;
-                    String name = null;
-                    if (currLine.contains(GIT)) {
-                        matcher = gitPattern.matcher(currLine);
-                        if (matcher.find()){
-                            name = matcher.group(1);
-                            String commitId = matcher.group(3);
-                            dependencyInfo = new DependencyInfo();
-                            dependencyInfo.setArtifactId(name);
-                            dependencyInfo.setCommit(commitId);
-                        }
-                    } else {
-                        matcher = hexPattern.matcher(currLine);
-                        if (matcher.find()) {
-                            name = matcher.group(1);
-                            String version = matcher.group(2);
-                            String sha1 = getSha1(name, version);
-                            if (sha1 == null){
+                    logger.debug("parsing line {}", currLine);
+                    try {
+                        DependencyInfo dependencyInfo = null;
+                        String name = null;
+                        if (currLine.contains(GIT)) {
+                            matcher = gitPattern.matcher(currLine);
+                            if (matcher.find()) {
+                                name = matcher.group(1);
+                                String commitId = matcher.group(3);
                                 dependencyInfo = new DependencyInfo();
-                            } else {
-                                dependencyInfo = new DependencyInfo(sha1);
+                                dependencyInfo.setArtifactId(name);
+                                dependencyInfo.setCommit(commitId);
+                            }else {
+                                logger.debug("Failed matching GIT pattern on this line");
                             }
-                            dependencyInfo.setArtifactId(name);
-                            dependencyInfo.setVersion(version);
-                            dependencyInfo.setFilename(dotHexCachePath + fileSeparator + name + Constants.DASH + version + TAR_EXTENSION);
+                        } else {
+                            matcher = hexPattern.matcher(currLine);
+                            if (matcher.find()) {
+                                name = matcher.group(1);
+                                String version = matcher.group(2);
+                                String sha1 = getSha1(name, version);
+                                if (sha1 == null) {
+                                    dependencyInfo = new DependencyInfo();
+                                } else {
+                                    dependencyInfo = new DependencyInfo(sha1);
+                                }
+                                dependencyInfo.setArtifactId(name);
+                                dependencyInfo.setVersion(version);
+                                dependencyInfo.setFilename(dotHexCachePath + fileSeparator + name + Constants.DASH + version + TAR_EXTENSION);
+                            } else {
+                                logger.debug("Failed matching HEX pattern on this line");
+                            }
                         }
-                    }
-                    if (dependencyInfo != null) {
-                        dependencyInfo.setSystemPath(mixLock.getPath());
-                        dependencyInfo.setDependencyType(DependencyType.HEX);
-                        dependencyInfoHashMap.put(name, dependencyInfo);
+                        if (dependencyInfo != null) {
+                            dependencyInfo.setSystemPath(mixLock.getPath());
+                            dependencyInfo.setDependencyType(DependencyType.HEX);
+                            dependencyInfoHashMap.put(name, dependencyInfo);
+                        }
+                    } catch (Exception e){
+                        logger.warn("Failed parsing this line, error: {}", e.getMessage());
+                        logger.debug("Exception: {}", e.getStackTrace());
                     }
                 }
             }
@@ -253,6 +295,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                 if (tarFile != null){
                     try {
                         sha1 = ChecksumUtils.calculateSHA1(tarFile);
+                        // extracting the version from the TAR file's name
                         Pattern versionPattern = Pattern.compile(VERSION_REGEX);
                         Matcher matcher = versionPattern.matcher(tarFile.getName());
                         if (matcher.find()) {
@@ -306,6 +349,8 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
     }
 
     private void addTransitiveDependency(DependencyInfo parentDependency, DependencyInfo childDependency){
+        // adding transitive dependency after making sure the child is not the parent, the parent dependecy doesn't contain
+        // this child already, the child dependency doesn't contain the parent, and that the parent is not a descendant of the child
         if (parentDependency != childDependency && !parentDependency.getChildren().contains(childDependency) &&
                 !childDependency.getChildren().contains(parentDependency) && !isDescendant(parentDependency, childDependency)) {
             parentDependency.getChildren().add(childDependency);

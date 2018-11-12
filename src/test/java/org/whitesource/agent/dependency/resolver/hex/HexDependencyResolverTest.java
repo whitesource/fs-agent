@@ -4,8 +4,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.whitesource.agent.api.model.DependencyInfo;
+import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 
@@ -19,15 +21,19 @@ public class HexDependencyResolverTest {
     }
     @Test
     public void parseMixLoc() {
-        HashMap<String, DependencyInfo> stringDependencyInfoHashMap = hexDependencyResolver.parseMixLoc(new File("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\imager-master\\mix.lock"));
+        String mixLockPath = Paths.get(".").toAbsolutePath().normalize().toString() +
+                TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\hex\\mix.lock");
+        HashMap<String, DependencyInfo> stringDependencyInfoHashMap = hexDependencyResolver.parseMixLoc(new File(mixLockPath));
         Assert.assertTrue(stringDependencyInfoHashMap != null);
     }
 
     @Test
     public void parseTree(){
-        HashMap<String, DependencyInfo> stringDependencyInfoHashMap = hexDependencyResolver.parseMixLoc(new File("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\avia-develop\\mix.lock"));
-        HashMap<String, List<DependencyInfo>> modulesMap = hexDependencyResolver.parseMixTree("C:\\Users\\ErezHuberman\\Documents\\===HEX===\\avia-develop", stringDependencyInfoHashMap);
-        printTree(modulesMap);
+        String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() +
+                TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\hex\\imager");
+        HashMap<String, DependencyInfo> stringDependencyInfoHashMap = hexDependencyResolver.parseMixLoc(new File(folderPath + "\\mix.lock"));
+        HashMap<String, List<DependencyInfo>> modulesMap = hexDependencyResolver.parseMixTree(folderPath, stringDependencyInfoHashMap);
+        //printTree(modulesMap);
         Assert.assertTrue(modulesMap != null);
     }
 

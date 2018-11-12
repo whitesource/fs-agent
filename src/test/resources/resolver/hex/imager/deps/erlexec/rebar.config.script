@@ -1,0 +1,80 @@
+%% For cross building using erlang:system_info() does not work as rebar runs
+%% using the build hosts Erlang runtime.
+%% If CXX envrionment variable is defined we are most likely running in a cross environment.
+{CXX,Target,Sysroot} =
+    case os:getenv("CXX") of
+    false    ->
+        {"g++",erlang:system_info(system_architecture),""};
+    Compiler ->
+        {Compiler,string:strip(os:cmd(Compiler ++ " -dumpmachine"),   right, $\n),
+                  string:strip(os:cmd(Compiler ++ " -print-sysroot"), right, $\n)}
+    end,
+
+%% Commonly on Linux, compilers report the target triplet as <arch>-<vendor>-linux,
+%% however, Erlang runtime reports and expects it as <arch>-<vendor>-linux-gnu.
+%% Fix by appending "-gnu".
+Mach = case string:str(Target,"linux") of
+    0 -> Target;
+    _ -> case string:words(Target,$-) of
+         4 -> Target;
+         _ -> Target ++ "-gnu"
+         end
+    end,
+
+Vsn = string:strip(os:cmd("git describe --always --tags --abbrev=0 | sed 's/^v//'"), right, $\n),
+
+%% Check for Linux capability API (Install package: libcap-devel).
+{LinCXX, LinLD} =
+    case file:read_file_info(Sysroot ++ "/usr/include/sys/capability.h") of
+    {ok, _} -> {" -DHAVE_CAP", " -lcap"};
+    _       -> {"", ""}
+    end,
+
+X64=case Mach of
+    "x86_64" ++ _E -> " -m64";
+    _              -> ""
+    end,
+
+OptimLevel =
+    case os:getenv("OPTIMIZE") of
+    false  -> "0";
+    "true" -> "2";
+    Level  -> list_to_integer(Level), Level
+    end,
+
+% Merge configuration options read from rebar.config with those dynamically set below
+maps:to_list(lists:foldl(
+    fun({K, V}, M) ->
+        case maps:find(K, M) of
+        {ok, V0} -> M#{K => V0 ++ V};
+        error    -> M#{K => V}
+        end
+    end,
+    maps:from_list(CONFIG),
+    [
+        {port_env,  [{"solaris", "CXXFLAGS", "$CXXFLAGS -std=c++11 -DHAVE_SETREUID" ++ X64},
+                     {"solaris", "LDFLAGS",  "$LDFLAGS -lrt" ++ X64},
+
+                     {"darwin",  "CXXFLAGS", "$CXXFLAGS -std=c++11 -DHAVE_SETREUID" ++ X64},
+                     {"darwin",  "LDFLAGS",  "$LDFLAGS" ++ X64},
+
+                     {"freebsd",   "CXXFLAGS", "$CXXFLAGS -std=c++11 -DHAVE_SETRESUID" ++ X64},
+                     {"freebsd",   "LDFLAGS",  "$LDFLAGS" ++ X64},
+
+                     {"linux",   "CXXFLAGS", "$CXXFLAGS -std=c++11 -DHAVE_SETRESUID" ++ LinCXX},
+                     {"linux",   "LDFLAGS",  "$LDFLAGS" ++ LinLD},
+
+                     {"CC",  CXX},
+                     {"CXX", CXX},
+                     {"CXXFLAGS", "$CXXFLAGS -DHAVE_PTRACE -O" ++ OptimLevel}
+                    ]},
+
+        {port_specs,[{filename:join(["priv", Mach, "exec-port"]), ["c_src/*.cpp"]}]},
+        {edoc_opts, [{overview,     "src/overview.edoc"},
+                     {title,        "The exec application"},
+                     {includes,     ["include"]},
+                     {def,          {vsn, Vsn}},
+                     {stylesheet_file, "src/edoc.css"},
+                     {app_default,  "http://www.erlang.org/doc/man"}]}
+    ]
+)).
