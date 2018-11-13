@@ -510,8 +510,6 @@ public class FSAConfiguration {
         boolean nugetResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, true);
         boolean nugetRestoreDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESTORE_DEPENDENCIES, false);
         boolean nugetRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RUN_PRE_STEP, false);
-        boolean nugetResolvePakcagesConfigFiles = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_PACKAGES_CONFIG_FILES, true);
-        boolean nugetResolveCsProjFiles = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_CS_PROJ_FILES, true);
 
         boolean mavenResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = config.getListProperty(ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
@@ -632,7 +630,7 @@ public class FSAConfiguration {
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreSourceFiles,
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
                 bowerResolveDependencies, bowerRunPreStep, bowerIgnoreSourceFiles,
-                nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep, nugetIgnoreSourceFiles, nugetResolvePakcagesConfigFiles, nugetResolveCsProjFiles,
+                nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep, nugetIgnoreSourceFiles,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles, mavenRunPreStep, mavenIgnoreDependencyTreeErrors,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles, pythonIgnoreSourceFiles,

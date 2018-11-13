@@ -119,8 +119,6 @@ public final class ConfigPropertyKeys {
     public static final String NUGET_RESTORE_DEPENDENCIES   = "nuget.restoreDependencies";
     public static final String NUGET_RUN_PRE_STEP           = "nuget.runPreStep";
     public static final String NUGET_IGNORE_SOURCE_FILES    = "nuget.ignoreSourceFiles";
-    public static final String NUGET_RESOLVE_CS_PROJ_FILES  = "nuget.resolveCsProjFiles";
-    public static final String NUGET_RESOLVE_PACKAGES_CONFIG_FILES = "nuget.resolvePackagesConfigFiles";
 
     public static final String MAVEN_IGNORED_SCOPES         = "maven.ignoredScopes";
     public static final String MAVEN_RESOLVE_DEPENDENCIES   = "maven.resolveDependencies";
