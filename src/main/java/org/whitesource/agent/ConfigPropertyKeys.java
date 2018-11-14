@@ -100,16 +100,20 @@ public final class ConfigPropertyKeys {
     public static final String BOWER_RUN_PRE_STEP           = "bower.runPreStep";
     public static final String BOWER_IGNORE_SOURCE_FILES    = "bower.ignoreSourceFiles";
 
-    public static final String PYTHON_RESOLVE_DEPENDENCIES      = "python.resolveDependencies";
-    public static final String PYTHON_PIP_PATH                  = "python.pipPath";
-    public static final String PYTHON_PATH                      = "python.path";
-    public static final String PYTHON_IS_WSS_PLUGIN_INSTALLED   = "python.isWssPluginInstalled";
-    public static final String PYTHON_UNINSTALL_WSS_PLUGIN      = "python.uninstallWssPlugin";
-    public static final String PYTHON_IGNORE_PIP_INSTALL_ERRORS = "python.ignorePipInstallErrors";
-    public static final String PYTHON_INSTALL_VIRTUALENV        = "python.installVirtualenv";
-    public static final String PYTHON_RESOLVE_HIERARCHY_TREE    = "python.resolveHierarchyTree";
-    public static final String PYTHON_RESOLVE_SETUP_PY_FILES    = "python.resolveSetupPyFiles";
-    public static final String PYTHON_IGNORE_SOURCE_FILES       = "python.ignoreSourceFiles";
+    public static final String PYTHON_RESOLVE_DEPENDENCIES       = "python.resolveDependencies";
+    public static final String PYTHON_PIP_PATH                   = "python.pipPath";
+    public static final String PYTHON_PATH                       = "python.path";
+    public static final String PYTHON_IS_WSS_PLUGIN_INSTALLED    = "python.isWssPluginInstalled";
+    public static final String PYTHON_UNINSTALL_WSS_PLUGIN       = "python.uninstallWssPlugin";
+    public static final String PYTHON_IGNORE_PIP_INSTALL_ERRORS  = "python.ignorePipInstallErrors";
+    public static final String PYTHON_INSTALL_VIRTUALENV         = "python.installVirtualenv";
+    public static final String PYTHON_RESOLVE_HIERARCHY_TREE     = "python.resolveHierarchyTree";
+    public static final String PYTHON_RESOLVE_SETUP_PY_FILES     = "python.resolveSetupPyFiles";
+    public static final String PYTHON_IGNORE_SOURCE_FILES        = "python.ignoreSourceFiles";
+    public static final String PYTHON_REQUIREMENTS_FILE_INCLUDES = "python.requirementsFileIncludes";
+    public static final String PYTHON_RUN_PIPENV_PRE_STEP        = "python.runPipenvPreStep";
+    public static final String PYTHON_IGNORE_PIPENV_INSTALL_ERRORS = "python.IgnorePipenvInstallErrors";
+    public static final String PYTHON_PIPENV_DEV_DEPENDENCIES    = "python.pipenvDevDependencies";
 
     public static final String NUGET_RESOLVE_DEPENDENCIES   = "nuget.resolveDependencies";
     public static final String NUGET_RESTORE_DEPENDENCIES   = "nuget.restoreDependencies";
@@ -122,6 +126,7 @@ public final class ConfigPropertyKeys {
     public static final String MAVEN_IGNORE_POM_MODULES     = "maven.ignorePomModules";
     public static final String MAVEN_IGNORE_SOURCE_FILES    = "maven.ignoreSourceFiles";
     public static final String MAVEN_RUN_PRE_STEP           = "maven.runPreStep";
+    public static final String MAVEN_IGNORE_DEPENDENCY_TREE_ERRORS = "maven.ignoreMvnTreeErrors";
 
     public static final String IGNORE_SOURCE_FILES          = "ignoreSourceFiles";
 
@@ -132,7 +137,6 @@ public final class ConfigPropertyKeys {
     public static final String PROJECT_CONFIGURATION_PATH   = "configFilePath";
     public static final String SCAN_PACKAGE_MANAGER         = "scanPackageManager";
     public static final String WHITESOURCE_FOLDER_PATH      = "whiteSourceFolderPath";
-    public static final String PYTHON_REQUIREMENTS_FILE_INCLUDES = "python.requirementsFileIncludes";
 
     public static final String ENDPOINT_ENABLED         = "endpoint.enabled";
     public static final String ENDPOINT_PORT            = "endpoint.port";
@@ -146,15 +150,14 @@ public final class ConfigPropertyKeys {
     public static final String GRADLE_AGGREGATE_MODULES     = "gradle.aggregateModules";
     public static final String GRADLE_PREFERRED_ENVIRONMENT = "gradle.preferredEnvironment";
     public static final String GRADLE_IGNORE_SOURCE_FILES   = "gradle.ignoreSourceFiles";
-    public static final String GRADLE_IGNORE_SCOPES   = "gradle.ignoredScopes";
-
+    public static final String GRADLE_IGNORE_SCOPES         = "gradle.ignoredScopes";
 
     public static final String PAKET_RESOLVE_DEPENDENCIES   = "paket.resolveDependencies";
     public static final String PAKET_IGNORED_GROUPS         = "paket.ignoredGroups";
     public static final String PAKET_RUN_PRE_STEP           = "paket.runPreStep";
     public static final String PAKET_EXE_PATH               = "paket.exePath";
-    public static final String PAKET_IGNORE_FILES               = "paket.ignoreFiles";
-    public static final String PAKET_IGNORE_SOURCE_FILES       = "paket.ignoreSourceFiles";
+    public static final String PAKET_IGNORE_FILES           = "paket.ignoreFiles";
+    public static final String PAKET_IGNORE_SOURCE_FILES    = "paket.ignoreSourceFiles";
 
     public static final String GO_RESOLVE_DEPENDENCIES              = "go.resolveDependencies";
     public static final String GO_DEPENDENCY_MANAGER                = "go.dependencyManager";
@@ -181,9 +184,14 @@ public final class ConfigPropertyKeys {
 
     public static final String HTML_RESOLVE_DEPENDENCIES    = "html.resolveDependencies";
 
-    public static final String COCOAPODS_RESOLVE_DEPENDENCIES    = "cocoapods.resolveDependencies";
+    public static final String COCOAPODS_RESOLVE_DEPENDENCIES     = "cocoapods.resolveDependencies";
     public static final String COCOAPODS_RUN_PRE_STEP             = "cocoapods.runPreStep";
     public static final String COCOAPODS_IGNORE_SOURCE_FILES      = "cocoapods.ignoreSourceFiles";
+
+    public static final String HEX_RESOLVE_DEPENDENECIES    = "hex.resolveDependencies";
+    public static final String HEX_RUN_PRE_STEP             = "hex.runPreStep";
+    public static final String HEX_IGNORE_SOURCE_FILES      = "hex.ignoreSourceFiles";
+    public static final String HEX_AGGREGATE_MODULES        = "hex.aggregateModules";
 
     public static final String DEPENDENCIES_ONLY            = "dependenciesOnly";
     public static final String WHITESOURCE_CONFIGURATION    = "whitesourceConfiguration";
@@ -226,9 +234,6 @@ public final class ConfigPropertyKeys {
     public static final String DOCKER_AWS_SECRETKEY = "docker.aws.secretKey";
 
 
-    public static final String PYTHON_RUN_PIPENV_PRE_STEP = "python.runPipenvPreStep";
-    public static final String PYTHON_IGNORE_PIPENV_INSTALL_ERRORS = "python.IgnorePipenvInstallErrors";
-    public static final String PYTHON_PIPENV_DEV_DEPENDENCIES = "python.pipenvDevDependencies";
 
     public static final String ADD_SHA1 = "addSha1";
 }

@@ -40,7 +40,6 @@ public abstract class BomParser implements IBomParser{
         String json = null;
         try (InputStream is = new FileInputStream(bomPath)) {
             json = IOUtils.toString(is);
-            is.close();
         } catch (FileNotFoundException e) {
             logger.error("file Not Found: {}", bomPath);
         } catch (IOException e) {

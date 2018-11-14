@@ -24,6 +24,7 @@ import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.dotNet.DotNetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyResolver;
 import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
+import org.whitesource.agent.dependency.resolver.hex.HexDependencyResolver;
 import org.whitesource.agent.dependency.resolver.html.HtmlDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
@@ -82,10 +83,10 @@ public class DependencyResolutionService {
         final boolean bowerRunPreStep = config.isBowerRunPreStep();
         final boolean bowerIgnoreSourceFiles = config.isBowerIgnoreSourceFiles();
 
-        final boolean nugetResolveDependencies = config.isNugetResolveDependencies();
-        final boolean nugetRestoreDependencies = config.isNugetRestoreDependencies();
-        final boolean nugetRunPreStep = config.isNugetRunPreStep();
-        final boolean nugetIgnoreSourceFiles = config.isNugetIgnoreSourceFiles();
+        final boolean nugetResolveDependencies  = config.isNugetResolveDependencies();
+        final boolean nugetRestoreDependencies  = config.isNugetRestoreDependencies();
+        final boolean nugetRunPreStep           = config.isNugetRunPreStep();
+        final boolean nugetIgnoreSourceFiles    = config.isNugetIgnoreSourceFiles();
 
         final boolean mavenResolveDependencies = config.isMavenResolveDependencies();
         final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
@@ -93,6 +94,7 @@ public class DependencyResolutionService {
         final boolean mavenIgnorePomModules = config.isMavenIgnorePomModules();
         final boolean mavenIgnoreSourceFiles = config.isMavenIgnoreSourceFiles();
         final boolean mavenRunPreStep = config.isMavenRunPreStep();
+        final boolean mavenIgnoreDependencyTreeErrors = config.isMavenIgnoreDependencyTreeErrors();
 
         boolean pythonResolveDependencies = config.isPythonResolveDependencies();
         final String[] pythonRequirementsFileIncludes = config.getPythonRequirementsFileIncludes();
@@ -140,6 +142,11 @@ public class DependencyResolutionService {
         final boolean cocoapodsRunPreStep = config.isCocoapodsRunPreStep();
         final boolean cocoapodsIgnoreSourceFiles = config.isCocoapodsIgnoreSourceFiles();
 
+        final boolean hexResolveDependencies    = config.isHexResolveDependencies();
+        final boolean hexRunPreStep             = config.isHexRunPreStep();
+        final boolean hexAggregateModules       = config.isHexAggregateModules();
+        final boolean hexIgnoreSourceFiles      = config.isHexIgnoreSourceFiles();
+
         ignoreSourceFiles = config.isIgnoreSourceFiles();
 
         fileScanner = new FilesScanner();
@@ -156,7 +163,7 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies, nugetIgnoreSourceFiles));
         }
         if (mavenResolveDependencies) {
-            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules, mavenRunPreStep));
+            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules, mavenRunPreStep, mavenIgnoreDependencyTreeErrors));
             this.mavenAggregateModules = mavenAggregateModules;
         }
         if (pythonResolveDependencies) {
@@ -196,6 +203,10 @@ public class DependencyResolutionService {
 
         if (cocoapodsResolveDependencies) {
             dependencyResolvers.add(new CocoaPodsDependencyResolver(cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles));
+        }
+
+        if (hexResolveDependencies){
+            dependencyResolvers.add(new HexDependencyResolver(hexIgnoreSourceFiles, hexRunPreStep, hexAggregateModules));
         }
 
         this.separateProjects = false;

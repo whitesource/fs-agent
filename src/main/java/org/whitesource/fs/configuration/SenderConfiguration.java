@@ -167,13 +167,13 @@ public class SenderConfiguration {
 
     @Override
     public String toString() {
-        return  ", serviceUrl='" + serviceUrl + "'\n" +
-                ", checkPolicies=" + checkPolicies + '\n' +
-                ", forceCheckAllDependencies=" + forceCheckAllDependencies + '\n' +
-                ", forceUpdate=" + forceUpdate + '\n' +
-                ", forceUpdate.failBuildOnPolicyViolation=" + forceUpdateFailBuildOnPolicyViolation + '\n' +
-                ", updateTypeValue='" + updateTypeValue + "'" +'\n' +
-                ", updateInventory=" + updateInventory;
+        return  "serviceUrl='" + serviceUrl + "'\n" +
+                "checkPolicies=" + checkPolicies + '\n' +
+                "forceCheckAllDependencies=" + forceCheckAllDependencies + '\n' +
+                "forceUpdate=" + forceUpdate + '\n' +
+                "forceUpdate.failBuildOnPolicyViolation=" + forceUpdateFailBuildOnPolicyViolation + '\n' +
+                "updateTypeValue='" + updateTypeValue + "'" +'\n' +
+                "updateInventory=" + updateInventory;
 //                ", enableImpactAnalysis=" + enableImpactAnalysis;
     }
 }

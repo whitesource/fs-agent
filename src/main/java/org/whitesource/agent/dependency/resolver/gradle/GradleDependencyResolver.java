@@ -33,7 +33,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     private static final List<String> GRADLE_SCRIPT_EXTENSION = Arrays.asList(".gradle", ".groovy", ".java", ".jar", ".war", ".ear", ".car", ".class");
 
-    private static final String JAR_EXTENSION = ".jar";
+    private static final String JAR_EXTENSION = Constants.DOT + Constants.JAR;
     private static final String PROJECT = "--- Project";
     public static final String COPY_DEPENDENCIES_TASK_TXT = "copyDependenciesTask.txt";
     private static final String DEPENDENCIES = "dependencies";
@@ -59,8 +59,8 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     public GradleDependencyResolver(boolean runAssembleCommand, boolean ignoreSourceCode, boolean gradleAggregateModules, String gradlePreferredEnvironment, String[] gradleIgnoredScopes, boolean gradleRunPreStep) {
         super();
-        gradleLinesParser = new GradleLinesParser(runAssembleCommand, gradlePreferredEnvironment);
         gradleCli = new GradleCli(gradlePreferredEnvironment);
+        gradleLinesParser = new GradleLinesParser(runAssembleCommand, gradleCli);
         this.ignoredScopes = gradleIgnoredScopes;
         topLevelFoldersNames = new ArrayList<>();
         this.ignoreSourceCode = ignoreSourceCode;
@@ -142,7 +142,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
         for (String topLeverFolderName : topLevelFoldersNames) {
-            excludes.add(GLOB_PATTERN + topLeverFolderName + JAR_EXTENSION);
+            excludes.add(GLOB_PATTERN + topLeverFolderName + Constants.JAR_EXTENSION);
         }
         return excludes;
     }
@@ -178,7 +178,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         List<String> lines;
         if (dependencyTrees.get(directoryName) == null) {
             String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.DEPENDENCIES);
-            lines = gradleCli.runGradleCmd(directory, gradleCommandParams);
+            lines = gradleCli.runGradleCmd(directory, gradleCommandParams, true);
             dependencyTrees.put(directoryName,lines);
         } else {
             lines = dependencyTrees.get(directoryName);
@@ -201,7 +201,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     }
 
     private List<String> collectProjects(String rootDirectory) {
-        List<String> projectsList = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.PROJECTS));
+        List<String> projectsList = gradleCli.runGradleCmd(rootDirectory, gradleCli.getGradleCommandParams(GradleMvnCommand.PROJECTS), true);
         List<String> resultProjectsList = null;
         if (projectsList != null) {
             resultProjectsList = new ArrayList<>();
@@ -353,7 +353,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         String directory = bomFile.getParent();
         String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.COPY_DEPENDENCIES);
         if (StringUtils.isNotEmpty(directory) && gradleCommandParams.length > 0) {
-            gradleCli.runGradleCmd(directory, gradleCommandParams);
+            gradleCli.runGradleCmd(directory, gradleCommandParams, true);
         } else {
             logger.warn("Could not run gradle command");
         }
