@@ -343,10 +343,15 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         if (runAssembleCommand) {
             try {
                 logger.info("running 'gradle assemble' command");
+                long creationTime = new Date().getTime(); // will be used later for removing temp files/folders
                 validateJavaFileExistence();
                 String[] gradleCommandParams = gradleCli.getGradleCommandParams(GradleMvnCommand.ASSEMBLE);
                 List<String> lines = gradleCli.runCmd(rootDirectory, gradleCommandParams);
-                removeTempJavaFolder();
+                //removeTempJavaFolder();
+                String errors = FilesUtils.removeTempFiles(rootDirectory, creationTime);
+                if (!errors.isEmpty()){
+                    logger.error(errors);
+                }
                 if (!lines.isEmpty()) {
                     for (String line : lines) {
                         if (line.contains("BUILD SUCCESSFUL")) {
@@ -374,6 +379,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         removeSrcDir = false;
         if (!srcDir.isDirectory()){ // src folder doesn't exist - create the whole tree
             FileUtils.forceMkdir(javaDir);
+            logger.debug("no 'src' folder, created temp " + javaDirPath);
             removeSrcDir = true;
         } else {
             String mainDirPath = rootDirectory + directoryName + this.mainDirPath;
@@ -381,11 +387,13 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             removeMainDir = false;
             if (!mainDir.isDirectory()){ // main folder doesn't exist - create it with its sub-folder
                 FileUtils.forceMkdir(javaDir);
+                logger.debug("no 'src/main' folder, created temp " + javaDirPath);
                 removeMainDir = true;
             } else {
                 removeJavaDir = false;
                 if (!javaDir.isDirectory()) { // java folder doesn't exist - create it
                     FileUtils.forceMkdir(javaDir);
+                    logger.debug("no 'src/main/java' folder, created temp " + javaDirPath);
                     removeJavaDir = true;
                 }
             }
@@ -394,6 +402,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         if (!javaFileExists(rootDirectory + directoryName + this.javaDirPath)){ // the java folder doesn't have any java file inside it - creating a temp file
             File javaFile = new File(javaDirPath + fileSeparator + TMP_JAVA_FILE);
             removeJavaFile = javaFile.createNewFile();
+            logger.debug("no java file, created temp " + javaFile.getPath());
         }
     }
 

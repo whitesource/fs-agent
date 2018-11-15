@@ -17,6 +17,7 @@ import org.whitesource.agent.dependency.resolver.gradle.GradleMvnCommand;
 import org.whitesource.agent.hash.HashCalculator;
 import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.CommandLineProcess;
+import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.LoggerFactory;
 
 import java.io.*;
@@ -215,8 +216,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             logger.error(error);
         }
 
-        if (collectDependenciesAtRuntime)
-            removeTempFiles(rootDirectory, creationTime);
+        if (collectDependenciesAtRuntime) {
+            String errors = FilesUtils.removeTempFiles(rootDirectory, creationTime);
+            if (!errors.isEmpty()){
+                logger.error(errors);
+            }
+        }
         return dependencyInfos;
     }
 
