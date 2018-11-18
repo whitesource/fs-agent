@@ -75,12 +75,12 @@ public class FSAConfiguration {
                 sender.toString() + '\n' +
                 resolver.toString() + '\n' +
                 request.toString() + '\n' +
-                ", scanPackageManager=" + scanPackageManager + '\n' +
-                ", " + offline.toString() + '\n' +
-                ", projectPerFolder=" + projectPerFolder + '\n' +
-                ", wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
-                ", scanPackageManager=" + scanPackageManager + '\n' +
-                ", scanDockerImages=" + scanDockerImages + '\n' +
+                "scanPackageManager=" + scanPackageManager + '\n' +
+                offline.toString() + '\n' +
+                "projectPerFolder=" + projectPerFolder + '\n' +
+                "wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
+                "scanPackageManager=" + scanPackageManager + '\n' +
+                "scanDockerImages=" + scanDockerImages + '\n' +
                 getAgent().toString() + '\n' +
                 '}';
     }
@@ -516,7 +516,7 @@ public class FSAConfiguration {
         boolean mavenAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, false);
         boolean mavenIgnoredPomModules = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_IGNORE_POM_MODULES, true);
         boolean mavenRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RUN_PRE_STEP, false);
-
+        boolean mavenIgnoreDependencyTreeErrors = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_IGNORE_DEPENDENCY_TREE_ERRORS, false);
         String whiteSourceConfiguration = config.getProperty(ConfigPropertyKeys.PROJECT_CONFIGURATION_PATH);
 
         boolean pythonResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RESOLVE_DEPENDENCIES, true);
@@ -581,6 +581,10 @@ public class FSAConfiguration {
         boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, true);
         boolean cocoapodsRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RUN_PRE_STEP, false);
 
+        boolean hexResolveDependencies  = config.getBooleanProperty(ConfigPropertyKeys.HEX_RESOLVE_DEPENDENECIES, true);
+        boolean hexRunPreStep           = config.getBooleanProperty(ConfigPropertyKeys.HEX_RUN_PRE_STEP, false);
+        boolean hexAggregateModules     = config.getBooleanProperty(ConfigPropertyKeys.HEX_AGGREGATE_MODULES, false);
+
         boolean npmIgnoreSourceFiles;
         boolean bowerIgnoreSourceFiles;
         boolean nugetIgnoreSourceFiles;
@@ -592,6 +596,7 @@ public class FSAConfiguration {
         boolean goIgnoreSourceFiles;
         boolean rubyIgnoreSourceFiles;
         boolean cocoapodsIgnoreSourceFiles;
+        boolean hexIgnoreSourceFiles;
         boolean ignoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.IGNORE_SOURCE_FILES, ConfigPropertyKeys.DEPENDENCIES_ONLY, false);
 
         if (ignoreSourceFiles == true) {
@@ -606,6 +611,7 @@ public class FSAConfiguration {
             rubyIgnoreSourceFiles = true;
             pythonIgnoreSourceFiles = true;
             cocoapodsIgnoreSourceFiles = true;
+            hexIgnoreSourceFiles = true;
         } else {
             npmIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_SOURCE_FILES, ConfigPropertyKeys.NPM_IGNORE_JAVA_SCRIPT_FILES, true);
             bowerIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.BOWER_IGNORE_SOURCE_FILES, false);
@@ -618,13 +624,14 @@ public class FSAConfiguration {
             pythonIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_SOURCE_FILES, true);
             rubyIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.RUBY_IGNORE_SOURCE_FILES, true);
             cocoapodsIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_IGNORE_SOURCE_FILES, true);
+            hexIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.HEX_IGNORE_SOURCE_FILES, true);
         }
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreSourceFiles,
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
                 bowerResolveDependencies, bowerRunPreStep, bowerIgnoreSourceFiles,
                 nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep, nugetIgnoreSourceFiles,
-                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles, mavenRunPreStep,
+                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles, mavenRunPreStep, mavenIgnoreDependencyTreeErrors,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles, pythonIgnoreSourceFiles,
                 pythonIgnorePipenvInstallErrors, pythonRunPipenvPreStep, pythonInstallDevDependencies,
@@ -635,7 +642,8 @@ public class FSAConfiguration {
                 rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles,
                 phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies,
                 sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, sbtIgnoreSourceFiles,
-                htmlResolveDependencies, cocoapodsResolveDependencies, cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles, addSha1);
+                htmlResolveDependencies, cocoapodsResolveDependencies, cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles,
+                hexResolveDependencies, hexRunPreStep, hexIgnoreSourceFiles, hexAggregateModules, addSha1);
     }
 
     private RequestConfiguration getRequest(FSAConfigProperties config, String apiToken, String userKey, String projectName, String projectToken, String scanComment) {
@@ -1203,6 +1211,9 @@ public class FSAConfiguration {
 
         // User-entry of a flag that overrides default FSA process termination
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.REQUIRE_KNOWN_SHA1, commandLineArgs.requireKnownSha1);
+
+        // docker flag to scan docker images instead of folder
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_DOCKER_IMAGES, commandLineArgs.scanDockerImages);
 
         return offlineRequestFiles;
     }

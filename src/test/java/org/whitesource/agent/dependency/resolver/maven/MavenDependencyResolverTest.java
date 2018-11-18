@@ -38,4 +38,8 @@ public class MavenDependencyResolverTest {
         return dependencyResolutionService.resolveDependencies(pathsToScan, new String[0]);
     }
 
+    @Test
+    public void test_collectDependenciesFromPomXml(){
+
+    }
 }

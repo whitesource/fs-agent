@@ -52,6 +52,8 @@ public final class Constants {
     public static final String WINDOWS              = "Windows";
     public static final String GRADLE_WRAPPER       = "wrapper";
     public static final String GRADLE               = "gradle";
+    public static final String POM                  = "pom";
+    public static final String JAR                  = "jar";
     public static final String DOT                  = ".";
     public static final String DIRECTORY            = "d";
     public static final String BACK_SLASH           = "\\";
@@ -86,6 +88,7 @@ public final class Constants {
     public static final String PIPFILE              = "Pipfile";
     public static final String TXT_EXTENSION        = ".txt";
     public static final String SETUP_PY             = "setup.py";
+    public static final String JAR_EXTENSION        = ".jar";
     public static final int MAX_EXTRACTION_DEPTH    = 7;
     public static final int COMMENT_MAX_LENGTH      = 1000;
     public static final int ZERO                    = 0;
@@ -102,6 +105,9 @@ public final class Constants {
     public static final char CLOSE_SQUARE_BRACKET   = ']';
     public static final String DOUBLE_EQUALS        = "==";
     public static final char SEMI_COLON             = ';';
+    public static final String DOLLAR               = "$";
+    public static final String OPEN_CURLY_BRACKET = "{";
+    public static final String CLOSE_CURLY_BRACKET = "}";
 
     public static final int MAX_NUMBER_OF_DEPENDENCIES = 1000000;
 
@@ -113,4 +119,5 @@ public final class Constants {
     public static final String BUILD = "build";
     public static final String NONE = "None";
     public static final String LIBS = "libs";
+    public static final String USER_HOME = "user.home";
 }

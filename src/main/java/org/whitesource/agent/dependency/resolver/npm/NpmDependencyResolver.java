@@ -276,9 +276,10 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         String responseFromRegistry = null;
         try {
             Client client = Client.create();
-            WebResource resource = client.resource(uriScopeDep);
             ClientResponse response;
+            WebResource resource;
             if (isScopeDep) {
+                resource = client.resource(uriScopeDep);
                 if (StringUtils.isEmptyOrNull(npmAccessToken)) {
                     response= resource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
                     logger.debug("npm.accessToken is not defined");
