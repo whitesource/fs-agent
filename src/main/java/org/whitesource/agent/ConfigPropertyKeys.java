@@ -165,7 +165,7 @@ public final class ConfigPropertyKeys {
     public static final String GO_DEPENDENCY_MANAGER                = "go.dependencyManager";
     public static final String GO_COLLECT_DEPENDENCIES_AT_RUNTIME   = "go.collectDependenciesAtRuntime";
     public static final String GO_GLIDE_IGNORE_TEST_PACKAGES        = "go.glide.ignoreTestPackages";
-    public static final String GO_IGNORE_SOURCE_FILES               = "go.glide.ignoreSourceFiles";
+    public static final String GO_IGNORE_SOURCE_FILES               = "go.ignoreSourceFiles";
     public static final String GO_GRADLE_ENABLE_TASK_ALIAS          = "go.gogradle.enableTaskAlias";
 
     public static final String RUBY_RESOLVE_DEPENDENCIES    = "ruby.resolveDependencies";

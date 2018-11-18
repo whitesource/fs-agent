@@ -372,7 +372,7 @@ public class ProjectsSender {
             updateRequest.setLogData(getLogData());
         }
         updateRequest.setRequesterEmail(requestConfig.getRequesterEmail());
-        if (requestConfig.getProductToken().isEmpty()) {
+        if (requestConfig.getProductToken() != null && !requestConfig.getProductToken().isEmpty()) {
             updateRequest.setProductToken(requestConfig.getProductToken());
         }
         try {
