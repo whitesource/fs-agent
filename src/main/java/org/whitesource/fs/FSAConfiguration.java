@@ -298,6 +298,7 @@ public class FSAConfiguration {
             for (ViaLanguage viaLanguage : ViaLanguage.values()) {
                 if (iaLanguage.toLowerCase().equals(viaLanguage.toString().toLowerCase())) {
                     iaLanguageValid = true;
+                    break;
                 }
             }
             if (!iaLanguageValid) {
@@ -876,8 +877,8 @@ public class FSAConfiguration {
                 }
                 configProps.put(key, value);
             }
-        } catch (IOException e) {
-            errors.add("Error occurred when reading from " + configFilePath + e.getMessage());
+        } catch (Exception e) {
+            errors.add("Error occurred when reading from " + configFilePath + ", error: " + e.getMessage());
         }
         return new Pair<>(configProps, errors);
     }
