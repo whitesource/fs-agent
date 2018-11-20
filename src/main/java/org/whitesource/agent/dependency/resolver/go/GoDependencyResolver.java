@@ -99,6 +99,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private String gradlePreferredEnvironment;
     private HashCalculator hashCalculator = new HashCalculator();
     private boolean addSha1;
+    private boolean afterCollect = false;
 
     public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean ignoreSourceFiles, boolean ignoreTestPackages, boolean goGradleEnableTaskAlias, String gradlePreferredEnvironment, boolean addSha1){
         super();
@@ -121,7 +122,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
-        if (!collectDependenciesAtRuntime && goDependencyManager != null && ignoreSourceFiles){
+        if (afterCollect && ignoreSourceFiles){
             excludes.add(Constants.PATTERN + GO_EXTENSION);
         }
         return excludes;
@@ -222,6 +223,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 logger.error(errors);
             }
         }
+        afterCollect = true;
         return dependencyInfos;
     }
 
