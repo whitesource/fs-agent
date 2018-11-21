@@ -61,6 +61,7 @@ public class DependencyResolutionService {
     private boolean mavenAggregateModules;
     private boolean sbtAggregateModules;
     private boolean gradleAggregateModules;
+    private boolean hexAggregateModules;
 
     /* --- Static members --- */
 
@@ -213,6 +214,7 @@ public class DependencyResolutionService {
 
         if (hexResolveDependencies){
             dependencyResolvers.add(new HexDependencyResolver(hexIgnoreSourceFiles, hexRunPreStep, hexAggregateModules));
+            this.hexAggregateModules = hexAggregateModules;
         }
 
         this.separateProjects = false;
@@ -230,6 +232,10 @@ public class DependencyResolutionService {
 
     public boolean isGradleAggregateModules() {
         return gradleAggregateModules;
+    }
+
+    public boolean isHexAggregateModules(){
+        return hexAggregateModules;
     }
 
     public boolean isSeparateProjects() {

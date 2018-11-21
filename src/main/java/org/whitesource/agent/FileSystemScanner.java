@@ -271,9 +271,9 @@ public class FileSystemScanner {
                             AgentProjectInfo currentProject;
 
                             // if it is single project threat it as the main
-                            if (((DependencyType.MAVEN.equals(result.getDependencyType()) &&
-                                    (!dependencyResolutionService.isMavenAggregateModules() || !dependencyResolutionService.isSbtAggregateModules()) ||
-                                    DependencyType.GRADLE.equals(result.getDependencyType()) && !dependencyResolutionService.isGradleAggregateModules())) &&
+                            if ((((DependencyType.MAVEN.equals(result.getDependencyType())  && (!dependencyResolutionService.isMavenAggregateModules() || !dependencyResolutionService.isSbtAggregateModules())) ||
+                                  (DependencyType.GRADLE.equals(result.getDependencyType()) &&  !dependencyResolutionService.isGradleAggregateModules()) ||
+                                  (DependencyType.HEX.equals(result.getDependencyType())    && !dependencyResolutionService.isHexAggregateModules()))) &&
                                     result.getResolvedProjects().size() > 1) {
                                 allProjects.put(project.getKey(), project.getValue());
                                 LinkedList<ViaComponents> listToNewProject = new LinkedList<>();
