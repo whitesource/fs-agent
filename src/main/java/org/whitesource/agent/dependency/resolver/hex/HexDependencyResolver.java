@@ -142,6 +142,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                          - dependency's line starts with either |, ` or white-space in windows,
                            and ├ (LINUX_CHAR_1), │ (LINUX_PIPE) or └  (LINUX_CHAR_2) in linux
                          - each level is has 4 more spaces than its parent level, therefore by dividing the index of dash by 4
+                           to find the line's level
                          code example:
 
                         WINDOWS

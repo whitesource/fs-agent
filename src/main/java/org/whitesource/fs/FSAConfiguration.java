@@ -584,7 +584,8 @@ public class FSAConfiguration {
         boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, true);
         boolean cocoapodsRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RUN_PRE_STEP, false);
 
-        boolean hexResolveDependencies  = config.getBooleanProperty(ConfigPropertyKeys.HEX_RESOLVE_DEPENDENECIES, true);
+        // TODO - as long as there's no support for hex on the server side - the default value of hex.resolveDependencies is FALSE
+        boolean hexResolveDependencies  = config.getBooleanProperty(ConfigPropertyKeys.HEX_RESOLVE_DEPENDENECIES, false);
         boolean hexRunPreStep           = config.getBooleanProperty(ConfigPropertyKeys.HEX_RUN_PRE_STEP, false);
         boolean hexAggregateModules     = config.getBooleanProperty(ConfigPropertyKeys.HEX_AGGREGATE_MODULES, false);
 
