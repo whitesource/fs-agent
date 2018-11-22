@@ -2,6 +2,7 @@ package org.whitesource.agent.dependency.resolver.hex;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
@@ -27,6 +28,7 @@ public class HexDependencyResolverTest {
         Assert.assertTrue(stringDependencyInfoHashMap != null);
     }
 
+    @Ignore
     @Test
     public void parseTree(){
         String folderPath = Paths.get(".").toAbsolutePath().normalize().toString() +

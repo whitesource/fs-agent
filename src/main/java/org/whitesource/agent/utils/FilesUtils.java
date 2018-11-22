@@ -21,8 +21,11 @@ import org.whitesource.agent.Constants;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -126,5 +129,27 @@ public class FilesUtils {
             extension = fileName.substring(i+1);
         }
         return extension;
+    }
+
+    public static String removeTempFiles(String rootDirectory, long creationTime) {
+        String errors = "";
+        FileTime fileCreationTime = FileTime.fromMillis(creationTime);
+        File directory = new File(rootDirectory);
+        File[] fList = directory.listFiles();
+        if (fList != null) {
+            for (File file : fList) {
+                try {
+                    BasicFileAttributes fileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+                    if (fileAttributes.creationTime().compareTo(fileCreationTime) > 0){
+                        FileUtils.forceDelete(file);
+                    } else if (file.isDirectory()) {
+                        errors = errors.concat(removeTempFiles(file.getPath(), creationTime));
+                    }
+                } catch (IOException e) {
+                    errors = errors.concat("can't remove " + file.getPath() + ": " + e.getMessage() + '\n');
+                }
+            }
+        }
+        return errors;
     }
 }

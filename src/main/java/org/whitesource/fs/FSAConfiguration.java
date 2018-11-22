@@ -298,6 +298,7 @@ public class FSAConfiguration {
             for (ViaLanguage viaLanguage : ViaLanguage.values()) {
                 if (iaLanguage.toLowerCase().equals(viaLanguage.toString().toLowerCase())) {
                     iaLanguageValid = true;
+                    break;
                 }
             }
             if (!iaLanguageValid) {
@@ -510,6 +511,8 @@ public class FSAConfiguration {
         boolean nugetResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, true);
         boolean nugetRestoreDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESTORE_DEPENDENCIES, false);
         boolean nugetRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RUN_PRE_STEP, false);
+        boolean nugetResolvePakcagesConfigFiles = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_PACKAGES_CONFIG_FILES, true);
+        boolean nugetResolveCsProjFiles = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_CS_PROJ_FILES, true);
 
         boolean mavenResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = config.getListProperty(ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
@@ -581,7 +584,8 @@ public class FSAConfiguration {
         boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, true);
         boolean cocoapodsRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RUN_PRE_STEP, false);
 
-        boolean hexResolveDependencies  = config.getBooleanProperty(ConfigPropertyKeys.HEX_RESOLVE_DEPENDENECIES, true);
+        // TODO - as long as there's no support for hex on the server side - the default value of hex.resolveDependencies is FALSE
+        boolean hexResolveDependencies  = config.getBooleanProperty(ConfigPropertyKeys.HEX_RESOLVE_DEPENDENECIES, false);
         boolean hexRunPreStep           = config.getBooleanProperty(ConfigPropertyKeys.HEX_RUN_PRE_STEP, false);
         boolean hexAggregateModules     = config.getBooleanProperty(ConfigPropertyKeys.HEX_AGGREGATE_MODULES, false);
 
@@ -630,7 +634,7 @@ public class FSAConfiguration {
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreSourceFiles,
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
                 bowerResolveDependencies, bowerRunPreStep, bowerIgnoreSourceFiles,
-                nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep, nugetIgnoreSourceFiles,
+                nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep, nugetIgnoreSourceFiles, nugetResolvePakcagesConfigFiles, nugetResolveCsProjFiles,
                 mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles, mavenRunPreStep, mavenIgnoreDependencyTreeErrors,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles, pythonIgnoreSourceFiles,
@@ -874,8 +878,8 @@ public class FSAConfiguration {
                 }
                 configProps.put(key, value);
             }
-        } catch (IOException e) {
-            errors.add("Error occurred when reading from " + configFilePath + e.getMessage());
+        } catch (Exception e) {
+            errors.add("Error occurred when reading from " + configFilePath + ", error: " + e.getMessage());
         }
         return new Pair<>(configProps, errors);
     }
