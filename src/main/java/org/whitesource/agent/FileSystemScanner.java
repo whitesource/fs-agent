@@ -252,8 +252,8 @@ public class FileSystemScanner {
                         }
                     }
                 } else if (resolutionResult.size() > 1 && enableImpactAnalysis) {
-                    // logger.info("Impact analysis won't run, more than one language detected");
-                    // TODO return message when needed WSE-342
+                    logger.info("Effective Usage Analysis will not run if an unsupported resolver is active. Verify that non-supported resolvers are not active");
+                    Main.exit(StatusCode.ERROR.getValue());
                 }
                 if (impactAnalysisLanguage != null) {
                     viaComponents = new ViaComponents(appPath, impactAnalysisLanguage);

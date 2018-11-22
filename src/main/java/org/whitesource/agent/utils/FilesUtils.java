@@ -17,9 +17,7 @@ package org.whitesource.agent.utils;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
-import org.whitesource.agent.TempFolders;
 
 import java.io.File;
 import java.io.IOException;

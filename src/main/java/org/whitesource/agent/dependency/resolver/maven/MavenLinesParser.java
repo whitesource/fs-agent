@@ -27,7 +27,7 @@ public class MavenLinesParser {
     /* --- Static members --- */
 
     private Logger logger = LoggerFactory.getLogger(MavenLinesParser.class);
-    private static final String MAVEN_DEPENDENCY_PLUGIN_TREE = "maven-dependency-plugin:"; // 2.8:tree";
+    private static final String MAVEN_DEPENDENCY_PLUGIN_TREE = "maven-dependency-plugin:";
     private static final String INFO = "[INFO] ";
     private static final String UTF_8 = "UTF-8";
     private static final String DOWNLOAD = "Download";
