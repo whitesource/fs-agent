@@ -139,7 +139,8 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                         if (line.startsWith(Constants.PIPE) || line.startsWith(ACCENT) || line.startsWith(Constants.WHITESPACE)
                                 || line.startsWith(LINUX_CHAR_1) || line.startsWith(LINUX_CHAR_2) || line.startsWith(LINUX_PIPE)) {
                         /**
-                         - dependency's line starts with either |, ` or white-space in windows, and ├, │ or └ in linux
+                         - dependency's line starts with either |, ` or white-space in windows,
+                           and ├ (LINUX_CHAR_1), │ (LINUX_PIPE) or └  (LINUX_CHAR_2) in linux
                          - each level is has 4 more spaces than its parent level, therefore by dividing the index of dash by 4
                          code example:
 
