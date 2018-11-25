@@ -56,6 +56,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String REPOSITORY = "repository";
     public static final String ALL = "All";
     public static final String NONE = "None";
+    public static final String EJB = "ejb";
     private final String B_PARAMETER = "-B";
     private final String VERSION_PARAMETER = "-v";
     protected final String TEST_JAR = "test-jar";
@@ -76,7 +77,8 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     /* --- Constructors --- */
 
     // this constructor was added only to allow MavenPomParser to extend this class
-    public MavenTreeDependencyCollector(){}
+    public MavenTreeDependencyCollector() {
+    }
 
     public MavenTreeDependencyCollector(String[] mavenIgnoredScopes, boolean ignorePomModules, boolean runPreStep, boolean mavenIgnoreDependencyTreeErrors) {
         mavenLinesParser = new MavenLinesParser();
@@ -136,7 +138,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 if (mvnDependencies.isErrorInProcess()) {
                     this.errorsRunningDependencyTree = true;
                 }
-                if (!mvnDependencies.isErrorInProcess() || mavenIgnoreDependencyTreeErrors ) {
+                if (!mvnDependencies.isErrorInProcess() || mavenIgnoreDependencyTreeErrors) {
                     List<Node> nodes = mavenLinesParser.parseLines(lines);
 
                     logger.info("End parsing pom files , found : " + String.join(Constants.COMMA,
@@ -217,16 +219,16 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         dependency.setType(node.getPackaging());
 
         String shortName;
+        // in case of ejb packaging the short name should be jar file
+        String nodePackaging = EJB.equals(node.getPackaging()) ? Constants.JAR : node.getPackaging();
         if (StringUtils.isBlank(node.getClassifier())) {
-            shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DOT + node.getPackaging();
+            shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DOT + nodePackaging;
         } else {
-            String nodePackaging = node.getPackaging();
             if (nodePackaging.equals(TEST_JAR)) {
                 nodePackaging = Constants.JAR;
             }
             shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DASH + node.getClassifier() + Constants.DOT + nodePackaging;
         }
-
         String filePath = Paths.get(M2Path, dependency.getGroupId().replace(Constants.DOT, File.separator), dependency.getArtifactId(), dependency.getVersion(), shortName).toString();
         if (!paths.containsKey(filePath)) {
             paths.put(filePath, new ArrayList<>());
