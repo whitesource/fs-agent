@@ -137,7 +137,7 @@ public class NugetPackagesConfigXmlParser implements Serializable {
                     dependency.setArtifactId(nugetPackage.getPkgName());
                     dependency.setVersion(nugetPackage.getPkgVersion());
                     dependency.setDependencyType(DependencyType.NUGET);
-                    dependency.setSystemPath(configFilePath);
+                    dependency.setDependencyPath(configFilePath);
                     dependencies.add(dependency);
                 }
             }

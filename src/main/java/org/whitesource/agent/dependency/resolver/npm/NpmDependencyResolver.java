@@ -164,6 +164,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         });
 
         Collection<DependencyInfo> dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
+        dependencies.stream().forEach(dependencyInfo -> dependencyInfo.setDependencyPath(topLevelFolder + fileSeparator + PACKAGE_JSON));
 
         boolean lsSuccess = !getDependencyCollector().getNpmLsFailureStatus();
         // flag that indicates if the number of the dependencies is zero and npm ls succeeded

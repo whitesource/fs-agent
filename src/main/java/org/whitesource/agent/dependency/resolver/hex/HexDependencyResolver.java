@@ -281,13 +281,14 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                                 }
                                 dependencyInfo.setArtifactId(name);
                                 dependencyInfo.setVersion(version);
-                                dependencyInfo.setFilename(dotHexCachePath + fileSeparator + name + Constants.DASH + version + TAR_EXTENSION);
+                                dependencyInfo.setSystemPath(dotHexCachePath + fileSeparator + name + Constants.DASH + version + TAR_EXTENSION);
+                                dependencyInfo.setFilename(name + Constants.DASH + version + TAR_EXTENSION);
                             } else {
                                 logger.debug("Failed matching HEX pattern on this line");
                             }
                         }
                         if (dependencyInfo != null) {
-                            dependencyInfo.setSystemPath(mixLock.getPath());
+                            dependencyInfo.setDependencyPath(mixLock.getPath());
                             dependencyInfo.setDependencyType(DependencyType.HEX);
                             dependencyInfoHashMap.put(name, dependencyInfo);
                         }
@@ -335,7 +336,8 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
             }
         }
         if (version != null) {
-            dependencyInfo.setFilename(dotHexCachePath + fileSeparator + name + Constants.DASH + version + TAR_EXTENSION);
+            dependencyInfo.setSystemPath(dotHexCachePath + fileSeparator + name + Constants.DASH + version + TAR_EXTENSION);
+            dependencyInfo.setFilename(name + Constants.DASH + version + TAR_EXTENSION);
             if (dependencyInfo.getVersion() == null) {
                 dependencyInfo.setVersion(version);
             }

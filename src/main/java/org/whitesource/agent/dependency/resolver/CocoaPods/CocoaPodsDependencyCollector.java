@@ -135,7 +135,7 @@ public class CocoaPodsDependencyCollector extends DependencyCollector {
         dependency.setVersion(version);
         dependency.setGroupId(name);
         dependency.setFilename(name + Constants.DASH + version);
-        dependency.setSystemPath(podFileLock);
+        dependency.setDependencyPath(podFileLock);
         String sha1 = null;
         try {
             sha1 = this.hashCalculator.calculateSha1ByNameVersionAndType(name, version, DependencyType.COCOAPODS);
