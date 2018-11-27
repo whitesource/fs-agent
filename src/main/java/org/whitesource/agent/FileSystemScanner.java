@@ -252,8 +252,8 @@ public class FileSystemScanner {
                         }
                     }
                 } else if (resolutionResult.size() > 1 && enableImpactAnalysis) {
-                    // logger.info("Impact analysis won't run, more than one language detected");
-                    // TODO return message when needed WSE-342
+                    logger.info("Effective Usage Analysis will not run if an unsupported resolver is active. Verify that non-supported resolvers are not active");
+                    Main.exit(StatusCode.ERROR.getValue());
                 }
                 if (impactAnalysisLanguage != null) {
                     viaComponents = new ViaComponents(appPath, impactAnalysisLanguage);
@@ -271,9 +271,9 @@ public class FileSystemScanner {
                             AgentProjectInfo currentProject;
 
                             // if it is single project threat it as the main
-                            if (((DependencyType.MAVEN.equals(result.getDependencyType()) &&
-                                    (!dependencyResolutionService.isMavenAggregateModules() || !dependencyResolutionService.isSbtAggregateModules()) ||
-                                    DependencyType.GRADLE.equals(result.getDependencyType()) && !dependencyResolutionService.isGradleAggregateModules())) &&
+                            if ((((DependencyType.MAVEN.equals(result.getDependencyType())  && (!dependencyResolutionService.isMavenAggregateModules() || !dependencyResolutionService.isSbtAggregateModules())) ||
+                                  (DependencyType.GRADLE.equals(result.getDependencyType()) &&  !dependencyResolutionService.isGradleAggregateModules()) ||
+                                  (DependencyType.HEX.equals(result.getDependencyType())    && !dependencyResolutionService.isHexAggregateModules()))) &&
                                     result.getResolvedProjects().size() > 1) {
                                 allProjects.put(project.getKey(), project.getValue());
                                 LinkedList<ViaComponents> listToNewProject = new LinkedList<>();

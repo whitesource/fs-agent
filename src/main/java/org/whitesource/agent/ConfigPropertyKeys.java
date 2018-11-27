@@ -119,6 +119,8 @@ public final class ConfigPropertyKeys {
     public static final String NUGET_RESTORE_DEPENDENCIES   = "nuget.restoreDependencies";
     public static final String NUGET_RUN_PRE_STEP           = "nuget.runPreStep";
     public static final String NUGET_IGNORE_SOURCE_FILES    = "nuget.ignoreSourceFiles";
+    public static final String NUGET_RESOLVE_CS_PROJ_FILES  = "nuget.resolveCsProjFiles";
+    public static final String NUGET_RESOLVE_PACKAGES_CONFIG_FILES = "nuget.resolvePackagesConfigFiles";
 
     public static final String MAVEN_IGNORED_SCOPES         = "maven.ignoredScopes";
     public static final String MAVEN_RESOLVE_DEPENDENCIES   = "maven.resolveDependencies";
@@ -163,7 +165,7 @@ public final class ConfigPropertyKeys {
     public static final String GO_DEPENDENCY_MANAGER                = "go.dependencyManager";
     public static final String GO_COLLECT_DEPENDENCIES_AT_RUNTIME   = "go.collectDependenciesAtRuntime";
     public static final String GO_GLIDE_IGNORE_TEST_PACKAGES        = "go.glide.ignoreTestPackages";
-    public static final String GO_IGNORE_SOURCE_FILES               = "go.glide.ignoreSourceFiles";
+    public static final String GO_IGNORE_SOURCE_FILES               = "go.ignoreSourceFiles";
     public static final String GO_GRADLE_ENABLE_TASK_ALIAS          = "go.gogradle.enableTaskAlias";
 
     public static final String RUBY_RESOLVE_DEPENDENCIES    = "ruby.resolveDependencies";

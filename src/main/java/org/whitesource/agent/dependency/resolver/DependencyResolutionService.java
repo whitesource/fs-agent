@@ -61,6 +61,7 @@ public class DependencyResolutionService {
     private boolean mavenAggregateModules;
     private boolean sbtAggregateModules;
     private boolean gradleAggregateModules;
+    private boolean hexAggregateModules;
 
     /* --- Static members --- */
 
@@ -87,6 +88,8 @@ public class DependencyResolutionService {
         final boolean nugetRestoreDependencies  = config.isNugetRestoreDependencies();
         final boolean nugetRunPreStep           = config.isNugetRunPreStep();
         final boolean nugetIgnoreSourceFiles    = config.isNugetIgnoreSourceFiles();
+        final boolean nugetResolveCsProjFiles   = config.isNugetResolveCsProjFiles();
+        final boolean nugetResolvePackagesConfigFiles = config.isNugetResolvePackagesConfigFiles();
 
         final boolean mavenResolveDependencies = config.isMavenResolveDependencies();
         final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
@@ -159,8 +162,12 @@ public class DependencyResolutionService {
         }
         if (nugetResolveDependencies) {
             String whitesourceConfiguration = config.getWhitesourceConfiguration();
-            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE, nugetRunPreStep, nugetIgnoreSourceFiles));
-            dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies, nugetIgnoreSourceFiles));
+            if (nugetResolvePackagesConfigFiles) {
+                dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE, nugetRunPreStep, nugetIgnoreSourceFiles));
+            }
+            if (nugetResolveCsProjFiles) {
+                dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies, nugetIgnoreSourceFiles));
+            }
         }
         if (mavenResolveDependencies) {
             dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules, mavenRunPreStep, mavenIgnoreDependencyTreeErrors));
@@ -207,6 +214,7 @@ public class DependencyResolutionService {
 
         if (hexResolveDependencies){
             dependencyResolvers.add(new HexDependencyResolver(hexIgnoreSourceFiles, hexRunPreStep, hexAggregateModules));
+            this.hexAggregateModules = hexAggregateModules;
         }
 
         this.separateProjects = false;
@@ -224,6 +232,10 @@ public class DependencyResolutionService {
 
     public boolean isGradleAggregateModules() {
         return gradleAggregateModules;
+    }
+
+    public boolean isHexAggregateModules(){
+        return hexAggregateModules;
     }
 
     public boolean isSeparateProjects() {

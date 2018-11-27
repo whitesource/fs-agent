@@ -247,7 +247,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         String sha1 = packageJson.getSha1();
         String registryPackageUrl = packageJson.getRegistryPackageUrl();
         if (StringUtils.isEmptyOrNull(sha1) && !StringUtils.isEmptyOrNull(registryPackageUrl)) {
-            sha1 = getSha1FromRegistryPackageUrl(registryPackageUrl, packageJson.isScopedPackage(), packageJson.getVersion(), npmAccessToken);
+            sha1 = getSha1FromRegistryPackageUrl(registryPackageUrl, packageJson.isScopedPackage(), packageJson.getVersion(), packageJson.getRegistryType(), npmAccessToken);
         }
         dependency.setSha1(sha1);
         dependency.setGroupId(packageJson.getName());
@@ -260,9 +260,9 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Private methods --- */
 
-    private String getSha1FromRegistryPackageUrl(String registryPackageUrl, boolean isScopeDep, String versionOfPackage, String npmAccessToken) {
+    private String getSha1FromRegistryPackageUrl(String registryPackageUrl, boolean isScopeDep, String versionOfPackage, RegistryType registryType, String npmAccessToken) {
 
-        String uriScopeDep = null;
+        String uriScopeDep = registryPackageUrl;
         if (isScopeDep) {
             try {
                 uriScopeDep = registryPackageUrl.replace(BomFile.DUMMY_PARAMETER_SCOPE_PACKAGE, URL_SLASH);
@@ -278,26 +278,26 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
             Client client = Client.create();
             ClientResponse response;
             WebResource resource;
-            if (isScopeDep) {
-                resource = client.resource(uriScopeDep);
-                if (StringUtils.isEmptyOrNull(npmAccessToken)) {
-                    response= resource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
-                    logger.debug("npm.accessToken is not defined");
-                } else {
-                    logger.debug("npm.accessToken is defined");
+            resource = client.resource(uriScopeDep);
+            if (StringUtils.isEmptyOrNull(npmAccessToken)) {
+                response = resource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+                logger.debug("npm.accessToken is not defined");
+            } else {
+                logger.debug("npm.accessToken is defined");
+                if (registryType == RegistryType.VISUAL_STUDIO) {
                     String userCredentials = BEARER + Constants.COLON + npmAccessToken;
                     String basicAuth = BASIC + Constants.WHITESPACE + new String(Base64.getEncoder().encode(userCredentials.getBytes()));
                     response = resource.accept(MediaType.APPLICATION_JSON).header("Authorization", basicAuth).get(ClientResponse.class);
+                } else {
+                    // Bearer authorization
+                    String userCredentials = BEARER + Constants.WHITESPACE + npmAccessToken;
+                    response = resource.accept(MediaType.APPLICATION_JSON).header("Authorization", userCredentials).get(ClientResponse.class);
                 }
-                if (response.getStatus() == 200) {
-                    responseFromRegistry = response.getEntity(String.class);
-                }
+            }
+            if (response.getStatus() >= 200 && response.getStatus() < 300) {
+                responseFromRegistry = response.getEntity(String.class);
             } else {
-                resource = client.resource(registryPackageUrl);
-                response = resource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
-                if (response.getStatus() == 200) {
-                    responseFromRegistry = response.getEntity(String.class);
-                }
+                logger.debug("Got {} status code from registry using the url {}.", response.getStatus(), uriScopeDep);
             }
         } catch (Exception e) {
             logger.warn("Could not reach the registry using the URL: {}. Got an error: {}", registryPackageUrl, e.getMessage());

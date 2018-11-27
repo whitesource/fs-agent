@@ -9,6 +9,7 @@ import java.util.UUID;
 
 /**
  * Created by anna.rozin
+ * Don't delete this class - it is being used by outside code
  */
 public class LogContext implements Serializable {
 

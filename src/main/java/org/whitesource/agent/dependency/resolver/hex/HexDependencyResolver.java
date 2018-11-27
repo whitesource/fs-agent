@@ -7,6 +7,7 @@ import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
+import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.Cli;
@@ -31,12 +32,15 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
     private static final String ACCENT = "`";
     private static final String HEX_REGEX = "\"(\\w+)\": \\{:hex, :\\w+, \"(\\d+\\.\\d+\\.\\d+(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?)\", \"(\\w+)\"";
     private static final String GIT_REGEX = "\"(\\w+)\": \\{:git, \"(https|http|):/\\/github.com\\/\\w+\\/\\w+.git\", \"(\\w+)\"";
-    private static final String TREE_REGEX = "--\\s(\\w+)\\s(~>\\s(\\d+\\.\\d+(\\.\\d+)?(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?))?";
+    private static final String TREE_REGEX = "\\s(\\w+)\\s(~>\\s(\\d+\\.\\d+(\\.\\d+)?(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?))?";
     private static final String VERSION_REGEX = "(\\d+\\.\\d+(\\.\\d+)?(?:-\\w+(?:\\.\\w+)*)?(?:\\+\\w+)?)";
     public static final String TAR_EXTENSION = ".tar";
     private static final String GIT = ":git,";
     private static final String MODULE_START = "==>";
     private static final String APPS = "apps";
+    private static final String LINUX_PIPE = "│";
+    private static final String LINUX_CHAR_1 = "├";
+    private static final String LINUX_CHAR_2 = "└";
 
     private final Logger logger = LoggerFactory.getLogger(HexDependencyResolver.class);
     private boolean ignoreSourceFiles;
@@ -132,12 +136,16 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                         modulesMap.put(moduleName, new ArrayList<>());
                         parentDependencies.clear();
                     } else {
-                        if (line.startsWith(Constants.PIPE) || line.startsWith(ACCENT) || line.startsWith(Constants.WHITESPACE)) {
-                        /*
-                         - dependency's line starts with either |, ` or white-space.
+                        if (line.startsWith(Constants.PIPE) || line.startsWith(ACCENT) || line.startsWith(Constants.WHITESPACE)
+                                || line.startsWith(LINUX_CHAR_1) || line.startsWith(LINUX_CHAR_2) || line.startsWith(LINUX_PIPE)) {
+                        /**
+                         - dependency's line starts with either |, ` or white-space in windows,
+                           and ├ (LINUX_CHAR_1), │ (LINUX_PIPE) or └  (LINUX_CHAR_2) in linux
                          - each level is has 4 more spaces than its parent level, therefore by dividing the index of dash by 4
+                           to find the line's level
                          code example:
 
+                        WINDOWS
                         telemetry
                         |-- erlang_pmp ~> 0.1 (Hex package)
                         |-- dialyxir ~> 1.0.0-rc.1 (Hex package)
@@ -147,8 +155,23 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                                 |-- makeup ~> 0.5.0 (Hex package)
                                 |   `-- nimble_parsec ~> 0.2.2 (Hex package)
                                 `-- nimble_parsec ~> 0.2.2 (Hex package)
-                        * */
-                            currentLevel = (line.indexOf(Constants.DASH) - 1) / 4;
+                        LINUX
+                        telemetry
+                        ├── erlang_pmp ~> 0.1 (Hex package)
+                        ├── dialyxir ~> 1.0.0-rc.1 (Hex package)
+                        └── ex_doc ~> 0.19 (Hex package)
+                            ├── earmark ~> 1.1 (Hex package)
+                            └── makeup_elixir ~> 0.7 (Hex package)
+                                ├── makeup ~> 0.5.0 (Hex package)
+                                │   └── nimble_parsec ~> 0.2.2 (Hex package)
+                                └── nimble_parsec ~> 0.2.2 (Hex package)
+
+                        **/
+                            if (DependencyCollector.isWindows()){
+                                currentLevel = (line.indexOf(Constants.DASH) - 1) / 4;
+                            } else {
+                                currentLevel = Math.max(line.indexOf(LINUX_CHAR_1), line.indexOf(LINUX_CHAR_2)) / 4;
+                            }
                             matcher = treePattern.matcher(line);
                             if (matcher.find()) {
                                 if (insideModule && currentLevel > 0) {

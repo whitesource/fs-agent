@@ -15,6 +15,7 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.whitesource.agent.utils.LoggerFactory;
@@ -36,6 +37,9 @@ public class NpmBomParser extends BomParser {
 
     /* --- Static members --- */
 
+    private static final String NPM_REGISTRY = "registry.npmjs.org";
+    private static final String VISUALSTUDIO_REGISTRY = "pkgs.visualstudio";
+    private static final String ARTIFACTORY_FORWARD_SLASH = "/artifactory/";
     private static String OPTIONAL_DEPENDENCIES = "optionalDependencies";
     private static String SHA1 = "_shasum";
     private static String NPM_PACKAGE_FORMAT = "{0}-{1}.tgz";
@@ -82,8 +86,26 @@ public class NpmBomParser extends BomParser {
             logger.debug("shasum not found in file {}", localFileName);
         }
 
-        BomFile bom = new BomFile(name, version, sha1, fileName, localFileName, dependencies, optionalDependencies, resolved);
+        RegistryType registryType = getRegistryType(resolved);
+
+        BomFile bom = new BomFile(name, version, sha1, fileName, localFileName, dependencies, optionalDependencies, resolved, registryType);
         return bom;
+    }
+
+    private RegistryType getRegistryType(String resolved) {
+        RegistryType registryType = null;
+        if (StringUtils.isNotBlank(resolved)) {
+            if (resolved.contains(ARTIFACTORY_FORWARD_SLASH)) {
+                registryType = RegistryType.ARTIFACTORY;
+            } else if (resolved.contains(VISUALSTUDIO_REGISTRY)) {
+                registryType = RegistryType.VISUAL_STUDIO;
+            } else if (resolved.contains(NPM_REGISTRY)) {
+                registryType = RegistryType.NPM_REGISTRY;
+            } else {
+                registryType = RegistryType.OTHER;
+            }
+        }
+        return registryType;
     }
 
     @Override
