@@ -115,6 +115,8 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
         projects.stream().forEach(agentProjectInfo -> {
             BomFile bomFile = files.stream().filter(b -> b.getName().equals(agentProjectInfo.getCoordinates().getArtifactId())).findFirst().orElse(null);
             if (bomFile != null){
+                // this code turn the dependencies tree recursively into a flat-list,
+                // so that each dependency has its dependencyFile set
                 agentProjectInfo.getDependencies().stream()
                         .flatMap(AddDependencyFileRecursionHelper::flatten)
                         .forEach(dependencyInfo -> dependencyInfo.setDependencyFile(bomFile.getLocalFileName()));
@@ -191,12 +193,3 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
     }
 
 }
-
-/*
-public class AddDependencyFileRecursionHelper{
-    private AddDependencyFileRecursionHelper(){}
-
-    public static Stream<DependencyInfo> flatten(DependencyInfo dependencyInfo){
-        return Stream.concat(Stream.of(dependencyInfo), dependencyInfo.getChildren().stream().flatMap(AddDependencyFileRecursionHelper::flatten));
-    }
-}*/
