@@ -288,7 +288,7 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
                             }
                         }
                         if (dependencyInfo != null) {
-                            dependencyInfo.setDependencyPath(mixLock.getPath());
+                            dependencyInfo.setDependencyFile(mixLock.getParent() + fileSeparator + MIX_EXS);
                             dependencyInfo.setDependencyType(DependencyType.HEX);
                             dependencyInfoHashMap.put(name, dependencyInfo);
                         }

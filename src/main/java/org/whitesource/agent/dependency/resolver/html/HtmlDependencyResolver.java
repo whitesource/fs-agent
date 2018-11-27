@@ -143,6 +143,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                             if (dependencyInfo != null) {
                                 dependencies.add(dependencyInfo);
                                 dependencyInfo.setSystemPath(htmlFilePath);
+                                dependencyInfo.setDependencyFile(htmlFilePath);
                             }
                         }
                     }

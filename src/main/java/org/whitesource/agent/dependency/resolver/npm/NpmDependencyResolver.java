@@ -28,7 +28,8 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
-import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
+import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;;
+import org.whitesource.agent.utils.AddDependencyFileRecursionHelper;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.fs.StatusCode;
@@ -164,7 +165,10 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         });
 
         Collection<DependencyInfo> dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
-        dependencies.stream().forEach(dependencyInfo -> dependencyInfo.setDependencyPath(topLevelFolder + fileSeparator + PACKAGE_JSON));
+        //dependencies.stream().forEach(dependencyInfo -> dependencyInfo.setDependencyFile(projectFolder + fileSeparator + PACKAGE_JSON));
+        dependencies.stream()
+                .flatMap(AddDependencyFileRecursionHelper::flatten)
+                .forEach(dependencyInfo -> dependencyInfo.setDependencyFile(projectFolder + fileSeparator + PACKAGE_JSON));
 
         boolean lsSuccess = !getDependencyCollector().getNpmLsFailureStatus();
         // flag that indicates if the number of the dependencies is zero and npm ls succeeded

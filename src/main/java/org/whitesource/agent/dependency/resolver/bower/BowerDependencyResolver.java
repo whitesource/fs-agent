@@ -79,7 +79,8 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
         dependency.setGroupId(packageJson.getName());
         dependency.setArtifactId(packageJson.getName());
         dependency.setVersion(packageJson.getVersion());
-        dependency.setDependencyPath(packageJson.getLocalFileName());
+        dependency.setSystemPath(packageJson.getLocalFileName());
+        //dependency.setDependencyFile(packageJson.getLocalFileName());
         dependency.setFilename(packageJson.getFileName());
         dependency.setDependencyType(getDependencyType());
     }

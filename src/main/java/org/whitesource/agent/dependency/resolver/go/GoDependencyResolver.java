@@ -372,7 +372,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             }
         }
         dependencyInfos.stream().forEach(dependencyInfo -> {
-            dependencyInfo.setDependencyPath(goPckLock.getPath());
+            //dependencyInfo.setDependencyFile(goPckLock.getPath());
             dependencyInfo.setDependencyType(DependencyType.GO);
             setSha1(dependencyInfo);
 
@@ -474,7 +474,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             }
         }
         dependencyInfos.stream().forEach(dependencyInfo -> {
-            dependencyInfo.setDependencyPath(goPmFile.getPath());
+            //dependencyInfo.setDependencyFile(goPmFile.getPath());
             dependencyInfo.setDependencyType(DependencyType.GO);
             setSha1(dependencyInfo);
         });
@@ -517,7 +517,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     dependencyInfo.setArtifactId(importPath);
                     dependencyInfo.setCommit(dep.get(REV).getAsString());
                     dependencyInfo.setDependencyType(DependencyType.GO);
-                    dependencyInfo.setDependencyPath(goDeps.getPath());
+                    //dependencyInfo.setDependencyFile(goDeps.getPath());
                     setSha1(dependencyInfo);
                     JsonElement commentElement = dep.get(COMMENT);
                     if (commentElement != null){
@@ -584,7 +584,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         dependencyInfo.setArtifactId(Path);
                         dependencyInfo.setCommit(pck.get(REVISION_GOV).getAsString());
                         dependencyInfo.setDependencyType(DependencyType.GO);
-                        dependencyInfo.setDependencyPath(goVendor.getPath());
+                        //dependencyInfo.setDependencyFile(goVendor.getPath());
                         setSha1(dependencyInfo);
                         if (pck.get(VERSION_GOV) != null) {
                             dependencyInfo.setVersion(pck.get(VERSION_GOV).getAsString());
@@ -631,7 +631,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 dependencyInfo.setArtifactId(name);
                 dependencyInfo.setCommit(split[1]);
                 dependencyInfo.setDependencyType(DependencyType.GO);
-                dependencyInfo.setDependencyPath(vendorConf.getPath());
+                //dependencyInfo.setDependencyFile(vendorConf.getPath());
                 setSha1(dependencyInfo);
                 dependencyInfos.add(dependencyInfo);
             }
@@ -741,7 +741,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
                 dependencyInfo.setArtifactId(name);
                 dependencyInfo.setDependencyType(DependencyType.GO);
-                dependencyInfo.setDependencyPath(rootDirectory + fileSeparator + Constants.BUILD_GRADLE);
+                //dependencyInfo.setDependencyFile(rootDirectory + fileSeparator + Constants.BUILD_GRADLE);
                 dependencyInfos.add(dependencyInfo);
             } catch (Exception e){
                 logger.warn("Error parsing line {}, exception: {}", currentLine, e.getMessage());
@@ -923,7 +923,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         dependency.setArtifactId(name);
         dependency.setCommit(commit);
         dependency.setDependencyType(DependencyType.GO);
-        dependency.setDependencyPath(systemPath);
+        //dependency.setDependencyFile(systemPath);
         setSha1(dependency);
         return dependency;
     }

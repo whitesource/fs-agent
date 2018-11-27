@@ -138,7 +138,7 @@ public class MavenPomParser extends MavenTreeDependencyCollector implements IBom
                         dependencyInfo.setType(dependency.getType());
                         dependencyInfo.setSystemPath(filePath);
                         dependencyInfo.setSha1(sha1);
-                        dependencyInfo.setDependencyPath(bomPath);
+                        dependencyInfo.setDependencyFile(bomPath);
                         dependenciesInfo.add(dependencyInfo);
                     }
                 }
