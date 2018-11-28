@@ -9,7 +9,7 @@ import java.util.UUID;
 /**
  * @author raz.nitzan
  */
-public class UniqueNameGenerator {
+public class UniqueNamesGenerator {
 
     /* --- public static methods --- */
 
