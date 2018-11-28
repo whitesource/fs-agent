@@ -4,7 +4,7 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>18.11.2-SNAPSHOT</version>
+    <version>18.11.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>White Source File System Agent</name>
@@ -144,7 +144,7 @@
         <dependency>
             <groupId>org.whitesource.analysis</groupId>
             <artifactId>whitesource-analysis-via</artifactId>
-            <version>18.11.1.169</version>
+            <version>18.11.1.170</version>
          </dependency>
 
         <!-- end VIA -->
