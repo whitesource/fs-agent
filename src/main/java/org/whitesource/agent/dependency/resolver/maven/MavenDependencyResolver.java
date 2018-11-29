@@ -22,12 +22,14 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
+import org.whitesource.agent.utils.AddDependencyFileRecursionHelper;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -66,19 +68,20 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
-         // try to collect dependencies via 'mvn dependency tree and parse'
-          Collection<AgentProjectInfo> projects = dependencyCollector.collectDependencies(topLevelFolder);
-         if (mavenIgnoreDependencyTreeErrors && dependencyCollector.isErrorsRunningDependencyTree()) {
+        // try to collect dependencies via 'mvn dependency tree and parse'
+        Collection<AgentProjectInfo> projects = dependencyCollector.collectDependencies(topLevelFolder);
+        if (mavenIgnoreDependencyTreeErrors && dependencyCollector.isErrorsRunningDependencyTree()) {
              collectDependenciesFromPomXml(bomFiles, projects);
-         }
-          List<BomFile> files = bomFiles.stream().map(bomParser::parseBomFile)
+        }
+        List<BomFile> files = bomFiles.stream().map(bomParser::parseBomFile)
                 .filter(Objects::nonNull).filter(bom -> !bom.getLocalFileName().contains(TEST))
                 .collect(Collectors.toList());
         // create excludes for .JAVA files upon finding MAVEN dependencies
-            Set<String> excludes = new HashSet<>();
+        Set<String> excludes = new HashSet<>();
 
-         Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
+        addDependencyFile(projects, files);
 
+        Map<AgentProjectInfo, Path> projectInfoPathMap = projects.stream().collect(Collectors.toMap(projectInfo -> projectInfo, projectInfo -> {
             // map each pom file to specific project
             Optional<BomFile> folderPath = files.stream().filter(file -> projectInfo.getCoordinates().getArtifactId().equals(file.getName())).findFirst();
             if (folderPath.isPresent()) {
@@ -106,6 +109,19 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
                     .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes, getDependencyType(), topLevelFolder);
         }
         return resolutionResult;
+    }
+
+    private void addDependencyFile(Collection<AgentProjectInfo> projects, List<BomFile> files) {
+        projects.stream().forEach(agentProjectInfo -> {
+            BomFile bomFile = files.stream().filter(b -> b.getName().equals(agentProjectInfo.getCoordinates().getArtifactId())).findFirst().orElse(null);
+            if (bomFile != null){
+                // this code turn the dependencies tree recursively into a flat-list,
+                // so that each dependency has its dependencyFile set
+                agentProjectInfo.getDependencies().stream()
+                        .flatMap(AddDependencyFileRecursionHelper::flatten)
+                        .forEach(dependencyInfo -> dependencyInfo.setDependencyFile(bomFile.getLocalFileName()));
+            }
+        });
     }
 
     // when failing to read data from 'mvn dependency:tree' output - trying to read directly from POM files

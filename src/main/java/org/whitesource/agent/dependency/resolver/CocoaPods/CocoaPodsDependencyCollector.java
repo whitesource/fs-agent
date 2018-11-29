@@ -135,6 +135,7 @@ public class CocoaPodsDependencyCollector extends DependencyCollector {
         dependency.setVersion(version);
         dependency.setGroupId(name);
         dependency.setFilename(name + Constants.DASH + version);
+        dependency.setDependencyFile(podFileLock);
         dependency.setSystemPath(podFileLock);
         String sha1 = null;
         try {

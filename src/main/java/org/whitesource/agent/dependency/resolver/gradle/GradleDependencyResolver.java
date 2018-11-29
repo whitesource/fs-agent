@@ -110,7 +110,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 //            }
             List<String> lines = getDependenciesTree(bomFileFolder, moduleName);
             if (lines != null) {
-                List<DependencyInfo> dependencies = collectDependencies(lines, bomFileFolder, bomFileFolder.equals(topLevelFolder));
+                List<DependencyInfo> dependencies = collectDependencies(lines, bomFileFolder, bomFileFolder.equals(topLevelFolder), bomFile);
                 if (dependencies.size() > 0) {
                     AgentProjectInfo agentProjectInfo = new AgentProjectInfo();
                     agentProjectInfo.getDependencies().addAll(dependencies);
@@ -186,7 +186,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         return lines;
     }
 
-    private List<DependencyInfo> collectDependencies(List<String> lines, String directory, boolean isParent) {
+    private List<DependencyInfo> collectDependencies(List<String> lines, String directory, boolean isParent, String bomFile) {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
         String directoryName = Constants.EMPTY_STRING;
         if (!isParent) {
@@ -196,7 +196,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         }
         // get gradle dependencies, if the command runs successfully parse the dependencies
         directoryName = fileSeparator.concat(directoryName);
-        dependencyInfos.addAll(gradleLinesParser.parseLines(lines, directory, directoryName, ignoredScopes));
+        dependencyInfos.addAll(gradleLinesParser.parseLines(lines, directory, directoryName, ignoredScopes, bomFile));
         return dependencyInfos;
     }
 

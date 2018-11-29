@@ -124,18 +124,18 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
         return new ArrayList<>();
     }
 
-    protected Collection<DependencyInfo> parseNugetPackageFiles(Set<String> configFilesPath, boolean getDependenciesFromReferenceTag) {
+    protected Collection<DependencyInfo> parseNugetPackageFiles(Set<String> nugetDependencyFiles, boolean getDependenciesFromReferenceTag) {
         // get configuration file path
         Set<DependencyInfo> dependencies = new HashSet<>();
-        for (String configFilePath : configFilesPath) {
+        for (String nugetDependencyFile : nugetDependencyFiles) {
             // don't scan the whitesource configuration file
             // sometimes FSA is called from outside and there is no config file
-            if (whitesourceConfiguration == null || !new File(whitesourceConfiguration).getAbsolutePath().equals(configFilePath)) {
-                File configFile = new File(configFilePath);
+            if (whitesourceConfiguration == null || !new File(whitesourceConfiguration).getAbsolutePath().equals(nugetDependencyFile)) {
+                File configFile = new File(nugetDependencyFile);
                 // check filename again (just in case)
                 if (!configFile.getName().equals(CommandLineArgs.CONFIG_FILE_NAME)) {
                     NugetPackagesConfigXmlParser parser = new NugetPackagesConfigXmlParser(configFile, this.nugetConfigFileType);
-                    Set<DependencyInfo> dependenciesFromSingleFile = parser.parsePackagesConfigFile(getDependenciesFromReferenceTag, configFilePath);
+                    Set<DependencyInfo> dependenciesFromSingleFile = parser.parsePackagesConfigFile(getDependenciesFromReferenceTag, nugetDependencyFile);
                     if (!dependenciesFromSingleFile.isEmpty()) {
                         dependencies.addAll(dependenciesFromSingleFile);
                     }
