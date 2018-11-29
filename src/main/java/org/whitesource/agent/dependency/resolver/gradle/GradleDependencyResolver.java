@@ -5,12 +5,14 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
+import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
+import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.fs.Main;
 
@@ -24,8 +26,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.whitesource.agent.TempFolders.BUILD_GRADLE_DIRECTORY;
 
 public class GradleDependencyResolver extends AbstractDependencyResolver {
 
@@ -238,8 +238,8 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     // copy all the bom files (build.gradle) to temp folder and run the command "gradle copyDependencies"
     private void downloadMissingDependencies(String projectFolder) {
         logger.debug("running pre-steps on folder {}", projectFolder);
-        File buildGradleTempDirectory = new File(BUILD_GRADLE_DIRECTORY);
-        buildGradleTempDirectory.mkdir();
+        String tempFolder = new FilesUtils().createTmpFolder(false, TempFolders.UNIQUE_GRADLE_TEMP_FOLDER);
+        File buildGradleTempDirectory = new File(tempFolder);
         if (copyProjectFolder(projectFolder, buildGradleTempDirectory)) {
             try {
                 Stream<Path> pathStream = Files.walk(Paths.get(buildGradleTempDirectory.getPath()), Integer.MAX_VALUE).filter(file -> file.getFileName().toString().equals(Constants.BUILD_GRADLE));
@@ -258,7 +258,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
                 logger.warn("Couldn't list all 'build.gradle' files, error: {}", e.getMessage());
                 logger.debug("Error: {}", e.getStackTrace());
             } finally {
-                FileUtils.deleteQuietly(buildGradleTempDirectory);
+                new TempFolders().deleteTempFoldersHelper(Paths.get(System.getProperty("java.io.tmpdir"), TempFolders.UNIQUE_GRADLE_TEMP_FOLDER).toString());
             }
         }
     }

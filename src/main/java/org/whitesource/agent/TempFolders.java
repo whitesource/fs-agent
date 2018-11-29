@@ -1,6 +1,8 @@
 package org.whitesource.agent;
 
 import org.whitesource.agent.utils.FilesUtils;
+import org.whitesource.agent.utils.UniqueNamesGenerator;
+
 import java.io.File;
 import java.nio.file.Paths;
 
@@ -9,15 +11,29 @@ public class TempFolders {
 
     /* --- Static members --- */
 
+    private static final String WHITESOURCE_ARCHIVE_EXTRACTOR = "WhiteSource-ArchiveExtractor";
+    private static final String WHITE_BUILD_GRADLE_FOLDER = "WhiteSource-Build-Gradle";
+    private static final String WHITESOURCE_HTML_RESOLVER = "WhiteSource-html-resolver";
+    private static final String WHITESOURCE_DOTNET_RESOLVER = "WhiteSource-DotnetRestore";
+    private static final String WHITESOURCE_DOCKER = "WhiteSource-Docker";
+    private static final String WHITESOURCE_SCM_CONNECTOR_TMP_DIRECTORY = "WhiteSource-ScmConnector";
+    private static final String WHITESOURCE_PLATFORM_DEPENDENT_TMP_DIR = "WhiteSource-PlatformDependentFiles";
+    private static final String WHITESOURCE_PYTHON_TEMP_FOLDER = "Whitesource_python_resolver";
 
-    public static final String WHITESOURCE_ARCHIVE_EXTRACTOR = "WhiteSource-ArchiveExtractor";
-    public static final String WHITE_BUILD_GRADLE_FOLDER = "WhiteSource-Build-Gradle";
-    public static final String SCM_CONNECTOR_TMP_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir"), "WhiteSource-ScmConnector").toString();
-    public static final String PATH_TO_ARCHIVE_EXTRACTOR = Paths.get(System.getProperty("java.io.tmpdir"), WHITESOURCE_ARCHIVE_EXTRACTOR).toString();
-    public static final String BUILD_GRADLE_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir"), WHITE_BUILD_GRADLE_FOLDER).toString();
+    public static final String UNIQUE_HTML_TEMP_FOLDER = UniqueNamesGenerator.createUniqueName(WHITESOURCE_HTML_RESOLVER, Constants.EMPTY_STRING);
+    public static final String UNIQUE_GRADLE_TEMP_FOLDER = UniqueNamesGenerator.createUniqueName(WHITE_BUILD_GRADLE_FOLDER, Constants.EMPTY_STRING);
+    public static final String UNIQUE_DOTNET_TEMP_FOLDER = UniqueNamesGenerator.createUniqueName(WHITESOURCE_DOTNET_RESOLVER, Constants.EMPTY_STRING);
+    public static final String UNIQUE_PYTHON_TEMP_FOLDER = UniqueNamesGenerator.createUniqueName(WHITESOURCE_PYTHON_TEMP_FOLDER, Constants.EMPTY_STRING);
+    public static final String UNIQUE_DOCKER_TEMP_FOLDER = UniqueNamesGenerator.createUniqueName(WHITESOURCE_DOCKER, Constants.EMPTY_STRING);
+    public static final String UNIQUE_SCM_TEMP_FOLDER = UniqueNamesGenerator.createUniqueName(WHITESOURCE_SCM_CONNECTOR_TMP_DIRECTORY, Constants.EMPTY_STRING);
+    public static final String UNIQUE_PLATFORM_DEPENDENT_TEMP_FOLDER = UniqueNamesGenerator.createUniqueName(WHITESOURCE_PLATFORM_DEPENDENT_TMP_DIR, Constants.EMPTY_STRING);
+    public static final String UNIQUE_WHITESOURCE_ARCHIVE_EXTRACTOR_TEMP_FOLDER = UniqueNamesGenerator.createUniqueName(WHITESOURCE_ARCHIVE_EXTRACTOR, Constants.EMPTY_STRING);
+
+    private static final String PATH_TO_ARCHIVE_EXTRACTOR = Paths.get(System.getProperty("java.io.tmpdir"), WHITESOURCE_ARCHIVE_EXTRACTOR).toString();
+    private static final String PATH_TO_SCM_CONNECTOR_TMP_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir"), UNIQUE_SCM_TEMP_FOLDER).toString();
 
     // Agents api temp folder - CheckSumUtils folder :: calculateOtherPlatformSha1 method
-    public static final String PLATFORM_DEPENDENT_TMP_DIR = Paths.get(System.getProperty("java.io.tmpdir"), "WhiteSource-PlatformDependentFiles").toString();
+    private static final String PATH_TO_PLATFORM_DEPENDENT_TMP_DIR = Paths.get(System.getProperty("java.io.tmpdir"), UNIQUE_PLATFORM_DEPENDENT_TEMP_FOLDER).toString();
 
     /* --- Constructors --- */
 
@@ -29,18 +45,18 @@ public class TempFolders {
 
     public void deleteTempFolders() {
         deleteTempFoldersHelper(PATH_TO_ARCHIVE_EXTRACTOR);
-        deleteTempFoldersHelper(SCM_CONNECTOR_TMP_DIRECTORY);
-        deleteTempFoldersHelper(PLATFORM_DEPENDENT_TMP_DIR);
+        deleteTempFoldersHelper(PATH_TO_SCM_CONNECTOR_TMP_DIRECTORY);
+        deleteTempFoldersHelper(PATH_TO_PLATFORM_DEPENDENT_TMP_DIR);
     }
 
     public void deleteTempFoldersHelper(String path) {
         if (path != null) {
             File file = new File(path);
-            if(file != null) {
+            if (file != null) {
                 FilesUtils.deleteDirectory(file);
             }
         }
     }
-    
+
 
 }

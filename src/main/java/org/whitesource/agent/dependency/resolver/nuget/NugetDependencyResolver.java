@@ -42,7 +42,8 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     public static final String CONFIG = ".config";
     public static final String CSPROJ = ".csproj";
     protected static final String CSHARP = ".cs";
-    /* --- Members --- */
+
+    /* --- Private Members --- */
 
     private final String whitesourceConfiguration;
     private final String bomPattern;
