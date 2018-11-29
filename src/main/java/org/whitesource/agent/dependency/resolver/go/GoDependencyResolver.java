@@ -318,6 +318,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                                             dependencyInfo.getArtifactId() + Constants.FORWARD_SLASH + name,
                                             dependencyInfo.getVersion());
                                     packageDependencyInfo.setCommit(dependencyInfo.getCommit());
+                                    packageDependencyInfo.setDependencyType(DependencyType.GO);
                                     if (useParent) {
                                         dependencyInfo.getChildren().add(packageDependencyInfo);
                                     } else {
