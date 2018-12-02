@@ -188,7 +188,7 @@ public class PythonDependencyCollector extends DependencyCollector {
                     logger.info("Try to download each dependency in the requirements.txt file one by one. It might take a few minutes.");
                     FilesUtils.deleteDirectory(new File(tempDirPackages));
                     this.tempDirPackages = new FilesUtils().createTmpFolder(false, TempFolders.UNIQUE_PYTHON_TEMP_FOLDER);
-                    logger.debug("Temporary folder {] was created", this.tempDirPackages);
+                    logger.debug("Temporary folder {} was created", this.tempDirPackages);
                     if (this.tempDirPackages != null) {
                         downloadLineByLine(this.requirementsTxtOrSetupPyPath);
                         dependencies = collectDependencies(new File(tempDirPackages), this.requirementsTxtOrSetupPyPath);
@@ -602,7 +602,7 @@ public class PythonDependencyCollector extends DependencyCollector {
     private String createScript(String requirementsTxtPath) {
         FilesUtils filesUtils = new FilesUtils();
         String path = filesUtils.createTmpFolder(false, TempFolders.UNIQUE_PYTHON_TEMP_FOLDER);
-        logger.debug("Temporary folder {] was created", path);
+        logger.debug("Temporary folder {} was created", path);
         String scriptPath = null;
         if (path != null) {
             scriptPath = path + SCRIPT_SH;

@@ -84,7 +84,7 @@ public abstract class ScmConnector {
      */
     public File cloneRepository() {
         String scmTempFolder = new FilesUtils().createTmpFolder(false, TempFolders.UNIQUE_SCM_TEMP_FOLDER);
-        logger.debug("Temporary folder {] was created", scmTempFolder);
+        logger.debug("Temporary folder {} was created", scmTempFolder);
         cloneDirectory = new File(scmTempFolder, getType().toString().toLowerCase() + Constants.UNDERSCORE +
                 getUrlName() + Constants.UNDERSCORE + getBranch());
         FilesUtils.deleteDirectory(cloneDirectory); // delete just in case it's not empty

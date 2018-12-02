@@ -196,8 +196,8 @@ public class DockerResolver {
 
         File imageTarFile = new File(TEMP_FOLDER, dockerImage.getRepository() + TAR_SUFFIX);
         File imageExtractionDir = new File(TEMP_FOLDER, dockerImage.getRepository());
-        logger.debug("Temporary folder {] was created", imageTarFile.getName());
-        logger.debug("Temporary folder {] was created", imageExtractionDir.getName());
+        logger.debug("Temporary folder {} was created", imageTarFile.getName());
+        logger.debug("Temporary folder {} was created", imageExtractionDir.getName());
         imageExtractionDir.mkdirs();
         try {
             //Save image as tar file

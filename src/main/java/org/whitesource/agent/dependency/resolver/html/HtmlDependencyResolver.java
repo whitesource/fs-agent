@@ -115,7 +115,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
         String body = null;
         String tempFolder = new FilesUtils().createTmpFolder(false, TempFolders.UNIQUE_HTML_TEMP_FOLDER);
         File tempFolderFile = new File(tempFolder);
-        logger.debug("Temporary folder {] was created", tempFolderFile.getName());
+        logger.debug("Temporary folder {} was created", tempFolderFile.getName());
         String dependencyFileName = null;
         if (tempFolder != null) {
             for (String scriptUrl : scriptUrls) {
