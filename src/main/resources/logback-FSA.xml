@@ -17,14 +17,14 @@
 
 	<appender name="console" class="ch.qos.logback.core.ConsoleAppender" >
 		<encoder>
-			<pattern>[%level] %d{"HH:mm:ss"} - %msg%n</pattern>
+			<pattern>[%level] %d{"yyyy-MM-dd HH:mm:ss,SSS Z"} - %msg%n</pattern>
 		</encoder>
 	</appender>
 
 	<appender name="${collectAppenderName}" class="org.whitesource.fs.LogMapAppender">
 		<append>false</append>
 		<encoder>
-			<pattern>[%level] %d{"HH:mm:ss"} - %msg%n</pattern>
+			<pattern>[%level] %d{"yyyy-MM-dd HH:mm:ss,SSS Z"} - %msg%n</pattern>
 		</encoder>
 	</appender>
 
