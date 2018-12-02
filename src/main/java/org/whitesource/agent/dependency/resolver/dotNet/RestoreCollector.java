@@ -67,7 +67,6 @@ public abstract class RestoreCollector extends DependencyCollector {
     public void executeRestore(String folder, Set<String> files) {
         for (String file : files) {
             String pathToDownloadPackages = tempDirectory + BACK_SLASH + getNameOfFolderPackages(file) + this.serialNumber;
-            logger.debug("Temporary folder {] was created", tempDirectory);
             this.serialNumber++;
             String[] command = getInstallParams(pathToDownloadPackages, file);
             String commandString = String.join(Constants.WHITESPACE, command);

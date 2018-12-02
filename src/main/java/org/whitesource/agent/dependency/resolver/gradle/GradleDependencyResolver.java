@@ -240,7 +240,6 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
         logger.debug("running pre-steps on folder {}", projectFolder);
         String tempFolder = new FilesUtils().createTmpFolder(false, TempFolders.UNIQUE_GRADLE_TEMP_FOLDER);
         File buildGradleTempDirectory = new File(tempFolder);
-        logger.debug("Temporary folder {] was created", buildGradleTempDirectory.getName());
         if (copyProjectFolder(projectFolder, buildGradleTempDirectory)) {
             try {
                 Stream<Path> pathStream = Files.walk(Paths.get(buildGradleTempDirectory.getPath()), Integer.MAX_VALUE).filter(file -> file.getFileName().toString().equals(Constants.BUILD_GRADLE));

@@ -150,7 +150,6 @@ public class ArchiveExtractor {
         String creationDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
         String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + TempFolders.UNIQUE_WHITESOURCE_ARCHIVE_EXTRACTOR_TEMP_FOLDER + File.separator + creationDate :
                 JAVA_TEMP_DIR + File.separator + TempFolders.UNIQUE_WHITESOURCE_ARCHIVE_EXTRACTOR_TEMP_FOLDER + File.separator + creationDate;
-        logger.debug("Temporary folder {] was created", tempFolder);
         String destDirectory = tempFolder + Constants.UNDERSCORE + this.randomString;
         int separatorIndex = scannerBaseDir.lastIndexOf(File.separator);
 
