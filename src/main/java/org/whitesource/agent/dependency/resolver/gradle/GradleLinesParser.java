@@ -72,7 +72,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         javaDirPath = mainDirPath + fileSeparator+ JAVA;
     }
 
-    public List<DependencyInfo> parseLines(List<String> lines, String rootDirectory, String directoryName, String[] ignoredScopes) {
+    public List<DependencyInfo> parseLines(List<String> lines, String rootDirectory, String directoryName, String[] ignoredScopes, String bomFile) {
         if (StringUtils.isBlank(dotGradlePath)){
             this.dotGradlePath = getDotGradleFolderPath();
         }
@@ -152,6 +152,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                     currentDependency.setSha1(dependencyFile.getSha1());
                     currentDependency.setSystemPath(dependencyFile.getFilePath());
                     currentDependency.setFilename(dependencyFile.getFileName());
+                    currentDependency.setDependencyFile(bomFile);
                     String extension = FilesUtils.getFileExtension(dependencyFile.getFilePath());
                     currentDependency.setType(extension);
                 }

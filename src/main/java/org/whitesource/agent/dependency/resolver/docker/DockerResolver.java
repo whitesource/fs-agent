@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.archiver.ArchiverException;
 import org.slf4j.Logger;
+import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.dependency.resolver.docker.remotedocker.RemoteDockersManager;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
@@ -35,8 +36,7 @@ public class DockerResolver {
 
     private static final Logger logger = LoggerFactory.getLogger(DockerResolver.class);
 
-    private static final String WHITE_SOURCE_DOCKER = "WhiteSource-Docker";
-    private static final String TEMP_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + WHITE_SOURCE_DOCKER;
+    private static final String TEMP_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + TempFolders.UNIQUE_DOCKER_TEMP_FOLDER;
     private static final String DOCKER_SAVE_IMAGE_COMMAND = "docker save";
     private static final String O_PARAMETER = "-o";
     private static final String REPOSITORY = "REPOSITORY";
@@ -196,6 +196,8 @@ public class DockerResolver {
 
         File imageTarFile = new File(TEMP_FOLDER, dockerImage.getRepository() + TAR_SUFFIX);
         File imageExtractionDir = new File(TEMP_FOLDER, dockerImage.getRepository());
+        logger.debug("Temporary folder {] was created", imageTarFile.getName());
+        logger.debug("Temporary folder {] was created", imageExtractionDir.getName());
         imageExtractionDir.mkdirs();
         try {
             //Save image as tar file

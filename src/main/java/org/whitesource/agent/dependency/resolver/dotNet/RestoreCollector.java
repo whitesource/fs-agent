@@ -2,7 +2,6 @@ package org.whitesource.agent.dependency.resolver.dotNet;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -11,6 +10,7 @@ import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollecto
 import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.agent.utils.FilesUtils;
+import org.whitesource.agent.utils.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,7 +66,8 @@ public abstract class RestoreCollector extends DependencyCollector {
 
     public void executeRestore(String folder, Set<String> files) {
         for (String file : files) {
-            String pathToDownloadPackages = this.tempDirectory + BACK_SLASH + getNameOfFolderPackages(file) + this.serialNumber;
+            String pathToDownloadPackages = tempDirectory + BACK_SLASH + getNameOfFolderPackages(file) + this.serialNumber;
+            logger.debug("Temporary folder {] was created", tempDirectory);
             this.serialNumber++;
             String[] command = getInstallParams(pathToDownloadPackages, file);
             String commandString = String.join(Constants.WHITESPACE, command);

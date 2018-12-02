@@ -39,13 +39,13 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
 
     public static final List<String> htmlTypeExtensions = Arrays.asList(Constants.HTM, Constants.HTML, Constants.SHTML,
             Constants.XHTML, Constants.JSP, Constants.ASP, Constants.DO, Constants.ASPX);
-    public final String[] includesPattern = new String[htmlTypeExtensions.size()];
-    public static final String WHITESOURCE_HTML_RESOLVER = "whitesource-html-resolver";
-
     public static final String URL_PATH = "://";
+
+    public final String[] includesPattern = new String[htmlTypeExtensions.size()];
     private final Pattern patternOfFirstLetter = Pattern.compile("[a-zA-Z].*");
     private final Pattern patternOfLegitSrcUrl = Pattern.compile("<%.*%>");
     private Map<String, String> urlResponseMap = new HashMap<>();
+
     /* --- Constructors --- */
 
     public HtmlDependencyResolver() {
@@ -84,12 +84,12 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
             }
         }
 
-       // delete parent folder of HTML Resolver
-       try {
-           new TempFolders().deleteTempFoldersHelper(Paths.get(System.getProperty("java.io.tmpdir"), WHITESOURCE_HTML_RESOLVER).toString());
-       } catch(Exception e) {
-           logger.debug("Failed to delete HTML Dependency Resolver Folder{}", e.getMessage());
-       }
+        // delete parent folder of HTML Resolver
+        try {
+            new TempFolders().deleteTempFoldersHelper(Paths.get(System.getProperty("java.io.tmpdir"), TempFolders.UNIQUE_HTML_TEMP_FOLDER).toString());
+        } catch (Exception e) {
+            logger.debug("Failed to delete HTML Dependency Resolver Folder{}", e.getMessage());
+        }
         // check the type and excludes
         return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
     }
@@ -113,8 +113,9 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     private List<DependencyInfo> collectJsFilesAndCalcHashes(List<String> scriptUrls, String htmlFilePath, Map<String, String> urlResponseMap) {
         List<DependencyInfo> dependencies = new LinkedList<>();
         String body = null;
-        String tempFolder = new FilesUtils().createTmpFolder(false, WHITESOURCE_HTML_RESOLVER);
+        String tempFolder = new FilesUtils().createTmpFolder(false, TempFolders.UNIQUE_HTML_TEMP_FOLDER);
         File tempFolderFile = new File(tempFolder);
+        logger.debug("Temporary folder {] was created", tempFolderFile.getName());
         String dependencyFileName = null;
         if (tempFolder != null) {
             for (String scriptUrl : scriptUrls) {
@@ -143,12 +144,13 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                             if (dependencyInfo != null) {
                                 dependencies.add(dependencyInfo);
                                 dependencyInfo.setSystemPath(htmlFilePath);
+                                dependencyInfo.setDependencyFile(htmlFilePath);
                             }
                         }
                     }
                 } catch (IOException e) {
                     logger.debug("Failed writing to file {}", dependencyFileName);
-                } catch (Exception e){
+                } catch (Exception e) {
                     logger.debug("Could not reach the registry using the URL: {}.", scriptUrl);
                 } finally {
                     if (StringUtils.isNotBlank(scriptUrl)) {
