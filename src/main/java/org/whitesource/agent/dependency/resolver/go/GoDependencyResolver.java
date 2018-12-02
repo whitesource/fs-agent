@@ -318,7 +318,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                                             dependencyInfo.getArtifactId() + Constants.FORWARD_SLASH + name,
                                             dependencyInfo.getVersion());
                                     packageDependencyInfo.setCommit(dependencyInfo.getCommit());
-                                    dependencyInfos.add(packageDependencyInfo);
+                                    packageDependencyInfo.setDependencyType(DependencyType.GO);
+                                    if (useParent) {
+                                        dependencyInfo.getChildren().add(packageDependencyInfo);
+                                    } else {
+                                        dependencyInfos.add(packageDependencyInfo);
+                                    }
                                 }
                                 repositoryPackages = null;
                             }
@@ -372,7 +377,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             }
         }
         dependencyInfos.stream().forEach(dependencyInfo -> {
-            dependencyInfo.setSystemPath(goPckLock.getPath());
+            //dependencyInfo.setDependencyFile(goPckLock.getPath());
             dependencyInfo.setDependencyType(DependencyType.GO);
             setSha1(dependencyInfo);
 
@@ -448,9 +453,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             logger.warn("Using dependency without tag/commit is not supported, library {}, will not be recognized by WSS", line[0]);
                             continue;
                         }
-                        dependencyInfo.setDependencyType(DependencyType.GO);
+                        /*dependencyInfo.setDependencyType(DependencyType.GO);
                         dependencyInfo.setSystemPath(goPmFile.getPath());
-                        setSha1(dependencyInfo);
+                        setSha1(dependencyInfo);*/
                         dependencyInfos.add(dependencyInfo);
                     }
                 } else if (currLine.contains(OPENNING_BRACKET + GOPM_DEPS + BRACKET)){ //if the current line contains [deps]
@@ -473,7 +478,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
             }
         }
-        dependencyInfos.stream().forEach(dependencyInfo -> {dependencyInfo.setSystemPath(goPmFile.getPath()); dependencyInfo.setDependencyType(DependencyType.GO);});
+        dependencyInfos.stream().forEach(dependencyInfo -> {
+            //dependencyInfo.setDependencyFile(goPmFile.getPath());
+            dependencyInfo.setDependencyType(DependencyType.GO);
+            setSha1(dependencyInfo);
+        });
         return dependencyInfos;
     }
 
@@ -513,7 +522,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     dependencyInfo.setArtifactId(importPath);
                     dependencyInfo.setCommit(dep.get(REV).getAsString());
                     dependencyInfo.setDependencyType(DependencyType.GO);
-                    dependencyInfo.setSystemPath(goDeps.getPath());
+                    //dependencyInfo.setDependencyFile(goDeps.getPath());
                     setSha1(dependencyInfo);
                     JsonElement commentElement = dep.get(COMMENT);
                     if (commentElement != null){
@@ -580,7 +589,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         dependencyInfo.setArtifactId(Path);
                         dependencyInfo.setCommit(pck.get(REVISION_GOV).getAsString());
                         dependencyInfo.setDependencyType(DependencyType.GO);
-                        dependencyInfo.setSystemPath(goVendor.getPath());
+                        //dependencyInfo.setDependencyFile(goVendor.getPath());
                         setSha1(dependencyInfo);
                         if (pck.get(VERSION_GOV) != null) {
                             dependencyInfo.setVersion(pck.get(VERSION_GOV).getAsString());
@@ -627,7 +636,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 dependencyInfo.setArtifactId(name);
                 dependencyInfo.setCommit(split[1]);
                 dependencyInfo.setDependencyType(DependencyType.GO);
-                dependencyInfo.setSystemPath(vendorConf.getPath());
+                //dependencyInfo.setDependencyFile(vendorConf.getPath());
                 setSha1(dependencyInfo);
                 dependencyInfos.add(dependencyInfo);
             }
@@ -737,7 +746,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
                 dependencyInfo.setArtifactId(name);
                 dependencyInfo.setDependencyType(DependencyType.GO);
-                dependencyInfo.setSystemPath(rootDirectory + fileSeparator + Constants.BUILD_GRADLE);
+                //dependencyInfo.setDependencyFile(rootDirectory + fileSeparator + Constants.BUILD_GRADLE);
                 dependencyInfos.add(dependencyInfo);
             } catch (Exception e){
                 logger.warn("Error parsing line {}, exception: {}", currentLine, e.getMessage());
@@ -861,6 +870,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             // this flag indicates if we get to imports line
             boolean resolveRepositoryPackages = false;
             boolean resolveSubPackages = false;
+            DependencyInfo currentDependency = null;
             while ((currLine = bufferedReader.readLine()) != null) {
                 /* possible lines:
                     imports:
@@ -881,13 +891,19 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         currLine = bufferedReader.readLine();
                         if (currLine != null) {
                             commit = currLine.substring(VERSION_GLIDE.length());
-                            dependencies.add(createGlideDependency(name, commit, glideLock.getAbsolutePath()));
+                            currentDependency = createGlideDependency(name, commit, glideLock.getAbsolutePath());
+                            dependencies.add(currentDependency);
                         }
                     } else if (currLine.startsWith(SUBPACKAGES_GLIDE)) {
                         resolveSubPackages = true;
                     } else if (resolveSubPackages && currLine.startsWith(PREFIX_SUBPACKAGES_SECTION)) {
                         String subPackageName = currLine.substring(PREFIX_SUBPACKAGES_SECTION.length());
-                        dependencies.add(createGlideDependency(name + Constants.FORWARD_SLASH + subPackageName, commit, glideLock.getAbsolutePath()));
+                        DependencyInfo childDependency = createGlideDependency(name + Constants.FORWARD_SLASH + subPackageName, commit, glideLock.getAbsolutePath());
+                        if (currentDependency == null) {
+                            dependencies.add(childDependency);
+                        } else {
+                            currentDependency.getChildren().add(childDependency);
+                        }
                     } else if (currLine.startsWith(TEST_IMPORTS)) {
                         resolveSubPackages = false;
                         if (this.ignoreTestPackages) {
@@ -919,7 +935,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         dependency.setArtifactId(name);
         dependency.setCommit(commit);
         dependency.setDependencyType(DependencyType.GO);
-        dependency.setSystemPath(systemPath);
+        //dependency.setDependencyFile(systemPath);
         setSha1(dependency);
         return dependency;
     }
