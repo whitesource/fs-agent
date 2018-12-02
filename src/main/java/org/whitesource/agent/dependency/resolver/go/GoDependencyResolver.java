@@ -318,6 +318,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                                             dependencyInfo.getArtifactId() + Constants.FORWARD_SLASH + name,
                                             dependencyInfo.getVersion());
                                     packageDependencyInfo.setCommit(dependencyInfo.getCommit());
+                                    packageDependencyInfo.setDependencyType(DependencyType.GO);
                                     if (useParent) {
                                         dependencyInfo.getChildren().add(packageDependencyInfo);
                                     } else {
@@ -869,6 +870,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             // this flag indicates if we get to imports line
             boolean resolveRepositoryPackages = false;
             boolean resolveSubPackages = false;
+            DependencyInfo currentDependency = null;
             while ((currLine = bufferedReader.readLine()) != null) {
                 /* possible lines:
                     imports:
@@ -889,13 +891,19 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         currLine = bufferedReader.readLine();
                         if (currLine != null) {
                             commit = currLine.substring(VERSION_GLIDE.length());
-                            dependencies.add(createGlideDependency(name, commit, glideLock.getAbsolutePath()));
+                            currentDependency = createGlideDependency(name, commit, glideLock.getAbsolutePath());
+                            dependencies.add(currentDependency);
                         }
                     } else if (currLine.startsWith(SUBPACKAGES_GLIDE)) {
                         resolveSubPackages = true;
                     } else if (resolveSubPackages && currLine.startsWith(PREFIX_SUBPACKAGES_SECTION)) {
                         String subPackageName = currLine.substring(PREFIX_SUBPACKAGES_SECTION.length());
-                        dependencies.add(createGlideDependency(name + Constants.FORWARD_SLASH + subPackageName, commit, glideLock.getAbsolutePath()));
+                        DependencyInfo childDependency = createGlideDependency(name + Constants.FORWARD_SLASH + subPackageName, commit, glideLock.getAbsolutePath());
+                        if (currentDependency == null) {
+                            dependencies.add(childDependency);
+                        } else {
+                            currentDependency.getChildren().add(childDependency);
+                        }
                     } else if (currLine.startsWith(TEST_IMPORTS)) {
                         resolveSubPackages = false;
                         if (this.ignoreTestPackages) {
