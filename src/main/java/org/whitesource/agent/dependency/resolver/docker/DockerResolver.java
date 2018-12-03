@@ -194,8 +194,8 @@ public class DockerResolver {
                 dockerImage.getRepository(), dockerImage.getTag()), null));
         projects.add(projectInfo);
 
-        File imageTarFile = new File(TEMP_FOLDER, dockerImage.getRepository() + TAR_SUFFIX);
-        File imageExtractionDir = new File(TEMP_FOLDER, dockerImage.getRepository());
+        File imageTarFile = new File(TEMP_FOLDER, dockerImage.getRepository() + Constants.DASH + dockerImage.getId() + TAR_SUFFIX);
+        File imageExtractionDir = new File(TEMP_FOLDER, dockerImage.getRepository() + Constants.DASH + dockerImage.getId());
         logger.debug("Temporary folder {} was created", imageTarFile.getName());
         logger.debug("Temporary folder {} was created", imageExtractionDir.getName());
         imageExtractionDir.mkdirs();
