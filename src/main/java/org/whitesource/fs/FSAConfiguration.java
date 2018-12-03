@@ -793,6 +793,12 @@ public class FSAConfiguration {
         result.setRemoteDockerAmazonEnabled(enableAmazon);
         result.setAmazonMaxPullImages(maxPullImagesFromAmazon);
 
+        // Azure configuration
+        result.setRemoteDockerAzureEnabled(config.getBooleanProperty(ConfigPropertyKeys.DOCKER_AZURE_ENABLED, false));
+        result.setAzureUserName(config.getProperty(ConfigPropertyKeys.DOCKER_AZURE_USER_NAME, EMPTY_STRING));
+        result.setAzureUserPassword(config.getProperty(ConfigPropertyKeys.DOCKER_AZURE_USER_PASSWORD, EMPTY_STRING));
+        String[] dockerAzureRegistryNames = config.getListProperty(ConfigPropertyKeys.DOCKER_AZURE_REGISTRY_NAMES, empty);
+        result.setAzureRegistryNames(new LinkedList<>(Arrays.asList(dockerAzureRegistryNames)));
         return result;
     }
 
