@@ -115,7 +115,8 @@ public class CocoaPodsDependencyCollector extends DependencyCollector {
                         newPrefixToSearch = line.substring(2, indexFirstBracket);
                     }
                     DependencyInfo childDependency = getDependencyInfo(allDependenciesLines, newPrefixToSearch, podFileLock);
-                    dependency.getChildren().add(childDependency);
+                    if (childDependency != null) // TODO - figure out in which case it is null and avoid them in the first place
+                        dependency.getChildren().add(childDependency);
                 }
             }
         }
