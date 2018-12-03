@@ -75,12 +75,12 @@ public class FSAConfiguration {
                 sender.toString() + '\n' +
                 resolver.toString() + '\n' +
                 request.toString() + '\n' +
-                ", scanPackageManager=" + scanPackageManager + '\n' +
-                ", " + offline.toString() + '\n' +
-                ", projectPerFolder=" + projectPerFolder + '\n' +
-                ", wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
-                ", scanPackageManager=" + scanPackageManager + '\n' +
-                ", scanDockerImages=" + scanDockerImages + '\n' +
+                "scanPackageManager=" + scanPackageManager + '\n' +
+                offline.toString() + '\n' +
+                "projectPerFolder=" + projectPerFolder + '\n' +
+                "wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
+                "scanPackageManager=" + scanPackageManager + '\n' +
+                "scanDockerImages=" + scanDockerImages + '\n' +
                 getAgent().toString() + '\n' +
                 '}';
     }
@@ -166,9 +166,17 @@ public class FSAConfiguration {
             commandLineArgs.parseCommandLine(args);
 
             if (config == null) {
-                Pair<FSAConfigProperties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath, commandLineArgs);
-                errors.addAll(propertiesWithErrors.getValue());
-                config = propertiesWithErrors.getKey();
+                analyzeMultiModule = commandLineArgs.analyzeMultiModule;
+
+                // The config file is not necessary if there is the analyzeMultiModule parameter
+                if (StringUtils.isEmpty(analyzeMultiModule)) {
+                    Pair<FSAConfigProperties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath, commandLineArgs);
+                    errors.addAll(propertiesWithErrors.getValue());
+                    config = propertiesWithErrors.getKey();
+                } else {
+                    config = new FSAConfigProperties();
+                }
+
                 if (StringUtils.isNotEmpty(commandLineArgs.project)) {
                     config.setProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY, commandLineArgs.project);
                 }
@@ -202,29 +210,7 @@ public class FSAConfiguration {
             if (StringUtils.isNotBlank(commandLineArgs.whiteSourceFolder)) {
                 config.setProperty(ConfigPropertyKeys.WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
             }
-            analyzeMultiModule = commandLineArgs.analyzeMultiModule;
-            if (StringUtils.isNotEmpty(analyzeMultiModule)) {
-                if (args.length == 4 && dependencyDirs.size() == 1) {
-                    Path path = Paths.get(analyzeMultiModule);
-                    try {
-                        if (!Files.exists(path)) {
-                            File setUpFile = new File(analyzeMultiModule);
-                            boolean fileCreated = setUpFile.createNewFile();
-                            if (fileCreated) {
-                                setUpMuiltiModuleFile = true;
-                            } else {
-                                errors.add("The system could not create the multi-project setup file. Please contact support.");
-                            }
-                        } else {
-                            errors.add("The file specified for storing multi-module analysis results already exists. Please specify a new file name.");
-                        }
-                    } catch (IOException e) {
-                        errors.add("The system could not create the multi-project setup file : " + path + " " + "Please contact support.");
-                    }
-                } else {
-                    errors.add("Multi-module analysis could not run due to specified invalid parameters.");
-                }
-            }
+
            /* xModulePath = commandLineArgs.xModulePath;
             if (StringUtils.isNotEmpty(xModulePath)) {
                 if (args.length == 2) {
@@ -312,6 +298,7 @@ public class FSAConfiguration {
             for (ViaLanguage viaLanguage : ViaLanguage.values()) {
                 if (iaLanguage.toLowerCase().equals(viaLanguage.toString().toLowerCase())) {
                     iaLanguageValid = true;
+                    break;
                 }
             }
             if (!iaLanguageValid) {
@@ -344,8 +331,33 @@ public class FSAConfiguration {
         endpoint = getEndpoint(config);
         remoteDockerConfiguration = getRemoteDockerConfiguration(config);
 
-        // check properties to ensure via is ready to run
-        checkPropertiesForVia(sender, resolver, appPathsToDependencyDirs, errors);
+        // The config file is not necessary if there is the analyzeMultiModule parameter
+        if (StringUtils.isEmpty(analyzeMultiModule)) {
+            // check properties to ensure via is ready to run
+            checkPropertiesForVia(sender, resolver, appPathsToDependencyDirs, errors);
+        } else {
+            errors.clear();
+            if (args.length == 4 && dependencyDirs.size() == 1) {
+                Path path = Paths.get(analyzeMultiModule);
+                try {
+                    if (!Files.exists(path)) {
+                        File setUpFile = new File(analyzeMultiModule);
+                        boolean fileCreated = setUpFile.createNewFile();
+                        if (fileCreated) {
+                            setUpMuiltiModuleFile = true;
+                        } else {
+                            errors.add("The system could not create the multi-project setup file. Please contact support.");
+                        }
+                    } else {
+                        errors.add("The file specified for storing multi-module analysis results already exists. Please specify a new file name.");
+                    }
+                } catch (IOException e) {
+                    errors.add("The system could not create the multi-project setup file : " + path + " " + "Please contact support.");
+                }
+            } else {
+                errors.add("Multi-module analysis could not run due to specified invalid parameters.");
+            }
+        }
     }
 
     private void readSetupFile(File xModuleFile) {
@@ -499,13 +511,15 @@ public class FSAConfiguration {
         boolean nugetResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, true);
         boolean nugetRestoreDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESTORE_DEPENDENCIES, false);
         boolean nugetRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RUN_PRE_STEP, false);
+        boolean nugetResolvePakcagesConfigFiles = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_PACKAGES_CONFIG_FILES, true);
+        boolean nugetResolveCsProjFiles = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_CS_PROJ_FILES, true);
 
         boolean mavenResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
         String[] mavenIgnoredScopes = config.getListProperty(ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
         boolean mavenAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, false);
         boolean mavenIgnoredPomModules = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_IGNORE_POM_MODULES, true);
         boolean mavenRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RUN_PRE_STEP, false);
-
+        boolean mavenIgnoreDependencyTreeErrors = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_IGNORE_DEPENDENCY_TREE_ERRORS, false);
         String whiteSourceConfiguration = config.getProperty(ConfigPropertyKeys.PROJECT_CONFIGURATION_PATH);
 
         boolean pythonResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RESOLVE_DEPENDENCIES, true);
@@ -549,6 +563,7 @@ public class FSAConfiguration {
         boolean goCollectDependenciesAtRuntime = config.getBooleanProperty(ConfigPropertyKeys.GO_COLLECT_DEPENDENCIES_AT_RUNTIME, false);
         boolean goIgnoreTestPackages = config.getBooleanProperty(ConfigPropertyKeys.GO_GLIDE_IGNORE_TEST_PACKAGES, true);
         boolean goGradleEnableTaskAlias = config.getBooleanProperty(ConfigPropertyKeys.GO_GRADLE_ENABLE_TASK_ALIAS, false);
+        boolean addSha1 = config.getBooleanProperty("addSha1", false);
 
         boolean rubyResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.RUBY_RESOLVE_DEPENDENCIES, true);
         boolean rubyRunBundleInstall = config.getBooleanProperty(ConfigPropertyKeys.RUBY_RUN_BUNDLE_INSTALL, false);
@@ -569,6 +584,11 @@ public class FSAConfiguration {
         boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, true);
         boolean cocoapodsRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RUN_PRE_STEP, false);
 
+        // TODO - as long as there's no support for hex on the server side - the default value of hex.resolveDependencies is FALSE
+        boolean hexResolveDependencies  = config.getBooleanProperty(ConfigPropertyKeys.HEX_RESOLVE_DEPENDENECIES, false);
+        boolean hexRunPreStep           = config.getBooleanProperty(ConfigPropertyKeys.HEX_RUN_PRE_STEP, false);
+        boolean hexAggregateModules     = config.getBooleanProperty(ConfigPropertyKeys.HEX_AGGREGATE_MODULES, false);
+
         boolean npmIgnoreSourceFiles;
         boolean bowerIgnoreSourceFiles;
         boolean nugetIgnoreSourceFiles;
@@ -580,6 +600,7 @@ public class FSAConfiguration {
         boolean goIgnoreSourceFiles;
         boolean rubyIgnoreSourceFiles;
         boolean cocoapodsIgnoreSourceFiles;
+        boolean hexIgnoreSourceFiles;
         boolean ignoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.IGNORE_SOURCE_FILES, ConfigPropertyKeys.DEPENDENCIES_ONLY, false);
 
         if (ignoreSourceFiles == true) {
@@ -594,6 +615,7 @@ public class FSAConfiguration {
             rubyIgnoreSourceFiles = true;
             pythonIgnoreSourceFiles = true;
             cocoapodsIgnoreSourceFiles = true;
+            hexIgnoreSourceFiles = true;
         } else {
             npmIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_SOURCE_FILES, ConfigPropertyKeys.NPM_IGNORE_JAVA_SCRIPT_FILES, true);
             bowerIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.BOWER_IGNORE_SOURCE_FILES, false);
@@ -606,13 +628,14 @@ public class FSAConfiguration {
             pythonIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_SOURCE_FILES, true);
             rubyIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.RUBY_IGNORE_SOURCE_FILES, true);
             cocoapodsIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_IGNORE_SOURCE_FILES, true);
+            hexIgnoreSourceFiles = config.getBooleanProperty(ConfigPropertyKeys.HEX_IGNORE_SOURCE_FILES, true);
         }
 
         return new ResolverConfiguration(npmRunPreStep, npmResolveDependencies, npmIgnoreScripts, npmIncludeDevDependencies, npmIgnoreSourceFiles,
                 npmTimeoutDependenciesCollector, npmAccessToken, npmIgnoreNpmLsErrors, npmYarnProject,
                 bowerResolveDependencies, bowerRunPreStep, bowerIgnoreSourceFiles,
-                nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep, nugetIgnoreSourceFiles,
-                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles, mavenRunPreStep,
+                nugetResolveDependencies, nugetRestoreDependencies, nugetRunPreStep, nugetIgnoreSourceFiles, nugetResolvePakcagesConfigFiles, nugetResolveCsProjFiles,
+                mavenResolveDependencies, mavenIgnoredScopes, mavenAggregateModules, mavenIgnoredPomModules, mavenIgnoreSourceFiles, mavenRunPreStep, mavenIgnoreDependencyTreeErrors,
                 pythonResolveDependencies, pipPath, pythonPath, pythonIsWssPluginInstalled, pythonUninstallWssPluginInstalled,
                 pythonIgnorePipInstallErrors, pythonInstallVirtualenv, pythonResolveHierarchyTree, pythonRequirementsFileIncludes, pythonResolveSetupPyFiles, pythonIgnoreSourceFiles,
                 pythonIgnorePipenvInstallErrors, pythonRunPipenvPreStep, pythonInstallDevDependencies,
@@ -623,7 +646,8 @@ public class FSAConfiguration {
                 rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles,
                 phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies,
                 sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, sbtIgnoreSourceFiles,
-                htmlResolveDependencies, cocoapodsResolveDependencies, cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles);
+                htmlResolveDependencies, cocoapodsResolveDependencies, cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles,
+                hexResolveDependencies, hexRunPreStep, hexIgnoreSourceFiles, hexAggregateModules, addSha1);
     }
 
     private RequestConfiguration getRequest(FSAConfigProperties config, String apiToken, String userKey, String projectName, String projectToken, String scanComment) {
@@ -860,8 +884,8 @@ public class FSAConfiguration {
                 }
                 configProps.put(key, value);
             }
-        } catch (IOException e) {
-            errors.add("Error occurred when reading from " + configFilePath + e.getMessage());
+        } catch (Exception e) {
+            errors.add("Error occurred when reading from " + configFilePath + ", error: " + e.getMessage());
         }
         return new Pair<>(configProps, errors);
     }
@@ -1167,6 +1191,7 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.X_PATHS, commandLineArgs.xPaths);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ANALYZE_MULTI_MODULE, commandLineArgs.analyzeMultiModule);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.X_MODULE_PATH, commandLineArgs.xModulePath);
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.ADD_SHA1, commandLineArgs.addSha1);
 
         // proxy
         if (commandLineArgs.proxy == null) {
@@ -1196,6 +1221,9 @@ public class FSAConfiguration {
 
         // User-entry of a flag that overrides default FSA process termination
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.REQUIRE_KNOWN_SHA1, commandLineArgs.requireKnownSha1);
+
+        // docker flag to scan docker images instead of folder
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_DOCKER_IMAGES, commandLineArgs.scanDockerImages);
 
         return offlineRequestFiles;
     }

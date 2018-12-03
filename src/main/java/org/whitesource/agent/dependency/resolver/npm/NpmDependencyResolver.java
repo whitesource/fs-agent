@@ -15,14 +15,12 @@
  */
 package org.whitesource.agent.dependency.resolver.npm;
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 import org.eclipse.jgit.util.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.web.client.RestTemplate;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -30,12 +28,14 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
-import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
+import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;;
+import org.whitesource.agent.utils.AddDependencyFileRecursionHelper;
 import org.whitesource.agent.utils.FilesScanner;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.fs.StatusCode;
 
+import javax.ws.rs.core.MediaType;
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -165,6 +165,11 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         });
 
         Collection<DependencyInfo> dependencies = projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
+        // this code turn the dependencies tree recursively into a flat-list,
+        // so that each dependency has its dependencyFile set
+        dependencies.stream()
+                .flatMap(AddDependencyFileRecursionHelper::flatten)
+                .forEach(dependencyInfo -> dependencyInfo.setDependencyFile(projectFolder + fileSeparator + PACKAGE_JSON));
 
         boolean lsSuccess = !getDependencyCollector().getNpmLsFailureStatus();
         // flag that indicates if the number of the dependencies is zero and npm ls succeeded
@@ -248,7 +253,7 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
         String sha1 = packageJson.getSha1();
         String registryPackageUrl = packageJson.getRegistryPackageUrl();
         if (StringUtils.isEmptyOrNull(sha1) && !StringUtils.isEmptyOrNull(registryPackageUrl)) {
-            sha1 = getSha1FromRegistryPackageUrl(registryPackageUrl, packageJson.isScopedPackage(), packageJson.getVersion(), npmAccessToken);
+            sha1 = getSha1FromRegistryPackageUrl(registryPackageUrl, packageJson.isScopedPackage(), packageJson.getVersion(), packageJson.getRegistryType(), npmAccessToken);
         }
         dependency.setSha1(sha1);
         dependency.setGroupId(packageJson.getName());
@@ -261,38 +266,50 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
 
     /* --- Private methods --- */
 
-    private String getSha1FromRegistryPackageUrl(String registryPackageUrl, boolean isScopeDep, String versionOfPackage, String npmAccessToken) {
-        RestTemplate restTemplate = new RestTemplate();
-        URI uriScopeDep = null;
+    private String getSha1FromRegistryPackageUrl(String registryPackageUrl, boolean isScopeDep, String versionOfPackage, RegistryType registryType, String npmAccessToken) {
+
+        String uriScopeDep = registryPackageUrl;
         if (isScopeDep) {
             try {
-                uriScopeDep = new URI(registryPackageUrl.replace(BomFile.DUMMY_PARAMETER_SCOPE_PACKAGE, URL_SLASH));
+                uriScopeDep = registryPackageUrl.replace(BomFile.DUMMY_PARAMETER_SCOPE_PACKAGE, URL_SLASH);
             } catch (Exception e) {
                 logger.warn("Failed creating uri of {}", registryPackageUrl);
                 return Constants.EMPTY_STRING;
             }
         }
 
+
         String responseFromRegistry = null;
         try {
-            if (isScopeDep) {
-                HttpHeaders httpHeaders = new HttpHeaders();
-                if (StringUtils.isEmptyOrNull(npmAccessToken)) {
-                    logger.debug("npm.accessToken is not defined");
-                } else {
-                    logger.debug("npm.accessToken is defined");
+            Client client = Client.create();
+            ClientResponse response;
+            WebResource resource;
+            resource = client.resource(uriScopeDep);
+            if (StringUtils.isEmptyOrNull(npmAccessToken)) {
+                response = resource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+                logger.debug("npm.accessToken is not defined");
+            } else {
+                logger.debug("npm.accessToken is defined");
+                if (registryType == RegistryType.VISUAL_STUDIO) {
                     String userCredentials = BEARER + Constants.COLON + npmAccessToken;
                     String basicAuth = BASIC + Constants.WHITESPACE + new String(Base64.getEncoder().encode(userCredentials.getBytes()));
-                    httpHeaders.set(AUTHORIZATION, basicAuth);
+                    response = resource.accept(MediaType.APPLICATION_JSON).header("Authorization", basicAuth).get(ClientResponse.class);
+                } else {
+                    // Bearer authorization
+                    String userCredentials = BEARER + Constants.WHITESPACE + npmAccessToken;
+                    response = resource.accept(MediaType.APPLICATION_JSON).header("Authorization", userCredentials).get(ClientResponse.class);
                 }
-
-                HttpEntity entity = new HttpEntity(httpHeaders);
-                responseFromRegistry = restTemplate.exchange(uriScopeDep, HttpMethod.GET, entity,String.class).getBody();
+            }
+            if (response.getStatus() >= 200 && response.getStatus() < 300) {
+                responseFromRegistry = response.getEntity(String.class);
             } else {
-                responseFromRegistry = restTemplate.getForObject(registryPackageUrl, String.class);
+                logger.debug("Got {} status code from registry using the url {}.", response.getStatus(), uriScopeDep);
             }
         } catch (Exception e) {
             logger.warn("Could not reach the registry using the URL: {}. Got an error: {}", registryPackageUrl, e.getMessage());
+            return Constants.EMPTY_STRING;
+        }
+        if (responseFromRegistry == null) {
             return Constants.EMPTY_STRING;
         }
         JSONObject jsonRegistry = new JSONObject(responseFromRegistry);

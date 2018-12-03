@@ -20,7 +20,7 @@ public class GradleLinesParserTest {
 
     @Before
     public void setup(){
-        gradleLinesParser = new GradleLinesParser(false, Constants.GRADLE_WRAPPER);
+        gradleLinesParser = new GradleLinesParser(false, new GradleCli(Constants.GRADLE_WRAPPER));
     }
 
     @Ignore
@@ -31,7 +31,7 @@ public class GradleLinesParserTest {
                 TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\gradle\\sample\\");
         CommandLineProcess commandLineProcess = new CommandLineProcess(folderPath, params);
         List<String> lines = commandLineProcess.executeProcess();
-        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING ,new String[0]);
+        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING ,new String[0], folderPath + "\\build.gradle");
     }
 
     @Ignore
@@ -39,7 +39,7 @@ public class GradleLinesParserTest {
     public void parseLineFromFile(){
         File file = TestHelper.getFileFromResources("resolver/gradle/lines.txt");
         List<String> lines = readFileAsList(file.getAbsolutePath());
-        List<DependencyInfo> dependencyInfoList = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING,new String[0]);
+        List<DependencyInfo> dependencyInfoList = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING,new String[0], null);
         Assert.assertTrue(dependencyInfoList.size() > 0);
     }
 
@@ -74,7 +74,7 @@ public class GradleLinesParserTest {
         lines.add("|    \\--- org.webjars.npm:is-object:[1.0.1,2) -> 1.0.1");
         lines.add("\\--- junit:junit:4.12");
         lines.add("     \\--- org.hamcrest:hamcrest-core:1.3");
-        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING, new String[0]);
+        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING, new String[0],null);
     }
 
     @Ignore
@@ -108,7 +108,7 @@ public class GradleLinesParserTest {
         lines.add("|         \\--- org.springframework:spring-core:4.1.6.RELEASE");
         lines.add("+--- org.hsqldb:hsqldb:2.3.2");
         lines.add("\\--- javax.servlet:servlet-api:2.5");
-        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING, new String[0]);
+        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING, new String[0],null);
 
         Assert.assertTrue(dependencyInfos.get(0).getVersion().equals("1.7.12"));
         Assert.assertTrue(dependencyInfos.get(4).getVersion().equals("2.5"));
@@ -170,7 +170,7 @@ public class GradleLinesParserTest {
         lines.add("|    +--- ch.qos.logback:logback-core:1.1.3");
         lines.add("|    \\--- org.slf4j:slf4j-api:1.7.7 -> 1.7.12");
 
-        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING, new String[0] );
+        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING, new String[0], null);
         Assert.assertTrue(dependencyInfos.get(2).getChildren().iterator().next().getVersion().equals("4.1.6.RELEASE"));
     }
 
@@ -204,7 +204,7 @@ public class GradleLinesParserTest {
         lines.add("");
         lines.add("BUILD SUCCESSFUL in 15s");
         lines.add("4 actionable tasks: 4 executed");
-        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING, new String[0]);
+        List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING, new String[0], null);
         //Assert.assertTrue(dependencyInfos.get(2).getChildren().iterator().next().getVersion().equals("4.1.6.RELEASE"));
     }
 

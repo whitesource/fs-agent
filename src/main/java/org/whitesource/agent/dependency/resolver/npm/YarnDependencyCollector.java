@@ -120,6 +120,7 @@ public class YarnDependencyCollector extends NpmLsJsonDependencyCollector {
                             dependencyInfo.setDependencyType(DependencyType.NPM);
                             String pathToPackageJson = yarnLock.getParent() + fileSeparator + NODE_MODULES + fileSeparator + groupId + fileSeparator + PACKAGE_JSON;
                             dependencyInfo.setSystemPath(pathToPackageJson);
+                            dependencyInfo.setDependencyFile(pathToPackageJson);
                             dependencyInfo.setFilename(pathToPackageJson);
                         }
                         // adding the dependency to the parents map, if:  it's not there already and either dev-dependencies should be included or

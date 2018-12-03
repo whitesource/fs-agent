@@ -24,6 +24,7 @@ import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;
 import org.whitesource.agent.dependency.resolver.dotNet.DotNetDependencyResolver;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyResolver;
 import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
+import org.whitesource.agent.dependency.resolver.hex.HexDependencyResolver;
 import org.whitesource.agent.dependency.resolver.html.HtmlDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmDependencyResolver;
@@ -60,6 +61,7 @@ public class DependencyResolutionService {
     private boolean mavenAggregateModules;
     private boolean sbtAggregateModules;
     private boolean gradleAggregateModules;
+    private boolean hexAggregateModules;
 
     /* --- Static members --- */
 
@@ -82,10 +84,12 @@ public class DependencyResolutionService {
         final boolean bowerRunPreStep = config.isBowerRunPreStep();
         final boolean bowerIgnoreSourceFiles = config.isBowerIgnoreSourceFiles();
 
-        final boolean nugetResolveDependencies = config.isNugetResolveDependencies();
-        final boolean nugetRestoreDependencies = config.isNugetRestoreDependencies();
-        final boolean nugetRunPreStep = config.isNugetRunPreStep();
-        final boolean nugetIgnoreSourceFiles = config.isNugetIgnoreSourceFiles();
+        final boolean nugetResolveDependencies  = config.isNugetResolveDependencies();
+        final boolean nugetRestoreDependencies  = config.isNugetRestoreDependencies();
+        final boolean nugetRunPreStep           = config.isNugetRunPreStep();
+        final boolean nugetIgnoreSourceFiles    = config.isNugetIgnoreSourceFiles();
+        final boolean nugetResolveCsProjFiles   = config.isNugetResolveCsProjFiles();
+        final boolean nugetResolvePackagesConfigFiles = config.isNugetResolvePackagesConfigFiles();
 
         final boolean mavenResolveDependencies = config.isMavenResolveDependencies();
         final String[] mavenIgnoredScopes = config.getMavenIgnoredScopes();
@@ -93,6 +97,7 @@ public class DependencyResolutionService {
         final boolean mavenIgnorePomModules = config.isMavenIgnorePomModules();
         final boolean mavenIgnoreSourceFiles = config.isMavenIgnoreSourceFiles();
         final boolean mavenRunPreStep = config.isMavenRunPreStep();
+        final boolean mavenIgnoreDependencyTreeErrors = config.isMavenIgnoreDependencyTreeErrors();
 
         boolean pythonResolveDependencies = config.isPythonResolveDependencies();
         final String[] pythonRequirementsFileIncludes = config.getPythonRequirementsFileIncludes();
@@ -140,6 +145,11 @@ public class DependencyResolutionService {
         final boolean cocoapodsRunPreStep = config.isCocoapodsRunPreStep();
         final boolean cocoapodsIgnoreSourceFiles = config.isCocoapodsIgnoreSourceFiles();
 
+        final boolean hexResolveDependencies    = config.isHexResolveDependencies();
+        final boolean hexRunPreStep             = config.isHexRunPreStep();
+        final boolean hexAggregateModules       = config.isHexAggregateModules();
+        final boolean hexIgnoreSourceFiles      = config.isHexIgnoreSourceFiles();
+
         ignoreSourceFiles = config.isIgnoreSourceFiles();
 
         fileScanner = new FilesScanner();
@@ -152,11 +162,15 @@ public class DependencyResolutionService {
         }
         if (nugetResolveDependencies) {
             String whitesourceConfiguration = config.getWhitesourceConfiguration();
-            dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE, nugetRunPreStep, nugetIgnoreSourceFiles));
-            dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies, nugetIgnoreSourceFiles));
+            if (nugetResolvePackagesConfigFiles) {
+                dependencyResolvers.add(new NugetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CONFIG_FILE_TYPE, nugetRunPreStep, nugetIgnoreSourceFiles));
+            }
+            if (nugetResolveCsProjFiles) {
+                dependencyResolvers.add(new DotNetDependencyResolver(whitesourceConfiguration, NugetConfigFileType.CSPROJ_TYPE, nugetRestoreDependencies, nugetIgnoreSourceFiles));
+            }
         }
         if (mavenResolveDependencies) {
-            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules, mavenRunPreStep));
+            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules, mavenRunPreStep, mavenIgnoreDependencyTreeErrors));
             this.mavenAggregateModules = mavenAggregateModules;
         }
         if (pythonResolveDependencies) {
@@ -174,7 +188,7 @@ public class DependencyResolutionService {
         }
 
         if (goResolveDependencies) {
-            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles, config.isGoIgnoreTestPackages(), config.isGoGradleEnableTaskAlias(), config.getGradlePreferredEnvironment()));
+            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles, config.isGoIgnoreTestPackages(), config.isGoGradleEnableTaskAlias(), config.getGradlePreferredEnvironment(), config.isAddSha1()));
         }
 
         if (rubyResolveDependencies) {
@@ -182,7 +196,7 @@ public class DependencyResolutionService {
         }
 
         if (phpResolveDependencies) {
-            dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies));
+            dependencyResolvers.add(new PhpDependencyResolver(phpRunPreStep, phpIncludeDevDependencies, config.isAddSha1()));
         }
 
         if (htmlResolveDependencies) {
@@ -196,6 +210,11 @@ public class DependencyResolutionService {
 
         if (cocoapodsResolveDependencies) {
             dependencyResolvers.add(new CocoaPodsDependencyResolver(cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles));
+        }
+
+        if (hexResolveDependencies){
+            dependencyResolvers.add(new HexDependencyResolver(hexIgnoreSourceFiles, hexRunPreStep, hexAggregateModules));
+            this.hexAggregateModules = hexAggregateModules;
         }
 
         this.separateProjects = false;
@@ -213,6 +232,10 @@ public class DependencyResolutionService {
 
     public boolean isGradleAggregateModules() {
         return gradleAggregateModules;
+    }
+
+    public boolean isHexAggregateModules(){
+        return hexAggregateModules;
     }
 
     public boolean isSeparateProjects() {
@@ -276,14 +299,16 @@ public class DependencyResolutionService {
                     logger.error(e.getMessage());
                     logger.debug("{}", e.getStackTrace());
                 }
-                resolutionResults.add(result);
+                if (result != null) {
+                    resolutionResults.add(result);
 
-                // create lists in order to match htmlResolver dependencies to their original project (Maven/Gradle/Sbt)
-                if (multiModuleDependencyTypes.contains(dependencyResolver.getDependencyType())) {
-                    multiModuleResults.add(result);
+                    // create lists in order to match htmlResolver dependencies to their original project (Maven/Gradle/Sbt)
+                    if (multiModuleDependencyTypes.contains(dependencyResolver.getDependencyType())) {
+                        multiModuleResults.add(result);
 
-                } else if (Constants.HTML.toUpperCase().equals(dependencyResolver.getDependencyTypeName())) {
-                    htmlResults.add(result);
+                    } else if (Constants.HTML.toUpperCase().equals(dependencyResolver.getDependencyTypeName())) {
+                        htmlResults.add(result);
+                    }
                 }
             });
         });

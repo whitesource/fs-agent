@@ -15,17 +15,15 @@
  */
 package org.whitesource.fs;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
+import org.whitesource.agent.*;
 import org.whitesource.agent.dependency.resolver.ViaMultiModuleAnalyzer;
 import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.utils.LoggerFactory;
-import org.whitesource.agent.Constants;
-import org.whitesource.agent.FileSystemScanner;
-import org.whitesource.agent.ViaComponents;
-import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.docker.DockerResolver;
@@ -62,7 +60,7 @@ public class FileSystemAgent {
 
     /* --- Members --- */
 
-    private final List<String> dependencyDirs;
+    private List<String> dependencyDirs;
     private final FSAConfiguration config;
 
     private boolean projectPerSubFolder;
@@ -80,6 +78,10 @@ public class FileSystemAgent {
                     List<Path> directories = new FilesUtils().getSubDirectories(directory, config.getAgent().getProjectPerFolderIncludes(),
                             config.getAgent().getProjectPerFolderExcludes(), config.getAgent().isFollowSymlinks(), config.getAgent().getGlobCaseSensitive());
                     directories.forEach(subDir -> this.dependencyDirs.add(subDir.toString()));
+                    //In case no sub-folders were found, put the top folder path as the dependencyDirs.
+                    if (CollectionUtils.isEmpty(directories)) {
+                        this.dependencyDirs = dependencyDirs;
+                    }
                 } else if (file.isFile()) {
                     this.dependencyDirs.add(directory);
                 } else {
@@ -116,7 +118,7 @@ public class FileSystemAgent {
         if (config.isSetUpMuiltiModuleFile()) {
             ViaMultiModuleAnalyzer viaMultiModuleAnalyzer = new ViaMultiModuleAnalyzer(config.getDependencyDirs().get(0),
                     new MavenDependencyResolver(false, new String[]{Constants.NONE}, false,
-                            false, false), Constants.TARGET, config.getAnalyzeMultiModule());
+                            false, false, false), Constants.TARGET, config.getAnalyzeMultiModule());
             if (viaMultiModuleAnalyzer.getBomFiles().isEmpty()) {
                 viaMultiModuleAnalyzer = new ViaMultiModuleAnalyzer(config.getDependencyDirs().get(0),
                         new GradleDependencyResolver(false, false, false, Constants.EMPTY_STRING, new String[]{Constants.NONE}, false),
@@ -157,7 +159,12 @@ public class FileSystemAgent {
                 appPathsToDependencyDirs.clear();
                 setDirs.clear();
             }
-            return projects;
+            if (CollectionUtils.isEmpty(projects.getProjects())) {
+                logger.warn("projectPerFolder = true, No sub-folders were found in project folder, scanning main project folder");
+                projectPerSubFolder = false;
+            } else {
+                return projects;
+            }
         }
         // Scan folders and create one project for all folders together
         if (!projectPerSubFolder) { // This 'if' is always true now, but keep it maybe we will do other checks in the future...
@@ -255,8 +262,9 @@ public class FileSystemAgent {
 
         Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToAppPathAndLanguage;
         ViaLanguage viaLanguage = getIaLanguage(config.getRequest().getIaLanguage());
+        ProjectConfiguration projectConfiguration = new ProjectConfiguration(config.getAgent(), scannerBaseDirs, appPathsToDependencyDirs, false);
         projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis(), viaLanguage)
-                    .createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnectors[0]);
+                    .createProjects(projectConfiguration);
         ProjectsDetails projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], Constants.EMPTY_STRING);
 
         // delete all temp scm files

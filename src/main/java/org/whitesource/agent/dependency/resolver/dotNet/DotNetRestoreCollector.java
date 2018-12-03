@@ -1,5 +1,7 @@
 package org.whitesource.agent.dependency.resolver.dotNet;
 
+import org.whitesource.agent.TempFolders;
+
 import java.nio.file.Paths;
 
 /**
@@ -9,7 +11,7 @@ public class DotNetRestoreCollector extends RestoreCollector {
 
     /* --- Statics Members --- */
 
-    private static final String DOTNET_RESTORE_TMP_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir"), "WhiteSource-DotnetRestore").toString();
+    private static final String DOTNET_RESTORE_TMP_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir"), TempFolders.UNIQUE_DOTNET_TEMP_FOLDER).toString();
     private static final String DOTNET_COMMAND = "dotnet";
     private static final String PACKAGES = "--packages";
 

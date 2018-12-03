@@ -55,7 +55,7 @@ public class FileSystemScanner {
     private final Logger logger = LoggerFactory.getLogger(FileSystemAgent.class);
     private String FSA_FILE = "**/*whitesource-fs-agent-*.*jar";
 
-    /* --- Members --- */
+    /* --- Private Members --- */
 
     private final boolean isSeparateProjects;
     private final AgentConfiguration agent;
@@ -63,6 +63,7 @@ public class FileSystemScanner {
     private boolean enableImpactAnalysis;
     private ViaLanguage iaLanguage;
     private DependencyResolutionService dependencyResolutionService;
+    private String sha1;
 
     /* --- Constructors --- */
 
@@ -99,6 +100,7 @@ public class FileSystemScanner {
      * @return list of all the dependencies for project
      */
 
+    @Deprecated
     public List<DependencyInfo> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean scmConnector,
                                                String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
@@ -109,6 +111,7 @@ public class FileSystemScanner {
         return projects.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
     }
 
+    @Deprecated
     public List<DependencyInfo> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
                                                String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
@@ -117,16 +120,19 @@ public class FileSystemScanner {
                 archiveIncludes, archiveExcludes, archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match, pythonRequirementsFileIncludes);
     }
 
+    @Deprecated
     public Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, boolean hasScmConnector) {
         return createProjects(scannerBaseDirs, convertListDirsToMap(scannerBaseDirs), hasScmConnector);
     }
 
+    @Deprecated
     public Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean hasScmConnector) {
         return createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnector, agent.getIncludes(), agent.getExcludes(), agent.getGlobCaseSensitive(), agent.getArchiveExtractionDepth(),
                 agent.getArchiveIncludes(), agent.getArchiveExcludes(), agent.isArchiveFastUnpack(), agent.isFollowSymlinks(),
                 agent.getExcludedCopyrights(), agent.isPartialSha1Match(), agent.isCalculateHints(), agent.isCalculateMd5(), agent.getPythonRequirementsFileIncludes());
     }
 
+    @Deprecated
     public Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, boolean scmConnector,
                                                                            String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                                            String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
@@ -135,20 +141,28 @@ public class FileSystemScanner {
                 archiveFastUnpack, followSymlinks, excludedCopyrights, partialSha1Match, calculateHints, calculateMd5, pythonRequirementsFileIncludes);
     }
 
+    @Deprecated
     public Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(List<String> scannerBaseDirs, Map<String, Set<String>> appPathsToDependencyDirs, boolean scmConnector,
                                                                            String[] includes, String[] excludes, boolean globCaseSensitive, int archiveExtractionDepth,
                                                                            String[] archiveIncludes, String[] archiveExcludes, boolean archiveFastUnpack, boolean followSymlinks,
                                                                            Collection<String> excludedCopyrights, boolean partialSha1Match, boolean calculateHints,
                                                                            boolean calculateMd5, String[] pythonRequirementsFileIncludes) {
+        AgentConfiguration agentConfiguration = new AgentConfiguration(includes, excludes, new String[]{}, new String[]{}, archiveExtractionDepth, archiveIncludes, archiveExcludes, archiveFastUnpack,
+                followSymlinks, partialSha1Match, calculateHints, calculateMd5, showProgressBar, globCaseSensitive, false, excludedCopyrights, new String[]{}, new String[]{},
+                pythonRequirementsFileIncludes, Constants.EMPTY_STRING);
+        ProjectConfiguration projectConfiguration = new ProjectConfiguration(agentConfiguration, scannerBaseDirs, appPathsToDependencyDirs, scmConnector);
+        return createProjects(projectConfiguration);
+    }
 
+    public Map<AgentProjectInfo, LinkedList<ViaComponents>> createProjects(ProjectConfiguration projectConfiguration) {
         MemoryUsageHelper.SystemStats systemStats = MemoryUsageHelper.getMemoryUsage();
         logger.debug(systemStats.toString());
 
         // get canonical paths
-        Set<String> pathsToScan = getCanonicalPaths(scannerBaseDirs);
+        Set<String> pathsToScan = getCanonicalPaths(projectConfiguration.getScannerBaseDirs());
 
-        for (String appPath : appPathsToDependencyDirs.keySet()) {
-            appPathsToDependencyDirs.put(appPath, getCanonicalPaths(appPathsToDependencyDirs.get(appPath)));
+        for (String appPath : projectConfiguration.getAppPathsToDependencyDirs().keySet()) {
+            projectConfiguration.getAppPathsToDependencyDirs().put(appPath, getCanonicalPaths(projectConfiguration.getAppPathsToDependencyDirs().get(appPath)));
         }
 
         // todo: consider adding exit since this can be called from other components
@@ -162,21 +176,23 @@ public class FileSystemScanner {
         // go over all base directories, look for archives
         Map<String, String> archiveToBaseDirMap = new HashMap<>();
         List<String> archiveDirectories = new ArrayList<>();
-        if (archiveExtractionDepth > 0) {
-            ArchiveExtractor archiveExtractor = new ArchiveExtractor(archiveIncludes, archiveExcludes, excludes, archiveFastUnpack);
+        AgentConfiguration agentConfiguration = projectConfiguration.getAgentConfiguration();
+        if (agentConfiguration.getArchiveExtractionDepth() > 0) {
+            ArchiveExtractor archiveExtractor = new ArchiveExtractor(agentConfiguration.getArchiveIncludes(), agentConfiguration.getArchiveExcludes(),
+                    agentConfiguration.getExcludes(), agentConfiguration.isArchiveFastUnpack());
             logger.info("Starting Archive Extraction (may take a few minutes)");
             for (String scannerBaseDir : new LinkedHashSet<>(pathsToScan)) {
-                unpackDirectory = archiveExtractor.extractArchives(scannerBaseDir, archiveExtractionDepth, archiveDirectories);
+                unpackDirectory = archiveExtractor.extractArchives(scannerBaseDir, agentConfiguration.getArchiveExtractionDepth(), archiveDirectories);
                 if (unpackDirectory != null) {
                     archiveExtraction = true;
                     String parentFileUrl = new File(scannerBaseDir).getParent();
                     logger.debug("Unpack directory: {}, parent file: {}", unpackDirectory, parentFileUrl);
                     archiveToBaseDirMap.put(unpackDirectory, parentFileUrl);
                     pathsToScan.add(unpackDirectory);
-                    if (!appPathsToDependencyDirs.containsKey(FSAConfiguration.DEFAULT_KEY)) {
-                        appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, new HashSet<>());
+                    if (!projectConfiguration.getAppPathsToDependencyDirs().containsKey(FSAConfiguration.DEFAULT_KEY)) {
+                        projectConfiguration.getAppPathsToDependencyDirs().put(FSAConfiguration.DEFAULT_KEY, new HashSet<>());
                     }
-                    appPathsToDependencyDirs.get(FSAConfiguration.DEFAULT_KEY).add(unpackDirectory);
+                    projectConfiguration.getAppPathsToDependencyDirs().get(FSAConfiguration.DEFAULT_KEY).add(unpackDirectory);
                 }
             }
         }
@@ -189,21 +205,23 @@ public class FileSystemScanner {
         AgentProjectInfo mainProject = new AgentProjectInfo();
         allProjects.put(mainProject, null);
         allProjectsToViaComponents.put(mainProject, new LinkedList<>());
+        String[] excludes = agentConfiguration.getExcludes();
 
         logger.info("Scanning directories {} for matching Files (may take a few minutes)", pathsToScan);
-        logger.info("Included file types: {}", String.join(Constants.COMMA, includes));
-        logger.info("Excluded file types: {}", String.join(Constants.COMMA, excludes));
+        logger.info("Included file types: {}", String.join(Constants.COMMA, agentConfiguration.getIncludes()));
+        logger.info("Excluded file types: {}", String.join(Constants.COMMA, agentConfiguration.getExcludes()));
         String[] resolversIncludesPattern = createResolversIncludesPattern(dependencyResolutionService.getDependencyResolvers());
 
-        Map<File, Collection<String>> fileMapBeforeResolve = new FilesUtils().fillFilesMap(pathsToScan, resolversIncludesPattern, excludes, followSymlinks, globCaseSensitive);
+        Map<File, Collection<String>> fileMapBeforeResolve = new FilesUtils().fillFilesMap(pathsToScan, resolversIncludesPattern, agentConfiguration.getExcludes(),
+                agentConfiguration.isFollowSymlinks(), agentConfiguration.getGlobCaseSensitive());
         Set<String> allFiles = fileMapBeforeResolve.entrySet().stream().flatMap(folder -> folder.getValue().stream()).collect(Collectors.toSet());
 
         final int[] totalDependencies = {0};
         boolean isIgnoreSourceFiles = false;
         if (enableImpactAnalysis && iaLanguage != null) {
-            for (String appPath : appPathsToDependencyDirs.keySet()) {
+            for (String appPath : projectConfiguration.getAppPathsToDependencyDirs().keySet()) {
                 if (!appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
-                    if ((appPathsToDependencyDirs.get(appPath)).iterator().next() != null) {
+                    if ((projectConfiguration.getAppPathsToDependencyDirs().get(appPath)).iterator().next() != null) {
                         String pojoAppPath = appPath;
                         allProjectsToViaComponents.get(allProjects.keySet().stream().findFirst().get()).add(new ViaComponents(pojoAppPath, iaLanguage));
                     }
@@ -215,16 +233,15 @@ public class FileSystemScanner {
 
             // get all resolution results
             Collection<ResolutionResult> resolutionResults = new ArrayList<>();
-            for (String appPath : appPathsToDependencyDirs.keySet()) {
+            for (String appPath : projectConfiguration.getAppPathsToDependencyDirs().keySet()) {
                 ViaComponents viaComponents = null;
                 ViaLanguage impactAnalysisLanguage = null;
                 Collection<ResolutionResult> resolutionResult = new LinkedList<>();
                 LinkedList<String> pathsList = new LinkedList<>();
-                pathsList.addAll(appPathsToDependencyDirs.get(appPath));
-                if (appPath.equals(FSAConfiguration.DEFAULT_KEY) && appPathsToDependencyDirs.keySet().size() == 1) {
-                    resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, excludes);
-                } else if (!appPath.equals(FSAConfiguration.DEFAULT_KEY) && appPathsToDependencyDirs.keySet().size() > 1) {
-                    resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, excludes);
+                pathsList.addAll(projectConfiguration.getAppPathsToDependencyDirs().get(appPath));
+                if ((appPath.equals(FSAConfiguration.DEFAULT_KEY) && projectConfiguration.getAppPathsToDependencyDirs().keySet().size() == 1) ||
+                        (!appPath.equals(FSAConfiguration.DEFAULT_KEY) && projectConfiguration.getAppPathsToDependencyDirs().keySet().size() > 1)) {
+                    resolutionResult = dependencyResolutionService.resolveDependencies(pathsList, agentConfiguration.getExcludes());
                 }
                 if (resolutionResult.size() == 1 && !appPath.equals(FSAConfiguration.DEFAULT_KEY)) {
                     DependencyType dependencyType = resolutionResult.stream().findFirst().get().getDependencyType();
@@ -252,15 +269,14 @@ public class FileSystemScanner {
                         }
                     }
                 } else if (resolutionResult.size() > 1 && enableImpactAnalysis) {
-                    // logger.info("Impact analysis won't run, more than one language detected");
-                    // TODO return message when needed WSE-342
+                    logger.info("Effective Usage Analysis will not run if an unsupported resolver is active. Verify that non-supported resolvers are not active");
+                    Main.exit(StatusCode.ERROR.getValue());
                 }
                 if (impactAnalysisLanguage != null) {
                     viaComponents = new ViaComponents(appPath, impactAnalysisLanguage);
                 }
                 // TODO: Check why is result = null in the loop
-                //resolutionResult.removeIf(Objects::isNull);
-
+                resolutionResult.removeIf(Objects::isNull);
                 for (ResolutionResult result : resolutionResult) {
                     Map<AgentProjectInfo, Path> projects = result.getResolvedProjects();
                     Collection<DependencyInfo> dependenciesToVia = new ArrayList<>();
@@ -272,9 +288,9 @@ public class FileSystemScanner {
                             AgentProjectInfo currentProject;
 
                             // if it is single project threat it as the main
-                            if (((DependencyType.MAVEN.equals(result.getDependencyType()) &&
-                                    (!dependencyResolutionService.isMavenAggregateModules() || !dependencyResolutionService.isSbtAggregateModules()) ||
-                                    DependencyType.GRADLE.equals(result.getDependencyType()) && !dependencyResolutionService.isGradleAggregateModules())) &&
+                            if ((((DependencyType.MAVEN.equals(result.getDependencyType()) && (!dependencyResolutionService.isMavenAggregateModules() || !dependencyResolutionService.isSbtAggregateModules())) ||
+                                    (DependencyType.GRADLE.equals(result.getDependencyType()) && !dependencyResolutionService.isGradleAggregateModules()) ||
+                                    (DependencyType.HEX.equals(result.getDependencyType()) && !dependencyResolutionService.isHexAggregateModules()))) &&
                                     result.getResolvedProjects().size() > 1) {
                                 allProjects.put(project.getKey(), project.getValue());
                                 LinkedList<ViaComponents> listToNewProject = new LinkedList<>();
@@ -291,7 +307,8 @@ public class FileSystemScanner {
                             }
                             impactAnalysisLanguage = null;
                             totalDependencies[0] += dependencies.size();
-                            dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies));
+                            List<String> usedSha1 = new LinkedList<>();
+                            dependencies.forEach(dependency -> increaseCount(dependency, totalDependencies, usedSha1));
                         }
                     }
                     if (viaComponents != null) {
@@ -305,7 +322,7 @@ public class FileSystemScanner {
 
             // merge additional excludes
             Set<String> allExcludes = resolutionResults.stream().flatMap(resolution -> resolution.getExcludes().stream()).collect(Collectors.toSet());
-            allExcludes.addAll(Arrays.stream(excludes).collect(Collectors.toList()));
+            allExcludes.addAll(Arrays.stream(agentConfiguration.getExcludes()).collect(Collectors.toList()));
 
             // change the original excludes with the merged values
             excludes = new String[allExcludes.size()];
@@ -315,7 +332,8 @@ public class FileSystemScanner {
 
         String[] excludesExtended = excludeFileSystemAgent(excludes);
         logger.info("Scanning directories {} for matching Files (may take a few minutes)", pathsToScan);
-        Map<File, Collection<String>> fileMap = new FilesUtils().fillFilesMap(pathsToScan, includes, excludesExtended, followSymlinks, globCaseSensitive);
+        Map<File, Collection<String>> fileMap = new FilesUtils().fillFilesMap(pathsToScan, agentConfiguration.getIncludes(), excludesExtended,
+                agentConfiguration.isFollowSymlinks(), agentConfiguration.getGlobCaseSensitive());
         long filesCount = fileMap.entrySet().stream().flatMap(folder -> folder.getValue().stream()).count();
         totalFiles += filesCount;
         logger.info(MessageFormat.format("Total files found according to the includes/excludes pattern: {0}", totalFiles));
@@ -324,7 +342,9 @@ public class FileSystemScanner {
 
         if (!isIgnoreSourceFiles) {
             filesDependencies.addAll(dependencyCalculator.createDependencies(
-                    scmConnector, totalFiles, fileMap, excludedCopyrights, partialSha1Match, calculateHints, calculateMd5));
+                    projectConfiguration.isScmConnector(), totalFiles, fileMap, agentConfiguration.getExcludedCopyrights(),
+                    agentConfiguration.isPartialSha1Match(), agentConfiguration.isCalculateHints(),
+                    agentConfiguration.isCalculateMd5()));
         }
 
         if (allProjects.size() == 1) {
@@ -367,12 +387,13 @@ public class FileSystemScanner {
 
             // create new projects if necessary
             if (!isIgnoreSourceFiles && filesDependencies.size() > 0) {
-                scannerBaseDirs.stream().forEach(directory -> {
+                projectConfiguration.getScannerBaseDirs().stream().forEach(directory -> {
                     List<Path> subDirectories;
                     // check all folders
 
                     String[] includesAll = {Constants.PATTERN};
-                    subDirectories = new FilesUtils().getSubDirectories(directory, includesAll, null, followSymlinks, globCaseSensitive);
+                    subDirectories = new FilesUtils().getSubDirectories(directory, includesAll, null, agentConfiguration.isFollowSymlinks(),
+                            agentConfiguration.getGlobCaseSensitive());
                     subDirectories.forEach(subFolder -> {
                         if (filesDependencies.size() > 0) {
                             List<DependencyInfo> projectDependencies = filesDependencies.stream().
@@ -479,9 +500,14 @@ public class FileSystemScanner {
         return pathsToScan;
     }
 
-    private void increaseCount(DependencyInfo dependency, int[] totalDependencies) {
+    private void increaseCount(DependencyInfo dependency, int[] totalDependencies, List<String> usedSha1) {
+        sha1 = dependency.getSha1();
+        if (usedSha1.contains(sha1)) {
+            return;
+        }
+        usedSha1.add(sha1);
         totalDependencies[0] += dependency.getChildren().size();
-        dependency.getChildren().forEach(dependencyInfo -> increaseCount(dependencyInfo, totalDependencies));
+        dependency.getChildren().forEach(dependencyInfo -> increaseCount(dependencyInfo, totalDependencies, usedSha1));
     }
 
     private String[] excludeFileSystemAgent(String[] excludes) {

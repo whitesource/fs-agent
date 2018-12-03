@@ -1,16 +1,14 @@
 package org.whitesource.agent.dependency.resolver.html;
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+import org.apache.commons.lang.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.DependencyInfoFactory;
 import org.whitesource.agent.TempFolders;
@@ -19,12 +17,12 @@ import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.utils.FilesUtils;
+import org.whitesource.agent.utils.LoggerFactory;
 
+import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -41,12 +39,12 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
 
     public static final List<String> htmlTypeExtensions = Arrays.asList(Constants.HTM, Constants.HTML, Constants.SHTML,
             Constants.XHTML, Constants.JSP, Constants.ASP, Constants.DO, Constants.ASPX);
-    public final String[] includesPattern = new String[htmlTypeExtensions.size()];
-    public static final String WHITESOURCE_HTML_RESOLVER = "whitesource-html-resolver";
-
     public static final String URL_PATH = "://";
+
+    public final String[] includesPattern = new String[htmlTypeExtensions.size()];
     private final Pattern patternOfFirstLetter = Pattern.compile("[a-zA-Z].*");
     private final Pattern patternOfLegitSrcUrl = Pattern.compile("<%.*%>");
+    private Map<String, String> urlResponseMap = new HashMap<>();
 
     /* --- Constructors --- */
 
@@ -62,6 +60,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         Collection<DependencyInfo> dependencies = new LinkedList<>();
+
         for (String htmlFile : bomFiles) {
             Document htmlFileDocument;
             try {
@@ -79,18 +78,18 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
                         }
                     }
                 }
-                dependencies.addAll(collectJsFilesAndCalcHashes(scriptUrls, htmlFile));
+                dependencies.addAll(collectJsFilesAndCalcHashes(scriptUrls, htmlFile, this.urlResponseMap));
             } catch (IOException e) {
                 logger.debug("Cannot parse the html file: {}", htmlFile);
             }
         }
 
-       // delete parent folder of HTML Resolver
-       try {
-           new TempFolders().deleteTempFoldersHelper(Paths.get(System.getProperty("java.io.tmpdir"), WHITESOURCE_HTML_RESOLVER).toString());
-       } catch(Exception e) {
-           logger.debug("Failed to delete HTML Dependency Resolver Folder{}", e.getMessage());
-       }
+        // delete parent folder of HTML Resolver
+        try {
+            new TempFolders().deleteTempFoldersHelper(Paths.get(System.getProperty("java.io.tmpdir"), TempFolders.UNIQUE_HTML_TEMP_FOLDER).toString());
+        } catch (Exception e) {
+            logger.debug("Failed to delete HTML Dependency Resolver Folder{}", e.getMessage());
+        }
         // check the type and excludes
         return new ResolutionResult(dependencies, getExcludes(), getDependencyType(), topLevelFolder);
     }
@@ -111,46 +110,55 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
         return false;
     }
 
-    private List<DependencyInfo> collectJsFilesAndCalcHashes(List<String> scriptUrls, String htmlFilePath) {
+    private List<DependencyInfo> collectJsFilesAndCalcHashes(List<String> scriptUrls, String htmlFilePath, Map<String, String> urlResponseMap) {
         List<DependencyInfo> dependencies = new LinkedList<>();
-        String tempFolder = new FilesUtils().createTmpFolder(false, WHITESOURCE_HTML_RESOLVER);
+        String body = null;
+        String tempFolder = new FilesUtils().createTmpFolder(false, TempFolders.UNIQUE_HTML_TEMP_FOLDER);
         File tempFolderFile = new File(tempFolder);
-        RestTemplate restTemplate = new RestTemplate();
         String dependencyFileName = null;
         if (tempFolder != null) {
             for (String scriptUrl : scriptUrls) {
-                URI uriScopeDep;
                 try {
-                    uriScopeDep = new URI(scriptUrl);
-                    HttpHeaders httpHeaders = new HttpHeaders();
-                    HttpEntity entity = new HttpEntity(httpHeaders);
-                    String body = restTemplate.exchange(uriScopeDep, HttpMethod.GET, entity, String.class).getBody();
-                    String fileName = scriptUrl.substring(scriptUrl.lastIndexOf(Constants.FORWARD_SLASH) + 1);
-                    dependencyFileName = tempFolder + File.separator + fileName;
-                    PrintWriter writer = new PrintWriter(dependencyFileName, Constants.UTF8);
-                    if (writer != null) {
-                        writer.println(body);
-                        writer.close();
+                    if (urlResponseMap.containsKey(scriptUrl)) {
+                        body = urlResponseMap.get(scriptUrl);
+                    } else {
+                        Client client = Client.create();
+                        WebResource webResource = client.resource(scriptUrl);
+                        ClientResponse response = webResource.accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+                        if (response.getStatus() != 200) {
+                            logger.debug("Could not reach the registry using the URL: {}.", scriptUrl);
+                        } else {
+                            logger.debug("Found a dependency in html file {}, URL: {}", htmlFilePath, scriptUrl);
+                            body = response.getEntity(String.class);
+
+                            String fileName = scriptUrl.substring(scriptUrl.lastIndexOf(Constants.FORWARD_SLASH) + 1);
+                            dependencyFileName = tempFolder + File.separator + fileName;
+                            PrintWriter writer = new PrintWriter(dependencyFileName, Constants.UTF8);
+                            if (writer != null) {
+                                writer.println(body);
+                                writer.close();
+                            }
+                            DependencyInfoFactory dependencyInfoFactory = new DependencyInfoFactory();
+                            DependencyInfo dependencyInfo = dependencyInfoFactory.createDependencyInfo(tempFolderFile, fileName);
+                            if (dependencyInfo != null) {
+                                dependencies.add(dependencyInfo);
+                                dependencyInfo.setSystemPath(htmlFilePath);
+                                dependencyInfo.setDependencyFile(htmlFilePath);
+                            }
+                        }
                     }
-                    DependencyInfoFactory dependencyInfoFactory = new DependencyInfoFactory();
-                    DependencyInfo dependencyInfo = dependencyInfoFactory.createDependencyInfo(tempFolderFile, fileName);
-                    if (dependencyInfo != null) {
-                        dependencies.add(dependencyInfo);
-                        dependencyInfo.setSystemPath(htmlFilePath);
-                    }
-                } catch (RestClientException e) {
-                    logger.debug("Could not reach the registry using the URL: {}. Got an error: {}", scriptUrl, e.getMessage());
-                } catch (URISyntaxException e) {
-                    logger.debug("Failed creating uri of {}", scriptUrl);
                 } catch (IOException e) {
                     logger.debug("Failed writing to file {}", dependencyFileName);
-                } catch (Exception e){
-                    logger.debug("An exception occurred :{}" , e.getMessage());
+                } catch (Exception e) {
+                    logger.debug("Could not reach the registry using the URL: {}.", scriptUrl);
+                } finally {
+                    if (StringUtils.isNotBlank(scriptUrl)) {
+                        urlResponseMap.put(scriptUrl, body);
+                    }
                 }
-
             }
-            FilesUtils.deleteDirectory(tempFolderFile);
         }
+        FilesUtils.deleteDirectory(tempFolderFile);
         return dependencies;
     }
 

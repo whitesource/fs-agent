@@ -16,6 +16,7 @@
 package org.whitesource.agent.dependency.resolver.python;
 
 import org.whitesource.agent.Constants;
+import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -51,7 +52,6 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     //private static final String PYTHON_BOM = "requirements.txt";
     private static final String PY_EXT = ".py";
-    public static final String WHITESOURCE_PYTHON_TEMP_FOLDER = "Whitesource_python_resolver";
     public static final String DIRECT = "_direct";
 
     /* --- Constructors --- */
@@ -93,9 +93,9 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     private Collection<DependencyInfo> runPipAlgorithm(FilesUtils filesUtils, Collection<DependencyInfo> dependencies, Set<String> dependenciesFiles) {
         for (String dependencyFile : dependenciesFiles) {
-            String tempDirVirtualEnv = filesUtils.createTmpFolder(true, WHITESOURCE_PYTHON_TEMP_FOLDER);
-            String tempDirPackages = filesUtils.createTmpFolder(false, WHITESOURCE_PYTHON_TEMP_FOLDER);
-            String tempDirDirectPackages = filesUtils.createTmpFolder(false, WHITESOURCE_PYTHON_TEMP_FOLDER + DIRECT);
+            String tempDirVirtualEnv = filesUtils.createTmpFolder(true, TempFolders.UNIQUE_PYTHON_TEMP_FOLDER);
+            String tempDirPackages = filesUtils.createTmpFolder(false, TempFolders.UNIQUE_PYTHON_TEMP_FOLDER);
+            String tempDirDirectPackages = filesUtils.createTmpFolder(false, TempFolders.UNIQUE_PYTHON_TEMP_FOLDER + DIRECT);
             PythonDependencyCollector pythonDependencyCollector;
             if (tempDirVirtualEnv != null && tempDirPackages != null) {
                 pythonDependencyCollector = new PythonDependencyCollector(this.pythonPath, this.pipPath, this.installVirutalenv, this.resolveHierarchyTree, this.ignorePipInstallErrors,
@@ -117,7 +117,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         String tempDirPackages = null;
         Collection<DependencyInfo> dependencies = new LinkedList<>();
         try {
-            tempDirPackages = filesUtils.createTmpFolder(true, WHITESOURCE_PYTHON_TEMP_FOLDER);
+            tempDirPackages = filesUtils.createTmpFolder(true, TempFolders.UNIQUE_PYTHON_TEMP_FOLDER);
             String dependencyFile = pipfilePath;
             PythonDependencyCollector pythonDependencyCollector;
             pythonDependencyCollector = new PythonDependencyCollector(ignorePipEnvInstallErrors, runPipenvPreStep, tempDirPackages, pythonPath, pipPath, pipenvInstallDevDependencies);

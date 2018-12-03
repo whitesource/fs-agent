@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -13,8 +14,10 @@ import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.gradle.GradleCli;
 import org.whitesource.agent.dependency.resolver.gradle.GradleMvnCommand;
+import org.whitesource.agent.hash.HashCalculator;
 import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.CommandLineProcess;
+import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.LoggerFactory;
 
 import java.io.*;
@@ -34,6 +37,8 @@ import static org.whitesource.agent.Constants.EMPTY_STRING;
 public class GoDependencyResolver extends AbstractDependencyResolver {
 
     public static final String GOPM_GEN_CMD = "gen";
+    private static final String GODEPS = "Godeps";
+    private static final String VENDOR = "vendor";
     private final Logger logger = LoggerFactory.getLogger(GoDependencyResolver.class);
 
     private static final String PROJECTS        = "[[projects]]";
@@ -92,8 +97,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private boolean ignoreTestPackages;
     private boolean goGradleEnableTaskAlias;
     private String gradlePreferredEnvironment;
+    private HashCalculator hashCalculator = new HashCalculator();
+    private boolean addSha1;
+    private boolean afterCollect = false;
 
-    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean ignoreSourceFiles, boolean ignoreTestPackages, boolean goGradleEnableTaskAlias, String gradlePreferredEnvironment){
+    public GoDependencyResolver(GoDependencyManager goDependencyManager, boolean collectDependenciesAtRuntime, boolean ignoreSourceFiles, boolean ignoreTestPackages, boolean goGradleEnableTaskAlias, String gradlePreferredEnvironment, boolean addSha1){
         super();
         this.cli = new Cli();
         this.goDependencyManager = goDependencyManager;
@@ -102,6 +110,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         this.ignoreTestPackages = ignoreTestPackages;
         this.goGradleEnableTaskAlias = goGradleEnableTaskAlias;
         this.gradlePreferredEnvironment = gradlePreferredEnvironment;
+        this.addSha1 = addSha1;
     }
 
     @Override
@@ -113,7 +122,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     @Override
     protected Collection<String> getExcludes() {
         Set<String> excludes = new HashSet<>();
-        if (!collectDependenciesAtRuntime && goDependencyManager != null && ignoreSourceFiles){
+        if (afterCollect && ignoreSourceFiles){
             excludes.add(Constants.PATTERN + GO_EXTENSION);
         }
         return excludes;
@@ -208,8 +217,13 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             logger.error(error);
         }
 
-        if (collectDependenciesAtRuntime)
-            removeTempFiles(rootDirectory, creationTime);
+        if (collectDependenciesAtRuntime) {
+            String errors = FilesUtils.removeTempFiles(rootDirectory, creationTime);
+            if (!errors.isEmpty()){
+                logger.error(errors);
+            }
+        }
+        afterCollect = true;
         return dependencyInfos;
     }
 
@@ -218,24 +232,31 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         String error = null;
         try {
             collectDepDependencies(rootDirectory, dependencyInfos);
+            goDependencyManager = GoDependencyManager.DEP;
         } catch (Exception e){
             try {
                 collectGoDepDependencies(rootDirectory, dependencyInfos);
+                goDependencyManager = GoDependencyManager.GO_DEP;
             } catch (Exception e1){
                 try {
                     collectVndrDependencies(rootDirectory, dependencyInfos);
+                    goDependencyManager = GoDependencyManager.VNDR;
                 } catch (Exception e2) {
                     try {
                         collectGoGradleDependencies(rootDirectory, dependencyInfos);
+                        goDependencyManager = GoDependencyManager.GO_GRADLE;
                     } catch (Exception e3) {
                         try {
                             collectGlideDependencies(rootDirectory, dependencyInfos);
+                            goDependencyManager = GoDependencyManager.GLIDE;
                         } catch (Exception e4) {
                             try {
                                 collectGoVendorDependencies(rootDirectory, dependencyInfos);
+                                goDependencyManager = GoDependencyManager.GO_VENDOR;
                             } catch (Exception e5) {
                                 try {
                                     collectGoPMDependencies(rootDirectory, dependencyInfos);
+                                    goDependencyManager = GoDependencyManager.GOPM;
                                 } catch (Exception e6) {
                                     error = "Couldn't collect dependencies - no dependency manager is installed";
                                 }
@@ -297,7 +318,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                                             dependencyInfo.getArtifactId() + Constants.FORWARD_SLASH + name,
                                             dependencyInfo.getVersion());
                                     packageDependencyInfo.setCommit(dependencyInfo.getCommit());
-                                    dependencyInfos.add(packageDependencyInfo);
+                                    packageDependencyInfo.setDependencyType(DependencyType.GO);
+                                    if (useParent) {
+                                        dependencyInfo.getChildren().add(packageDependencyInfo);
+                                    } else {
+                                        dependencyInfos.add(packageDependencyInfo);
+                                    }
                                 }
                                 repositoryPackages = null;
                             }
@@ -350,7 +376,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
             }
         }
-        dependencyInfos.stream().forEach(dependencyInfo -> {dependencyInfo.setSystemPath(goPckLock.getPath()); dependencyInfo.setDependencyType(DependencyType.GO);});
+        dependencyInfos.stream().forEach(dependencyInfo -> {
+            //dependencyInfo.setDependencyFile(goPckLock.getPath());
+            dependencyInfo.setDependencyType(DependencyType.GO);
+            setSha1(dependencyInfo);
+
+        });
         return dependencyInfos;
     }
 
@@ -420,9 +451,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         }
                         if (line.length <= 1 || line[1].equals(EMPTY_STRING)) {
                             logger.warn("Using dependency without tag/commit is not supported, library {}, will not be recognized by WSS", line[0]);
+                            continue;
                         }
-                        dependencyInfo.setDependencyType(DependencyType.GO);
+                        /*dependencyInfo.setDependencyType(DependencyType.GO);
                         dependencyInfo.setSystemPath(goPmFile.getPath());
+                        setSha1(dependencyInfo);*/
                         dependencyInfos.add(dependencyInfo);
                     }
                 } else if (currLine.contains(OPENNING_BRACKET + GOPM_DEPS + BRACKET)){ //if the current line contains [deps]
@@ -445,7 +478,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
             }
         }
-        dependencyInfos.stream().forEach(dependencyInfo -> {dependencyInfo.setSystemPath(goPmFile.getPath()); dependencyInfo.setDependencyType(DependencyType.GO);});
+        dependencyInfos.stream().forEach(dependencyInfo -> {
+            //dependencyInfo.setDependencyFile(goPmFile.getPath());
+            dependencyInfo.setDependencyType(DependencyType.GO);
+            setSha1(dependencyInfo);
+        });
         return dependencyInfos;
     }
 
@@ -458,7 +495,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoDepDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'godep'");
-        File goDepJson = new File(rootDirectory + fileSeparator + "Godeps" + fileSeparator +  GODEPS_JSON);
+        // apparently when go.collectDependenciesAtRuntime=false, the rootDirectory includes the 'Godeps' folder as well - in such case removing it from the path
+        File goDepJson = new File(rootDirectory + (!collectDependenciesAtRuntime && rootDirectory.endsWith(GODEPS) ? "" : fileSeparator + GODEPS) + fileSeparator +  GODEPS_JSON);
         if (goDepJson.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GO_DEP.getType(), GO_SAVE)))){
             dependencyInfos.addAll(parseGoDeps(goDepJson));
         } else {
@@ -484,7 +522,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     dependencyInfo.setArtifactId(importPath);
                     dependencyInfo.setCommit(dep.get(REV).getAsString());
                     dependencyInfo.setDependencyType(DependencyType.GO);
-                    dependencyInfo.setSystemPath(goDeps.getPath());
+                    //dependencyInfo.setDependencyFile(goDeps.getPath());
+                    setSha1(dependencyInfo);
                     JsonElement commentElement = dep.get(COMMENT);
                     if (commentElement != null){
                         String comment = commentElement.getAsString();
@@ -518,7 +557,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private void collectGoVendorDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'govendor'");
-        File goVendorJson = new File(rootDirectory  + fileSeparator +  GOVENDOR_JSON);
+        // apparently when go.collectDependenciesAtRuntime=false, the rootDirectory includes the 'vendor' folder as well - in such case removing it from the path
+        File goVendorJson = new File(rootDirectory  + (!collectDependenciesAtRuntime && rootDirectory.endsWith(VENDOR) ? "" : fileSeparator + VENDOR ) + fileSeparator + GOVENDOR_JSON);
         if (goVendorJson.isFile()){
             dependencyInfos.addAll(parseGoVendor(goVendorJson));
         } else {
@@ -549,7 +589,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         dependencyInfo.setArtifactId(Path);
                         dependencyInfo.setCommit(pck.get(REVISION_GOV).getAsString());
                         dependencyInfo.setDependencyType(DependencyType.GO);
-                        dependencyInfo.setSystemPath(goVendor.getPath());
+                        //dependencyInfo.setDependencyFile(goVendor.getPath());
+                        setSha1(dependencyInfo);
                         if (pck.get(VERSION_GOV) != null) {
                             dependencyInfo.setVersion(pck.get(VERSION_GOV).getAsString());
                         }
@@ -595,7 +636,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 dependencyInfo.setArtifactId(name);
                 dependencyInfo.setCommit(split[1]);
                 dependencyInfo.setDependencyType(DependencyType.GO);
-                dependencyInfo.setSystemPath(vendorConf.getPath());
+                //dependencyInfo.setDependencyFile(vendorConf.getPath());
+                setSha1(dependencyInfo);
                 dependencyInfos.add(dependencyInfo);
             }
         } catch (FileNotFoundException e) {
@@ -606,43 +648,49 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         return dependencyInfos;
     }
 
-    private void collectGoGradleDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) {
+    private void collectGoGradleDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'GoGradle'");
         GradleCli gradleCli = new GradleCli(this.gradlePreferredEnvironment);
         try {
             Stream<Path> pathStream = Files.walk(Paths.get(rootDirectory), Integer.MAX_VALUE).filter(file -> file.getFileName().toString().equals(Constants.BUILD_GRADLE));
-            pathStream.forEach(file -> {
-                GradleMvnCommand command = this.goGradleEnableTaskAlias ? GradleMvnCommand.GO_DEPENDENCIES : GradleMvnCommand.DEPENDENCIES;
-                List<String> lines = gradleCli.runGradleCmd(file.getParent().toString(), gradleCli.getGradleCommandParams(command));
-                if (lines != null) {
-                    parseGoGradleDependencies(lines, dependencyInfos, rootDirectory);
-                    if (dependencyInfos.size() > 0) {
-                        File goGradleLock = new File(rootDirectory + fileSeparator + GOGRADLE_LOCK);
-                        // in case goGradle-enable-task-alias is true - use goLock instead of lock
-                        if (goGradleLock.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, gradleCli.getGradleCommandParams(this.goGradleEnableTaskAlias ? GradleMvnCommand.GO_LOCK : GradleMvnCommand.LOCK)))) {
-                            HashMap<String, String> gradleLockFile = parseGoGradleLockFile(goGradleLock);
-                            // for each dependency - matching its full commit id
-                            dependencyInfos.stream().forEach(dependencyInfo -> dependencyInfo.setCommit(gradleLockFile.get(dependencyInfo.getArtifactId())));
-                            // removing dependencies without commit-id and version
-                            dependencyInfos.stream().forEach(dependencyInfo -> {
-                                if (dependencyInfo.getVersion() == null && dependencyInfo.getCommit() == null){
-                                    logger.debug("{}/{} has no version nor commit-id; removing it from the dependencies' list", dependencyInfo.getArtifactId(), dependencyInfo.getGroupId());
-                                }
-                            });
-                            dependencyInfos.removeIf(dependencyInfo -> dependencyInfo.getCommit() == null && dependencyInfo.getVersion() == null);
+            if (pathStream.count() > 0) {
+                pathStream.forEach(file -> {
+                    GradleMvnCommand command = this.goGradleEnableTaskAlias ? GradleMvnCommand.GO_DEPENDENCIES : GradleMvnCommand.DEPENDENCIES;
+                    List<String> lines = gradleCli.runGradleCmd(file.getParent().toString(), gradleCli.getGradleCommandParams(command), true);
+                    if (lines != null) {
+                        parseGoGradleDependencies(lines, dependencyInfos, rootDirectory);
+                        if (dependencyInfos.size() > 0) {
+                            File goGradleLock = new File(rootDirectory + fileSeparator + GOGRADLE_LOCK);
+                            // in case goGradle-enable-task-alias is true - use goLock instead of lock
+                            if (goGradleLock.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, gradleCli.getGradleCommandParams(this.goGradleEnableTaskAlias ? GradleMvnCommand.GO_LOCK : GradleMvnCommand.LOCK)))) {
+                                HashMap<String, String> gradleLockFile = parseGoGradleLockFile(goGradleLock);
+                                // for each dependency - matching its full commit id
+                                dependencyInfos.stream().forEach(dependencyInfo -> dependencyInfo.setCommit(gradleLockFile.get(dependencyInfo.getArtifactId())));
+                                // removing dependencies without commit-id and version
+                                dependencyInfos.stream().forEach(dependencyInfo -> {
+                                    if (dependencyInfo.getVersion() == null && dependencyInfo.getCommit() == null) {
+                                        logger.debug("{}/{} has no version nor commit-id; removing it from the dependencies' list", dependencyInfo.getArtifactId(), dependencyInfo.getGroupId());
+                                    } else {
+                                        setSha1(dependencyInfo);
+                                    }
+                                });
+                                dependencyInfos.removeIf(dependencyInfo -> dependencyInfo.getCommit() == null && dependencyInfo.getVersion() == null);
+                            } else {
+                                logger.warn("Can't find {} and verify dependencies commit-ids; make sure 'collectDependenciesAtRuntime' is set to true or run 'gradlew lock' manually", goGradleLock.getPath());
+                            }
                         } else {
-                            logger.warn("Can't find {} and verify dependencies commit-ids; make sure 'collectDependenciesAtRuntime' is set to true or run 'gradlew lock' manually", goGradleLock.getPath());
+                            logger.warn("no dependencies found after running 'gradlew " + command.getCommand() + " command.  \n" +
+                                    "If your gradle.properties file includes 'org.gradle.jvmargs=-Dgogradle.alias=true' make sure that 'go.gogradle.enableTaskAlias' in the configuration file is set to 'true'");
                         }
                     } else {
-                      logger.warn("no dependencies found after running 'gradlew " + command.getCommand() +" command.  \n" +
-                              "If your gradle.properties file includes 'org.gradle.jvmargs=-Dgogradle.alias=true' make sure that 'go.gogradle.enableTaskAlias' in the configuration file is set to 'true'");
+                        logger.warn("running `gradlew " + command.getCommand() + "` command failed.  \n" +
+                                "If your gradle.properties file includes 'org.gradle.jvmargs=-Dgogradle.alias=true' make sure that 'go.gogradle.enableTaskAlias' in the configuration file is set to 'true';\n" +
+                                "otherwise - set it to false");
                     }
-                } else {
-                    logger.warn("running `gradlew " + command.getCommand() + "` command failed.  \n" +
-                            "If your gradle.properties file includes 'org.gradle.jvmargs=-Dgogradle.alias=true' make sure that 'go.gogradle.enableTaskAlias' in the configuration file is set to 'true';\n" +
-                            "otherwise - set it to false");
-                }
-            });
+                });
+            } else {
+                throw new Exception("Can't find any 'build.gradle' file.  Please make sure Gradle is installed");
+            }
         } catch (IOException e){
             logger.warn("Error collecting go-gradle dependencies from {}, exception: {}", rootDirectory, e.getMessage());
             logger.debug("Exception: {}", e.getStackTrace());
@@ -698,7 +746,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
                 dependencyInfo.setArtifactId(name);
                 dependencyInfo.setDependencyType(DependencyType.GO);
-                dependencyInfo.setSystemPath(rootDirectory + fileSeparator + Constants.BUILD_GRADLE);
+                //dependencyInfo.setDependencyFile(rootDirectory + fileSeparator + Constants.BUILD_GRADLE);
                 dependencyInfos.add(dependencyInfo);
             } catch (Exception e){
                 logger.warn("Error parsing line {}, exception: {}", currentLine, e.getMessage());
@@ -822,6 +870,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             // this flag indicates if we get to imports line
             boolean resolveRepositoryPackages = false;
             boolean resolveSubPackages = false;
+            DependencyInfo currentDependency = null;
             while ((currLine = bufferedReader.readLine()) != null) {
                 /* possible lines:
                     imports:
@@ -842,13 +891,19 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         currLine = bufferedReader.readLine();
                         if (currLine != null) {
                             commit = currLine.substring(VERSION_GLIDE.length());
-                            dependencies.add(createGlideDependency(name, commit, glideLock.getAbsolutePath()));
+                            currentDependency = createGlideDependency(name, commit, glideLock.getAbsolutePath());
+                            dependencies.add(currentDependency);
                         }
                     } else if (currLine.startsWith(SUBPACKAGES_GLIDE)) {
                         resolveSubPackages = true;
                     } else if (resolveSubPackages && currLine.startsWith(PREFIX_SUBPACKAGES_SECTION)) {
                         String subPackageName = currLine.substring(PREFIX_SUBPACKAGES_SECTION.length());
-                        dependencies.add(createGlideDependency(name + Constants.FORWARD_SLASH + subPackageName, commit, glideLock.getAbsolutePath()));
+                        DependencyInfo childDependency = createGlideDependency(name + Constants.FORWARD_SLASH + subPackageName, commit, glideLock.getAbsolutePath());
+                        if (currentDependency == null) {
+                            dependencies.add(childDependency);
+                        } else {
+                            currentDependency.getChildren().add(childDependency);
+                        }
                     } else if (currLine.startsWith(TEST_IMPORTS)) {
                         resolveSubPackages = false;
                         if (this.ignoreTestPackages) {
@@ -880,8 +935,31 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         dependency.setArtifactId(name);
         dependency.setCommit(commit);
         dependency.setDependencyType(DependencyType.GO);
-        dependency.setSystemPath(systemPath);
+        //dependency.setDependencyFile(systemPath);
+        setSha1(dependency);
         return dependency;
+    }
+
+    private void setSha1(DependencyInfo dependencyInfo){
+        if (this.addSha1) {
+            String artifactId = dependencyInfo.getArtifactId();
+            String version = dependencyInfo.getVersion();
+            String commit = dependencyInfo.getCommit();
+            if (StringUtils.isBlank(version) && StringUtils.isBlank(commit)) {
+                logger.debug("Unable to calcluate SHA1 for {}, it has no version nor commit-id", artifactId);
+                return;
+            }
+            String sha1 = null;
+            String sha1Source = StringUtils.isNotBlank(version) ? version : commit;
+            try {
+                sha1 = this.hashCalculator.calculateSha1ByNameVersionAndType(artifactId, sha1Source, DependencyType.GO);
+            } catch (IOException e) {
+                logger.debug("Failed to calculate sha1 of: {}", artifactId);
+            }
+            if (sha1 != null) {
+                dependencyInfo.setSha1(sha1);
+            }
+        }
     }
 
     private boolean runCmd(String rootDirectory, String[] params){

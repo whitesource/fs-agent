@@ -17,6 +17,7 @@ package org.whitesource.agent.dependency.resolver;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
+import org.whitesource.agent.dependency.resolver.npm.RegistryType;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 
@@ -39,6 +40,7 @@ public class BomFile {
     private Map<String, String> optionalDependencies;
     private String resolved;
     private boolean scopedPackage;
+    private RegistryType registryType;
 
     public static String DUMMY_PARAMETER_SCOPE_PACKAGE = "{dummyParameterOfScopePackage}";
     private final Logger logger = LoggerFactory.getLogger(BomFile.class);
@@ -51,7 +53,7 @@ public class BomFile {
     /* --- Constructors --- */
 
     public BomFile(String name, String version, String sha1, String fileName, String localFileName,
-                   Map<String, String> dependencies, Map<String, String> optionalDependencies, String resolved) {
+                   Map<String, String> dependencies, Map<String, String> optionalDependencies, String resolved, RegistryType registryType) {
         this.name = name;
         this.version = version;
         this.sha1 = sha1;
@@ -62,10 +64,11 @@ public class BomFile {
         this.resolved = resolved;
         this.scopedPackage = false;
         this.groupId = null;
+        this.registryType = registryType;
     }
 
     public BomFile(String groupId, String artifactId, String version, String bomPath) {
-        this(artifactId, version, null, null, bomPath, null, null, null);
+        this(artifactId, version, null, null, bomPath, null, null, null, null);
         this.groupId = groupId;
     }
 
@@ -117,6 +120,10 @@ public class BomFile {
         return optionalDependencies;
     }
 
+    public RegistryType getRegistryType() {
+        return this.registryType;
+    }
+
     public String getRegistryPackageUrl() {
         String registryPackageUrl = null;
         if (StringUtils.isEmpty(this.resolved)) {
@@ -129,10 +136,15 @@ public class BomFile {
             logger.info("This configuration - " + this.name + " (remote repository packages) is not supported by WhiteSource. Please use direct URL package references.");
             return StringUtils.EMPTY;
         }
-        if (this.resolved.contains(SCOPED_PACKAGE) || this.resolved.indexOf(NPM_REGISTRY) == -1) {
+
+        if (this.registryType == RegistryType.ARTIFACTORY) {
+            // example: change this url: http://localhost:8081/artifactory/api/npm/npmExample/q-1.5.1.tgz to http://localhost:8081/artifactory/api/npm/npmExample/q-1.5.1.json
+            registryPackageUrl = this.resolved.substring(0, this.resolved.length() - 3);
+            registryPackageUrl = registryPackageUrl + "json";
+        } else if (this.resolved.contains(SCOPED_PACKAGE) || this.registryType != RegistryType.NPM_REGISTRY) {
             // resolve rare cases where the package's name is a sub-string of the registry's url
             int npmRegistryIndex = this.resolved.indexOf(NPM_REGISTRY1);
-            registryPackageUrl =  this.resolved.substring(0, this.resolved.indexOf(this.name,npmRegistryIndex) + this.name.length());
+            registryPackageUrl = this.resolved.substring(0, this.resolved.indexOf(this.name, npmRegistryIndex) + this.name.length());
             int lastSlashIndex = registryPackageUrl.lastIndexOf('/');
             registryPackageUrl = registryPackageUrl.substring(0, lastSlashIndex) + DUMMY_PARAMETER_SCOPE_PACKAGE + registryPackageUrl.substring(lastSlashIndex + 1);
             this.scopedPackage = true;

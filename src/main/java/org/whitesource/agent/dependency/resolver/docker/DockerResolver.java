@@ -5,16 +5,17 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.archiver.ArchiverException;
 import org.slf4j.Logger;
-import org.whitesource.agent.dependency.resolver.docker.remotedocker.RemoteDockersManager;
-import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
+import org.whitesource.agent.ProjectConfiguration;
+import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.archive.ArchiveExtractor;
-import org.whitesource.agent.hash.FileExtensions;
+import org.whitesource.agent.dependency.resolver.docker.remotedocker.RemoteDockersManager;
 import org.whitesource.agent.utils.FilesScanner;
+import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.fs.FSAConfiguration;
 
 import java.io.*;
@@ -22,6 +23,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.whitesource.agent.Constants.*;
 import static org.whitesource.agent.archive.ArchiveExtractor.TAR_SUFFIX;
@@ -35,8 +37,7 @@ public class DockerResolver {
 
     private static final Logger logger = LoggerFactory.getLogger(DockerResolver.class);
 
-    private static final String WHITE_SOURCE_DOCKER = "WhiteSource-Docker";
-    private static final String TEMP_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + WHITE_SOURCE_DOCKER;
+    private static final String TEMP_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + TempFolders.UNIQUE_DOCKER_TEMP_FOLDER;
     private static final String DOCKER_SAVE_IMAGE_COMMAND = "docker save";
     private static final String O_PARAMETER = "-o";
     private static final String REPOSITORY = "REPOSITORY";
@@ -208,13 +209,13 @@ public class DockerResolver {
             try {
                 int megaByte = 1048576; // 1024*1024
                 long tarSizeInBytes = imageTarFile.length();
-                long tarSizeInMBs = tarSizeInBytes/megaByte;
+                long tarSizeInMBs = tarSizeInBytes / megaByte;
                 long freeDiskSpaceInBytes = imageTarFile.getFreeSpace();
-                long freeDiskSpaceInMBs = imageTarFile.getFreeSpace()/megaByte;
+                long freeDiskSpaceInMBs = imageTarFile.getFreeSpace() / megaByte;
 
                 logger.info("Extracting file {} - Size {} Bytes ({} MBs)- Free Space {} Bytes ({} MBs)",
                         imageTarFile.getCanonicalPath(), tarSizeInBytes, tarSizeInMBs, freeDiskSpaceInBytes, freeDiskSpaceInMBs);
-            } catch (Exception ex){
+            } catch (Exception ex) {
                 logger.error("Could not get file size - {}", ex);
             }
             archiveExtractor.extractDockerImageLayers(imageTarFile, imageExtractionDir);
@@ -271,10 +272,9 @@ public class DockerResolver {
             setDirs.add(extractPath);
             Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
             appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
-            List<DependencyInfo> dependencyInfos = new FileSystemScanner(config.getResolver(), config.getAgent(), false).createProjects(
-                    Arrays.asList(extractPath), appPathsToDependencyDirs, false, config.getAgent().getIncludes(), config.getAgent().getExcludes(),
-                    config.getAgent().getGlobCaseSensitive(), config.getAgent().getArchiveExtractionDepth(), FileExtensions.ARCHIVE_INCLUDES,
-                    FileExtensions.ARCHIVE_EXCLUDES, false, config.getAgent().isFollowSymlinks(), config.getAgent().getExcludedCopyrights(), PARTIAL_SHA1_MATCH, config.getAgent().getPythonRequirementsFileIncludes());
+            ProjectConfiguration projectConfiguration = new ProjectConfiguration(config.getAgent(), Arrays.asList(extractPath), appPathsToDependencyDirs, false);
+            Collection<AgentProjectInfo> agentProjectInfos = new FileSystemScanner(config.getResolver(), config.getAgent(), false).createProjects(projectConfiguration).keySet();
+            List<DependencyInfo> dependencyInfos = agentProjectInfos.stream().flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList());
 
             projectInfo.getDependencies().addAll(dependencyInfos);
         } catch (IOException e) {

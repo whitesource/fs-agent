@@ -52,33 +52,35 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     private static final String MVN_COMMAND = "mvn";
     private static final String SCOPE_TEST = "test";
     private static final String SCOPE_PROVIDED = "provided";
-    private static final String USER_HOME = "user.home";
     private static final String M2 = ".m2";
     private static final String REPOSITORY = "repository";
     public static final String ALL = "All";
     public static final String NONE = "None";
-    private static final String POM = "pom";
-    private static final String B_PARAMETER = "-B";
-    private static final String VERSION_PARAMETER = "-v";
-    private static final String TEST_JAR = "test-jar";
-    private static final String JAR = "jar";
-    private static final String MVN_CLEAN = "clean";
-    private static final String MVN_INSTALL = "install";
-    private static final String MVN_SKIP_TESTS = "-DskipTests";
-
+    public static final String EJB = "ejb";
+    private final String B_PARAMETER = "-B";
+    private final String VERSION_PARAMETER = "-v";
+    protected final String TEST_JAR = "test-jar";
+    private final String MVN_CLEAN = "clean";
+    private final String MVN_INSTALL = "install";
+    private final String MVN_SKIP_TESTS = "-DskipTests";
+    private boolean errorsRunningDependencyTree = false;
 
     /* --- Members --- */
 
     protected String M2Path;
-    private final Set<String> mavenIgnoredScopes;
+    private Set<String> mavenIgnoredScopes;
     private boolean showMavenTreeError;
     private boolean ignorePomModules;
     private boolean runPreStep;
     private MavenLinesParser mavenLinesParser;
-
+    private boolean mavenIgnoreDependencyTreeErrors;
     /* --- Constructors --- */
 
-    public MavenTreeDependencyCollector(String[] mavenIgnoredScopes, boolean ignorePomModules, boolean runPreStep) {
+    // this constructor was added only to allow MavenPomParser to extend this class
+    public MavenTreeDependencyCollector() {
+    }
+
+    public MavenTreeDependencyCollector(String[] mavenIgnoredScopes, boolean ignorePomModules, boolean runPreStep, boolean mavenIgnoreDependencyTreeErrors) {
         mavenLinesParser = new MavenLinesParser();
         this.mavenIgnoredScopes = new HashSet<>();
         if (mavenIgnoredScopes == null) {
@@ -94,6 +96,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         }
         this.ignorePomModules = ignorePomModules;
         this.runPreStep = runPreStep;
+        this.mavenIgnoreDependencyTreeErrors = mavenIgnoreDependencyTreeErrors;
     }
 
     /* --- Public methods --- */
@@ -131,14 +134,18 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                     mvnDependencies = new CommandLineProcess(rootDirectory, getLsCommandParams());
                     lines = mvnDependencies.executeProcess();
                 }
-                if (!mvnDependencies.isErrorInProcess()) {
+                // set flag of errors, in case we do not have errors  we do not want to parse direct dependencies from pom later on.
+                if (mvnDependencies.isErrorInProcess()) {
+                    this.errorsRunningDependencyTree = true;
+                }
+                if (!mvnDependencies.isErrorInProcess() || mavenIgnoreDependencyTreeErrors) {
                     List<Node> nodes = mavenLinesParser.parseLines(lines);
 
                     logger.info("End parsing pom files , found : " + String.join(Constants.COMMA,
                             nodes.stream().map(node -> node.getArtifactId()).collect(Collectors.toList())));
 
                     projects = nodes.stream()
-                            .filter(node -> !this.ignorePomModules || (ignorePomModules && !node.getPackaging().equals(POM)))
+                            .filter(node -> !this.ignorePomModules || (ignorePomModules && !node.getPackaging().equals(Constants.POM)))
                             .map(tree -> {
                                 Map<String, List<DependencyInfo>> pathToDependenciesMap = new HashMap<>();
                                 List<DependencyInfo> dependencies = new LinkedList<>();
@@ -149,7 +156,6 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                                     dependency.setSha1(pathSha1Pair.getValue());
                                     dependency.setSystemPath(pathSha1Pair.getKey());
                                 }));
-
                                 AgentProjectInfo projectInfo = new AgentProjectInfo();
                                 projectInfo.setCoordinates(new Coordinates(tree.getGroupId(), tree.getArtifactId(), tree.getVersion()));
                                 logger.debug("Project/Module coordinates: {}", projectInfo.getCoordinates().toString());
@@ -213,16 +219,16 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
         dependency.setType(node.getPackaging());
 
         String shortName;
+        // in case of ejb packaging the short name should be jar file
+        String nodePackaging = EJB.equals(node.getPackaging()) ? Constants.JAR : node.getPackaging();
         if (StringUtils.isBlank(node.getClassifier())) {
-            shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DOT + node.getPackaging();
+            shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DOT + nodePackaging;
         } else {
-            String nodePackaging = node.getPackaging();
             if (nodePackaging.equals(TEST_JAR)) {
-                nodePackaging = JAR;
+                nodePackaging = Constants.JAR;
             }
             shortName = dependency.getArtifactId() + Constants.DASH + dependency.getVersion() + Constants.DASH + node.getClassifier() + Constants.DOT + nodePackaging;
         }
-
         String filePath = Paths.get(M2Path, dependency.getGroupId().replace(Constants.DOT, File.separator), dependency.getArtifactId(), dependency.getVersion(), shortName).toString();
         if (!paths.containsKey(filePath)) {
             paths.put(filePath, new ArrayList<>());
@@ -234,11 +240,9 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
                 dependency.setFilename(jarFile.getName());
             }
         }
-
         node.getChildNodes().forEach(childNode -> dependency.getChildren().add(getDependencyFromNode(childNode, paths)));
         return dependency;
     }
-
 
     /* --- Private methods --- */
 
@@ -277,7 +281,7 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
     }
 
     protected String getMavenM2Path(String rootDirectory) {
-        String currentUsersHomeDir = System.getProperty(USER_HOME);
+        String currentUsersHomeDir = System.getProperty(Constants.USER_HOME);
         File m2Path = Paths.get(currentUsersHomeDir, M2, REPOSITORY).toFile();
 
         if (m2Path.exists()) {
@@ -311,4 +315,10 @@ public class MavenTreeDependencyCollector extends DependencyCollector {
             return null;
         }
     }
+
+
+    public boolean isErrorsRunningDependencyTree() {
+        return errorsRunningDependencyTree;
+    }
+
 }

@@ -27,7 +27,7 @@ public class MavenLinesParser {
     /* --- Static members --- */
 
     private Logger logger = LoggerFactory.getLogger(MavenLinesParser.class);
-    private static final String MAVEN_DEPENDENCY_PLUGIN_TREE = "maven-dependency-plugin:"; // 2.8:tree";
+    private static final String MAVEN_DEPENDENCY_PLUGIN_TREE = "maven-dependency-plugin:";
     private static final String INFO = "[INFO] ";
     private static final String UTF_8 = "UTF-8";
     private static final String DOWNLOAD = "Download";
@@ -52,7 +52,7 @@ public class MavenLinesParser {
                              line.trim().startsWith(Constants.PIPE) ||
                              line.split(Constants.COLON).length == 4) &&
                              !line.contains(Constants.DASH + Constants.WHITESPACE + Constants.OPEN_BRACKET) &&
-                             !line.endsWith(Character.toString(Constants.CLOSE_BRACKET))
+                            (!line.endsWith(Character.toString(Constants.CLOSE_BRACKET)) || line.endsWith(Character.toString(Constants.CLOSE_BRACKET) + Character.toString(Constants.CLOSE_BRACKET)))
             ).collect(Collectors.toList());
 
             String mvnLines = String.join(System.lineSeparator(), currentBlock);
@@ -76,7 +76,7 @@ public class MavenLinesParser {
         });
         return nodes;
     }
-
+    
     // so : 29095967
     private static Collector<String, List<List<String>>, List<List<String>>> splitBySeparator(Predicate<String> sep) {
         return Collector.of(() -> new ArrayList<List<String>>(Arrays.asList(new ArrayList<>())),

@@ -1,4 +1,4 @@
-requests == 2.13.0
+requests == 2.20.0
 enum34 == 1.1.6
 jsonpickle == 0.9.4
 mock == 2.0.0
