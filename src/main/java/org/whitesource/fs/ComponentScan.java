@@ -1,6 +1,7 @@
 package org.whitesource.fs;
 
 import org.slf4j.Logger;
+import org.whitesource.agent.ProjectConfiguration;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.ConfigPropertyKeys;
 import org.whitesource.agent.Constants;
@@ -73,11 +74,8 @@ public class ComponentScan {
             } else if (Boolean.valueOf(config.getProperty(ConfigPropertyKeys.SCAN_DOCKER_IMAGES))) {
                 projects = new DockerResolver(fsaConfiguration).resolveDockerImages();
             } else {
-                projects = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent(), false).createProjects(
-                        scannerBaseDirs, appPathsToDependencyDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getAgent().getArchiveExtractionDepth(),
-                        fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(),
-                        followSymlinks, excludedCopyrights, fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(),
-                        fsaConfiguration.getAgent().isCalculateMd5(), fsaConfiguration.getAgent().getPythonRequirementsFileIncludes()).keySet();
+                ProjectConfiguration projectConfiguration = new ProjectConfiguration(fsaConfiguration.getAgent(), scannerBaseDirs, appPathsToDependencyDirs, false);
+                projects = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent(), false).createProjects(projectConfiguration).keySet();
             }
 
             logger.info("Finished dependency resolution");
