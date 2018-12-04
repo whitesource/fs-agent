@@ -37,11 +37,11 @@ import org.redline_rpm.header.AbstractHeader;
 import org.redline_rpm.header.Format;
 import org.redline_rpm.header.Header;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
-import org.whitesource.agent.Constants;
-import org.whitesource.agent.utils.FilesScanner;
-import org.whitesource.agent.utils.Pair;
-import org.whitesource.agent.TempFolders;
+import org.whitesource.utils.logger.LoggerFactory;
+import org.whitesource.utils.Constants;
+import org.whitesource.utils.files.FilesScanner;
+import org.whitesource.utils.Pair;
+import org.whitesource.utils.files.TempFolders;
 
 import java.io.*;
 import java.nio.channels.Channels;

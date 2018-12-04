@@ -5,7 +5,10 @@
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
     <version>18.11.2-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <modules>
+        <module>../fs-agent-utils</module>
+    </modules>
+    <packaging>pom</packaging>
 
     <name>White Source File System Agent</name>
     <description>File System Agent is a simple java command line tool which extracts descriptive information from your open source libraries</description>
@@ -90,6 +93,11 @@
             <groupId>org.whitesource</groupId>
             <artifactId>wss-agent-report</artifactId>
             <version>${agent.api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.whitesource</groupId>
+            <artifactId>whitesource-fs-agent-utils</artifactId>
+            <version>18.11.2-SNAPSHOT</version>
         </dependency>
 
         <!-- CLI library -->

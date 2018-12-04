@@ -1,6 +1,6 @@
 package org.whitesource.agent.dependency.resolver.dotNet;
 
-import org.whitesource.agent.TempFolders;
+import org.whitesource.utils.files.TempFolders;
 
 import java.nio.file.Paths;
 

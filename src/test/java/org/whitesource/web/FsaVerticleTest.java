@@ -16,7 +16,6 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.FSAConfigProperties;
 import org.whitesource.fs.ProjectsDetails;
-import org.whitesource.fs.StatusCode;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
 
 import java.io.IOException;

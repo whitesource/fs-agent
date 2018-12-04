@@ -23,15 +23,16 @@ import org.whitesource.agent.*;
 import org.whitesource.agent.dependency.resolver.ViaMultiModuleAnalyzer;
 import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.utils.logger.LoggerFactory;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.docker.DockerResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.dependency.resolver.packageManger.PackageManagerExtractor;
 import org.whitesource.agent.utils.CommandLineProcess;
-import org.whitesource.agent.utils.FilesUtils;
-import org.whitesource.agent.utils.Pair;
+import org.whitesource.utils.files.FilesUtils;
+import org.whitesource.utils.Pair;
+import org.whitesource.utils.StatusCode;
 import org.whitesource.fs.configuration.ScmConfiguration;
 import org.whitesource.fs.configuration.ScmRepositoriesParser;
 import org.whitesource.scm.ScmConnector;
@@ -41,6 +42,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 /**
  * File System Agent.

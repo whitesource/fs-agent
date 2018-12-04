@@ -2,10 +2,10 @@ package org.whitesource.scm;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.whitesource.agent.Constants;
-import org.whitesource.agent.TempFolders;
-import org.whitesource.agent.utils.FilesUtils;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.utils.Constants;
+import org.whitesource.utils.files.TempFolders;
+import org.whitesource.utils.files.FilesUtils;
+import org.whitesource.utils.logger.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Paths;

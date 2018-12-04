@@ -32,6 +32,7 @@ import org.whitesource.agent.Constants;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.fs.*;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
+import org.whitesource.utils.StatusCode;
 
 import java.io.IOException;
 import java.nio.file.Files;

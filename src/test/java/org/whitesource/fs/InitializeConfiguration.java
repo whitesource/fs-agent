@@ -3,9 +3,7 @@ package org.whitesource.fs;
 import org.junit.Before;
 import org.whitesource.agent.*;
 import org.whitesource.agent.api.model.AgentProjectInfo;
-import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
-import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.io.FileInputStream;
@@ -67,35 +65,6 @@ public class InitializeConfiguration {
             projectToViaComponents = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent(), false).createProjects(projectConfiguration);
         }
     }
-
-    /* --- Public methods --- */
-
-    public Pair<String, StatusCode> sendProjects(ProjectsSender projectsSender, ProjectsDetails projectsDetails) {
-        Collection<AgentProjectInfo> projects = projectsDetails.getProjects();
-        Iterator<AgentProjectInfo> iterator = projects.iterator();
-        while (iterator.hasNext()) {
-            AgentProjectInfo project = iterator.next();
-            if (project.getDependencies().isEmpty()) {
-                iterator.remove();
-                // if coordinates are null, then use token
-                String projectIdentifier;
-                Coordinates coordinates = project.getCoordinates();
-                if (coordinates == null) {
-                    projectIdentifier = project.getProjectToken();
-                } else {
-                    projectIdentifier = coordinates.getArtifactId();
-                }
-            }
-        }
-
-        if (projects.isEmpty()) {
-            return new Pair<>("Exiting, nothing to update", StatusCode.SUCCESS);
-        } else {
-            return projectsSender.sendRequest(projectsDetails);//todo
-        }
-    }
-
-
 
     /* --- Getters / Setters --- */
 

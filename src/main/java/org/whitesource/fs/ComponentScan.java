@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.whitesource.agent.ProjectConfiguration;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.ConfigPropertyKeys;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.FileSystemScanner;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;

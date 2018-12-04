@@ -26,8 +26,8 @@ import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
-import org.whitesource.agent.utils.LoggerFactory;
-import org.whitesource.agent.utils.Pair;
+import org.whitesource.utils.logger.LoggerFactory;
+import org.whitesource.utils.Pair;
 import org.whitesource.fs.configuration.*;
 
 import java.io.*;

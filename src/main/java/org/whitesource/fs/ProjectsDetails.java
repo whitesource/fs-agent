@@ -17,6 +17,7 @@ package org.whitesource.fs;
 
 import org.whitesource.agent.ViaComponents;
 import org.whitesource.agent.api.model.AgentProjectInfo;
+import org.whitesource.utils.StatusCode;
 
 import java.util.Collection;
 import java.util.HashMap;

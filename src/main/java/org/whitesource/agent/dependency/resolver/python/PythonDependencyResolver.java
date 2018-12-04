@@ -15,15 +15,15 @@
  */
 package org.whitesource.agent.dependency.resolver.python;
 
-import org.whitesource.agent.Constants;
-import org.whitesource.agent.TempFolders;
+import org.whitesource.utils.Constants;
+import org.whitesource.utils.files.TempFolders;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.dependency.resolver.dotNet.RestoreCollector;
-import org.whitesource.agent.utils.FilesUtils;
+import org.whitesource.utils.files.FilesUtils;
 
 import java.io.File;
 import java.nio.file.Paths;

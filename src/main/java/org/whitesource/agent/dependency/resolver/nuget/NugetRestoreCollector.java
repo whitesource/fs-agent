@@ -1,6 +1,6 @@
 package org.whitesource.agent.dependency.resolver.nuget;
 
-import org.whitesource.agent.TempFolders;
+import org.whitesource.utils.files.TempFolders;
 import org.whitesource.agent.dependency.resolver.dotNet.RestoreCollector;
 
 import java.nio.file.Paths;

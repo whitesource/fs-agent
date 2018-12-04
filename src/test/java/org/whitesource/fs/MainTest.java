@@ -9,6 +9,7 @@ import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.dispatch.UpdateInventoryRequest;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
+import org.whitesource.utils.StatusCode;
 
 import java.io.*;
 import java.nio.file.Paths;

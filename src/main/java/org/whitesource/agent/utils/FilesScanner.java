@@ -17,7 +17,7 @@ package org.whitesource.agent.utils;
 
 import org.apache.tools.ant.DirectoryScanner;
 import org.slf4j.Logger;
-import org.whitesource.agent.SingleFileScanner;
+import org.whitesource.utils.files.SingleFileScanner;
 import org.whitesource.agent.dependency.resolver.ResolvedFolder;
 
 import java.io.File;

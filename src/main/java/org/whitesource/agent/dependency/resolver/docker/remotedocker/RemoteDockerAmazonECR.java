@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.docker.DockerImage;
 import org.whitesource.agent.utils.LoggerFactory;
-import org.whitesource.agent.utils.Pair;
 import org.whitesource.fs.configuration.RemoteDockerConfiguration;
 import java.io.BufferedReader;
 import java.io.IOException;

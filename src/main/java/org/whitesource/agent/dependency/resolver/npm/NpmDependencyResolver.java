@@ -32,7 +32,7 @@ import org.whitesource.agent.dependency.resolver.bower.BowerDependencyResolver;;
 import org.whitesource.agent.utils.AddDependencyFileRecursionHelper;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.LoggerFactory;
-import org.whitesource.fs.StatusCode;
+import org.whitesource.utils.StatusCode;
 
 import javax.ws.rs.core.MediaType;
 import java.io.File;
