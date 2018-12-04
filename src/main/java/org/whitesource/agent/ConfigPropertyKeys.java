@@ -235,6 +235,11 @@ public final class ConfigPropertyKeys {
     // TODO: Not implemented yet
     public static final String DOCKER_AWS_SECRETKEY = "docker.aws.secretKey";
 
+    // Remote Docker Azure
+    public static final String DOCKER_AZURE_ENABLED = "docker.azure.enable";
+    public static final String DOCKER_AZURE_USER_NAME = "docker.azure.userName";
+    public static final String DOCKER_AZURE_USER_PASSWORD = "docker.azure.userPassword";
+    public static final String DOCKER_AZURE_REGISTRY_NAMES = "docker.azure.registryNames";
 
 
     public static final String ADD_SHA1 = "addSha1";
