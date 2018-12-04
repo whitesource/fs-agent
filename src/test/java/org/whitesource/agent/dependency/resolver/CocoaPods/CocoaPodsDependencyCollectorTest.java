@@ -20,6 +20,7 @@ public class CocoaPodsDependencyCollectorTest {
     private final Logger logger = LoggerFactory.getLogger(CocoaPodsDependencyCollectorTest.class);
 
     private CocoaPodsDependencyCollector cocoaPodsDependencyCollector;
+    private int index;
     @Before
     public void setUp() {
         cocoaPodsDependencyCollector = new CocoaPodsDependencyCollector();
@@ -29,18 +30,24 @@ public class CocoaPodsDependencyCollectorTest {
     public void collectDependencies() {
         String podFilePath = Paths.get(".").toAbsolutePath().normalize().toString() + TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\cocoaPods\\Podfile.lock");
         Collection<AgentProjectInfo> agentProjectInfos = cocoaPodsDependencyCollector.collectDependencies(podFilePath);
-        /*for (AgentProjectInfo agentProjectInfo : agentProjectInfos){
+        index = 0;
+        for (AgentProjectInfo agentProjectInfo : agentProjectInfos){
             for (DependencyInfo dependencyInfo : agentProjectInfo.getDependencies()){
-                printDependency(dependencyInfo);
+                printDependency(dependencyInfo, 0);
             }
-        }*/
+        }
         Assert.assertTrue(agentProjectInfos != null);
     }
 
-    private void printDependency(DependencyInfo dependencyInfo){
-        logger.info(dependencyInfo.getGroupId());
+    private void printDependency(DependencyInfo dependencyInfo, int level){
+        String dash = "";
+        for (int i = 0; i < level; i++){
+            dash = dash.concat("-");
+        }
+        logger.info(index++ + ") "+ dash + dependencyInfo.getGroupId());
+        level++;
         for (DependencyInfo child : dependencyInfo.getChildren()){
-            printDependency(child);
+            printDependency(child, level);
         }
     }
 }

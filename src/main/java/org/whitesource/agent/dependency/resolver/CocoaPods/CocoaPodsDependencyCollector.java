@@ -102,7 +102,9 @@ public class CocoaPodsDependencyCollector extends DependencyCollector {
         DependencyInfo dependency = null;
         boolean getToRightDependency = false;
         for (String line : allDependenciesLines) {
-            if (line.startsWith(PATTERN_DIRECT_LINE) && line.startsWith(prefixToSearch)) {
+            String fixed = line.replace(Constants.QUOTATION_MARK,Constants.EMPTY_STRING);
+            String fixedPrefix = prefixToSearch.replace(Constants.QUOTATION_MARK,Constants.EMPTY_STRING);
+            if (line.startsWith(PATTERN_DIRECT_LINE) && fixed.startsWith(fixedPrefix)) {
                 getToRightDependency = true;
                 dependency = createDependencyFromLine(line, podFileLock);
             } else if (getToRightDependency && line.startsWith(PATTERN_DIRECT_LINE)) {
@@ -115,7 +117,7 @@ public class CocoaPodsDependencyCollector extends DependencyCollector {
                         newPrefixToSearch = line.substring(2, indexFirstBracket);
                     }
                     DependencyInfo childDependency = getDependencyInfo(allDependenciesLines, newPrefixToSearch, podFileLock);
-                    if (childDependency != null) // TODO - figure out in which case it is null and avoid them in the first place
+                    if (childDependency != null)
                         dependency.getChildren().add(childDependency);
                 }
             }
