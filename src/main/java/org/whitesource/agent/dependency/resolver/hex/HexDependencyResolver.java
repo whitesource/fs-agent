@@ -1,7 +1,7 @@
 package org.whitesource.agent.dependency.resolver.hex;
 
 import org.slf4j.Logger;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
@@ -11,7 +11,7 @@ import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
 import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.Cli;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.utils.logger.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Path;

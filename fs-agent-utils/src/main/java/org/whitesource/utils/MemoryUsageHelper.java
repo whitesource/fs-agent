@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.whitesource.agent.utils;
+package org.whitesource.utils;
 
 /**
  * @author eugen.horovitz

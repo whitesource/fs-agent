@@ -1,4 +1,4 @@
-package org.whitesource.agent.utils;
+package org.whitesource.utils.logger;
 
 /**
  * @author raz.nitzan

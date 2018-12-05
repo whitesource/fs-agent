@@ -3,7 +3,7 @@ package org.whitesource.agent.dependency.resolver.sbt;
 import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.core.Persister;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.utils.logger.LoggerFactory;
 import org.whitesource.agent.dependency.resolver.BomFile;
 import org.whitesource.agent.dependency.resolver.IBomParser;
 import org.whitesource.agent.dependency.resolver.maven.MavenPomParser;

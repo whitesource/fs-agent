@@ -12,7 +12,7 @@ import org.eclipse.jgit.dircache.InvalidPathException;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FS;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.utils.logger.LoggerFactory;
 
 import java.io.File;
 

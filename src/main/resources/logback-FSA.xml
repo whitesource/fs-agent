@@ -3,11 +3,11 @@
 	<!-- setting this property here removed the logback's own status messages from the start of the log on the console -->
 	<statusListener class="ch.qos.logback.core.status.NopStatusListener" />
 
-	<define name="collectLoggerName" class="org.whitesource.fs.LogMapDefiner" >
+	<define name="collectLoggerName" class="org.whitesource.utils.logger.LogMapDefiner" >
 		<propertyLookupKey>loggerName</propertyLookupKey>
 	</define>
 
-	<define name="collectAppenderName" class="org.whitesource.fs.LogMapDefiner" >
+	<define name="collectAppenderName" class="org.whitesource.utils.logger.LogMapDefiner" >
 		<propertyLookupKey>appenderName</propertyLookupKey>
 	</define>
 
@@ -21,7 +21,7 @@
 		</encoder>
 	</appender>
 
-	<appender name="${collectAppenderName}" class="org.whitesource.fs.LogMapAppender">
+	<appender name="${collectAppenderName}" class="org.whitesource.utils.logger.LogMapAppender">
 		<append>false</append>
 		<encoder>
 			<pattern>[%level] [%d{"yyyy-MM-dd HH:mm:ss,SSS Z"}[ - %msg%n</pattern>

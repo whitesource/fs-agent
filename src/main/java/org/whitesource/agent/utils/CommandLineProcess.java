@@ -8,6 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.utils.Constants;
 import org.whitesource.utils.files.UniqueNamesGenerator;
+import org.whitesource.utils.logger.LoggerFactory;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 
 import java.io.*;

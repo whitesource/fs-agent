@@ -18,8 +18,8 @@ package org.whitesource.agent.dependency.resolver;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.dependency.resolver.npm.RegistryType;
-import org.whitesource.agent.utils.LoggerFactory;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.logger.LoggerFactory;
+import org.whitesource.utils.Constants;
 
 import java.util.Map;
 

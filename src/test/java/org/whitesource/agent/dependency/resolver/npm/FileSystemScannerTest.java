@@ -4,8 +4,8 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.whitesource.agent.ConfigPropertyKeys;
-import org.whitesource.agent.Constants;
-import org.whitesource.agent.utils.FilesScanner;
+import org.whitesource.utils.Constants;
+import org.whitesource.utils.files.FilesScanner;
 
 import java.io.File;
 import java.util.Arrays;

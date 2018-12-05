@@ -5,6 +5,8 @@ import org.whitesource.agent.*;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.fs.configuration.ResolverConfiguration;
+import org.whitesource.utils.Constants;
+import org.whitesource.utils.ExtensionUtils;
 
 import java.io.FileInputStream;
 import java.io.IOException;

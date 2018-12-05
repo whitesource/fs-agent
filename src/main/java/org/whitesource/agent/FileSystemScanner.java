@@ -33,6 +33,7 @@ import org.whitesource.fs.FileSystemAgent;
 import org.whitesource.fs.Main;
 import org.whitesource.fs.configuration.AgentConfiguration;
 import org.whitesource.fs.configuration.ResolverConfiguration;
+import org.whitesource.utils.Constants;
 import org.whitesource.utils.StatusCode;
 
 import java.io.File;

@@ -1,10 +1,10 @@
-package org.whitesource.agent.utils;
+package org.whitesource.utils;
 
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class MemoryUsageTest {
+public class MemoryUsageHelperTest {
 
     @Ignore
     @Test

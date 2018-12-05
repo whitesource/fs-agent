@@ -11,12 +11,13 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.whitesource.agent.ConfigPropertyKeys;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.fs.FSAConfiguration;
 import org.whitesource.fs.FSAConfigProperties;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.configuration.ConfigurationSerializer;
+import org.whitesource.utils.StatusCode;
 
 import java.io.IOException;
 import java.util.Collection;

@@ -25,7 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.whitesource.agent.Constants.*;
+import static org.whitesource.utils.Constants.*;
 import static org.whitesource.agent.archive.ArchiveExtractor.TAR_SUFFIX;
 
 /**

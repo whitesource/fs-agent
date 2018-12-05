@@ -33,12 +33,13 @@ import org.whitesource.utils.StatusCode;
 import org.whitesource.utils.logger.LoggerFactory;
 import org.whitesource.utils.Pair;
 import org.whitesource.contracts.PluginInfo;
-import org.whitesource.fs.LogMapAppender;
+import org.whitesource.utils.logger.LogMapAppender;
 import org.whitesource.fs.Main;
 import org.whitesource.fs.ProjectsDetails;
 import org.whitesource.fs.configuration.OfflineConfiguration;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.fs.configuration.SenderConfiguration;
+import org.whitesource.utils.Constants;
 
 import java.io.BufferedWriter;
 import java.io.File;

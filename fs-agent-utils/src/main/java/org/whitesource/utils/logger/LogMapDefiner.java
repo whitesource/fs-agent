@@ -1,7 +1,7 @@
-package org.whitesource.fs;
+package org.whitesource.utils.logger;
 
 import ch.qos.logback.core.PropertyDefinerBase;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 
 import java.util.HashMap;
 import java.util.Map;

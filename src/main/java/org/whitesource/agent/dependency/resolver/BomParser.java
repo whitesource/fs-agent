@@ -17,7 +17,7 @@ package org.whitesource.agent.dependency.resolver;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.utils.logger.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

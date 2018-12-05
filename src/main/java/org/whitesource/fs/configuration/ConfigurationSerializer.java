@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.logger.LoggerFactory;
+import org.whitesource.utils.Constants;
 import org.whitesource.fs.FSAConfiguration;
 
 import java.io.File;

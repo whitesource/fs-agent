@@ -2,7 +2,7 @@ package org.whitesource.agent.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 
 import java.io.IOException;

@@ -8,7 +8,7 @@ import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyResolverTest;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.utils.logger.LoggerFactory;
 
 import java.nio.file.Paths;
 import java.util.Collection;

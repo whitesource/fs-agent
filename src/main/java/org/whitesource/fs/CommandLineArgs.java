@@ -18,7 +18,7 @@ package org.whitesource.fs;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.converters.CommaParameterSplitter;
- import org.whitesource.agent.Constants;
+ import org.whitesource.utils.Constants;
 
 import java.util.LinkedList;
 import java.util.List;

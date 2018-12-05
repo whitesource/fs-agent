@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.whitesource.agent.utils;
+package org.whitesource.utils.files;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
+import org.whitesource.utils.logger.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;

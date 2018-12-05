@@ -9,6 +9,7 @@ import org.whitesource.contracts.PluginInfo;
 import org.whitesource.fs.configuration.OfflineConfiguration;
 import org.whitesource.fs.configuration.RequestConfiguration;
 import org.whitesource.fs.configuration.SenderConfiguration;
+import org.whitesource.utils.Constants;
 
 import java.util.Collection;
 

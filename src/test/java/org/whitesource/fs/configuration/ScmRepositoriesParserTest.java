@@ -3,7 +3,7 @@ package org.whitesource.fs.configuration;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.scm.ScmType;
 

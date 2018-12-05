@@ -1,6 +1,6 @@
 package org.whitesource.agent.utils;
 
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 
 import java.io.Serializable;
 import java.util.Objects;

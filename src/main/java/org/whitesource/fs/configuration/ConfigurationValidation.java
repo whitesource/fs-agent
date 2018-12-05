@@ -16,7 +16,7 @@
 package org.whitesource.fs.configuration;
 
 import org.apache.commons.lang.StringUtils;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.List;

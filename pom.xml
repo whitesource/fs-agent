@@ -6,7 +6,7 @@
     <artifactId>whitesource-fs-agent</artifactId>
     <version>18.11.2-SNAPSHOT</version>
     <modules>
-        <module>../fs-agent-utils</module>
+        <module>fs-agent-utils</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -93,11 +93,6 @@
             <groupId>org.whitesource</groupId>
             <artifactId>wss-agent-report</artifactId>
             <version>${agent.api.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.whitesource</groupId>
-            <artifactId>whitesource-fs-agent-utils</artifactId>
-            <version>18.11.2-SNAPSHOT</version>
         </dependency>
 
         <!-- CLI library -->
@@ -290,6 +285,11 @@
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
             <version>1.17.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.whitesource</groupId>
+            <artifactId>whitesource-fs-agent-utils</artifactId>
+            <version>18.11.2-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

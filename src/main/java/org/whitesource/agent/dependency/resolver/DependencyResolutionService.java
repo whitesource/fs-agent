@@ -16,7 +16,7 @@
 package org.whitesource.agent.dependency.resolver;
 
 import org.slf4j.Logger;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.CocoaPods.CocoaPodsDependencyResolver;
@@ -35,8 +35,9 @@ import org.whitesource.agent.dependency.resolver.php.PhpDependencyResolver;
 import org.whitesource.agent.dependency.resolver.python.PythonDependencyResolver;
 import org.whitesource.agent.dependency.resolver.ruby.RubyDependencyResolver;
 import org.whitesource.agent.dependency.resolver.sbt.SbtDependencyResolver;
-import org.whitesource.agent.utils.FilesScanner;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.utils.files.FilesScanner;
+import org.whitesource.utils.files.ResolvedFolder;
+import org.whitesource.utils.logger.LoggerFactory;
 import org.whitesource.fs.configuration.ResolverConfiguration;
 
 import java.nio.file.Path;

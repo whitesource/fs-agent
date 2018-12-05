@@ -26,6 +26,7 @@ import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.hash.HashAlgorithm;
 import org.whitesource.agent.hash.HashCalculator;
 import org.whitesource.agent.hash.HintUtils;
+import org.whitesource.utils.Constants;
 
 import java.io.File;
 import java.io.FileNotFoundException;

@@ -31,6 +31,7 @@ import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollecto
 import org.whitesource.agent.dependency.resolver.packageManger.PackageManagerExtractor;
 import org.whitesource.agent.utils.CommandLineProcess;
 import org.whitesource.utils.files.FilesUtils;
+import org.whitesource.utils.Constants;
 import org.whitesource.utils.Pair;
 import org.whitesource.utils.StatusCode;
 import org.whitesource.fs.configuration.ScmConfiguration;

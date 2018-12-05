@@ -21,7 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;
 import org.whitesource.agent.client.ClientConstants;
@@ -39,8 +39,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.whitesource.agent.Constants.COLON;
-import static org.whitesource.agent.Constants.EMPTY_STRING;
+import static org.whitesource.utils.Constants.COLON;
+import static org.whitesource.utils.Constants.EMPTY_STRING;
 import static org.whitesource.agent.client.ClientConstants.SERVICE_URL_KEYWORD;
 
 /**

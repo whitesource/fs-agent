@@ -7,7 +7,7 @@ import com.google.gson.JsonParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
@@ -17,8 +17,8 @@ import org.whitesource.agent.dependency.resolver.gradle.GradleMvnCommand;
 import org.whitesource.agent.hash.HashCalculator;
 import org.whitesource.agent.utils.Cli;
 import org.whitesource.agent.utils.CommandLineProcess;
-import org.whitesource.agent.utils.FilesUtils;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.utils.files.FilesUtils;
+import org.whitesource.utils.logger.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.whitesource.agent.Constants.EMPTY_STRING;
+import static org.whitesource.utils.Constants.EMPTY_STRING;
 
 public class GoDependencyResolver extends AbstractDependencyResolver {
 

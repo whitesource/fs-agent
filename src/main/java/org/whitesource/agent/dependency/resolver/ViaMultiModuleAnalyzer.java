@@ -1,9 +1,10 @@
 package org.whitesource.agent.dependency.resolver;
 
 import org.slf4j.Logger;
-import org.whitesource.agent.Constants;
-import org.whitesource.agent.utils.FilesScanner;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.utils.Constants;
+import org.whitesource.utils.files.FilesScanner;
+import org.whitesource.utils.files.ResolvedFolder;
+import org.whitesource.utils.logger.LoggerFactory;
 
 import java.io.*;
 import java.util.Arrays;

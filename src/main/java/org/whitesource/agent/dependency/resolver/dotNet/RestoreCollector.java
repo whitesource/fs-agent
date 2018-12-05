@@ -2,15 +2,15 @@ package org.whitesource.agent.dependency.resolver.dotNet;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.hash.ChecksumUtils;
 import org.whitesource.agent.utils.CommandLineProcess;
-import org.whitesource.agent.utils.FilesUtils;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.utils.files.FilesUtils;
+import org.whitesource.utils.logger.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver.bower;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.BomFile;

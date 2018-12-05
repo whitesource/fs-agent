@@ -2,7 +2,7 @@ package org.whitesource.agent.dependency.resolver.html;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 
 import java.io.File;
 import java.io.IOException;

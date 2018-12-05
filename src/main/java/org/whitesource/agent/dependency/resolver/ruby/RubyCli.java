@@ -1,6 +1,6 @@
 package org.whitesource.agent.dependency.resolver.ruby;
 
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.utils.Cli;
 

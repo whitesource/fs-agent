@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.whitesource.fs;
+package org.whitesource.utils;
 
-
-import org.whitesource.agent.Constants;
 
 import java.util.ArrayList;
 import java.util.Arrays;

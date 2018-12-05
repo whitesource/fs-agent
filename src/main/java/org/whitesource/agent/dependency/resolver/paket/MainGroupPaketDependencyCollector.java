@@ -1,6 +1,6 @@
 package org.whitesource.agent.dependency.resolver.paket;
 
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 
 import java.util.List;
 

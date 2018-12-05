@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 package org.whitesource.agent.dependency.resolver.maven;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;

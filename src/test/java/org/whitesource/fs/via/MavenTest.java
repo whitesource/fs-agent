@@ -3,7 +3,7 @@ package org.whitesource.fs.via;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.ProjectsSender;
 import org.whitesource.agent.ViaComponents;
 import org.whitesource.agent.api.model.AgentProjectInfo;

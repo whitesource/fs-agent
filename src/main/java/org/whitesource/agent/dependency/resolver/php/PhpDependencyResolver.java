@@ -7,8 +7,8 @@ import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.whitesource.agent.hash.HashCalculator;
-import org.whitesource.agent.utils.LoggerFactory;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.logger.LoggerFactory;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.AbstractDependencyResolver;
@@ -21,9 +21,9 @@ import org.whitesource.agent.utils.CommandLineProcess;
 import java.io.*;
 import java.util.*;
 
-import static org.whitesource.agent.Constants.FORWARD_SLASH;
-import static org.whitesource.agent.Constants.INSTALL;
-import static org.whitesource.agent.Constants.PATTERN;
+import static org.whitesource.utils.Constants.FORWARD_SLASH;
+import static org.whitesource.utils.Constants.INSTALL;
+import static org.whitesource.utils.Constants.PATTERN;
 
 /**
  * @author chen.luigi

@@ -17,8 +17,8 @@ package org.whitesource.agent.dependency.resolver.bower;
 
 import org.json.JSONObject;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.logger.LoggerFactory;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.dependency.resolver.npm.NpmBomParser;
 
 import java.text.MessageFormat;

@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.whitesource.agent.utils;
+package org.whitesource.utils.files;
 
 import org.apache.tools.ant.DirectoryScanner;
 import org.slf4j.Logger;
-import org.whitesource.utils.files.SingleFileScanner;
-import org.whitesource.agent.dependency.resolver.ResolvedFolder;
+import org.whitesource.utils.logger.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;

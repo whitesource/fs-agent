@@ -1,4 +1,4 @@
-package org.whitesource.agent.utils;
+package org.whitesource.utils.logger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,7 @@ public class LoggerFS implements Logger {
 
     /* --- Members --- */
 
-    private final org.slf4j.Logger logger;
+    private final Logger logger;
     private final String contextId;
 
     /* --- Constructors --- */

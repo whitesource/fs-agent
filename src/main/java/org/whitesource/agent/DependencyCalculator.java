@@ -5,6 +5,7 @@ import org.whitesource.agent.api.model.DependencyInfo;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.*;
+import org.whitesource.utils.Constants;
 
 public class DependencyCalculator {
 

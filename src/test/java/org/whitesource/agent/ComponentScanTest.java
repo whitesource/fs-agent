@@ -7,6 +7,7 @@ import org.whitesource.agent.dependency.resolver.npm.TestHelper;
 import org.whitesource.fs.CommandLineArgs;
 import org.whitesource.fs.ComponentScan;
 import org.whitesource.fs.FSAConfigProperties;
+import org.whitesource.utils.Constants;
 
 import java.io.File;
 import java.nio.file.Paths;

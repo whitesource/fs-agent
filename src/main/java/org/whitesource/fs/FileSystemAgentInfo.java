@@ -17,8 +17,8 @@ package org.whitesource.fs;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
-import org.whitesource.agent.utils.LoggerFactory;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.logger.LoggerFactory;
+import org.whitesource.utils.Constants;
 import org.whitesource.contracts.PluginInfo;
 
 import java.io.IOException;

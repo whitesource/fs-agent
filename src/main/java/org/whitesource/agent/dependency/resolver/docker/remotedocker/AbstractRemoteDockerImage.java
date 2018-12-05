@@ -1,6 +1,6 @@
 package org.whitesource.agent.dependency.resolver.docker.remotedocker;
 
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.dependency.resolver.docker.DockerImage;
 
 import java.util.Collections;

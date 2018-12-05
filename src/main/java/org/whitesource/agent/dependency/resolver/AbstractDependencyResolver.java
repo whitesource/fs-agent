@@ -16,7 +16,7 @@
 package org.whitesource.agent.dependency.resolver;
 
 import org.apache.commons.lang.StringUtils;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.api.model.DependencyType;
 
 import java.io.File;

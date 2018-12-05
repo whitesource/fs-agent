@@ -2,12 +2,12 @@ package org.whitesource.agent.dependency.resolver.npm;
 
 import org.junit.Assert;
 import org.whitesource.agent.ConfigPropertyKeys;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.ResolutionResult;
-import org.whitesource.agent.utils.FilesUtils;
+import org.whitesource.utils.files.FilesUtils;
 import org.whitesource.fs.CommandLineArgs;
 import org.whitesource.fs.FSAConfigProperties;
 
