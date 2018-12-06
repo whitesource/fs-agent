@@ -92,6 +92,8 @@ public class CocoaPodsDependencyCollector extends DependencyCollector {
                 DependencyInfo dependencyInfo = getDependencyInfo(allDependenciesLines, prefixToSearch, podFileLock);
                 if (dependencyInfo != null) {
                     dependencies.add(dependencyInfo);
+                } else {
+                    logger.warn("could not get info for root dependency {}", prefixToSearch);
                 }
             }
         }
@@ -102,8 +104,8 @@ public class CocoaPodsDependencyCollector extends DependencyCollector {
         DependencyInfo dependency = null;
         boolean getToRightDependency = false;
         for (String line : allDependenciesLines) {
-            String fixed = line.replace(Constants.QUOTATION_MARK,Constants.EMPTY_STRING);
-            String fixedPrefix = prefixToSearch.replace(Constants.QUOTATION_MARK,Constants.EMPTY_STRING);
+            String fixed = line.replace(Constants.QUOTATION_MARK, Constants.EMPTY_STRING);
+            String fixedPrefix = prefixToSearch.replace(Constants.QUOTATION_MARK, Constants.EMPTY_STRING);
             if (line.startsWith(PATTERN_DIRECT_LINE) && fixed.startsWith(fixedPrefix)) {
                 getToRightDependency = true;
                 dependency = createDependencyFromLine(line, podFileLock);
@@ -117,8 +119,11 @@ public class CocoaPodsDependencyCollector extends DependencyCollector {
                         newPrefixToSearch = line.substring(2, indexFirstBracket);
                     }
                     DependencyInfo childDependency = getDependencyInfo(allDependenciesLines, newPrefixToSearch, podFileLock);
-                    if (childDependency != null)
+                    if (childDependency != null) {
                         dependency.getChildren().add(childDependency);
+                    } else {
+                        logger.warn("could not get info for child dependency {}", newPrefixToSearch);
+                    }
                 }
             }
         }
