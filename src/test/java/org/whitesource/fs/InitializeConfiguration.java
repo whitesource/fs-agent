@@ -63,11 +63,8 @@ public class InitializeConfiguration {
             setDirs.addAll(scannerBaseDirs);
             Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
             appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
-            projectToViaComponents = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent(), false).createProjects(
-                    scannerBaseDirs, appPathsToDependencyDirs, false, includes, excludes, globCaseSensitive, fsaConfiguration.getAgent().getArchiveExtractionDepth(),
-                    fsaConfiguration.getAgent().getArchiveIncludes(), fsaConfiguration.getAgent().getArchiveExcludes(), fsaConfiguration.getAgent().isArchiveFastUnpack(),
-                    followSymlinks, excludedCopyrights, fsaConfiguration.getAgent().isPartialSha1Match(), fsaConfiguration.getAgent().isCalculateHints(),
-                    fsaConfiguration.getAgent().isCalculateMd5(), fsaConfiguration.getAgent().getPythonRequirementsFileIncludes());
+            ProjectConfiguration projectConfiguration = new ProjectConfiguration(fsaConfiguration.getAgent(), scannerBaseDirs, appPathsToDependencyDirs, false);
+            projectToViaComponents = new FileSystemScanner(resolverConfiguration, fsaConfiguration.getAgent(), false).createProjects(projectConfiguration);
         }
     }
 

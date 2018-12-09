@@ -28,7 +28,7 @@ public class CommandLineProcess {
     private long timeoutProcessMinutes;
     private boolean errorInProcess = false;
     private Process processStart = null;
-    private File errorLog = new File("error.log");
+    private File errorLog = new File(UniqueNamesGenerator.createUniqueName("error", ".log"));
 
     /* --- Statics Members --- */
     private static final long DEFAULT_TIMEOUT_READLINE_SECONDS = 300;
