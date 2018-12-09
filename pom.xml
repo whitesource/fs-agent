@@ -5,9 +5,6 @@
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
     <version>18.11.2-SNAPSHOT</version>
-    <modules>
-        <module>fs-agent-utils</module>
-    </modules>
     <packaging>pom</packaging>
 
     <name>White Source File System Agent</name>
@@ -57,6 +54,9 @@
             <email>tom.shapira@whitesourcesoftware.com</email>
         </developer>
     </developers>
+    <modules>
+        <module>fs-agent-utils</module>
+    </modules>
 
     <dependencies>
         <dependency>
