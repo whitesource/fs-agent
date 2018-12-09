@@ -4,6 +4,7 @@ import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.archiver.ArchiverException;
+import org.eclipse.core.internal.resources.Folder;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
@@ -14,6 +15,7 @@ import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.archive.ArchiveExtractor;
 import org.whitesource.agent.dependency.resolver.docker.remotedocker.RemoteDockersManager;
+import org.whitesource.agent.hash.FileExtensions;
 import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.fs.FSAConfiguration;
@@ -93,31 +95,55 @@ public class DockerResolver {
         Process process = null;
         try {
             // docker get list of images, use wait to get the whole list
-            process = Runtime.getRuntime().exec(DOCKER_IMAGES);
-            InputStream inputStream = process.getInputStream();
-            BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-            logger.debug("Docker images list from BufferedReader");
-            while ((line = br.readLine()) != null) {
-                logger.debug(line);
-                // read all docker images data, skip the first line
-                if (!line.startsWith(REPOSITORY)) {
-                    String[] dockerImageString = line.split(SPACES_REGEX);
-                    if (dockerImageString.length > 2) {
-                        dockerImages.add(new DockerImage(dockerImageString[0], dockerImageString[1], dockerImageString[2]));
-                    } else {
-                        logger.info("Docker line content is ignored: {}", line);
+            boolean isTarImages = config.isScanImagesTar();
+            if (!isTarImages) {
+                process = Runtime.getRuntime().exec(DOCKER_IMAGES);
+                InputStream inputStream = process.getInputStream();
+                BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+                logger.debug("Docker images list from BufferedReader");
+                while ((line = br.readLine()) != null) {
+                    logger.debug(line);
+                    // read all docker images data, skip the first line
+                    if (!line.startsWith(REPOSITORY)) {
+                        String[] dockerImageString = line.split(SPACES_REGEX);
+                        if (dockerImageString.length > 2) {
+                            dockerImages.add(new DockerImage(dockerImageString[0], dockerImageString[1], dockerImageString[2]));
+                        } else {
+                            logger.info("Docker line content is ignored: {}", line);
+                        }
                     }
                 }
-            }
-            process.waitFor();
-            if (!dockerImages.isEmpty()) {
-                // filter docker images using includes & excludes parameter
-                dockerImagesToScan = filterDockerImagesToScan(dockerImages, config.getAgent().getDockerIncludes(), config.getAgent().getDockerExcludes());
-                if (!dockerImagesToScan.isEmpty()) {
-                    saveDockerImages(dockerImagesToScan, projects);
+                process.waitFor();
+                if (!dockerImages.isEmpty()) {
+                    // filter docker images using includes & excludes parameter
+                    dockerImagesToScan = filterDockerImagesToScan(dockerImages, config.getAgent().getDockerIncludes(), config.getAgent().getDockerExcludes());
+                    if (!dockerImagesToScan.isEmpty()) {
+                        saveDockerImages(dockerImagesToScan, projects);
+                    }
                 }
+                br.close();
+            } else {
+                Collection<File> tarFiles = new HashSet<>();
+                FilenameFilter filenameFilter = new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        if (name.endsWith(TAR_SUFFIX)) {
+                            return true;
+                        }
+                        return false;
+                    }
+                };
+                for(String dir: config.getDependencyDirs()) {
+                    File tarDir = new File(dir);
+                    if (tarDir.isDirectory()) {
+                        for (File tarFile: tarDir.listFiles(filenameFilter)) {
+                            tarFiles.add(tarFile);
+                        }
+                    }
+                }
+                Collection<File> tarImagesToScan = filterTarImagesToScan(tarFiles, config.getAgent().getDockerIncludes(), config.getAgent().getDockerExcludes());
+                scanTarList(tarImagesToScan, projects);
             }
-            br.close();
         } catch (IOException e) {
             logger.error("IO exception : {}", e.getMessage());
             logger.debug("IO exception : {}", e.getStackTrace());
@@ -149,27 +175,47 @@ public class DockerResolver {
         for (DockerImage dockerImage : dockerImages) {
             String dockerImageString = dockerImage.getRepository() + Constants.WHITESPACE + dockerImage.getTag() + Constants.WHITESPACE + dockerImage.getId();
             // add images to scan according to dockerIncludes pattern
-            for (String imageInclude : imageIncludesList) {
-                if (StringUtils.isNotBlank(imageInclude)) {
-                    Pattern p = Pattern.compile(imageInclude);
-                    Matcher m = p.matcher(dockerImageString);
-                    if (m.find()) {
-                        dockerImagesToScan.add(dockerImage);
-                    }
-                }
+            if (isMatchingPattern(dockerImageString, imageIncludesList)) {
+                dockerImagesToScan.add(dockerImage);
             }
             // remove images from scan according to dockerExcludes pattern
-            for (String imageExcludes : imageExcludesList) {
-                if (StringUtils.isNotBlank(imageExcludes)) {
-                    Pattern p = Pattern.compile(imageExcludes);
-                    Matcher m = p.matcher(dockerImageString);
-                    if (m.find()) {
-                        dockerImagesToScan.remove(dockerImage);
-                    }
-                }
+            if (isMatchingPattern(dockerImageString, imageIncludesList)) {
+                dockerImagesToScan.remove(dockerImage);
             }
         }
         return dockerImagesToScan;
+    }
+
+    private Collection<File> filterTarImagesToScan(Collection<File> dockerImages, String[] dockerImageIncludes, String[] dockerImageExcludes) {
+        logger.info("Filtering docker images list by includes and excludes lists");
+        Collection<File> dockerImagesToScan = new LinkedList<>();
+        Collection<String> imageIncludesList = Arrays.asList(dockerImageIncludes);
+        Collection<String> imageExcludesList = Arrays.asList(dockerImageExcludes);
+        for (File dockerImage : dockerImages) {
+            String dockerImageString = dockerImage.getName();
+            // add images to scan according to dockerIncludes pattern
+            if (isMatchingPattern(dockerImageString, imageIncludesList)) {
+                dockerImagesToScan.add(dockerImage);
+            }
+            // remove images from scan according to dockerExcludes pattern
+            if (isMatchingPattern(dockerImageString, imageExcludesList)) {
+                dockerImagesToScan.remove(dockerImage);
+            }
+        }
+        return dockerImagesToScan;
+    }
+
+    private boolean isMatchingPattern(String dockerImageString, Collection<String> imageIncludesList) {
+        for (String imageInclude : imageIncludesList) {
+            if (StringUtils.isNotBlank(imageInclude)) {
+                Pattern p = Pattern.compile(imageInclude);
+                Matcher m = p.matcher(dockerImageString);
+                if (m.find()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -181,11 +227,164 @@ public class DockerResolver {
         int imagesCount = dockerImages.size();
         for (DockerImage dockerImage : dockerImages) {
             logger.info("Image {} of {} Images", counter, imagesCount);
-            saveDockerImage(dockerImage, projects);
+            //saveDockerImage(dockerImage, projects);
+            manageDockerImage(dockerImage, projects);
             counter++;
         }
     }
 
+    private void scanTarList (Collection<File> tarFilesName, Collection<AgentProjectInfo> projects) {
+        int i=0;
+        for (File tarFile:tarFilesName) {
+            String tar = tarFile.getAbsolutePath();
+            i++;
+            logger.info("file {} : {}", i, tar);
+        }
+        for (File tarFile:tarFilesName) {
+            String tar = tarFile.getAbsolutePath();
+            AgentProjectInfo projectInfo = new AgentProjectInfo();
+            String tarName = tar.substring(tar.lastIndexOf(BACK_SLASH)+1);
+            String[] splitted = tarName.split(WHITESPACE);
+            if (splitted.length == 3) {
+                String id = splitted[0];
+                String repository = splitted[1].replace(String.valueOf(SEMI_COLON), FORWARD_SLASH);
+                String tag = splitted[2].replace(String.valueOf(SEMI_COLON), FORWARD_SLASH)
+                        .replace(String.valueOf(OPEN_BRACKET), EMPTY_STRING)
+                        .replace(String.valueOf(CLOSE_BRACKET) + TAR_SUFFIX, EMPTY_STRING);
+                projectInfo.setCoordinates(new Coordinates(null, DOCKER_NAME_FORMAT.format(DOCKER_NAME_FORMAT_STRING, id,
+                        repository, tag), null));
+                projects.add(projectInfo);
+                File imageTarFile = new File(tar);
+                File imageExtractionDir = new File(TEMP_FOLDER, imageTarFile.getName());
+                imageExtractionDir.mkdirs();
+                extractAndBuildImage(imageTarFile, imageExtractionDir, projectInfo, config.deleteTarImages());
+                scanImage(imageExtractionDir, projectInfo);
+                deleteDockerArchiveFiles(null, imageExtractionDir);
+            } else {
+                logger.info("file {} name is not in format 'Hash Name (Tag)'", tar);
+            }
+        }
+    }
+
+    private void manageDockerImage(DockerImage dockerImage, Collection<AgentProjectInfo> projects) throws IOException {
+        logger.debug("Saving image {} {}", dockerImage.getRepository(), dockerImage.getTag());
+        // create agent project info
+        AgentProjectInfo projectInfo = new AgentProjectInfo();
+        projectInfo.setCoordinates(new Coordinates(null, DOCKER_NAME_FORMAT.format(DOCKER_NAME_FORMAT_STRING, dockerImage.getId(),
+                dockerImage.getRepository(), dockerImage.getTag()), null));
+        projects.add(projectInfo);
+
+        File imageTarFile = new File(TEMP_FOLDER, dockerImage.getRepository() + TAR_SUFFIX);
+        File imageExtractionDir = new File(TEMP_FOLDER, dockerImage.getRepository());
+        imageExtractionDir.mkdirs();
+
+        boolean saved = saveImage(dockerImage, imageTarFile);
+        if (saved) {
+            extractAndBuildImage(imageTarFile, imageExtractionDir, projectInfo, config.deleteTarImages());
+            scanImage(imageExtractionDir, projectInfo);
+        }
+
+        deleteDockerArchiveFiles(imageTarFile, imageExtractionDir);
+    }
+
+    private boolean saveImage(DockerImage dockerImage, File imageTarFile) {
+        Process process = null;
+        try {
+            //Save image as tar file
+            process = Runtime.getRuntime().exec(DOCKER_SAVE_IMAGE_COMMAND + Constants.WHITESPACE + dockerImage.getId() +
+                    Constants.WHITESPACE + O_PARAMETER + Constants.WHITESPACE + imageTarFile.getPath());
+            process.waitFor();
+            return true;
+        } catch (InterruptedException e) {
+            logger.error(e.getMessage());
+            logger.debug("{}", e.getStackTrace());
+        } catch (IOException e) {
+            logger.error("Error exporting image {}: {}", dockerImage.getRepository(), e.getMessage());
+            logger.debug("Error exporting image {}", dockerImage.getRepository(), e);
+        } finally {
+            process.destroy();
+        }
+        return false;
+    }
+
+    private void extractAndBuildImage (File imageTarFile, File imageExtractionDir, AgentProjectInfo projectInfo, Boolean fromTarList) {
+        ArchiveExtractor archiveExtractor = new ArchiveExtractor(config.getAgent().getArchiveIncludes(), config.getAgent().getArchiveExcludes(), config.getAgent().getIncludes());
+        try {
+            int megaByte = 1048576; // 1024*1024
+            long tarSizeInBytes = imageTarFile.length();
+            long tarSizeInMBs = tarSizeInBytes/megaByte;
+            long freeDiskSpaceInBytes = imageTarFile.getFreeSpace();
+            long freeDiskSpaceInMBs = imageTarFile.getFreeSpace()/megaByte;
+
+            logger.info("Extracting file {} - Size {} Bytes ({} MBs)- Free Space {} Bytes ({} MBs)",
+                    imageTarFile.getCanonicalPath(), tarSizeInBytes, tarSizeInMBs, freeDiskSpaceInBytes, freeDiskSpaceInMBs);
+        } catch (Exception ex){
+            logger.error("Could not get file size - {}", ex);
+        }
+        archiveExtractor.extractDockerImageLayers(imageTarFile, imageExtractionDir, fromTarList);
+        FilesScanner filesScanner = new FilesScanner();
+        String[] fileNames = filesScanner.getDirectoryContent(imageExtractionDir.getParent(), scanIncludes, scanExcludes, true, false);
+
+        // build the full path correctly
+        for (int i = 0; i < fileNames.length; i++) {
+            fileNames[i] = imageExtractionDir.getParent() + File.separator + fileNames[i];
+        }
+
+        // check for dependencies for each docker operating system (Debian,Arch-Linux,Alpine,Rpm)
+        AbstractParser parser = new DebianParser();
+        File file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE);
+
+        // extract .xz file to read the package log file
+        if (file != null) {
+            file = getPackagesLogFile(file, archiveExtractor);
+        }
+        parseProjectInfo(projectInfo, parser, file);
+        file = parser.findFile(fileNames, DEBIAN_LIST_PACKAGES_FILE_AVAILABLE);
+        if (file != null) {
+            parseProjectInfo(projectInfo, parser, file);
+        }
+
+        // try to find duplicates and clear them
+        Collection<DependencyInfo> debianDependencyInfos = mergeDependencyInfos(projectInfo);
+        if (debianDependencyInfos != null && !debianDependencyInfos.isEmpty()) {
+            projectInfo.getDependencies().clear();
+            projectInfo.getDependencies().addAll(debianDependencyInfos);
+        }
+        logger.info("Found {} Debian Packages", debianDependencyInfos.size());
+
+        parser = new ArchLinuxParser();
+        file = parser.findFile(fileNames, ARCH_LINUX_DESC_FOLDERS);
+        int archLinuxPackages = parseProjectInfo(projectInfo, parser, file);
+        logger.info("Found {} Arch linux Packages", archLinuxPackages);
+
+        parser = new AlpineParser();
+        file = parser.findFile(fileNames, ALPINE_LIST_PACKAGES_FILE);
+        int alpinePackages = parseProjectInfo(projectInfo, parser, file);
+        logger.info("Found {} Alpine Packages", alpinePackages);
+
+        RpmParser rpmParser = new RpmParser();
+        Collection<String> yumDbFoldersPath = new LinkedList<>();
+        RpmParser.findFolder(imageExtractionDir, YUM_DB, yumDbFoldersPath);
+        File yumDbFolder = rpmParser.checkFolders(yumDbFoldersPath, RPM_YUM_DB_FOLDER_DEFAULT_PATH);
+        int rpmPackages = parseProjectInfo(projectInfo, rpmParser, yumDbFolder);
+        logger.info("Found {} Rpm Packages", rpmPackages);
+    }
+
+    private void scanImage (File imageExtractionDir, AgentProjectInfo projectInfo) {
+        String extractPath = imageExtractionDir.getPath();
+        Set<String> setDirs = new HashSet<>();
+        setDirs.add(extractPath);
+        Map<String, Set<String>> appPathsToDependencyDirs = new HashMap<>();
+        appPathsToDependencyDirs.put(FSAConfiguration.DEFAULT_KEY, setDirs);
+        List<DependencyInfo> dependencyInfos = new FileSystemScanner(config.getResolver(), config.getAgent(), false).createProjects(
+                Arrays.asList(extractPath), appPathsToDependencyDirs, false, config.getAgent().getIncludes(), config.getAgent().getExcludes(),
+                config.getAgent().getGlobCaseSensitive(), config.getAgent().getArchiveExtractionDepth(), FileExtensions.ARCHIVE_INCLUDES,
+                FileExtensions.ARCHIVE_EXCLUDES, false, config.getAgent().isFollowSymlinks(), config.getAgent().getExcludedCopyrights(), PARTIAL_SHA1_MATCH, config.getAgent().getPythonRequirementsFileIncludes());
+
+        projectInfo.getDependencies().addAll(dependencyInfos);
+    }
+
+    /*
     private void saveDockerImage(DockerImage dockerImage, Collection<AgentProjectInfo> projects) throws IOException {
         logger.debug("Saving image {} {}", dockerImage.getRepository(), dockerImage.getTag());
         Process process = null;
@@ -218,7 +417,7 @@ public class DockerResolver {
             } catch (Exception ex) {
                 logger.error("Could not get file size - {}", ex);
             }
-            archiveExtractor.extractDockerImageLayers(imageTarFile, imageExtractionDir);
+            archiveExtractor.extractDockerImageLayers(imageTarFile, imageExtractionDir, false);
             FilesScanner filesScanner = new FilesScanner();
             String[] fileNames = filesScanner.getDirectoryContent(imageExtractionDir.getParent(), scanIncludes, scanExcludes, true, false);
 
@@ -290,7 +489,7 @@ public class DockerResolver {
             process.destroy();
             deleteDockerArchiveFiles(imageTarFile, imageExtractionDir);
         }
-    }
+    }*/
 
     private Collection<DependencyInfo> mergeDependencyInfos(AgentProjectInfo projectInfo) {
         Map<String, DependencyInfo> infoMap = new HashedMap();

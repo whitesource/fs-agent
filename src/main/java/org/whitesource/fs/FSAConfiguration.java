@@ -120,6 +120,8 @@ public class FSAConfiguration {
     private final List<String> requirementsFileIncludes;
     private final boolean scanPackageManager;
     private final boolean scanDockerImages;
+    private final boolean scanTarImages;
+    private final boolean deleteTarImages;
 
     private final String scannedFolders;
 
@@ -260,6 +262,8 @@ public class FSAConfiguration {
 
         scanPackageManager = config.getBooleanProperty(ConfigPropertyKeys.SCAN_PACKAGE_MANAGER, false);
         scanDockerImages = config.getBooleanProperty(ConfigPropertyKeys.SCAN_DOCKER_IMAGES, false);
+        scanTarImages = config.getBooleanProperty(ConfigPropertyKeys.SCAN_TAR_IMAGES, false);
+        deleteTarImages = config.getBooleanProperty(ConfigPropertyKeys.DELETE_TAR_FILES, true);
 
         if (dependencyDirs == null)
             dependencyDirs = new ArrayList<>();
@@ -1060,6 +1064,13 @@ public class FSAConfiguration {
         return logLevel;
     }
 
+    public boolean isScanImagesTar() {
+        return scanTarImages;
+    }
+
+    public boolean deleteTarImages() {
+        return deleteTarImages;
+    }
 
     /* --- Public static methods--- */
 
@@ -1222,8 +1233,14 @@ public class FSAConfiguration {
         // User-entry of a flag that overrides default FSA process termination
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.REQUIRE_KNOWN_SHA1, commandLineArgs.requireKnownSha1);
 
-        // docker flag to scan docker images instead of folder
+        // docker flag to scan docker images
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_DOCKER_IMAGES, commandLineArgs.scanDockerImages);
+
+        //docker flag to scan docker images by using docker or tar files folder (which specified with parameter -d)
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_TAR_IMAGES, commandLineArgs.scanDockerImages);
+
+        //docker flag to delete tar images files after extracting
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.DELETE_TAR_FILES, commandLineArgs.scanDockerImages);
 
         return offlineRequestFiles;
     }
@@ -1233,7 +1250,7 @@ public class FSAConfiguration {
         String[] parsedProxyInfo = new String[4];
         if (proxy != null) {
             try {
-                URL proxyAsUrl = new URL(proxy);
+                URL proxyAsUrl = new  URL(proxy);
                 parsedProxyInfo[0] = proxyAsUrl.getHost();
                 parsedProxyInfo[1] = String.valueOf(proxyAsUrl.getPort());
                 if (proxyAsUrl.getUserInfo() != null) {
