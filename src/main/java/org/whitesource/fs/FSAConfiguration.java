@@ -276,8 +276,10 @@ public class FSAConfiguration {
         validateIaLanguage(config);
 
         // todo: check possibility to get the errors only in the end
-        errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal,
-                apiToken, configFilePath, archiveExtractionDepth, includes, projectPerFolderIncludes, pythonRequirementsFileIncludes, scanComment));
+        if (!Constants.TRUE.equals(commandLineArgs.noConfig)) {
+            errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal,
+                    apiToken, configFilePath, archiveExtractionDepth, includes, projectPerFolderIncludes, pythonRequirementsFileIncludes, scanComment));
+        }
 
         logLevel = config.getProperty(ConfigPropertyKeys.LOG_LEVEL_KEY, INFO);
         logContext = config.getProperty(ConfigPropertyKeys.LOG_CONTEXT);
@@ -328,9 +330,8 @@ public class FSAConfiguration {
         /* check if the minimum required settings for running without config file exist
             apiKey & projectName/projectToken & productName/productToken & scannedDirectory
          */
-        if (commandLineArgs.apiKey == null && (commandLineArgs.projectToken != null || commandLineArgs.project != null) &&
-                (commandLineArgs.product != null && commandLineArgs.productToken != null) && commandLineArgs.dependencyDirs != null) {
-            errors.add("check");
+        if (commandLineArgs.apiKey == null || (commandLineArgs.projectToken != null && commandLineArgs.project != null) || commandLineArgs.dependencyDirs != null) {
+            errors.add("apiKey, projectName/token & -d params are required for scan without config file");
         }
     }
 
