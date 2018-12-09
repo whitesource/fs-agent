@@ -158,22 +158,11 @@ public class CommandLineArgs {
     @Parameter(names = "-addSha1", description = "for developement only; false by default")
     String addSha1 = null;
 
-    /*
-    @Parameter(names = "-aws_account_id", description = "AWS Account ID")
-    String awsAccountId = null;
+    @Parameter(names = "-wss.url", description = "URL to send the request to")
+    String wssUrl = null;
 
-    @Parameter(names = "-aws_region", description = "AWS Region")
-    String awsRegion = null;
-
-    @Parameter(names = "-docker_image", description = "Docker Image")
-    String dockerImage = null;
-
-    @Parameter(names = "-docker_tag", description = "Docker Image's Tag")
-    String dockerTag = null;
-
-    @Parameter(names = "-docker_digest", description = "Docker Image's Digest")
-    String dockerDigest = null;
-    */
+    @Parameter(names = "-noConfig", description = "Run without a config file")
+    String noConfig = null;
 
     /* --- Public methods --- */
 

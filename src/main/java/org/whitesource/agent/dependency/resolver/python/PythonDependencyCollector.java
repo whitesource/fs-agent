@@ -185,7 +185,7 @@ public class PythonDependencyCollector extends DependencyCollector {
                 }
                 // If there was an error and the dependency file type is requirements.txt, download each dependency in the requirements.txt file one by one
                 if (failed && this.ignorePipInstallErrors && this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
-                    logger.info("Try to download each dependency in the requirements.txt file one by one. It might take a few minutes.");
+                    logger.info("Try to download each dependency in " + this.requirementsTxtOrSetupPyPath + " file one by one. It might take a few minutes.");
                     FilesUtils.deleteDirectory(new File(tempDirPackages));
                     this.tempDirPackages = new FilesUtils().createTmpFolder(false, TempFolders.UNIQUE_PYTHON_TEMP_FOLDER);
                     if (this.tempDirPackages != null) {

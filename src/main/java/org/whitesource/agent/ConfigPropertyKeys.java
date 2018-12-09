@@ -245,4 +245,5 @@ public final class ConfigPropertyKeys {
 
 
     public static final String ADD_SHA1 = "addSha1";
+    public static final String NO_CONFIG = "noConfig";
 }

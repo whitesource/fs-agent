@@ -568,6 +568,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private List<DependencyInfo> parseGoVendor(File goVendor) throws IOException {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
+        HashMap<String, DependencyInfo> dependencyInfoHashMap = new HashMap<>();
         JsonParser parser = new JsonParser();
         FileReader fileReader = null;
         //parse GoVendor dependency json file
@@ -584,9 +585,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         logger.debug("Packeges in json #{} : {}", i, packages.get(i).toString());
                         dependencyInfo = new DependencyInfo();
                         JsonObject pck = packages.get(i).getAsJsonObject();
-                        String Path = pck.get(PATH).getAsString();
-                        dependencyInfo.setGroupId(getGroupId(Path));
-                        dependencyInfo.setArtifactId(Path);
+                        String name = pck.get(PATH).getAsString();
+                        dependencyInfo.setGroupId(getGroupId(name));
+                        dependencyInfo.setArtifactId(name);
                         dependencyInfo.setCommit(pck.get(REVISION_GOV).getAsString());
                         dependencyInfo.setDependencyType(DependencyType.GO);
                         //dependencyInfo.setDependencyFile(goVendor.getPath());
@@ -594,7 +595,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         if (pck.get(VERSION_GOV) != null) {
                             dependencyInfo.setVersion(pck.get(VERSION_GOV).getAsString());
                         }
-                        dependencyInfos.add(dependencyInfo);
+                        setInHierarchyTree(dependencyInfos, dependencyInfoHashMap, dependencyInfo, name);
                     }
                 }
             }
@@ -607,6 +608,23 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             }
         }
         return dependencyInfos;
+    }
+
+    private void setInHierarchyTree(List<DependencyInfo> dependencyInfos, HashMap<String, DependencyInfo> dependencyInfoHashMap, DependencyInfo dependencyInfo, String name) {
+        boolean childDependency = false;
+        dependencyInfoHashMap.put(name, dependencyInfo);
+        // checking if the dependency is child of another (if its name is contained inside the name of other dependency)
+        while (name.contains(Constants.FORWARD_SLASH)){
+            name = name.substring(0, name.lastIndexOf(Constants.FORWARD_SLASH));
+            if (dependencyInfoHashMap.get(name) != null){
+                dependencyInfoHashMap.get(name).getChildren().add(dependencyInfo);
+                childDependency = true;
+                break;
+            }
+        }
+        if (!childDependency){
+            dependencyInfos.add(dependencyInfo);
+        }
     }
 
     private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
