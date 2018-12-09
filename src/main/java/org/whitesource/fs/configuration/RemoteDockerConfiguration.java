@@ -1,6 +1,5 @@
 package org.whitesource.fs.configuration;
 
-import java.util.LinkedList;
 import java.util.List;
 
 public class RemoteDockerConfiguration {
@@ -22,19 +21,13 @@ public class RemoteDockerConfiguration {
     private String amazonRegion = "east";
     private int amazonMaxPullImages;
 
+    // Azure configurations
+    private boolean remoteDockerAzureEnabled;
+    private String azureUserName;
+    private String azureUserPassword;
+    private List<String> azureRegistryNames;
 
-    public RemoteDockerConfiguration() {
-        this.imageNames     = new LinkedList<>();
-        this.imageTags      = new LinkedList<>();
-        this.imageDigests   = new LinkedList<>();
-        forceDelete         = false;
-        remoteDockerEnabled = false;
-        maxScanImages       = 0;
-        amazonMaxPullImages = 0;
-        forcePull           = false;
-        maxPullImages       = 10;
-        loginSudo           = true;
-    }
+    /* --- Constructors --- */
 
     public RemoteDockerConfiguration(List<String> imageNames, List<String> imageTags, List<String> imageDigests,
                                      boolean forceDelete, boolean remoteDockerEnabled, int maxScanImages,
@@ -51,30 +44,20 @@ public class RemoteDockerConfiguration {
         this.loginSudo = loginSudo;
     }
 
+    /* --- Getters / Setters --- */
+
     public List<String> getImageNames() {
         return imageNames;
     }
-/*
-    public void setImageNames(List<String> imageNames) {
-        this.imageNames = imageNames;
-    }
-*/
+
     public List<String> getImageTags() {
         return imageTags;
     }
-/*
-    public void setImageTags(List<String> imageTags) {
-        this.imageTags = imageTags;
-    }
-*/
+
     public List<String> getImageDigests() {
         return imageDigests;
     }
-/*
-    public void setImageDigests(List<String> imageDigests) {
-        this.imageDigests = imageDigests;
-    }
-*/
+
     public boolean isForceDelete() {
         return forceDelete;
     }
@@ -86,20 +69,24 @@ public class RemoteDockerConfiguration {
     public boolean isRemoteDockerEnabled() {
         return remoteDockerEnabled;
     }
-/*
-    public void setRemoteDockerEnabled(boolean remoteDockerEnabled) {
-        this.remoteDockerEnabled = remoteDockerEnabled;
-    }
-*/
+
     public int getMaxScanImages() {
         return maxScanImages;
     }
-/*
-    public void setMaxScanImages(int maxScanImages) {
-        this.maxScanImages = maxScanImages;
+
+    public boolean isForcePull() {
+        return forcePull;
     }
-*/
-    // Amazon methods
+
+    public int getMaxPullImages() {
+        return maxPullImages;
+    }
+
+    public boolean isLoginSudo() {
+        return loginSudo;
+    }
+
+    // ------------- Amazon methods -------------
 
     public List<String> getAmazonRegistryIds() {
         return amazonRegistryIds;
@@ -108,11 +95,7 @@ public class RemoteDockerConfiguration {
     public void setAmazonRegistryIds(List<String> amazonRegistryIds) {
         this.amazonRegistryIds = amazonRegistryIds;
     }
-/*
-    public String getAmazonRegion() {
-        return amazonRegion;
-    }
-*/
+
     public void setAmazonRegion(String amazonRegion) {
         this.amazonRegion = amazonRegion;
     }
@@ -133,23 +116,36 @@ public class RemoteDockerConfiguration {
         this.amazonMaxPullImages = amazonMaxPullImages;
     }
 
-    public boolean isForcePull() {
-        return forcePull;
+    // ---------- Azure Methods --------------
+    public boolean isRemoteDockerAzureEnabled() {
+        return remoteDockerAzureEnabled;
     }
 
-    public void setForcePull(boolean forcePull) {
-        this.forcePull = forcePull;
+    public void setRemoteDockerAzureEnabled(boolean remoteDockerAzureEnabled) {
+        this.remoteDockerAzureEnabled = remoteDockerAzureEnabled;
     }
 
-    public int getMaxPullImages() {
-        return maxPullImages;
+    public String getAzureUserName() {
+        return azureUserName;
     }
 
-    public void setMaxPullImages(int maxPullImages) {
-        this.maxPullImages = maxPullImages;
+    public void setAzureUserName(String azureUserName) {
+        this.azureUserName = azureUserName;
     }
 
-    public boolean isLoginSudo() {
-        return loginSudo;
+    public String getAzureUserPassword() {
+        return azureUserPassword;
+    }
+
+    public void setAzureUserPassword(String azureUserPassword) {
+        this.azureUserPassword = azureUserPassword;
+    }
+
+    public List<String> getAzureRegistryNames() {
+        return azureRegistryNames;
+    }
+
+    public void setAzureRegistryNames(List<String> azureRegistryNames) {
+        this.azureRegistryNames = azureRegistryNames;
     }
 }

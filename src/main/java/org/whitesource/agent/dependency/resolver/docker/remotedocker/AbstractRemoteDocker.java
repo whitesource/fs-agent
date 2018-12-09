@@ -13,16 +13,20 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class AbstractRemoteDocker {
 
+    /* --- Static members --- */
+
     private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteDocker.class);
-    private static String DOCKER_CLI_VERSION = "docker --version";
-    static String DOCKER_CLI_LOGIN  = "docker login";
-    static String DOCKER_CLI_REMOVE_IMAGE = "docker rmi ";
-    private static String DOCKER_CLI_PULL = "docker pull ";
-    static String LINUX_PREFIX_SUDO = "sudo ";
-    private static final String WS_SCANNED_TAG = "WS.Scanned";
+    protected static final String DOCKER_CLI_VERSION = "docker --version";
+    protected static final String DOCKER_CLI_LOGIN  = "docker login";
+    protected static final String DOCKER_CLI_REMOVE_IMAGE = "docker rmi ";
+    protected static final String DOCKER_CLI_PULL = "docker pull ";
+    protected static final String LINUX_PREFIX_SUDO = "sudo ";
+    protected static final String WS_SCANNED_TAG = "WS.Scanned";
 
     // This is a set of the pulled images only - Users may require to pull existing images - but they are not saved
     // in this set because we will remove the images that we pulled here (we don't want to remove the existing images
@@ -53,7 +57,7 @@ public abstract class AbstractRemoteDocker {
     public Set<AbstractRemoteDockerImage> pullRemoteDockerImages() {
         if (isAllSoftwareRequiredInstalled()) {
              if (loginToRemoteRegistry()) {
-                 imagesFound = listImagesOnRemoteRegistry();
+                 imagesFound = getRemoteRegistryImagesList();
                  if (imagesFound != null && !imagesFound.isEmpty()) {
                      imagesPulled = pullImagesFromRemoteRegistry();
                  }
@@ -65,14 +69,20 @@ public abstract class AbstractRemoteDocker {
     }
 
     public void removePulledRemoteDockerImages() {
-        if (imagesPulled != null) {
+        if (imagesPulled != null && !imagesPulled.isEmpty()) {
+            logger.info("Remove pulled remote docker images");
             for(AbstractRemoteDockerImage image: imagesPulled) {
                 String command = DOCKER_CLI_REMOVE_IMAGE;
                 // Use force delete
                 if (config.isForceDelete()) {
                     command += "-f ";
                 }
-                executeCommand(command + image.getImageSha256());
+                Pair<Integer, InputStream> result = executeCommand(command + image.getUniqueIdentifier());
+                if(result.getKey() == 0) {
+                    logger.debug("Image '{}' removed successfully.", image.getRepositoryName());
+                } else {
+                    logger.debug("Image '{}' wasn't removed.", image.getRepositoryName());
+                }
             }
         }
     }
@@ -83,9 +93,9 @@ public abstract class AbstractRemoteDocker {
         TODO: this function should return a collection of manifest image object
         TODO: DockerImage object does not include all the required data (like date, tags list, etc...)
      */
-    protected abstract Set<AbstractRemoteDockerImage> listImagesOnRemoteRegistry();
+    protected abstract Set<AbstractRemoteDockerImage> getRemoteRegistryImagesList();
 
-    protected abstract boolean isRequiredRegistryManagerInstalled();
+    protected abstract boolean isRegistryCliInstalled();
 
     protected abstract String getImageFullURL(AbstractRemoteDockerImage image);
 
@@ -122,7 +132,7 @@ public abstract class AbstractRemoteDocker {
     }
 
     private boolean isAllSoftwareRequiredInstalled() {
-        return isDockerInstalled() && isRequiredRegistryManagerInstalled();
+        return isDockerInstalled() && isRegistryCliInstalled();
     }
 
     private boolean isAllNamesRequired() {
@@ -315,7 +325,7 @@ public abstract class AbstractRemoteDocker {
     // This function cannot be run with multiple threads because each time it is run it overrides the values
     // of resultVal and inputStream, so if other thread (for example) is reading the stream, it might get mixed data
     // from old command's stream and the new command's stream
-    Pair<Integer, InputStream> executeCommand(String command) {
+    protected Pair<Integer, InputStream> executeCommand(String command) {
         int resultVal = 1;
         InputStream inputStream = null;
         try {
@@ -343,7 +353,7 @@ public abstract class AbstractRemoteDocker {
         return new Pair<>(resultVal, inputStream);
     }
 
-    boolean isCommandSuccessful(String command) {
+    protected boolean isCommandSuccessful(String command) {
         Pair<Integer, InputStream> result = executeCommand(command);
         Integer val = result.getKey();
         return val == 0;
@@ -369,53 +379,26 @@ public abstract class AbstractRemoteDocker {
         }
         return false;
     }
-/*
-    private boolean isMatchStringInListWithIgnore(String toMatch, List<String> stringsList, List<String> ignoreList) {
-        if (toMatch == null || stringsList == null || stringsList.isEmpty()) {
-            return false;
-        }
-        if (ignoreList == null || ignoreList.isEmpty()) {
-            return isMatchStringInList(toMatch, stringsList);
-        }
-        else {
-            for (String currentString : stringsList) {
-                if (!ignoreList.contains(currentString)) {
-                    if (toMatch.matches(currentString)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-*/
-    public void incrementScannedImagesCount(int amount) {
-        scannedImagesCount += amount;
-    }
 
     /*
-    private String getImageSizeInMB(String imageUrl) {
-        String command = "docker image inspect " + imageUrl + " --format='{{.Size}}'";
-        Pair<Integer, String> pullResult = executeCommandWithOutput(command);
-        boolean cmdResult = pullResult.getKey() == 0;
-        String result = "Unknown";
-        if (cmdResult) {
-            String cmdVal = pullResult.getValue().replaceAll("'","");
-            try {
-                long sizeInBytes = Long.parseLong(cmdVal);
-                long sizeInMegaBytes = sizeInBytes / 1024 / 1024;
-                result = String.valueOf(sizeInMegaBytes);
-            } catch (Exception ex) {
-                logger.debug("Was not able to parse image size {} ", imageUrl);
-                logger.debug("Error - {}", ex.getMessage());
-            }
+    Get image sha256 extracted from digest from image manifest.
+     */
+    protected String getSHA256FromManifest(String manifest) {
+        if (StringUtils.isBlank(manifest)) {
+            return Constants.EMPTY_STRING;
         }
-        return result;
-    }
 
-    protected boolean isEnoughSpaceForImage() {
-        return true;
-    }
-    */
+        // sha256 regex, matched group will return string contains digits and chars, String length 64
+        String sha256Regex = "sha256:([\\w\\d]{64})";
+        Pattern pattern = Pattern.compile(sha256Regex);
+        Matcher matcher = pattern.matcher(manifest);
 
+        if(matcher.find()){
+            return matcher.group(1);
+        } else {
+            logger.error("Could not get config -> digest -> sha256 value from manifest");
+            logger.error("Manifest content - {}", manifest);
+            return Constants.EMPTY_STRING;
+        }
+    }
 }

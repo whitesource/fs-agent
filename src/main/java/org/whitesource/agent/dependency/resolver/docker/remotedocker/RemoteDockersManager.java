@@ -1,5 +1,7 @@
 package org.whitesource.agent.dependency.resolver.docker.remotedocker;
 
+import org.whitesource.agent.dependency.resolver.docker.remotedocker.amazon.RemoteDockerAmazonECR;
+import org.whitesource.agent.dependency.resolver.docker.remotedocker.azure.AzureRemoteDocker;
 import org.whitesource.fs.configuration.RemoteDockerConfiguration;
 
 import java.util.*;
@@ -17,6 +19,9 @@ public class RemoteDockersManager {
             if (remoteDockersEnabled) {
                 if (config.isRemoteDockerAmazonEnabled()) {
                     remoteDockersList.add(new RemoteDockerAmazonECR(config));
+                }
+                if(config.isRemoteDockerAzureEnabled()) {
+                    remoteDockersList.add(new AzureRemoteDocker(config));
                 }
             }
         }
