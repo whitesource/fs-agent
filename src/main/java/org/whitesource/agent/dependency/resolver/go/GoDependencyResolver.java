@@ -596,6 +596,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             dependencyInfo.setVersion(pck.get(VERSION_GOV).getAsString());
                         }
                         boolean childDependency = false;
+                        // TODO - put into a method
                         dependencyInfoHashMap.put(name, dependencyInfo);
                         // checking if the dependency is child of another (if its name is contained inside the name of other dependency)
                         while (name.contains(Constants.FORWARD_SLASH)){

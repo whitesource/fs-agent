@@ -14,6 +14,7 @@ public class LoggerFS implements Logger {
     private static final String OPENING_BRACKET = "[";
     private static final String CLOSING_BRACKET = "] ";
     private static final String CTX = "[CTX=";
+    private static final String TAB = "\t";
 
     /* --- Members --- */
 
@@ -354,7 +355,7 @@ public class LoggerFS implements Logger {
         if (this.contextId == null) {
             return msg;
         } else {
-            return CTX + this.contextId  + CLOSING_BRACKET + "\t" + msg;
+            return CTX + this.contextId  + CLOSING_BRACKET + TAB + msg;
         }
     }
 }

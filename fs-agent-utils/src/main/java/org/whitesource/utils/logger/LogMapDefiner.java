@@ -20,6 +20,8 @@ public class LogMapDefiner extends PropertyDefinerBase {
 
     private String propertyLookupKey;
 
+    /* --- Getters / Setters --- */
+
     public void setPropertyLookupKey(String propertyLookupKey) {
         this.propertyLookupKey = propertyLookupKey;
     }

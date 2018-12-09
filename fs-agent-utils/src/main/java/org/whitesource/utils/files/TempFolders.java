@@ -1,6 +1,5 @@
 package org.whitesource.utils.files;
 
-import org.whitesource.utils.files.UniqueNamesGenerator;
 import org.whitesource.utils.Constants;
 
 import java.io.File;
