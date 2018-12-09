@@ -627,7 +627,6 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         }
     }
 
-
     private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
         logger.debug("collecting dependencies using 'vndr'");
         File vndrConf = new File(rootDirectory + fileSeparator + VNDR_CONF);
