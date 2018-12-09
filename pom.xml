@@ -4,7 +4,7 @@
 
     <groupId>org.whitesource</groupId>
     <artifactId>whitesource-fs-agent</artifactId>
-    <version>18.11.2-SNAPSHOT</version>
+    <version>${wss-fs-agent.version}</version>
     <packaging>pom</packaging>
 
     <name>White Source File System Agent</name>
@@ -16,6 +16,7 @@
         <agent.api.version>2.9.1</agent.api.version>
         <slf4j.version>1.7.5</slf4j.version>
         <skipTests>false</skipTests>
+        <wss-fs-agent.version>18.11.2-SNAPSHOT</wss-fs-agent.version>
     </properties>
 
     <organization>
@@ -94,6 +95,11 @@
             <artifactId>wss-agent-report</artifactId>
             <version>${agent.api.version}</version>
         </dependency>
+        <!--dependency>
+            <groupId>org.whitesource</groupId>
+            <artifactId>whitesource-fs-agent-utils</artifactId>
+            <version>18.11.2-SNAPSHOT</version>
+        </dependency-->
 
         <!-- CLI library -->
         <dependency>
@@ -275,11 +281,6 @@
             <artifactId>jersey-client</artifactId>
             <version>1.17.1</version>
         </dependency>
-        <!--dependency>
-            <groupId>org.whitesource</groupId>
-            <artifactId>whitesource-fs-agent-utils</artifactId>
-            <version>18.11.2-SNAPSHOT</version>
-        </dependency-->
     </dependencies>
 
     <build>

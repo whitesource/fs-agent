@@ -9,10 +9,73 @@
         <version>18.11.2-SNAPSHOT</version>
     </parent>
 
-    <!--groupId>org.whitesource</groupId-->
     <artifactId>whitesource-fs-agent-utils</artifactId>
-    <!--version>18.11.2-SNAPSHOT</version-->
     <packaging>jar</packaging>
+
+    <!--properties>
+        < plugins >
+        <maven.assembly.plugin.version>2.4</maven.assembly.plugin.version>
+    </properties-->
+
+    <!--build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>bnd-maven-plugin</artifactId>
+                <version>4.1.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>bnd-process</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>${maven.assembly.plugin.version}</version>
+                    <configuration>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                        <archive>
+                            <manifest>
+                                <mainClass>Main</mainClass>
+                            </manifest>
+                        </archive>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>make-assembly</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build-->
 
     <dependencies>
         <!-- Necessary for DirectoryScanner for globbing the dependency directory -->
@@ -23,7 +86,7 @@
         </dependency>
     </dependencies>
 
-    <profiles>
+    <!--profiles>
         <profile>
             <id>Release</id>
             <activation>
@@ -41,6 +104,6 @@
                 </plugins>
             </build>
         </profile>
-    </profiles>
+    </profiles-->
 
 </project>
