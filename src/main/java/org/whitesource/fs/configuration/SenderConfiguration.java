@@ -16,10 +16,9 @@
 package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.whitesource.agent.client.ClientConstants;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
-import static org.whitesource.agent.client.ClientConstants.CONNECTION_TIMEOUT_KEYWORD;
-import static org.whitesource.agent.client.ClientConstants.SERVICE_URL_KEYWORD;
 
 public class SenderConfiguration {
 
@@ -43,8 +42,8 @@ public class SenderConfiguration {
 
     public SenderConfiguration(
             @JsonProperty(CHECK_POLICIES_PROPERTY_KEY) boolean checkPolicies,
-            @JsonProperty(SERVICE_URL_KEYWORD) String serviceUrl,
-            @JsonProperty(CONNECTION_TIMEOUT_KEYWORD) int connectionTimeOut,
+            @JsonProperty(ClientConstants.SERVICE_URL_KEYWORD) String serviceUrl,
+            @JsonProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD) int connectionTimeOut,
 
             @JsonProperty(PROXY_HOST_PROPERTY_KEY) String proxyHost,
             @JsonProperty(PROXY_PORT_PROPERTY_KEY) int proxyPort,
@@ -80,7 +79,7 @@ public class SenderConfiguration {
         this.updateInventory = updateInventory;
     }
 
-    @JsonProperty(SERVICE_URL_KEYWORD)
+    @JsonProperty(ClientConstants.SERVICE_URL_KEYWORD)
     public String getServiceUrl() {
         return serviceUrl;
     }
@@ -100,7 +99,7 @@ public class SenderConfiguration {
         return proxyHost;
     }
 
-    @JsonProperty(CONNECTION_TIMEOUT_KEYWORD)
+    @JsonProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD)
     public int getConnectionTimeOut() {
         return connectionTimeOut;
     }
