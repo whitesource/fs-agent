@@ -330,7 +330,7 @@ public class FSAConfiguration {
         /* check if the minimum required settings for running without config file exist
             apiKey & projectName/projectToken & productName/productToken & scannedDirectory
          */
-        if (commandLineArgs.apiKey == null || (commandLineArgs.projectToken != null && commandLineArgs.project != null) || commandLineArgs.dependencyDirs != null) {
+        if (commandLineArgs.apiKey == null || (commandLineArgs.projectToken == null && commandLineArgs.project == null) || commandLineArgs.dependencyDirs == null) {
             errors.add("apiKey, projectName/token & -d params are required for scan without config file");
         }
     }
