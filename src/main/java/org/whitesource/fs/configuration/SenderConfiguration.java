@@ -16,6 +16,8 @@
 package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.whitesource.agent.utils.WsStringUtils;
+import org.whitesource.fs.FSAConfigProperty;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 import static org.whitesource.agent.client.ClientConstants.CONNECTION_TIMEOUT_KEYWORD;
@@ -23,22 +25,29 @@ import static org.whitesource.agent.client.ClientConstants.SERVICE_URL_KEYWORD;
 
 public class SenderConfiguration {
 
+    @FSAConfigProperty
     private final boolean checkPolicies;
+    @FSAConfigProperty
     private final String serviceUrl;
     private final String proxyHost;
     private final int connectionTimeOut;
     private final int proxyPort;
     private final String proxyUser;
     private final String proxyPassword;
+    @FSAConfigProperty
     private final boolean forceCheckAllDependencies;
+    @FSAConfigProperty
     private final boolean forceUpdate;
+    @FSAConfigProperty
     private final boolean forceUpdateFailBuildOnPolicyViolation;
+    @FSAConfigProperty
     private final String updateTypeValue;
     private boolean enableImpactAnalysis;
     private final boolean ignoreCertificateCheck;
     private final int connectionRetries;
     private final int connectionRetriesIntervals;
     private final boolean sendLogsToWss;
+    @FSAConfigProperty
     private final boolean updateInventory;
 
     public SenderConfiguration(
@@ -167,13 +176,6 @@ public class SenderConfiguration {
 
     @Override
     public String toString() {
-        return  "serviceUrl='" + serviceUrl + "'\n" +
-                "checkPolicies=" + checkPolicies + '\n' +
-                "forceCheckAllDependencies=" + forceCheckAllDependencies + '\n' +
-                "forceUpdate=" + forceUpdate + '\n' +
-                "forceUpdate.failBuildOnPolicyViolation=" + forceUpdateFailBuildOnPolicyViolation + '\n' +
-                "updateTypeValue='" + updateTypeValue + "'" +'\n' +
-                "updateInventory=" + updateInventory;
-//                ", enableImpactAnalysis=" + enableImpactAnalysis;
+        return WsStringUtils.toString(this);
     }
 }

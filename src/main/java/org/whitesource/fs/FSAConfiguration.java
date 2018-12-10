@@ -28,6 +28,7 @@ import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.Pair;
+import org.whitesource.agent.utils.WsStringUtils;
 import org.whitesource.fs.configuration.*;
 
 import java.io.*;
@@ -64,27 +65,6 @@ public class FSAConfiguration {
     public static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
     public static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
-
-    @Override
-    public String toString() {
-        return "FSA Configuration {\n" +
-                "logLevel=" + logLevel + '\n' +
-                "configFilePath=" + configFilePath + '\n' +
-                "fileListPath=" + fileListPath + '\n' +
-                "dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
-                sender.toString() + '\n' +
-                resolver.toString() + '\n' +
-                request.toString() + '\n' +
-                "scanPackageManager=" + scanPackageManager + '\n' +
-                offline.toString() + '\n' +
-                "projectPerFolder=" + projectPerFolder + '\n' +
-                "wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
-                "scanPackageManager=" + scanPackageManager + '\n' +
-                "scanDockerImages=" + scanDockerImages + '\n' +
-                getAgent().toString() + '\n' +
-                '}';
-    }
-
     public static final String WHITE_SOURCE_DEFAULT_FOLDER_PATH = ".";
     public static final String PIP = "pip";
     public static final String PYTHON = "python";
@@ -93,15 +73,20 @@ public class FSAConfiguration {
     public static final boolean DEFAULT_SSL = true;
     private static final boolean DEFAULT_ENABLED = false;
 
+    @FSAConfigProperty
     private boolean projectPerFolder;
+    @FSAConfigProperty
     private int connectionTimeOut;
 
 
     /* --- Private fields --- */
 
     private final ScmConfiguration scm;
+    @FSAConfigProperty
     private final SenderConfiguration sender;
+    @FSAConfigProperty
     private final OfflineConfiguration offline;
+    @FSAConfigProperty
     private final ResolverConfiguration resolver;
     private final ConfigurationValidation configurationValidation;
     private final EndPointConfiguration endpoint;
@@ -112,17 +97,25 @@ public class FSAConfiguration {
     /* --- Private final fields --- */
 
     private final List<String> offlineRequestFiles;
+    @FSAConfigProperty
     private final String fileListPath;
+    @FSAConfigProperty
     private List<String> dependencyDirs;
+    @FSAConfigProperty
     private final String configFilePath;
+    @FSAConfigProperty
     private final AgentConfiguration agent;
+    @FSAConfigProperty
     private final RequestConfiguration request;
     private final List<String> requirementsFileIncludes;
+    @FSAConfigProperty
     private final boolean scanPackageManager;
+    @FSAConfigProperty
     private final boolean scanDockerImages;
 
     private final String scannedFolders;
 
+    @FSAConfigProperty
     private String logLevel;
     private String logContext;
     private boolean useCommandLineProductName;
@@ -1294,5 +1287,10 @@ public class FSAConfiguration {
         protected PasswordAuthentication getPasswordAuthentication() {
             return new PasswordAuthentication(user, password.toCharArray());
         }
+    }
+
+    @Override
+    public String toString() {
+        return "FSA Configuration {" + Constants.NEW_LINE + WsStringUtils.toString(this) + "}";
     }
 }
