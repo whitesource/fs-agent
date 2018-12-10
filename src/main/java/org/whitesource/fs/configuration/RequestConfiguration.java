@@ -18,6 +18,9 @@ package org.whitesource.fs.configuration;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
+import org.whitesource.agent.utils.WsStringUtils;
+import org.whitesource.fs.FSAConfigProperty;
+import org.whitesource.fs.WsSecret;
 
 import java.util.List;
 
@@ -26,21 +29,35 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RequestConfiguration {
 
-    private final String projectVersion;
-    private final String projectToken;
-    private final boolean projectPerSubFolder;
+    @WsSecret
+    @FSAConfigProperty
     private final String apiToken;
+    @WsSecret
+    @FSAConfigProperty
     private final String userKey;
+    @FSAConfigProperty
+    private final String projectVersion;
+    @FSAConfigProperty
+    private final String projectToken;
+    @FSAConfigProperty
+    private final boolean projectPerSubFolder;
+    @FSAConfigProperty
     private final String requesterEmail;
+    @FSAConfigProperty
     private final String productToken;
+    @FSAConfigProperty
     private String productName;
+    @FSAConfigProperty
     private String productVersion;
+    @FSAConfigProperty
     private final String projectName;
     private final List<String> appPaths;
     private final String viaDebug;
     private final int viaAnalysisLevel;
     private final String iaLanguage;
+    @FSAConfigProperty
     private final String scanComment;
+    @FSAConfigProperty
     private final boolean requireKnownSha1;
 
     public RequestConfiguration(@JsonProperty(ORG_TOKEN_PROPERTY_KEY) String apiToken,
@@ -162,17 +179,6 @@ public class RequestConfiguration {
 
     @Override
     public String toString() {
-        return  "projectVersion='" + projectVersion + '\n' +
-                "projectToken='" + projectToken + '\n' +
-                "projectPerSubFolder=" + projectPerSubFolder + '\n' +
-                "apiToken='" + "*******" + '\n' +
-                "userKey='" + "*******" + '\n' +
-                "requesterEmail='" + requesterEmail + "'" + '\n' +
-                "productToken='" + productToken + '\n' +
-                "productName='" + productName + '\n' +
-                "productVersion='" + productVersion + '\n' +
-                "projectName='" + projectName + '\n' +
-                "requireKnownSha1=" + requireKnownSha1 + '\n' +
-                "scanComment ='" + scanComment;
+        return WsStringUtils.toString(this);
     }
 }

@@ -27,6 +27,7 @@ import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.Pair;
+import org.whitesource.agent.utils.WsStringUtils;
 import org.whitesource.fs.configuration.*;
 
 import java.io.*;
@@ -63,27 +64,6 @@ public class FSAConfiguration {
     public static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
     public static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
-
-    @Override
-    public String toString() {
-        return "FSA Configuration {\n" +
-                "logLevel=" + logLevel + '\n' +
-                "configFilePath=" + configFilePath + '\n' +
-                "fileListPath=" + fileListPath + '\n' +
-                "dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
-                sender.toString() + '\n' +
-                resolver.toString() + '\n' +
-                request.toString() + '\n' +
-                "scanPackageManager=" + scanPackageManager + '\n' +
-                offline.toString() + '\n' +
-                "projectPerFolder=" + projectPerFolder + '\n' +
-                "wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
-                "scanPackageManager=" + scanPackageManager + '\n' +
-                "scanDockerImages=" + scanDockerImages + '\n' +
-                getAgent().toString() + '\n' +
-                '}';
-    }
-
     public static final String WHITE_SOURCE_DEFAULT_FOLDER_PATH = ".";
     public static final String PIP = "pip";
     public static final String PYTHON = "python";
@@ -92,15 +72,20 @@ public class FSAConfiguration {
     public static final boolean DEFAULT_SSL = true;
     private static final boolean DEFAULT_ENABLED = false;
 
+    @FSAConfigProperty
     private boolean projectPerFolder;
+    @FSAConfigProperty
     private int connectionTimeOut;
 
 
     /* --- Private fields --- */
 
     private final ScmConfiguration scm;
+    @FSAConfigProperty
     private final SenderConfiguration sender;
+    @FSAConfigProperty
     private final OfflineConfiguration offline;
+    @FSAConfigProperty
     private final ResolverConfiguration resolver;
     private final ConfigurationValidation configurationValidation;
     private final EndPointConfiguration endpoint;
@@ -111,17 +96,27 @@ public class FSAConfiguration {
     /* --- Private final fields --- */
 
     private final List<String> offlineRequestFiles;
+    @FSAConfigProperty
     private final String fileListPath;
+    @FSAConfigProperty
     private List<String> dependencyDirs;
+    @FSAConfigProperty
     private final String configFilePath;
+    @FSAConfigProperty
     private final AgentConfiguration agent;
+    @FSAConfigProperty
     private final RequestConfiguration request;
     private final List<String> requirementsFileIncludes;
+    @FSAConfigProperty
     private final boolean scanPackageManager;
+    @FSAConfigProperty
     private final boolean scanDockerImages;
+    private final boolean scanTarImages;
+    private final boolean deleteTarImages;
 
     private final String scannedFolders;
 
+    @FSAConfigProperty
     private String logLevel;
     private String logContext;
     private boolean useCommandLineProductName;
@@ -242,6 +237,8 @@ public class FSAConfiguration {
 
         scanPackageManager = config.getBooleanProperty(ConfigPropertyKeys.SCAN_PACKAGE_MANAGER, false);
         scanDockerImages = config.getBooleanProperty(ConfigPropertyKeys.SCAN_DOCKER_IMAGES, false);
+        scanTarImages = config.getBooleanProperty(ConfigPropertyKeys.SCAN_TAR_IMAGES, false);
+        deleteTarImages = config.getBooleanProperty(ConfigPropertyKeys.DELETE_TAR_FILES, true);
 
         if (dependencyDirs == null)
             dependencyDirs = new ArrayList<>();
@@ -775,6 +772,12 @@ public class FSAConfiguration {
         result.setRemoteDockerAmazonEnabled(enableAmazon);
         result.setAmazonMaxPullImages(maxPullImagesFromAmazon);
 
+        // Azure configuration
+        result.setRemoteDockerAzureEnabled(config.getBooleanProperty(ConfigPropertyKeys.DOCKER_AZURE_ENABLED, false));
+        result.setAzureUserName(config.getProperty(ConfigPropertyKeys.DOCKER_AZURE_USER_NAME, EMPTY_STRING));
+        result.setAzureUserPassword(config.getProperty(ConfigPropertyKeys.DOCKER_AZURE_USER_PASSWORD, EMPTY_STRING));
+        String[] dockerAzureRegistryNames = config.getListProperty(ConfigPropertyKeys.DOCKER_AZURE_REGISTRY_NAMES, empty);
+        result.setAzureRegistryNames(new LinkedList<>(Arrays.asList(dockerAzureRegistryNames)));
         return result;
     }
 
@@ -1011,6 +1014,13 @@ public class FSAConfiguration {
         return logLevel;
     }
 
+    public boolean isScanImagesTar() {
+        return scanTarImages;
+    }
+
+    public boolean deleteTarImages() {
+        return deleteTarImages;
+    }
 
     /* --- Public static methods--- */
 
@@ -1174,8 +1184,14 @@ public class FSAConfiguration {
         // User-entry of a flag that overrides default FSA process termination
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.REQUIRE_KNOWN_SHA1, commandLineArgs.requireKnownSha1);
 
-        // docker flag to scan docker images instead of folder
+        // docker flag to scan docker images
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_DOCKER_IMAGES, commandLineArgs.scanDockerImages);
+
+        //docker flag to scan docker images by using docker or tar files folder (which specified with parameter -d)
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_TAR_IMAGES, commandLineArgs.scanDockerImages);
+
+        //docker flag to delete tar images files after extracting
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.DELETE_TAR_FILES, commandLineArgs.scanDockerImages);
 
         return offlineRequestFiles;
     }
@@ -1185,7 +1201,7 @@ public class FSAConfiguration {
         String[] parsedProxyInfo = new String[4];
         if (proxy != null) {
             try {
-                URL proxyAsUrl = new URL(proxy);
+                URL proxyAsUrl = new  URL(proxy);
                 parsedProxyInfo[0] = proxyAsUrl.getHost();
                 parsedProxyInfo[1] = String.valueOf(proxyAsUrl.getPort());
                 if (proxyAsUrl.getUserInfo() != null) {
@@ -1246,5 +1262,10 @@ public class FSAConfiguration {
         protected PasswordAuthentication getPasswordAuthentication() {
             return new PasswordAuthentication(user, password.toCharArray());
         }
+    }
+
+    @Override
+    public String toString() {
+        return "FSA Configuration {" + Constants.NEW_LINE + WsStringUtils.toString(this) + "}";
     }
 }

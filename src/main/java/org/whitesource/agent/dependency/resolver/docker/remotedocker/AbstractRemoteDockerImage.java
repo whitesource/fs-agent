@@ -1,6 +1,5 @@
 package org.whitesource.agent.dependency.resolver.docker.remotedocker;
 
-import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.docker.DockerImage;
 
 import java.util.Collections;
@@ -8,7 +7,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-public class AbstractRemoteDockerImage {
+public abstract class AbstractRemoteDockerImage {
 
     protected String repositoryName;
     protected String imageDigest;
@@ -63,22 +62,6 @@ public class AbstractRemoteDockerImage {
         this.imageTags = imageTags;
     }
 
-    public Date getImagePushedAt() {
-        return imagePushedAt;
-    }
-
-    public void setImagePushedAt(Date imagePushedAt) {
-        this.imagePushedAt = imagePushedAt;
-    }
-
-    public String getImageManifest() {
-        return imageManifest;
-    }
-
-    public void setImageManifest(String imageManifest) {
-        this.imageManifest = imageManifest;
-    }
-
     public DockerImage getDockerImage(String tag) {
         return new DockerImage(repositoryName, tag, imageDigest);
     }
@@ -93,4 +76,8 @@ public class AbstractRemoteDockerImage {
         }
         return result;
     }
+
+    /* --- Abstract methods --- */
+
+    public abstract String getUniqueIdentifier();
 }
