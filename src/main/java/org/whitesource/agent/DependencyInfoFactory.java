@@ -135,6 +135,9 @@ public class DependencyInfoFactory {
                 Map<ChecksumType, String> javaScriptChecksums;
                 try {
                     javaScriptChecksums = new HashCalculator().calculateJavaScriptHashes(dependencyFile);
+                    if (javaScriptChecksums == null || javaScriptChecksums.isEmpty()) {
+                        logger.debug("Failed to calculate javaScript hash: {}", dependencyFile.getPath());
+                    }
                     for (Map.Entry<ChecksumType, String> entry : javaScriptChecksums.entrySet()) {
                         dependency.addChecksum(entry.getKey(), entry.getValue());
                     }
