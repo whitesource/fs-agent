@@ -70,6 +70,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final String GO_ENSURE       = "ensure";
     private static final String GO_INIT         = "init";
     private static final String GO_SAVE         = "save";
+    private static final String GO_ADD_EXTERNAL = "add +external";
     private static final List<String> GO_SCRIPT_EXTENSION = Arrays.asList(".lock", ".json", GO_EXTENSION);
     private static final String IMPORTS = "imports";
     private static final String NAME_GLIDE = "- name: ";
@@ -561,9 +562,10 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         logger.debug("collecting dependencies using 'govendor'");
         // apparently when go.collectDependenciesAtRuntime=false, the rootDirectory includes the 'vendor' folder as well - in such case removing it from the path
         File goVendorJson = new File(rootDirectory  + (!collectDependenciesAtRuntime && rootDirectory.endsWith(VENDOR) ? "" : fileSeparator + VENDOR ) + fileSeparator + GOVENDOR_JSON);
-        if (goVendorJson.isFile()){
+        if (goVendorJson.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GO_VENDOR.getType(), GO_INIT)) &&
+                runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GO_VENDOR.getType(), GO_ADD_EXTERNAL)))){
             dependencyInfos.addAll(parseGoVendor(goVendorJson));
-        } else {
+        } else  {
             throw new Exception("Can't find " + GOVENDOR_JSON + " file.  Please make sure 'govendor' is installed and run 'govendor init' command");
         }
     }
