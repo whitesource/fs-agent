@@ -506,6 +506,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private List<DependencyInfo> parseGoDeps(File goDeps) throws IOException {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
+        HashMap<String, DependencyInfo> dependencyInfoHashMap = new HashMap<>();
         JsonParser parser = new JsonParser();
         FileReader fileReader = null;
         try {
@@ -532,7 +533,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         }
                         dependencyInfo.setVersion(comment);
                     }
-                    dependencyInfos.add(dependencyInfo);
+                    setInHierarchyTree(dependencyInfos, dependencyInfoHashMap, dependencyInfo, importPath);
+                    //dependencyInfos.add(dependencyInfo);
                 }
             }
         } catch (FileNotFoundException e){
