@@ -37,6 +37,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.whitesource.agent.Constants.COLON;
@@ -67,6 +69,7 @@ public class FSAConfiguration {
     public static final String WHITE_SOURCE_DEFAULT_FOLDER_PATH = ".";
     public static final String PIP = "pip";
     public static final String PYTHON = "python";
+    public static final String SERVICE_URL_REGEX = "http[s]?:/\\/[-\\w\\/=:.]*\\/agent";
 
     public static final int DEFAULT_PORT = 443;
     public static final boolean DEFAULT_SSL = true;
@@ -82,7 +85,7 @@ public class FSAConfiguration {
 
     private final ScmConfiguration scm;
     @FSAConfigProperty
-    private final SenderConfiguration sender;
+    private SenderConfiguration sender;
     @FSAConfigProperty
     private final OfflineConfiguration offline;
     @FSAConfigProperty
@@ -289,7 +292,12 @@ public class FSAConfiguration {
         scm = getScm(config);
         agent = getAgent(config, commandLineArgs.noConfig);
         offline = getOffline(config);
-        sender = getSender(config, serviceUrl);
+        sender = null;
+        try {
+            sender = getSender(config, serviceUrl);
+        } catch (Exception e){
+            errors.add(e.getMessage());
+        }
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
         remoteDockerConfiguration = getRemoteDockerConfiguration(config);
@@ -373,7 +381,7 @@ public class FSAConfiguration {
 
     public void checkPropertiesForVia(SenderConfiguration sender, ResolverConfiguration resolver, Map<String, Set<String>> appPathsToDependencyDirs, List<String> errors) {
         Set<String> viaAppPaths = appPathsToDependencyDirs.keySet();
-        if (sender.isEnableImpactAnalysis()) {
+        if (sender != null && sender.isEnableImpactAnalysis()) {
             // the default appPath size is one (defaultKey = -d property), this one check if the user set more then one appPath
             if (viaAppPaths.size() == 1) {
                 errors.add("Effective Usage Analysis will not run if the command line parameter 'appPath' is not specified");
@@ -621,7 +629,7 @@ public class FSAConfiguration {
                 projectVersion, productName, productToken, productVersion, appPath, viaDebug, viaAnalysis, iaLanguage, scanComment, requireKnownSha1);
     }
 
-    private SenderConfiguration getSender(FSAConfigProperties config, String cmdServiceUrl) {
+    private SenderConfiguration getSender(FSAConfigProperties config, String cmdServiceUrl) throws Exception {
         String updateTypeValue = config.getProperty(ConfigPropertyKeys.UPDATE_TYPE, UpdateType.OVERRIDE.toString());
         boolean checkPolicies = config.getBooleanProperty(ConfigPropertyKeys.CHECK_POLICIES_PROPERTY_KEY, false);
         boolean forceCheckAllDependencies = config.getBooleanProperty(ConfigPropertyKeys.FORCE_CHECK_ALL_DEPENDENCIES, false);
@@ -630,6 +638,11 @@ public class FSAConfiguration {
         boolean forceUpdateBuildFailed = config.getBooleanProperty(ConfigPropertyKeys.FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION, false);
         boolean enableImpactAnalysis = config.getBooleanProperty(ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false);
         String serviceUrl = cmdServiceUrl != null ? cmdServiceUrl : config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
+        Pattern urlPattern = Pattern.compile(SERVICE_URL_REGEX);
+        Matcher matcher = urlPattern.matcher(serviceUrl);
+        if (!matcher.find()){
+            throw new Exception("service URL is malformed: " + serviceUrl);
+        }
         String proxyHost = config.getProperty(ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY);
         connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
                 String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
