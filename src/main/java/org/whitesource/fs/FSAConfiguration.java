@@ -69,7 +69,7 @@ public class FSAConfiguration {
     public static final String WHITE_SOURCE_DEFAULT_FOLDER_PATH = ".";
     public static final String PIP = "pip";
     public static final String PYTHON = "python";
-    public static final String SERVICE_URL_REGEX = "http[s]?:/\\/[-\\w\\/=:.]*\\/agent";
+    public static final String SERVICE_URL_REGEX = "http[s]?:\\/\\/[-\\w\\/=:.]*\\/agent";
 
     public static final int DEFAULT_PORT = 443;
     public static final boolean DEFAULT_SSL = true;
@@ -641,7 +641,11 @@ public class FSAConfiguration {
         Pattern urlPattern = Pattern.compile(SERVICE_URL_REGEX);
         Matcher matcher = urlPattern.matcher(serviceUrl);
         if (!matcher.find()){
-            throw new Exception("service URL is malformed: " + serviceUrl);
+            String msg = "Service URL is malformed: " + serviceUrl;
+            if (serviceUrl.endsWith("/agent") == false){
+                msg = msg.concat(" (make sure the URL ends with '/agent')");
+            }
+            throw new Exception(msg);
         }
         String proxyHost = config.getProperty(ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY);
         connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
