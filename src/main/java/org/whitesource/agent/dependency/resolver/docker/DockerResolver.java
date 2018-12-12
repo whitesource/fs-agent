@@ -3,12 +3,9 @@ package org.whitesource.agent.dependency.resolver.docker;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.plexus.archiver.ArchiverException;
-import org.eclipse.core.internal.resources.Folder;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
 import org.whitesource.agent.FileSystemScanner;
-import org.whitesource.agent.ProjectConfiguration;
 import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
@@ -25,7 +22,6 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.whitesource.agent.Constants.*;
 import static org.whitesource.agent.archive.ArchiveExtractor.TAR_SUFFIX;
@@ -179,7 +175,7 @@ public class DockerResolver {
                 dockerImagesToScan.add(dockerImage);
             }
             // remove images from scan according to dockerExcludes pattern
-            if (isMatchingPattern(dockerImageString, imageIncludesList)) {
+            if (isMatchingPattern(dockerImageString, imageExcludesList)) {
                 dockerImagesToScan.remove(dockerImage);
             }
         }
