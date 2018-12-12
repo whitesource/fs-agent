@@ -16,35 +16,43 @@
 package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.whitesource.agent.client.ClientConstants;
+import org.whitesource.agent.utils.WsStringUtils;
+import org.whitesource.fs.FSAConfigProperty;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
-import static org.whitesource.agent.client.ClientConstants.CONNECTION_TIMEOUT_KEYWORD;
-import static org.whitesource.agent.client.ClientConstants.SERVICE_URL_KEYWORD;
 
 public class SenderConfiguration {
 
+    @FSAConfigProperty
     private final boolean checkPolicies;
+    @FSAConfigProperty
     private final String serviceUrl;
     private final String proxyHost;
     private final int connectionTimeOut;
     private final int proxyPort;
     private final String proxyUser;
     private final String proxyPassword;
+    @FSAConfigProperty
     private final boolean forceCheckAllDependencies;
+    @FSAConfigProperty
     private final boolean forceUpdate;
+    @FSAConfigProperty
     private final boolean forceUpdateFailBuildOnPolicyViolation;
+    @FSAConfigProperty
     private final String updateTypeValue;
     private boolean enableImpactAnalysis;
     private final boolean ignoreCertificateCheck;
     private final int connectionRetries;
     private final int connectionRetriesIntervals;
     private final boolean sendLogsToWss;
+    @FSAConfigProperty
     private final boolean updateInventory;
 
     public SenderConfiguration(
             @JsonProperty(CHECK_POLICIES_PROPERTY_KEY) boolean checkPolicies,
-            @JsonProperty(SERVICE_URL_KEYWORD) String serviceUrl,
-            @JsonProperty(CONNECTION_TIMEOUT_KEYWORD) int connectionTimeOut,
+            @JsonProperty(ClientConstants.SERVICE_URL_KEYWORD) String serviceUrl,
+            @JsonProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD) int connectionTimeOut,
 
             @JsonProperty(PROXY_HOST_PROPERTY_KEY) String proxyHost,
             @JsonProperty(PROXY_PORT_PROPERTY_KEY) int proxyPort,
@@ -80,7 +88,7 @@ public class SenderConfiguration {
         this.updateInventory = updateInventory;
     }
 
-    @JsonProperty(SERVICE_URL_KEYWORD)
+    @JsonProperty(ClientConstants.SERVICE_URL_KEYWORD)
     public String getServiceUrl() {
         return serviceUrl;
     }
@@ -100,7 +108,7 @@ public class SenderConfiguration {
         return proxyHost;
     }
 
-    @JsonProperty(CONNECTION_TIMEOUT_KEYWORD)
+    @JsonProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD)
     public int getConnectionTimeOut() {
         return connectionTimeOut;
     }
@@ -167,13 +175,6 @@ public class SenderConfiguration {
 
     @Override
     public String toString() {
-        return  "serviceUrl='" + serviceUrl + "'\n" +
-                "checkPolicies=" + checkPolicies + '\n' +
-                "forceCheckAllDependencies=" + forceCheckAllDependencies + '\n' +
-                "forceUpdate=" + forceUpdate + '\n' +
-                "forceUpdate.failBuildOnPolicyViolation=" + forceUpdateFailBuildOnPolicyViolation + '\n' +
-                "updateTypeValue='" + updateTypeValue + "'" +'\n' +
-                "updateInventory=" + updateInventory;
-//                ", enableImpactAnalysis=" + enableImpactAnalysis;
+        return WsStringUtils.toString(this);
     }
 }

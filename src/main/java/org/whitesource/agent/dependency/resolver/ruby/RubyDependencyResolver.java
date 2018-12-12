@@ -456,8 +456,9 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         dependencyInfo.setArtifactId(name + Constants.DASH + version + Constants.DOT + GEM);
         dependencyInfo.setVersion(version);
         dependencyInfo.setDependencyType(DependencyType.RUBY);
-        dependencyInfo.setSystemPath(gemLockFile.getPath());
-        dependencyInfo.setFilename(pathToGems + fileSeparator + name + Constants.DASH + version + Constants.DOT + GEM);
+        dependencyInfo.setDependencyFile(gemLockFile.getPath());
+        dependencyInfo.setSystemPath(pathToGems + fileSeparator + name + Constants.DASH + version + Constants.DOT + GEM);
+        dependencyInfo.setFilename(name + Constants.DASH + version + Constants.DOT + GEM);
     }
 
     // Ruby's cache is inside the installation folder.  path can be found by running command 'gem environment gemdir'

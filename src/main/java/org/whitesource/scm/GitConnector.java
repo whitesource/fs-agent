@@ -75,8 +75,12 @@ public class GitConnector extends ScmConnector {
                 cloneCommand.setTransportConfigCallback(new TransportConfigCallback() {
                     @Override
                     public void configure(Transport transport) {
-                        SshTransport sshTransport = (SshTransport) transport;
-                        sshTransport.setSshSessionFactory(sshSessionFactory);
+                        if( transport instanceof SshTransport ) {
+                            SshTransport sshTransport = (SshTransport) transport;
+                            sshTransport.setSshSessionFactory(sshSessionFactory);
+                        } else {
+                            logger.warn("you are not using ssh protocol while using scm.ppk");
+                        }
                     }
                 });
                 cloneCommand.setCredentialsProvider(new passphraseCredentialsProvider(getPassword()));

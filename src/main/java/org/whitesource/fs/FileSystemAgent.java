@@ -19,14 +19,11 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
+import org.whitesource.agent.*;
 import org.whitesource.agent.dependency.resolver.ViaMultiModuleAnalyzer;
 import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
 import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.utils.LoggerFactory;
-import org.whitesource.agent.Constants;
-import org.whitesource.agent.FileSystemScanner;
-import org.whitesource.agent.ViaComponents;
-import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
 import org.whitesource.agent.dependency.resolver.docker.DockerResolver;
@@ -265,8 +262,9 @@ public class FileSystemAgent {
 
         Map<AgentProjectInfo, LinkedList<ViaComponents>> projectToAppPathAndLanguage;
         ViaLanguage viaLanguage = getIaLanguage(config.getRequest().getIaLanguage());
+        ProjectConfiguration projectConfiguration = new ProjectConfiguration(config.getAgent(), scannerBaseDirs, appPathsToDependencyDirs, false);
         projectToAppPathAndLanguage = new FileSystemScanner(config.getResolver(), config.getAgent() , config.getSender().isEnableImpactAnalysis(), viaLanguage)
-                    .createProjects(scannerBaseDirs, appPathsToDependencyDirs, hasScmConnectors[0]);
+                    .createProjects(projectConfiguration);
         ProjectsDetails projectsDetails = new ProjectsDetails(projectToAppPathAndLanguage, success[0], Constants.EMPTY_STRING);
 
         // delete all temp scm files
