@@ -1,9 +1,10 @@
 package org.whitesource.agent.utils;
 
 import org.slf4j.Logger;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.fs.FSAConfigProperty;
 import org.whitesource.fs.WsSecret;
+import org.whitesource.utils.logger.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;

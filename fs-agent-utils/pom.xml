@@ -6,7 +6,7 @@
     <parent>
         <artifactId>whitesource-fs-agent</artifactId>
         <groupId>org.whitesource</groupId>
-        <version>18.11.2-SNAPSHOT</version>
+        <version>18.12.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>whitesource-fs-agent-utils</artifactId>
@@ -31,17 +31,7 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+
 
 
     </dependencies>

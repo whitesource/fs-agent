@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
+import org.whitesource.agent.utils.WsStringUtils;
 import org.whitesource.utils.Constants;
 import org.whitesource.agent.ViaLanguage;
 import org.whitesource.agent.api.dispatch.UpdateType;

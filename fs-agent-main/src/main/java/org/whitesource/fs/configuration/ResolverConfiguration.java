@@ -19,9 +19,9 @@ package org.whitesource.fs.configuration;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
-import org.whitesource.agent.Constants;
+import org.whitesource.utils.Constants;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyManager;
-import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.utils.logger.LoggerFactory;
 import org.whitesource.fs.FSAConfigProperty;
 
 import java.lang.reflect.Field;
