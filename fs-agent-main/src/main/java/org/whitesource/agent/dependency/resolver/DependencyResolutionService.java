@@ -122,7 +122,7 @@ public class DependencyResolutionService {
 
 
         final boolean goResolveDependencies = config.isGoResolveDependencies();
-        final boolean goIgnoreSourceFiles = config.isGoIgnoreSourceFiles();
+        final boolean goIgnoreSourceFiles = config.isGoGlideIgnoreSourceFiles();
 
         final boolean rubyResolveDependencies = config.isRubyResolveDependencies();
         final boolean rubyRunBundleInstall = config.isRubyRunBundleInstall();
@@ -189,7 +189,7 @@ public class DependencyResolutionService {
         }
 
         if (goResolveDependencies) {
-            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles, config.isGoIgnoreTestPackages(), config.isGoGradleEnableTaskAlias(), config.getGradlePreferredEnvironment(), config.isAddSha1()));
+            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles, config.isGoGlideIgnoreTestPackages(), config.isGoGradleEnableTaskAlias(), config.getGradlePreferredEnvironment(), config.isAddSha1()));
         }
 
         if (rubyResolveDependencies) {

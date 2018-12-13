@@ -17,31 +17,36 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.whitesource.agent.utils.WsStringUtils;
+import org.whitesource.fs.FSAConfigProperty;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
 public class OfflineConfiguration {
 
-    private final boolean enabled;
+    @FSAConfigProperty
+    private final boolean offline;
+    @FSAConfigProperty
     private final boolean zip;
+    @FSAConfigProperty
     private final boolean prettyJson;
     private final String whiteSourceFolderPath;
 
     @JsonCreator
     public OfflineConfiguration(
-            @JsonProperty(OFFLINE_PROPERTY_KEY) boolean enabled,
+            @JsonProperty(OFFLINE_PROPERTY_KEY) boolean offline,
             @JsonProperty(OFFLINE_ZIP_PROPERTY_KEY) boolean zip,
             @JsonProperty(OFFLINE_PRETTY_JSON_KEY) boolean prettyJson,
             @JsonProperty(WHITESOURCE_FOLDER_PATH) String whiteSourceFolderPath) {
-        this.enabled = enabled;
+        this.offline = offline;
         this.zip = zip;
         this.prettyJson = prettyJson;
         this.whiteSourceFolderPath = whiteSourceFolderPath;
     }
 
     @JsonProperty(OFFLINE_PROPERTY_KEY)
-    public boolean isEnabled() {
-        return enabled;
+    public boolean isOffline() {
+        return offline;
     }
 
     @JsonProperty(OFFLINE_PRETTY_JSON_KEY)
@@ -61,6 +66,6 @@ public class OfflineConfiguration {
 
     @Override
     public String toString() {
-        return "offline=" + isEnabled() + ", zip=" + isZip() + ", prettyJson=" + isPrettyJson();
+        return WsStringUtils.toString(this);
     }
 }

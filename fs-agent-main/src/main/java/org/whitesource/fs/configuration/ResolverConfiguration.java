@@ -18,10 +18,17 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.whitesource.agent.ConfigPropertyKeys;
+import org.slf4j.Logger;
+import org.whitesource.agent.Constants;
 import org.whitesource.agent.dependency.resolver.go.GoDependencyManager;
+import org.whitesource.agent.utils.LoggerFactory;
+import org.whitesource.fs.FSAConfigProperty;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
 
@@ -191,8 +198,8 @@ public class ResolverConfiguration {
             this.goDependencyManager = GoDependencyManager.getFromType(goDependencyManager);
         }
         this.goCollectDependenciesAtRuntime = goCollectDependenciesAtRuntime;
-        this.goIgnoreTestPackages           = goIgnoreTestPackages;
-        this.goIgnoreSourceFiles            = goIgnoreSourceFiles;
+        this.goGlideIgnoreTestPackages = goIgnoreTestPackages;
+        this.goGlideIgnoreSourceFiles = goIgnoreSourceFiles;
         this.goGradleEnableTaskAlias        = goGradleEnableTaskAlias;
 
         this.rubyResolveDependencies    = rubyResolveDependencies;
@@ -227,103 +234,179 @@ public class ResolverConfiguration {
 
     /* --- Members --- */
 
+    private static Logger logger;
+    private String whitesourceConfiguration;
+
+    @FSAConfigProperty
+    private boolean ignoreSourceFiles;
+
+    @FSAConfigProperty
     private boolean npmRunPreStep;
+    @FSAConfigProperty
     private boolean npmIgnoreScripts;
+    @FSAConfigProperty
     private boolean npmResolveDependencies;
+    @FSAConfigProperty
     private boolean npmIncludeDevDependencies;
-    private String npmAccessToken;
+    @FSAConfigProperty
     private long npmTimeoutDependenciesCollector;
+    @FSAConfigProperty
     private boolean npmIgnoreNpmLsErrors;
+    @FSAConfigProperty
     private boolean npmYarnProject;
+    @FSAConfigProperty
     private boolean npmIgnoreSourceFiles;
+    private String npmAccessToken;
 
-
+    @FSAConfigProperty
     private boolean bowerResolveDependencies;
+    @FSAConfigProperty
     private boolean bowerRunPreStep;
+    @FSAConfigProperty
     private boolean bowerIgnoreSourceFiles;
 
+    @FSAConfigProperty
     private boolean nugetResolveDependencies;
+    @FSAConfigProperty
     private boolean nugetRestoreDependencies;
+    @FSAConfigProperty
     private boolean nugetRunPreStep;
+    @FSAConfigProperty
     private boolean nugetIgnoreSourceFiles;
+    @FSAConfigProperty
     private boolean nugetResolvePackagesConfigFiles;
+    @FSAConfigProperty
     private boolean nugetResolveCsProjFiles;
 
+    @FSAConfigProperty
     private boolean mavenResolveDependencies;
+    @FSAConfigProperty
     private String[] mavenIgnoredScopes;
+    @FSAConfigProperty
     private boolean mavenAggregateModules;
+    @FSAConfigProperty
     private boolean mavenIgnorePomModules;
+    @FSAConfigProperty
     private boolean mavenIgnoreSourceFiles;
+    @FSAConfigProperty
     private boolean mavenRunPreStep;
-
+    @FSAConfigProperty
     private boolean mavenIgnoreDependencyTreeErrors;
 
-//    private boolean dependenciesOnly;
-    private boolean ignoreSourceFiles;
-    private String whitesourceConfiguration;
+    @FSAConfigProperty
     private boolean pythonResolveDependencies;
+    @FSAConfigProperty
     private String pipPath;
+    @FSAConfigProperty
     private String pythonPath;
+    @FSAConfigProperty
     private boolean pythonIgnorePipInstallErrors;
+    @FSAConfigProperty
     private boolean pythonInstallVirtualenv;
+    @FSAConfigProperty
     private boolean pythonResolveHierarchyTree;
+    @FSAConfigProperty
     private String[] pythonRequirementsFileIncludes;
+    @FSAConfigProperty
     private boolean pythonResolveSetupPyFiles;
+    @FSAConfigProperty
     private boolean pythonIgnoreSourceFiles;
+    @FSAConfigProperty
     private boolean ignorePipEnvInstallErrors;
-
-
+    @FSAConfigProperty
     private boolean pipenvInstallDevDependencies;
+    @FSAConfigProperty
     private boolean runPipenvPreStep;
-    private boolean gradleResolveDependencies;
-    private boolean gradleRunAssembleCommand;
-    private boolean gradleAggregateModules;
-    private String gradlePreferredEnvironment;
-    private boolean gradleIgnoreSourceFiles;
-    private boolean gradleRunPreStep;
-    private String[] gradleIgnoredScopes;
-
+    @FSAConfigProperty
     private final boolean pythonIsWssPluginInstalled;
+    @FSAConfigProperty
     private final boolean pythonUninstallWssPlugin;
 
+    @FSAConfigProperty
+    private boolean gradleResolveDependencies;
+    @FSAConfigProperty
+    private boolean gradleRunAssembleCommand;
+    @FSAConfigProperty
+    private boolean gradleAggregateModules;
+    @FSAConfigProperty
+    private String gradlePreferredEnvironment;
+    @FSAConfigProperty
+    private boolean gradleIgnoreSourceFiles;
+    @FSAConfigProperty
+    private boolean gradleRunPreStep;
+    @FSAConfigProperty
+    private String[] gradleIgnoredScopes;
+
+    @FSAConfigProperty
     private boolean paketResolveDependencies;
+    @FSAConfigProperty
     private String[] paketIgnoredScopes;
+    @FSAConfigProperty
     private boolean paketRunPreStep;
+    @FSAConfigProperty
     private String paketPath;
+    @FSAConfigProperty
     private boolean paketIgnoreSourceFiles;
 
+    @FSAConfigProperty
     private boolean goResolveDependencies;
+    @FSAConfigProperty
     private GoDependencyManager goDependencyManager;
+    @FSAConfigProperty
     private boolean goCollectDependenciesAtRuntime;
-    private boolean goIgnoreTestPackages;
-    private boolean goIgnoreSourceFiles;
+    @FSAConfigProperty
+    private boolean goGlideIgnoreTestPackages;
+    @FSAConfigProperty
+    private boolean goGlideIgnoreSourceFiles;
+    @FSAConfigProperty
     private boolean goGradleEnableTaskAlias;
 
+    @FSAConfigProperty
     private boolean rubyResolveDependencies;
+    @FSAConfigProperty
     private boolean rubyRunBundleInstall;
+    @FSAConfigProperty
     private boolean rubyOverwriteGemFile;
+    @FSAConfigProperty
     private boolean rubyInstallMissingGems;
+    @FSAConfigProperty
     private boolean rubyIgnoreSourceFiles;
 
+    @FSAConfigProperty
     private boolean phpResolveDependencies;
+    @FSAConfigProperty
     private boolean phpRunPreStep;
+    @FSAConfigProperty
     private boolean phpIncludeDevDependencies;
 
+    @FSAConfigProperty
     private boolean sbtResolveDependencies;
+    @FSAConfigProperty
     private boolean sbtAggregateModules;
+    @FSAConfigProperty
     private boolean sbtRunPreStep;
+    @FSAConfigProperty
     private String sbtTargetFolder;
+    @FSAConfigProperty
     private boolean sbtIgnoreSourceFiles;
 
+    @FSAConfigProperty
     private boolean htmlResolveDependencies;
 
+    @FSAConfigProperty
     private boolean cocoapodsResolveDependencies;
+    @FSAConfigProperty
     private boolean cocoapodsRunPreStep;
+    @FSAConfigProperty
     private boolean cocoapodsIgnoreSourceFiles;
 
+    @FSAConfigProperty
     private boolean hexResolveDependencies;
+    @FSAConfigProperty
     private boolean hexRunPreStep;
+    @FSAConfigProperty
     private boolean hexAggregateModules;
+    @FSAConfigProperty
     private boolean hexIgnoreSourceFiles;
 
     private boolean addSha1;
@@ -578,12 +661,12 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(GO_GLIDE_IGNORE_TEST_PACKAGES)
-    public boolean isGoIgnoreTestPackages() {
-        return goIgnoreTestPackages;
+    public boolean isGoGlideIgnoreTestPackages() {
+        return goGlideIgnoreTestPackages;
     }
 
     @JsonProperty(GO_IGNORE_SOURCE_FILES)
-    public boolean isGoIgnoreSourceFiles() { return goIgnoreSourceFiles; }
+    public boolean isGoGlideIgnoreSourceFiles() { return goGlideIgnoreSourceFiles; }
 
     @JsonProperty(GO_GRADLE_ENABLE_TASK_ALIAS)
     public boolean isGoGradleEnableTaskAlias(){  return goGradleEnableTaskAlias;    }
@@ -695,111 +778,66 @@ public class ResolverConfiguration {
 
     @Override
     public String toString() {
-        return "ignoreSourceFiles/dependenciesOnly=" + ignoreSourceFiles + '\n' +
-//                ", dependenciesOnly=" + dependenciesOnly +
-                "NPM:\n" +
-                "npm.runPreStep=" + npmRunPreStep +
-                ", npm.ignoreScripts=" + npmIgnoreScripts +
-                ", npm.resolveDependencies= " + npmResolveDependencies +
-                ", npm.includeDevDependencies= " + npmIncludeDevDependencies + '\n' +
-                "npm.ignoreSourceFiles=" + npmIgnoreSourceFiles +
-                ", npm.timeoutDependenciesCollectorInSeconds=" + npmTimeoutDependenciesCollector +
-                ", npm.ignoreNpmLsErrors=" + npmIgnoreNpmLsErrors +
-                ", npm.yarnProject=" + npmYarnProject + '\n' +
+        logger = LoggerFactory.getLogger(ResolverConfiguration.class);
+        StringBuilder result = new StringBuilder();
+        Field[] fields = this.getClass().getDeclaredFields();
 
-                "BOWER:\n" +
-                "bower.resolveDependencies=" + bowerResolveDependencies +
-                ", bower.runPreStep=" + bowerRunPreStep +
-                ", bower.ignoreSourceFiles=" + bowerIgnoreSourceFiles + '\n' +
+        String newResolver;
+        String currentResolver = null;
+        List<String> resolversList = Arrays.asList("npm", "bower", "nuget", "maven", "python",  "gradle", "paket", "go", "ruby", "php", "sbt", "html", "cocoapods", "hex");
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(FSAConfigProperty.class)) {
 
-                "NUGET:\n" +
-                "nuget.resolveDependencies=" + nugetResolveDependencies +
-                ", nuget.ignoreSourceFiles=" + nugetIgnoreSourceFiles +
-                ", nuget.restoreDependencies=" + nugetRestoreDependencies + '\n' +
-                "nuget.runPreStep=" + nugetRunPreStep +
-                ", nuget.resolveCsProjFiles=" + nugetResolveCsProjFiles +
-                ", nuget.resolvePackagesConfigFiles=" + nugetResolvePackagesConfigFiles + '\n' +
+                try {
+                    field.setAccessible(true);
+                    String name = field.getName();
+                    Object value = field.get(this);
+                    Class fieldType = field.getType();
 
-                "MAVEN:\n" +
-                "maven.resolveDependencies=" + mavenResolveDependencies +
-                ", maven.ignoredScopes=" + Arrays.toString(mavenIgnoredScopes) +
-                ", maven.aggregateModules=" + mavenAggregateModules +
-                ", maven.ignoreSourceFiles=" + mavenIgnoreSourceFiles + '\n' +
-                "maven.runPreStep=" + mavenRunPreStep +
-                ", maven.ignorePomModules=" + mavenIgnorePomModules +
-                ", maven.ignoreMvnTreeErrors=" + mavenIgnoreDependencyTreeErrors + '\n' +
+                    // Following block is to manage toString method to print each resolver parameters in One Line
+                    // if field name contains pip it means that currentResolver is Python and this field should be in Python
+                    if (!name.toLowerCase().contains("pip")) {
+                        String regex = "([a-z]+)";
+                        Pattern p = Pattern.compile(regex);
+                        Matcher m = p.matcher(name);
+                        if (m.find()) {
+                            newResolver = m.group();
+                            if (resolversList.contains(newResolver.toLowerCase())) {
+                                if (currentResolver == null || !currentResolver.equals(newResolver)) {
+                                    if(currentResolver != null) {
+                                        result.append(Constants.CLOSE_CURLY_BRACKET);
+                                        result.append(Constants.NEW_LINE);
+                                    }
+                                    result.append(newResolver);
+                                    result.append(": {");
+                                    currentResolver = newResolver;
 
-                "PYTHON:\n" +
-                "python.resolveDependencies=" + pythonResolveDependencies +
-                ", python.ignorePipInstallErrors=" + pythonIgnorePipInstallErrors +
-                ", python.installVirtualenv=" + pythonInstallVirtualenv +
-                ", python.resolveHierarchyTree=" + pythonResolveHierarchyTree + '\n' +
-                "python.resolveSetupPyFiles=" + pythonResolveSetupPyFiles +
-                ", python.requirementsFileIncludes=" + Arrays.toString(pythonRequirementsFileIncludes) +
-                ", python.ignoreSourceFiles=" + pythonIgnoreSourceFiles +
-                ", python.ignorePipInstallErrors=" + ignorePipEnvInstallErrors + '\n' +
-                "python.runPipenvPreStep=" + runPipenvPreStep +
-                ", python.pipPath=" + pipPath +
-                ", python.path=" + pythonPath +
-                ", python.pipenvDevDependencies=" + pipenvInstallDevDependencies + '\n' +
-                "python.isWssPluginInstalled=" + pythonIsWssPluginInstalled +
-                ", python.uninstallWssPlugin=" + pythonUninstallWssPlugin + '\n' +
+                                }
 
-                "GRADLE:\n" +
-                "gradle.resolveDependencies=" + gradleResolveDependencies +
-                ", gradle.runAssembleCommand=" + gradleRunAssembleCommand +
-                ", gradle.aggregateModules=" + gradleAggregateModules +
-                ", gradle.ignoreSourceFiles=" + gradleIgnoreSourceFiles + '\n' +
-                "gradle.runPreStep=" + gradleRunPreStep +
-                ", gradle.ignoredScopes=" + Arrays.toString(gradleIgnoredScopes) +
-                ", gradle.preferredEnvironment=" + gradlePreferredEnvironment + '\n' +
+                            } else {
+                                // This block for parameters that are not belong to each resolver
+                                result.append(field.getName() + Constants.EQUALS + value + Constants.NEW_LINE);
+                                continue;
+                            }
+                        }
+                    }
 
-                "PAKET:\n" +
-                "paket.resolveDependencies=" + paketResolveDependencies +
-                ", paket.ignoredScopes=" + Arrays.toString(paketIgnoredScopes) +
-                ", paket.runPreStep=" + paketRunPreStep + '\n' +
-                "paket.exePath=" +paketPath +
-                ", paket.ignoreSourceFiles =" + paketIgnoreSourceFiles + '\n' +
+                    if (value == null) {
+                        result.append(field.getName() + Constants.EQUALS + Constants.EMPTY_STRING + Constants.COMMA + Constants.WHITESPACE);
+                    } else {
+                        if (fieldType.isArray()) {
+                            result.append(field.getName() + Constants.EQUALS + Arrays.toString((Object[]) value) + Constants.COMMA + Constants.WHITESPACE);
+                        } else {
+                            result.append(field.getName() + Constants.EQUALS + value + Constants.COMMA + Constants.WHITESPACE);
+                        }
+                    }
 
-                "GO:\n" +
-                "go.resolveDependencies=" + goResolveDependencies +
-                ", go.dependencyManager=" + goDependencyManager +
-                ", go.collectDependenciesAtRuntime=" + goCollectDependenciesAtRuntime + '\n' +
-                "go.glide.ignoreTestPackages=" + goIgnoreTestPackages +
-                ", go.glide.ignoreSourceFiles=" + goIgnoreSourceFiles +
-                ", go.gogradle.enableTaskAlias=" + goGradleEnableTaskAlias + '\n' +
-
-                "RUBY:\n" +
-                "ruby.resolveDependencies=" + rubyResolveDependencies +
-                ", ruby.runBundleInstall=" + rubyRunBundleInstall +
-                ", ruby.overwriteGemFile=" + rubyOverwriteGemFile + '\n' +
-                "ruby.installMissingGems=" + rubyInstallMissingGems +
-                ", ruby.ignoreSourceFiles=" + rubyIgnoreSourceFiles + '\n' +
-
-                "PHP:\n" +
-                "php.resolveDependencies=" + phpResolveDependencies +
-                ", php.runPreStep=" + phpRunPreStep +
-                ", php.includeDevDependenices=" + phpIncludeDevDependencies + '\n' +
-
-                "SBT:\n" +
-                "sbt.resolveDependencies=" + sbtResolveDependencies +
-                ", sbt.aggregateModules=" + sbtAggregateModules +
-                ", sbt.runPreStep=" + sbtRunPreStep + '\n' +
-                "sbt.TargetFolder=" + sbtTargetFolder +
-                ", sbt.ignoreSourceFiles=" + sbtIgnoreSourceFiles + '\n' +
-
-                "HTML:\n" +
-                "html.resolveDependencies=" + htmlResolveDependencies + '\n' +
-
-                "COCOAPODS:\n" +
-                "cocoapods.resolveDependencies=" + cocoapodsResolveDependencies +
-                ", cocoapods.ignoreSourceFiles=" + cocoapodsIgnoreSourceFiles +
-                ", cocoapods.runPreStep=" + cocoapodsRunPreStep + '\n' +
-
-                "HEX:\n" +
-                "hex.resolveDependencies=" + hexResolveDependencies +
-                ", hex.runPreStep=" + hexRunPreStep +
-                ", hex.ignoreSourceFiles=" + hexIgnoreSourceFiles +
-                ", hex.aggregateModules=" + hexAggregateModules;
+                } catch (IllegalAccessException e) {
+                   logger.debug("Failed in Resolvers Configuration parsing toString - {}. Exception: {}", e.getMessage(), e.getStackTrace());
+                }
+            }
+        }
+        result.append("}" + Constants.NEW_LINE);
+        return result.toString();
     }
 }

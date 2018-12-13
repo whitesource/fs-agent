@@ -5,7 +5,7 @@ import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.utils.Cli;
 
 public class RubyCli extends Cli {
-
+// TODO - this class can be removed (the functionality here is incorporated into this method in Cli class)
     @Override
     public String[] getCommandParams(String command, String param){
         String[] params = param.split(Constants.WHITESPACE);

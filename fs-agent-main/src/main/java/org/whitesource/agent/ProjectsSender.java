@@ -96,7 +96,7 @@ public class ProjectsSender {
 
         WhitesourceService service = createService();
         String resultInfo = Constants.EMPTY_STRING;
-        if (offlineConfig.isEnabled()) {
+        if (offlineConfig.isOffline()) {
             resultInfo = offlineUpdate(service, projects);
             return new Pair<>(resultInfo, this.prepStepStatusCode);
         } else {
@@ -260,7 +260,7 @@ public class ProjectsSender {
     protected WhitesourceService createService() {
         logger.info("Service URL is " + senderConfig.getServiceUrl());
         boolean setProxy = false;
-        if (StringUtils.isNotBlank(senderConfig.getProxyHost()) || !offlineConfig.isEnabled()) {
+        if (StringUtils.isNotBlank(senderConfig.getProxyHost()) || !offlineConfig.isOffline()) {
             setProxy = true;
         }
         int connectionTimeoutMinutes = senderConfig.getConnectionTimeOut();
