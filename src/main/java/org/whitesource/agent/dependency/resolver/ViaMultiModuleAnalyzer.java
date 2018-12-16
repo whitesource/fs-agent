@@ -6,10 +6,7 @@ import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.LoggerFactory;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -59,8 +56,10 @@ public class ViaMultiModuleAnalyzer {
             bufferedWriter.write(System.lineSeparator());
             int counter = 1;
             boolean printMessageAppPath = true;
+            HashMap<String, Integer> folderNameCounter = new HashMap<String, Integer>();
             for (String bomFile : bomFiles) {
                 File parentFileOfBom = new File(bomFile).getParentFile();
+                String parentFileName = parentFileOfBom.getName();
                 File buildFolder = new File(parentFileOfBom.getPath() + File.separator + this.suffixOfBuild);
                 if (buildFolder.exists() && buildFolder.isDirectory() && buildFolder.listFiles() != null) {
                     Collection<File> filesWithBuildExtensions = Arrays.stream(buildFolder.listFiles()).filter(file -> {
@@ -84,6 +83,17 @@ public class ViaMultiModuleAnalyzer {
                                 printMessageAppPath = false;
                             }
                             bufferedWriter.write(replaceAllSlashes(appPathProperty));
+                            bufferedWriter.write(System.lineSeparator());
+                            bufferedWriter.write(replaceAllSlashes("defaultName" + Constants.EQUALS + parentFileName));
+                            bufferedWriter.write(System.lineSeparator());
+                            if (folderNameCounter.get(parentFileName) == null){
+                                folderNameCounter.put(parentFileName,0);
+                                bufferedWriter.write(replaceAllSlashes("altName" + Constants.EQUALS + parentFileName));
+                            } else {
+                                int i = folderNameCounter.get(parentFileName) + 1;
+                                folderNameCounter.put(parentFileName,i);
+                                bufferedWriter.write(replaceAllSlashes("altName" + Constants.EQUALS + parentFileName + i));
+                            }
                             bufferedWriter.write(System.lineSeparator());
                             counter++;
                         }
