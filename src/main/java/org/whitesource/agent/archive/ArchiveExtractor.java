@@ -148,8 +148,8 @@ public class ArchiveExtractor {
 
     private String getTempFolder(String scannerBaseDir) {
         String creationDate = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-        String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + TempFolders.WHITESOURCE_ARCHIVE_EXTRACTOR + File.separator + creationDate :
-                JAVA_TEMP_DIR + File.separator + TempFolders.WHITESOURCE_ARCHIVE_EXTRACTOR + File.separator + creationDate;
+        String tempFolder = JAVA_TEMP_DIR.endsWith(File.separator) ? JAVA_TEMP_DIR + TempFolders.UNIQUE_WHITESOURCE_ARCHIVE_EXTRACTOR_TEMP_FOLDER + File.separator + creationDate :
+                JAVA_TEMP_DIR + File.separator + TempFolders.UNIQUE_WHITESOURCE_ARCHIVE_EXTRACTOR_TEMP_FOLDER + File.separator + creationDate;
         String destDirectory = tempFolder + Constants.UNDERSCORE + this.randomString;
         int separatorIndex = scannerBaseDir.lastIndexOf(File.separator);
 
@@ -223,13 +223,16 @@ public class ArchiveExtractor {
     }
 
     // extract image layers
-    public void extractDockerImageLayers(File imageTarFile, File imageExtractionDir) {
+    public void extractDockerImageLayers(File imageTarFile, File imageExtractionDir, Boolean deleteTarFiles) {
         FilesScanner filesScanner = new FilesScanner();
         boolean success = false;
         // docker layers are saved as TAR file (we save it as TAR)
         if (imageTarFile.getName().endsWith(TAR_SUFFIX)) {
             success = unTar(imageTarFile.getName().toLowerCase(), imageExtractionDir.getAbsolutePath(), imageTarFile.getPath());
-            boolean deleted = imageTarFile.delete();
+            boolean deleted = false;
+            if (deleteTarFiles) {
+                deleted = imageTarFile.delete();
+            }
             if (!deleted) {
                 logger.warn("Was not able to delete {} (docker image TAR file)", imageTarFile.getName());
             }
@@ -238,7 +241,7 @@ public class ArchiveExtractor {
             String[] fileNames = filesScanner.getDirectoryContent(imageExtractionDir.getAbsolutePath(), new String[]{LAYER_TAR}, new String[]{}, true, false);
             for (String filename : fileNames) {
                 File layerToExtract = new File(imageExtractionDir + File.separator + filename);
-                extractDockerImageLayers(layerToExtract, layerToExtract.getParentFile());
+                extractDockerImageLayers(layerToExtract, layerToExtract.getParentFile(), deleteTarFiles);
             }
         } else {
             logger.warn("Was not able to extract {} (docker image TAR file)", imageTarFile.getName());

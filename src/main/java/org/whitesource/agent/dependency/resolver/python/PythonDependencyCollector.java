@@ -6,6 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.whitesource.agent.Constants;
+import org.whitesource.agent.TempFolders;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
@@ -184,9 +185,9 @@ public class PythonDependencyCollector extends DependencyCollector {
                 }
                 // If there was an error and the dependency file type is requirements.txt, download each dependency in the requirements.txt file one by one
                 if (failed && this.ignorePipInstallErrors && this.dependencyFileType == DependenciesFileType.REQUIREMENTS_TXT) {
-                    logger.info("Try to download each dependency in the requirements.txt file one by one. It might take a few minutes.");
+                    logger.info("Try to download each dependency in " + this.requirementsTxtOrSetupPyPath + " file one by one. It might take a few minutes.");
                     FilesUtils.deleteDirectory(new File(tempDirPackages));
-                    this.tempDirPackages = new FilesUtils().createTmpFolder(false, PythonDependencyResolver.WHITESOURCE_PYTHON_TEMP_FOLDER);
+                    this.tempDirPackages = new FilesUtils().createTmpFolder(false, TempFolders.UNIQUE_PYTHON_TEMP_FOLDER);
                     if (this.tempDirPackages != null) {
                         downloadLineByLine(this.requirementsTxtOrSetupPyPath);
                         dependencies = collectDependencies(new File(tempDirPackages), this.requirementsTxtOrSetupPyPath);
@@ -599,7 +600,7 @@ public class PythonDependencyCollector extends DependencyCollector {
 
     private String createScript(String requirementsTxtPath) {
         FilesUtils filesUtils = new FilesUtils();
-        String path = filesUtils.createTmpFolder(false, PythonDependencyResolver.WHITESOURCE_PYTHON_TEMP_FOLDER);
+        String path = filesUtils.createTmpFolder(false, TempFolders.UNIQUE_PYTHON_TEMP_FOLDER);
         String scriptPath = null;
         if (path != null) {
             scriptPath = path + SCRIPT_SH;

@@ -1,4 +1,6 @@
-package org.whitesource.agent.dependency.resolver.docker.remotedocker;
+package org.whitesource.agent.dependency.resolver.docker.remotedocker.amazon;
+
+import org.whitesource.agent.dependency.resolver.docker.remotedocker.AbstractRemoteDockerImage;
 
 import java.util.Date;
 import java.util.List;
@@ -6,11 +8,12 @@ import java.util.Objects;
 
 public class DockerImageAmazon extends AbstractRemoteDockerImage {
 
+    /* --- Private members --- */
+
     private String registryId;
     private String mainTag;
 
-    public DockerImageAmazon() {
-    }
+    /* --- Constructors --- */
 
     public DockerImageAmazon(String registryId, String repositoryName, String imageDigest, List<String> imageTags,
                              Date imagePushedAt, String imageManifest, String mainTag, String imageSha256) {
@@ -19,20 +22,11 @@ public class DockerImageAmazon extends AbstractRemoteDockerImage {
         this.mainTag = mainTag;
     }
 
-    public String getRegistryId() {
-        return registryId;
-    }
+    /* --- Overridden public methods --- */
 
-    public void setRegistryId(String registryId) {
-        this.registryId = registryId;
-    }
-
-    public String getMainTag() {
-        return mainTag;
-    }
-
-    public void setMainTag(String mainTag) {
-        this.mainTag = mainTag;
+    @Override
+    public String getUniqueIdentifier() {
+        return this.getImageSha256();
     }
 
     @Override

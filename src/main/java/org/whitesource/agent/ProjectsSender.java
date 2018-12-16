@@ -95,7 +95,7 @@ public class ProjectsSender {
 
         WhitesourceService service = createService();
         String resultInfo = Constants.EMPTY_STRING;
-        if (offlineConfig.isEnabled()) {
+        if (offlineConfig.isOffline()) {
             resultInfo = offlineUpdate(service, projects);
             return new Pair<>(resultInfo, this.prepStepStatusCode);
         } else {
@@ -259,7 +259,7 @@ public class ProjectsSender {
     protected WhitesourceService createService() {
         logger.info("Service URL is " + senderConfig.getServiceUrl());
         boolean setProxy = false;
-        if (StringUtils.isNotBlank(senderConfig.getProxyHost()) || !offlineConfig.isEnabled()) {
+        if (StringUtils.isNotBlank(senderConfig.getProxyHost()) || !offlineConfig.isOffline()) {
             setProxy = true;
         }
         int connectionTimeoutMinutes = senderConfig.getConnectionTimeOut();
@@ -464,7 +464,8 @@ public class ProjectsSender {
         ConcurrentSkipListMap<Long, ILoggingEvent> collectToSet = ((LogMapAppender) setLog.getAppender(Constants.MAP_APPENDER_NAME)).getLogEvents();
         // going over all the collected events, filtering out the empty ones, and writing them to a long string
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
-        List<ILoggingEvent> events = collectToSet.values().stream().filter(iLoggingEvent -> !iLoggingEvent.getMessage().isEmpty() && !iLoggingEvent.getMessage().equals(Constants.NEW_LINE)).collect(Collectors.toList());
+        List<ILoggingEvent> events = collectToSet.values().stream().filter(iLoggingEvent -> !iLoggingEvent.getMessage().isEmpty() &&
+                !iLoggingEvent.getMessage().equals(Constants.NEW_LINE)).collect(Collectors.toList());
         if (events.size() > MAX_LOG_EVENTS) {
             events = events.stream().filter(iLoggingEvent -> iLoggingEvent.getLevel().levelInt >= Level.INFO.levelInt).collect(Collectors.toList());
         }

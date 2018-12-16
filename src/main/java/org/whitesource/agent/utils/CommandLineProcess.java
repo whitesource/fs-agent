@@ -28,7 +28,7 @@ public class CommandLineProcess {
     private long timeoutProcessMinutes;
     private boolean errorInProcess = false;
     private Process processStart = null;
-    private File errorLog = new File("error.log");
+    private File errorLog = new File(UniqueNamesGenerator.createUniqueName("error", ".log"));
 
     /* --- Statics Members --- */
     private static final long DEFAULT_TIMEOUT_READLINE_SECONDS = 300;
@@ -165,7 +165,7 @@ public class CommandLineProcess {
         boolean continueReadingLines = true;
         try {
             if (!includeErrorLines) {
-                logger.debug("trying to read lines using '{}'", args.toString());
+                logger.debug("trying to read lines using '{}'", commandArgsToString());
             }
             int lineIndex = 1;
             String line = Constants.EMPTY_STRING;
@@ -204,6 +204,16 @@ public class CommandLineProcess {
             IOUtils.closeQuietly(reader);
         }
         return wasError;
+    }
+
+    private String commandArgsToString() {
+        StringBuilder result = new StringBuilder(Constants.EMPTY_STRING);
+        for (String arg : this.args) {
+            result.append(arg + Constants.WHITESPACE);
+        }
+        // delete last whitespace
+        result.deleteCharAt(result.length() - 1);
+        return result.toString();
     }
 
     public void executeProcessWithoutOutput() throws IOException {

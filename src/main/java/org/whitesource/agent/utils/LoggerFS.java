@@ -354,7 +354,7 @@ public class LoggerFS implements Logger {
         if (this.contextId == null) {
             return msg;
         } else {
-            return OPENING_BRACKET + this.logger.getName() + CLOSING_BRACKET + CTX + this.contextId  + CLOSING_BRACKET + "\t" + msg;
+            return CTX + this.contextId  + CLOSING_BRACKET + "\t" + msg;
         }
     }
 }

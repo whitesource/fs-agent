@@ -62,7 +62,7 @@ public class NugetPackagesConfigXmlParser implements Serializable {
      * @param getDependenciesFromReferenceTag - flag to indicate weather to get dependencies form reference tag or not
      * @return Set of DependencyInfos
      */
-    public Set<DependencyInfo> parsePackagesConfigFile(boolean getDependenciesFromReferenceTag, String configFilePath) {
+    public Set<DependencyInfo> parsePackagesConfigFile(boolean getDependenciesFromReferenceTag, String nugetDependencyFile) {
         Persister persister = new Persister();
         Set<DependencyInfo> dependencies = new HashSet<>();
         try {
@@ -70,14 +70,14 @@ public class NugetPackagesConfigXmlParser implements Serializable {
             if (this.nugetConfigFileType == NugetConfigFileType.CONFIG_FILE_TYPE) {
                 NugetPackages packages = persister.read(NugetPackages.class, xml);
                 if (!getDependenciesFromReferenceTag) {
-                    dependencies.addAll(collectDependenciesFromNugetConfig(packages, configFilePath));
+                    dependencies.addAll(collectDependenciesFromNugetConfig(packages, nugetDependencyFile));
                 }
                 // case of csproj file
             } else {
                 NugetCsprojPackages csprojPackages = persister.read(NugetCsprojPackages.class, xml);
                 NugetPackages packages = getNugetPackagesFromCsproj(csprojPackages);
                 if (!getDependenciesFromReferenceTag) {
-                    dependencies.addAll(collectDependenciesFromNugetConfig(packages, configFilePath));
+                    dependencies.addAll(collectDependenciesFromNugetConfig(packages, nugetDependencyFile));
                 }
                 dependencies.addAll(getDependenciesFromReferencesTag(csprojPackages));
             }
@@ -126,7 +126,7 @@ public class NugetPackagesConfigXmlParser implements Serializable {
         return dependencies;
     }
 
-    private Set<DependencyInfo> collectDependenciesFromNugetConfig(NugetPackages configNugetPackage, String configFilePath) {
+    private Set<DependencyInfo> collectDependenciesFromNugetConfig(NugetPackages configNugetPackage, String nugetDependencyFile) {
         Set<DependencyInfo> dependencies = new HashSet<>();
         List<NugetPackage> nugetPackages = configNugetPackage.getNugetPackages();
         if (nugetPackages != null) {
@@ -137,7 +137,8 @@ public class NugetPackagesConfigXmlParser implements Serializable {
                     dependency.setArtifactId(nugetPackage.getPkgName());
                     dependency.setVersion(nugetPackage.getPkgVersion());
                     dependency.setDependencyType(DependencyType.NUGET);
-                    dependency.setSystemPath(configFilePath);
+                    dependency.setDependencyFile(nugetDependencyFile);
+                    dependency.setSystemPath(nugetDependencyFile);
                     dependencies.add(dependency);
                 }
             }

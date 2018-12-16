@@ -17,8 +17,9 @@ package org.whitesource.fs.configuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.whitesource.agent.utils.WsStringUtils;
+import org.whitesource.fs.FSAConfigProperty;
 
-import java.util.Arrays;
 import java.util.Collection;
 
 import static org.whitesource.agent.ConfigPropertyKeys.*;
@@ -26,24 +27,37 @@ import static org.whitesource.agent.ConfigPropertyKeys.*;
 public class AgentConfiguration {
 
     public static final String ERROR = "error";
+    @FSAConfigProperty
     private final String[] includes;
+    @FSAConfigProperty
     private final String[] excludes;
+    @FSAConfigProperty
     private final String[] dockerIncludes;
+    @FSAConfigProperty
     private final String[] dockerExcludes;
+    @FSAConfigProperty
     private final String[] pythonRequirementsFileIncludes;
+    @FSAConfigProperty
     private final int archiveExtractionDepth;
+    @FSAConfigProperty
     private final String[] archiveIncludes;
+    @FSAConfigProperty
     private final String[] archiveExcludes;
     private final boolean archiveFastUnpack;
+    @FSAConfigProperty
     private final boolean followSymlinks;
     private final boolean partialSha1Match;
     private final boolean calculateHints;
     private final boolean calculateMd5;
+    @FSAConfigProperty
     private final boolean dockerScan;
     private final boolean showProgressBar;
+    @FSAConfigProperty
     private final boolean globCaseSensitive;
     private final Collection<String> excludedCopyrights;
+    @FSAConfigProperty
     private final String[] projectPerFolderIncludes;
+    @FSAConfigProperty
     private final String[] projectPerFolderExcludes;
     private final String error;
 
@@ -193,18 +207,6 @@ public class AgentConfiguration {
 
     @Override
     public String toString() {
-        return "includes=" + Arrays.toString(includes) + "\n" +
-                "excludes=" + Arrays.toString(excludes) + "\n" +
-                "dockerScan=" + dockerScan +
-                ", dockerIncludes=" + Arrays.toString(dockerIncludes) +
-                ", dockerExcludes=" + Arrays.toString(dockerExcludes) + "\n" +
-                "archiveExtractionDepth=" + archiveExtractionDepth +
-                ", archiveIncludes=" + Arrays.toString(archiveIncludes) +
-                ", archiveExcludes=" + Arrays.toString(archiveExcludes) + "\n" +
-                "followSymlinks=" + followSymlinks +
-                ", globCaseSensitive=" + globCaseSensitive +
-                ", projectPerFolderIncludes=" + Arrays.toString(projectPerFolderIncludes) +
-                ", projectPerFolderExcludes=" + Arrays.toString(projectPerFolderExcludes) +
-                ", pythonRequirementsFileIncludes=" + Arrays.toString(pythonRequirementsFileIncludes);
+        return WsStringUtils.toString(this);
     }
 }

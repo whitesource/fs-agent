@@ -70,6 +70,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final String GO_ENSURE       = "ensure";
     private static final String GO_INIT         = "init";
     private static final String GO_SAVE         = "save";
+    private static final String GO_ADD_EXTERNAL = "add +external";
     private static final List<String> GO_SCRIPT_EXTENSION = Arrays.asList(".lock", ".json", GO_EXTENSION);
     private static final String IMPORTS = "imports";
     private static final String NAME_GLIDE = "- name: ";
@@ -318,7 +319,12 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                                             dependencyInfo.getArtifactId() + Constants.FORWARD_SLASH + name,
                                             dependencyInfo.getVersion());
                                     packageDependencyInfo.setCommit(dependencyInfo.getCommit());
-                                    dependencyInfos.add(packageDependencyInfo);
+                                    packageDependencyInfo.setDependencyType(DependencyType.GO);
+                                    if (useParent) {
+                                        dependencyInfo.getChildren().add(packageDependencyInfo);
+                                    } else {
+                                        dependencyInfos.add(packageDependencyInfo);
+                                    }
                                 }
                                 repositoryPackages = null;
                             }
@@ -372,7 +378,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             }
         }
         dependencyInfos.stream().forEach(dependencyInfo -> {
-            dependencyInfo.setSystemPath(goPckLock.getPath());
+            //dependencyInfo.setDependencyFile(goPckLock.getPath());
             dependencyInfo.setDependencyType(DependencyType.GO);
             setSha1(dependencyInfo);
 
@@ -448,9 +454,9 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                             logger.warn("Using dependency without tag/commit is not supported, library {}, will not be recognized by WSS", line[0]);
                             continue;
                         }
-                        dependencyInfo.setDependencyType(DependencyType.GO);
+                        /*dependencyInfo.setDependencyType(DependencyType.GO);
                         dependencyInfo.setSystemPath(goPmFile.getPath());
-                        setSha1(dependencyInfo);
+                        setSha1(dependencyInfo);*/
                         dependencyInfos.add(dependencyInfo);
                     }
                 } else if (currLine.contains(OPENNING_BRACKET + GOPM_DEPS + BRACKET)){ //if the current line contains [deps]
@@ -473,7 +479,11 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
             }
         }
-        dependencyInfos.stream().forEach(dependencyInfo -> {dependencyInfo.setSystemPath(goPmFile.getPath()); dependencyInfo.setDependencyType(DependencyType.GO);});
+        dependencyInfos.stream().forEach(dependencyInfo -> {
+            //dependencyInfo.setDependencyFile(goPmFile.getPath());
+            dependencyInfo.setDependencyType(DependencyType.GO);
+            setSha1(dependencyInfo);
+        });
         return dependencyInfos;
     }
 
@@ -497,6 +507,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     private List<DependencyInfo> parseGoDeps(File goDeps) throws IOException {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
+        HashMap<String, DependencyInfo> dependencyInfoHashMap = new HashMap<>();
         JsonParser parser = new JsonParser();
         FileReader fileReader = null;
         try {
@@ -513,7 +524,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                     dependencyInfo.setArtifactId(importPath);
                     dependencyInfo.setCommit(dep.get(REV).getAsString());
                     dependencyInfo.setDependencyType(DependencyType.GO);
-                    dependencyInfo.setSystemPath(goDeps.getPath());
+                    //dependencyInfo.setDependencyFile(goDeps.getPath());
                     setSha1(dependencyInfo);
                     JsonElement commentElement = dep.get(COMMENT);
                     if (commentElement != null){
@@ -523,7 +534,8 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         }
                         dependencyInfo.setVersion(comment);
                     }
-                    dependencyInfos.add(dependencyInfo);
+                    setInHierarchyTree(dependencyInfos, dependencyInfoHashMap, dependencyInfo, importPath);
+                    //dependencyInfos.add(dependencyInfo);
                 }
             }
         } catch (FileNotFoundException e){
@@ -550,15 +562,17 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         logger.debug("collecting dependencies using 'govendor'");
         // apparently when go.collectDependenciesAtRuntime=false, the rootDirectory includes the 'vendor' folder as well - in such case removing it from the path
         File goVendorJson = new File(rootDirectory  + (!collectDependenciesAtRuntime && rootDirectory.endsWith(VENDOR) ? "" : fileSeparator + VENDOR ) + fileSeparator + GOVENDOR_JSON);
-        if (goVendorJson.isFile()){
+        if (goVendorJson.isFile() || (collectDependenciesAtRuntime && runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GO_VENDOR.getType(), GO_INIT)) &&
+                runCmd(rootDirectory, cli.getCommandParams(GoDependencyManager.GO_VENDOR.getType(), GO_ADD_EXTERNAL)))){
             dependencyInfos.addAll(parseGoVendor(goVendorJson));
-        } else {
+        } else  {
             throw new Exception("Can't find " + GOVENDOR_JSON + " file.  Please make sure 'govendor' is installed and run 'govendor init' command");
         }
     }
 
     private List<DependencyInfo> parseGoVendor(File goVendor) throws IOException {
         List<DependencyInfo> dependencyInfos = new ArrayList<>();
+        HashMap<String, DependencyInfo> dependencyInfoHashMap = new HashMap<>();
         JsonParser parser = new JsonParser();
         FileReader fileReader = null;
         //parse GoVendor dependency json file
@@ -575,17 +589,17 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         logger.debug("Packeges in json #{} : {}", i, packages.get(i).toString());
                         dependencyInfo = new DependencyInfo();
                         JsonObject pck = packages.get(i).getAsJsonObject();
-                        String Path = pck.get(PATH).getAsString();
-                        dependencyInfo.setGroupId(getGroupId(Path));
-                        dependencyInfo.setArtifactId(Path);
+                        String name = pck.get(PATH).getAsString();
+                        dependencyInfo.setGroupId(getGroupId(name));
+                        dependencyInfo.setArtifactId(name);
                         dependencyInfo.setCommit(pck.get(REVISION_GOV).getAsString());
                         dependencyInfo.setDependencyType(DependencyType.GO);
-                        dependencyInfo.setSystemPath(goVendor.getPath());
+                        //dependencyInfo.setDependencyFile(goVendor.getPath());
                         setSha1(dependencyInfo);
                         if (pck.get(VERSION_GOV) != null) {
                             dependencyInfo.setVersion(pck.get(VERSION_GOV).getAsString());
                         }
-                        dependencyInfos.add(dependencyInfo);
+                        setInHierarchyTree(dependencyInfos, dependencyInfoHashMap, dependencyInfo, name);
                     }
                 }
             }
@@ -598,6 +612,23 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             }
         }
         return dependencyInfos;
+    }
+
+    private void setInHierarchyTree(List<DependencyInfo> dependencyInfos, HashMap<String, DependencyInfo> dependencyInfoHashMap, DependencyInfo dependencyInfo, String name) {
+        boolean childDependency = false;
+        dependencyInfoHashMap.put(name, dependencyInfo);
+        // checking if the dependency is child of another (if its name is contained inside the name of other dependency)
+        while (name.contains(Constants.FORWARD_SLASH)){
+            name = name.substring(0, name.lastIndexOf(Constants.FORWARD_SLASH));
+            if (dependencyInfoHashMap.get(name) != null){
+                dependencyInfoHashMap.get(name).getChildren().add(dependencyInfo);
+                childDependency = true;
+                break;
+            }
+        }
+        if (!childDependency){
+            dependencyInfos.add(dependencyInfo);
+        }
     }
 
     private void collectVndrDependencies(String rootDirectory, List<DependencyInfo> dependencyInfos) throws Exception {
@@ -627,7 +658,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 dependencyInfo.setArtifactId(name);
                 dependencyInfo.setCommit(split[1]);
                 dependencyInfo.setDependencyType(DependencyType.GO);
-                dependencyInfo.setSystemPath(vendorConf.getPath());
+                //dependencyInfo.setDependencyFile(vendorConf.getPath());
                 setSha1(dependencyInfo);
                 dependencyInfos.add(dependencyInfo);
             }
@@ -737,7 +768,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                 }
                 dependencyInfo.setArtifactId(name);
                 dependencyInfo.setDependencyType(DependencyType.GO);
-                dependencyInfo.setSystemPath(rootDirectory + fileSeparator + Constants.BUILD_GRADLE);
+                //dependencyInfo.setDependencyFile(rootDirectory + fileSeparator + Constants.BUILD_GRADLE);
                 dependencyInfos.add(dependencyInfo);
             } catch (Exception e){
                 logger.warn("Error parsing line {}, exception: {}", currentLine, e.getMessage());
@@ -861,6 +892,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             // this flag indicates if we get to imports line
             boolean resolveRepositoryPackages = false;
             boolean resolveSubPackages = false;
+            DependencyInfo currentDependency = null;
             while ((currLine = bufferedReader.readLine()) != null) {
                 /* possible lines:
                     imports:
@@ -881,13 +913,19 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
                         currLine = bufferedReader.readLine();
                         if (currLine != null) {
                             commit = currLine.substring(VERSION_GLIDE.length());
-                            dependencies.add(createGlideDependency(name, commit, glideLock.getAbsolutePath()));
+                            currentDependency = createGlideDependency(name, commit, glideLock.getAbsolutePath());
+                            dependencies.add(currentDependency);
                         }
                     } else if (currLine.startsWith(SUBPACKAGES_GLIDE)) {
                         resolveSubPackages = true;
                     } else if (resolveSubPackages && currLine.startsWith(PREFIX_SUBPACKAGES_SECTION)) {
                         String subPackageName = currLine.substring(PREFIX_SUBPACKAGES_SECTION.length());
-                        dependencies.add(createGlideDependency(name + Constants.FORWARD_SLASH + subPackageName, commit, glideLock.getAbsolutePath()));
+                        DependencyInfo childDependency = createGlideDependency(name + Constants.FORWARD_SLASH + subPackageName, commit, glideLock.getAbsolutePath());
+                        if (currentDependency == null) {
+                            dependencies.add(childDependency);
+                        } else {
+                            currentDependency.getChildren().add(childDependency);
+                        }
                     } else if (currLine.startsWith(TEST_IMPORTS)) {
                         resolveSubPackages = false;
                         if (this.ignoreTestPackages) {
@@ -919,7 +957,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
         dependency.setArtifactId(name);
         dependency.setCommit(commit);
         dependency.setDependencyType(DependencyType.GO);
-        dependency.setSystemPath(systemPath);
+        //dependency.setDependencyFile(systemPath);
         setSha1(dependency);
         return dependency;
     }

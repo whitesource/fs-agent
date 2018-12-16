@@ -17,7 +17,6 @@ package org.whitesource.fs;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.whitesource.agent.ConfigPropertyKeys;
@@ -28,6 +27,7 @@ import org.whitesource.agent.client.ClientConstants;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
 import org.whitesource.agent.utils.LoggerFactory;
 import org.whitesource.agent.utils.Pair;
+import org.whitesource.agent.utils.WsStringUtils;
 import org.whitesource.fs.configuration.*;
 
 import java.io.*;
@@ -64,27 +64,6 @@ public class FSAConfiguration {
     public static final String INCLUDES_EXCLUDES_SEPARATOR_REGEX = "[,;\\s]+";
     public static final int DEFAULT_ARCHIVE_DEPTH = 0;
     private static final String NONE = "(none)";
-
-    @Override
-    public String toString() {
-        return "FSA Configuration {\n" +
-                "logLevel=" + logLevel + '\n' +
-                "configFilePath=" + configFilePath + '\n' +
-                "fileListPath=" + fileListPath + '\n' +
-                "dependencyDirs=" + Arrays.asList(dependencyDirs) + '\n' +
-                sender.toString() + '\n' +
-                resolver.toString() + '\n' +
-                request.toString() + '\n' +
-                "scanPackageManager=" + scanPackageManager + '\n' +
-                offline.toString() + '\n' +
-                "projectPerFolder=" + projectPerFolder + '\n' +
-                "wss.connectionTimeoutMinutes=" + connectionTimeOut + '\n' +
-                "scanPackageManager=" + scanPackageManager + '\n' +
-                "scanDockerImages=" + scanDockerImages + '\n' +
-                getAgent().toString() + '\n' +
-                '}';
-    }
-
     public static final String WHITE_SOURCE_DEFAULT_FOLDER_PATH = ".";
     public static final String PIP = "pip";
     public static final String PYTHON = "python";
@@ -93,15 +72,20 @@ public class FSAConfiguration {
     public static final boolean DEFAULT_SSL = true;
     private static final boolean DEFAULT_ENABLED = false;
 
+    @FSAConfigProperty
     private boolean projectPerFolder;
+    @FSAConfigProperty
     private int connectionTimeOut;
 
 
     /* --- Private fields --- */
 
     private final ScmConfiguration scm;
+    @FSAConfigProperty
     private final SenderConfiguration sender;
+    @FSAConfigProperty
     private final OfflineConfiguration offline;
+    @FSAConfigProperty
     private final ResolverConfiguration resolver;
     private final ConfigurationValidation configurationValidation;
     private final EndPointConfiguration endpoint;
@@ -112,17 +96,27 @@ public class FSAConfiguration {
     /* --- Private final fields --- */
 
     private final List<String> offlineRequestFiles;
+    @FSAConfigProperty
     private final String fileListPath;
+    @FSAConfigProperty
     private List<String> dependencyDirs;
+    @FSAConfigProperty
     private final String configFilePath;
+    @FSAConfigProperty
     private final AgentConfiguration agent;
+    @FSAConfigProperty
     private final RequestConfiguration request;
     private final List<String> requirementsFileIncludes;
+    @FSAConfigProperty
     private final boolean scanPackageManager;
+    @FSAConfigProperty
     private final boolean scanDockerImages;
+    private final boolean scanTarImages;
+    private final boolean deleteTarImages;
 
     private final String scannedFolders;
 
+    @FSAConfigProperty
     private String logLevel;
     private String logContext;
     private boolean useCommandLineProductName;
@@ -156,20 +150,22 @@ public class FSAConfiguration {
         appPaths = null;
         String apiToken = null;
         String userKey = null;
+        String serviceUrl = null;
+        CommandLineArgs commandLineArgs = new CommandLineArgs();
         if ((args != null)) {
             // read command line args
             // validate args // TODO use jCommander validators
             // TODO add usage command
-
-
-            CommandLineArgs commandLineArgs = new CommandLineArgs();
             commandLineArgs.parseCommandLine(args);
 
             if (config == null) {
                 analyzeMultiModule = commandLineArgs.analyzeMultiModule;
 
                 // The config file is not necessary if there is the analyzeMultiModule parameter
-                if (StringUtils.isEmpty(analyzeMultiModule)) {
+                if (Boolean.valueOf(commandLineArgs.noConfig)) {
+                    config = new FSAConfigProperties();
+                    checkCmdArgsWithoutConfig(commandLineArgs);
+                } else if (StringUtils.isEmpty(analyzeMultiModule)) {
                     Pair<FSAConfigProperties, List<String>> propertiesWithErrors = readWithError(commandLineArgs.configFilePath, commandLineArgs);
                     errors.addAll(propertiesWithErrors.getValue());
                     config = propertiesWithErrors.getKey();
@@ -201,6 +197,9 @@ public class FSAConfiguration {
             if (StringUtils.isNotEmpty(commandLineArgs.userKey)) {
                 userKey = commandLineArgs.userKey;
             }
+            if (StringUtils.isNotEmpty(commandLineArgs.wssUrl)) {
+                serviceUrl = commandLineArgs.wssUrl;
+            }
             projectName = config.getProperty(ConfigPropertyKeys.PROJECT_NAME_PROPERTY_KEY);
             fileListPath = commandLineArgs.fileListPath;
             if (commandLineArgs.dependencyDirs != null && !commandLineArgs.dependencyDirs.isEmpty()) {
@@ -210,28 +209,6 @@ public class FSAConfiguration {
             if (StringUtils.isNotBlank(commandLineArgs.whiteSourceFolder)) {
                 config.setProperty(ConfigPropertyKeys.WHITESOURCE_FOLDER_PATH, commandLineArgs.whiteSourceFolder);
             }
-
-           /* xModulePath = commandLineArgs.xModulePath;
-            if (StringUtils.isNotEmpty(xModulePath)) {
-                if (args.length == 2) {
-                    Path path = Paths.get(analyzeMultiModule);
-                    try {
-                        if (Files.exists(path) && Files.size(path) > 0) {
-                            Properties setUpPropertiesFile = new Properties();
-                            //setUpPropertiesFile.load(new FileInputStream(new File()));
-                            File xModuleFile = new File(xModulePath);
-                        }
-                        *//*if (xModuleFile.exists() && xModuleFile.length() > 0) {
-                            readSetupFile(xModuleFile);
-                        }*//*
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            } else {
-                errors.add("Effective Usage Analysis of a multi-module configuration will not run unless a valid setup file is specified.");
-            }*/
-
 
             // requirements file includes
             requirementsFileIncludes.addAll(commandLineArgs.requirementsFileIncludes);
@@ -260,6 +237,8 @@ public class FSAConfiguration {
 
         scanPackageManager = config.getBooleanProperty(ConfigPropertyKeys.SCAN_PACKAGE_MANAGER, false);
         scanDockerImages = config.getBooleanProperty(ConfigPropertyKeys.SCAN_DOCKER_IMAGES, false);
+        scanTarImages = config.getBooleanProperty(ConfigPropertyKeys.SCAN_TAR_IMAGES, false);
+        deleteTarImages = config.getBooleanProperty(ConfigPropertyKeys.DELETE_TAR_FILES, true);
 
         if (dependencyDirs == null)
             dependencyDirs = new ArrayList<>();
@@ -280,7 +259,7 @@ public class FSAConfiguration {
             userKey = getToken(config, ConfigPropertyKeys.USER_KEY_FILE, ConfigPropertyKeys.USER_KEY_PROPERTY_KEY);
         }
         int archiveExtractionDepth = config.getArchiveDepth();
-        String[] includes = config.getIncludes();
+        String[] includes = Constants.TRUE.equals(commandLineArgs.noConfig) ? ExtensionUtils.INCLUDES : config.getIncludes();
         String[] projectPerFolderIncludes = config.getProjectPerFolderIncludes();
         String[] pythonRequirementsFileIncludes = config.getPythonIncludes();
         String[] argsForAppPathAndDirs = args;
@@ -290,30 +269,14 @@ public class FSAConfiguration {
         initializeDependencyDirs(argsForAppPathAndDirs, config);
         String scanComment = config.getProperty(ConfigPropertyKeys.SCAN_COMMENT);
 
-
         // validate iaLanguage
-        String iaLanguage = config.getProperty(ConfigPropertyKeys.IA_LANGUAGE);
-        boolean iaLanguageValid = false;
-        if (iaLanguage != null) {
-            for (ViaLanguage viaLanguage : ViaLanguage.values()) {
-                if (iaLanguage.toLowerCase().equals(viaLanguage.toString().toLowerCase())) {
-                    iaLanguageValid = true;
-                    break;
-                }
-            }
-            if (!iaLanguageValid) {
-                //todo move to debug mode after QA
-                errors.add("Error: VIA setting are not applicable parameters are not valid. exiting... ");
-            }
-            if (iaLanguageValid && !config.getBooleanProperty(ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false)) {
-                //todo move to debug mode after QA
-                errors.add("Error: VIA setting are not applicable parameters are not valid. exiting... ");
-            }
-        }
+        validateIaLanguage(config);
 
         // todo: check possibility to get the errors only in the end
-        errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal,
-                apiToken, configFilePath, archiveExtractionDepth, includes, projectPerFolderIncludes, pythonRequirementsFileIncludes, scanComment));
+        if (!Constants.TRUE.equals(commandLineArgs.noConfig)) {
+            errors.addAll(configurationValidation.getConfigurationErrors(projectPerFolder, projectToken, projectNameFinal,
+                    apiToken, configFilePath, archiveExtractionDepth, includes, projectPerFolderIncludes, pythonRequirementsFileIncludes, scanComment));
+        }
 
         logLevel = config.getProperty(ConfigPropertyKeys.LOG_LEVEL_KEY, INFO);
         logContext = config.getProperty(ConfigPropertyKeys.LOG_CONTEXT);
@@ -324,9 +287,9 @@ public class FSAConfiguration {
 
         request = getRequest(config, apiToken, userKey, projectName, projectToken, scanComment);
         scm = getScm(config);
-        agent = getAgent(config);
+        agent = getAgent(config, commandLineArgs.noConfig);
         offline = getOffline(config);
-        sender = getSender(config);
+        sender = getSender(config, serviceUrl);
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
         remoteDockerConfiguration = getRemoteDockerConfiguration(config);
@@ -360,43 +323,35 @@ public class FSAConfiguration {
         }
     }
 
-    private void readSetupFile(File xModuleFile) {
-        Map<String, HashSet<String>> appPathToModulesDependencyDirs = new HashMap<>();
-        String dependencyDir = null;
-        try {
-            List<String> lines = FileUtils.readLines(xModuleFile);
-            if (StringUtils.isNotEmpty(lines.get(0))) {
-                dependencyDir = lines.get(0);
-            }
-            for (int i = 2; i < lines.size(); i++) {
-                if (lines.get(i).contains(Constants.COMMA)) {
-                    String[] moduleLine = lines.get(i).split(Constants.COMMA);
-                    String appPath = moduleLine[1];
-                    if (StringUtils.isNotEmpty(appPath) && StringUtils.isNotEmpty(dependencyDir)) {
-                        File file = new File(appPath);
-                        if (file.exists()) {
-                            HashSet<String> dependencyModulesDirs = new HashSet<>();
-                            dependencyModulesDirs.add(dependencyDir);
-                            appPathToModulesDependencyDirs.put(appPath, dependencyModulesDirs);
-                        }
-                    }
-                } else {
-
-                    errors.add("Effective Usage Analysis of a multi-module configuration will not run unless a valid setup file is specified.");
-                }
-            }
-            if (!appPathToModulesDependencyDirs.isEmpty() && StringUtils.isNotEmpty(dependencyDir)) {
-                appPathToModulesDependencyDirs.clear();
-                appPathsToDependencyDirs.putAll(appPathToModulesDependencyDirs);
-            } else {
-                errors.add("Effective Usage Analysis of a multi-module configuration will not run unless a valid setup file is specified.");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void checkCmdArgsWithoutConfig(CommandLineArgs commandLineArgs) {
+        /* check if the minimum required settings for running without config file exist
+            apiKey & projectName/projectToken & productName/productToken & scannedDirectory
+         */
+        if (commandLineArgs.apiKey == null || (commandLineArgs.projectToken == null && commandLineArgs.project == null) || commandLineArgs.dependencyDirs == null) {
+            errors.add("apiKey, projectName/token & -d params are required for scan without config file");
         }
     }
 
-    private String getToken(FSAConfigProperties config, String propertyKeyFile, String propertyKeyToken) {
+    private void validateIaLanguage(FSAConfigProperties config) {
+        String iaLanguage = config.getProperty(ConfigPropertyKeys.IA_LANGUAGE);
+        boolean iaLanguageValid = false;
+        if (iaLanguage != null) {
+            for (ViaLanguage viaLanguage : ViaLanguage.values()) {
+                if (iaLanguage.toLowerCase().equals(viaLanguage.toString().toLowerCase())) {
+                    iaLanguageValid = true;
+                    break;
+                }
+            }
+            if (!iaLanguageValid) {
+                errors.add("Error: VIA setting are not applicable parameters are not valid. exiting... ");
+            }
+            if (iaLanguageValid && !config.getBooleanProperty(ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false)) {
+                errors.add("Error: VIA setting are not applicable parameters are not valid. exiting... ");
+            }
+        }
+    }
+
+     private String getToken(FSAConfigProperties config, String propertyKeyFile, String propertyKeyToken) {
         String token = null;
         String tokenFile = config.getProperty(propertyKeyFile);
         if (StringUtils.isNotEmpty(tokenFile)) {
@@ -666,7 +621,7 @@ public class FSAConfiguration {
                 projectVersion, productName, productToken, productVersion, appPath, viaDebug, viaAnalysis, iaLanguage, scanComment, requireKnownSha1);
     }
 
-    private SenderConfiguration getSender(FSAConfigProperties config) {
+    private SenderConfiguration getSender(FSAConfigProperties config, String cmdServiceUrl) {
         String updateTypeValue = config.getProperty(ConfigPropertyKeys.UPDATE_TYPE, UpdateType.OVERRIDE.toString());
         boolean checkPolicies = config.getBooleanProperty(ConfigPropertyKeys.CHECK_POLICIES_PROPERTY_KEY, false);
         boolean forceCheckAllDependencies = config.getBooleanProperty(ConfigPropertyKeys.FORCE_CHECK_ALL_DEPENDENCIES, false);
@@ -674,7 +629,7 @@ public class FSAConfiguration {
         boolean forceUpdate = config.getBooleanProperty(ConfigPropertyKeys.FORCE_UPDATE, false);
         boolean forceUpdateBuildFailed = config.getBooleanProperty(ConfigPropertyKeys.FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION, false);
         boolean enableImpactAnalysis = config.getBooleanProperty(ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false);
-        String serviceUrl = config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
+        String serviceUrl = cmdServiceUrl != null ? cmdServiceUrl : config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
         String proxyHost = config.getProperty(ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY);
         connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
                 String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));
@@ -708,8 +663,8 @@ public class FSAConfiguration {
         return new OfflineConfiguration(enabled, zip, prettyJson, wsFolder);
     }
 
-    private AgentConfiguration getAgent(FSAConfigProperties config) {
-        String[] includes = config.getIncludes();
+    private AgentConfiguration getAgent(FSAConfigProperties config, String noConfig) {
+        String[] includes = Constants.TRUE.equals(noConfig) ? ExtensionUtils.INCLUDES : config.getIncludes();
         String[] excludes = config.getProperty(ConfigPropertyKeys.EXCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
         String[] dockerIncludes = config.getDockerIncludes();
         String[] dockerExcludes = config.getProperty(ConfigPropertyKeys.DOCKER_EXCLUDES_PATTERN_PROPERTY_KEY, EMPTY_STRING).split(FSAConfiguration.INCLUDES_EXCLUDES_SEPARATOR_REGEX);
@@ -817,6 +772,12 @@ public class FSAConfiguration {
         result.setRemoteDockerAmazonEnabled(enableAmazon);
         result.setAmazonMaxPullImages(maxPullImagesFromAmazon);
 
+        // Azure configuration
+        result.setRemoteDockerAzureEnabled(config.getBooleanProperty(ConfigPropertyKeys.DOCKER_AZURE_ENABLED, false));
+        result.setAzureUserName(config.getProperty(ConfigPropertyKeys.DOCKER_AZURE_USER_NAME, EMPTY_STRING));
+        result.setAzureUserPassword(config.getProperty(ConfigPropertyKeys.DOCKER_AZURE_USER_PASSWORD, EMPTY_STRING));
+        String[] dockerAzureRegistryNames = config.getListProperty(ConfigPropertyKeys.DOCKER_AZURE_REGISTRY_NAMES, empty);
+        result.setAzureRegistryNames(new LinkedList<>(Arrays.asList(dockerAzureRegistryNames)));
         return result;
     }
 
@@ -945,10 +906,9 @@ public class FSAConfiguration {
         //if there is any data written to the buffer, so convert to input stream
         if (writeUrlFileContent != null) {
             inputStream = IOUtils.toInputStream(writeUrlFileContent, UTF_8);
-        }
-        //if string buffer still null, so try to open stream of local file path
-        else {
+        } else {
             try {
+                //if string buffer still null, so try to open stream of local file path
                 inputStream = new FileInputStream(filePath);
             } catch (FileNotFoundException e) {
                 errors.add("Failed to open " + filePath + " for reading " + e.getMessage());
@@ -1054,6 +1014,13 @@ public class FSAConfiguration {
         return logLevel;
     }
 
+    public boolean isScanImagesTar() {
+        return scanTarImages;
+    }
+
+    public boolean deleteTarImages() {
+        return deleteTarImages;
+    }
 
     /* --- Public static methods--- */
 
@@ -1169,6 +1136,7 @@ public class FSAConfiguration {
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SEND_LOGS_TO_WSS, commandLineArgs.sendLogsToWss);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_COMMENT, commandLineArgs.scanComment);
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.LOG_CONTEXT, commandLineArgs.logContext);
+//        readPropertyFromCommandLine(configProps, SERVICE_URL_KEYWORD, commandLineArgs.wssUrl);
         // request file
         List<String> offlineRequestFiles = new LinkedList<>();
         offlineRequestFiles.addAll(commandLineArgs.requestFiles);
@@ -1216,8 +1184,14 @@ public class FSAConfiguration {
         // User-entry of a flag that overrides default FSA process termination
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.REQUIRE_KNOWN_SHA1, commandLineArgs.requireKnownSha1);
 
-        // docker flag to scan docker images instead of folder
+        // docker flag to scan docker images
         readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_DOCKER_IMAGES, commandLineArgs.scanDockerImages);
+
+        //docker flag to scan docker images by using docker or tar files folder (which specified with parameter -d)
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.SCAN_TAR_IMAGES, commandLineArgs.scanDockerImages);
+
+        //docker flag to delete tar images files after extracting
+        readPropertyFromCommandLine(configProps, ConfigPropertyKeys.DELETE_TAR_FILES, commandLineArgs.scanDockerImages);
 
         return offlineRequestFiles;
     }
@@ -1227,7 +1201,7 @@ public class FSAConfiguration {
         String[] parsedProxyInfo = new String[4];
         if (proxy != null) {
             try {
-                URL proxyAsUrl = new URL(proxy);
+                URL proxyAsUrl = new  URL(proxy);
                 parsedProxyInfo[0] = proxyAsUrl.getHost();
                 parsedProxyInfo[1] = String.valueOf(proxyAsUrl.getPort());
                 if (proxyAsUrl.getUserInfo() != null) {
@@ -1288,5 +1262,10 @@ public class FSAConfiguration {
         protected PasswordAuthentication getPasswordAuthentication() {
             return new PasswordAuthentication(user, password.toCharArray());
         }
+    }
+
+    @Override
+    public String toString() {
+        return "FSA Configuration {" + Constants.NEW_LINE + WsStringUtils.toString(this) + "}";
     }
 }
