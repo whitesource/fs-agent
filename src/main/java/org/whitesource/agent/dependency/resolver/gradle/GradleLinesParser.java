@@ -40,7 +40,6 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private static final int INDENTETION_SPACE = 5;
     private static final String JAR_EXTENSION = Constants.DOT + Constants.JAR;
     private static final String ASTERIX = "(*)";
-    public static final String[] GRADLE_PARSER_INCLUDES = {Constants.GLOB_PATTERN_PREFIX + Constants.JAR_EXTENSION, Constants.GLOB_PATTERN_PREFIX + AAR_EXTENSION, Constants.GLOB_PATTERN_PREFIX + Constants.EXE};
     public static final String[] GRADLE_PARSER_EXCLUDES = {"-sources"};
 
     private String fileSeparator;
@@ -281,30 +280,13 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         File localRepo = new File(gradleLocalRepositoryPath);
         DependencyFile dependencyFile = null;
         if (localRepo.exists() && localRepo.isDirectory()) {
-            FilesScanner filesScanner = new FilesScanner();
             String artifactId = dependencyInfo.getArtifactId();
             String version = dependencyInfo.getVersion();
             String dependencyName = artifactId + Constants.DASH + version;
-            logger.debug("looking for " + dependencyName + " in {}", localRepo.getPath());
-            String[] directoryContent = filesScanner.getDirectoryContent(gradleLocalRepositoryPath, GRADLE_PARSER_INCLUDES, GRADLE_PARSER_EXCLUDES, true, false, false);
-            if (directoryContent.length != 0) {
-                for (String dependencyFileName : directoryContent) {
-                    if (dependencyFileName.contains(dependencyName)) {
-                        String sha1 = getSha1(gradleLocalRepositoryPath + File.separator + dependencyFileName);
-                        if (StringUtils.isNotBlank(sha1)) {
-                            dependencyFile = new DependencyFile(sha1, new File(dependencyFileName));
-                            break;
-                        } else {
-                            logger.debug("Could calculate sha1 for file {} in {}", dependencyName, localRepo.getPath());
-                            break;
-                        }
-                    }
-                }
-            } else {
-                logger.debug("Could not find the dependency {} in {}", dependencyName, localRepo.getPath());
-            }
+            logger.debug("Looking for " + dependencyName + " in {}", localRepo.getPath());
+            dependencyFile = findDependencySha1(dependencyName, gradleLocalRepositoryPath);
         } else {
-            logger.warn("Could not find the path {} or not a directory", localRepo.getPath());
+            logger.warn("Could not find path {}", localRepo.getPath());
         }
         return dependencyFile;
     }
@@ -314,6 +296,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         String artifactId = dependencyInfo.getArtifactId();
         String version = dependencyInfo.getVersion();
         logger.debug("looking for " + groupId + "." + artifactId + "." + version + " in .gradle cache");
+        String dependencyName = artifactId + Constants.DASH + version;
         DependencyFile dependencyFile = null;
         // gradle file path includes the sha1
         if (dotGradlePath != null) {
@@ -323,18 +306,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             // 2 folders one for pom and another for the jar. Look for the one with the jar in order to get the sha1
             // .gradle\caches\modules-2\files-2.1\junit\junit\4.12\2973d150c0dc1fefe998f834810d68f278ea58ec
             if (dependencyFolder.isDirectory()) {
-                outerloop:
-                for (File folder : dependencyFolder.listFiles()) {
-                    if (folder.isDirectory()) {
-                        for (File file : folder.listFiles()) {
-                            if ((file.getName().endsWith(Constants.JAR_EXTENSION) || file.getName().endsWith(AAR_EXTENSION) || file.getName().endsWith(EXE_EXTENSION)) && !file.getName().contains("-sources")) {
-                                String sha1 = getSha1(file.getPath());
-                                dependencyFile = new DependencyFile(sha1, file);
-                                break outerloop;
-                            }
-                        }
-                    }
-                }
+                dependencyFile = findDependencySha1(dependencyName, pathToDependency);
             }
         }
         if (dependencyFile == null) {
@@ -459,6 +431,32 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             }
         }
         return false;
+    }
+
+    private DependencyFile findDependencySha1(String dependencyName, String pathToDependency) {
+        FilesScanner filesScanner = new FilesScanner();
+        DependencyFile dependencyFile = null;
+        String[] parserIncludes = new String[]{Constants.GLOB_PATTERN_PREFIX + dependencyName + JAR_EXTENSION, Constants.GLOB_PATTERN_PREFIX + dependencyName + EXE_EXTENSION,
+                Constants.GLOB_PATTERN_PREFIX + dependencyName + AAR_EXTENSION};
+        String[] directoryContent = filesScanner.getDirectoryContent(pathToDependency, parserIncludes, GRADLE_PARSER_EXCLUDES,
+                true, false, false);
+        if (directoryContent.length != 0) {
+            for (String dependencyFileName : directoryContent) {
+                if (dependencyFileName.contains(dependencyName)) {
+                    String sha1 = getSha1(pathToDependency + File.separator + dependencyFileName);
+                    // try to find the first file match
+                    if (StringUtils.isNotBlank(sha1)) {
+                        dependencyFile = new DependencyFile(sha1, new File(dependencyFileName));
+                        break;
+                    } else {
+                        logger.debug("Couldn't find sha1 for " + dependencyFileName + " inside .gradle cache.");
+                    }
+                }
+            }
+        } else {
+            logger.debug("Could not find the dependency {} in {}", dependencyName, pathToDependency);
+        }
+        return dependencyFile;
     }
 
     // removing only the folders/ file that were created
