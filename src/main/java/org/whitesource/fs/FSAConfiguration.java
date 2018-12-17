@@ -336,7 +336,7 @@ public class FSAConfiguration {
             apiKey & projectName/projectToken & productName/productToken & scannedDirectory
          */
         if (commandLineArgs.apiKey == null || (commandLineArgs.projectToken == null && commandLineArgs.project == null) || commandLineArgs.dependencyDirs == null) {
-            errors.add("apiKey, projectName/token & -d params are required for scan without config file");
+            errors.add("The apiKey and project/projectToken parameters are required to perform a scan without a configuration file");
         }
     }
 
