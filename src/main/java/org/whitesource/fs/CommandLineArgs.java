@@ -108,7 +108,7 @@ public class CommandLineArgs {
     String viaDebug = null;
 
     @Parameter(names = "-viaLevel", description = "Impact Analysis level")
-    String viaLevel = "2";
+    String viaLevel = "1";
 
     @Parameter(names = "-enableImpactAnalysis", description = "Whether or not to enable impact analysis")
     String enableImpactAnalysis = null;
