@@ -19,6 +19,8 @@ public class ViaMultiModuleAnalyzer {
     private static final String APP_PATH = "AppPath";
     private static final String DEPENDENCY_MANAGER_PATH = "DependencyManagerFilePath";
     private static final String PROJECT_FOLDER_PATH = "ProjectFolderPath";
+    private static final String DEFAULT_NAME = "defaultName";
+    private static final String ALT_NAME = "altName";
 
     /* --- Members --- */
 
@@ -84,15 +86,15 @@ public class ViaMultiModuleAnalyzer {
                             }
                             bufferedWriter.write(replaceAllSlashes(appPathProperty));
                             bufferedWriter.write(System.lineSeparator());
-                            bufferedWriter.write(replaceAllSlashes("defaultName" + Constants.EQUALS + parentFileName));
+                            bufferedWriter.write(replaceAllSlashes(DEFAULT_NAME + counter + Constants.EQUALS + parentFileName));
                             bufferedWriter.write(System.lineSeparator());
                             if (folderNameCounter.get(parentFileName) == null){
                                 folderNameCounter.put(parentFileName,0);
-                                bufferedWriter.write(replaceAllSlashes("altName" + Constants.EQUALS + parentFileName));
+                                bufferedWriter.write(replaceAllSlashes(ALT_NAME + counter + Constants.EQUALS + parentFileName));
                             } else {
                                 int i = folderNameCounter.get(parentFileName) + 1;
                                 folderNameCounter.put(parentFileName,i);
-                                bufferedWriter.write(replaceAllSlashes("altName" + Constants.EQUALS + parentFileName + i));
+                                bufferedWriter.write(replaceAllSlashes(ALT_NAME + counter + Constants.EQUALS + parentFileName + i));
                             }
                             bufferedWriter.write(System.lineSeparator());
                             counter++;
