@@ -29,7 +29,7 @@ public class GradleDependencyResolverTest {
     @Ignore
     @Before
     public void setUp() throws Exception {
-        gradleDependencyResolver = new GradleDependencyResolver(true, true, true, Constants.GRADLE, new String[]{}, false);
+        gradleDependencyResolver = new GradleDependencyResolver(true, true, true, Constants.GRADLE, new String[]{}, Constants.EMPTY_STRING, false);
     }
 
     @Test
@@ -59,10 +59,10 @@ public class GradleDependencyResolverTest {
         Assert.assertFalse(TestHelper.checkResultOfScanFiles(folderPath, bothExcludes.get(0), bothExcludes.get(1), includes, DependencyType.GRADLE));
     }
 
-    private List<ResolutionResult> getResolutionResults(List<String> pathsToScan,String isIgnoreSourceFiles) {
+    private List<ResolutionResult> getResolutionResults(List<String> pathsToScan, String isIgnoreSourceFiles) {
         FSAConfigProperties props = new FSAConfigProperties();
         props.setProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, "true");
-        props.setProperty(ConfigPropertyKeys.GRADLE_IGNORE_SOURCE_FILES, isIgnoreSourceFiles );
+        props.setProperty(ConfigPropertyKeys.GRADLE_IGNORE_SOURCE_FILES, isIgnoreSourceFiles);
         ResolverConfiguration resolverConfiguration = new FSAConfiguration(props).getResolver();
         DependencyResolutionService dependencyResolutionService = new DependencyResolutionService(resolverConfiguration);
         return dependencyResolutionService.resolveDependencies(pathsToScan, new String[0]);

@@ -112,6 +112,7 @@ public class DependencyResolutionService {
         final boolean gradleIgnoreSourceFiles = config.isGradleIgnoreSourceFiles();
         boolean gradleRunPreStep = config.isGradleRunPreStep();
         final String[] gradleIgnoredScopes = config.getGradleIgnoredScopes();
+        String gradleLocalRepositoryPath = config.getGradleLocalRepositoryPath();
 
         final boolean paketResolveDependencies = config.isPaketResolveDependencies();
         final String[] paketIgnoredScopes = config.getPaketIgnoredScopes();
@@ -179,7 +180,7 @@ public class DependencyResolutionService {
         }
 
         if (gradleResolveDependencies) {
-            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), gradleIgnoreSourceFiles, gradleAggregateModules, config.getGradlePreferredEnvironment(), gradleIgnoredScopes, gradleRunPreStep));
+            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), gradleIgnoreSourceFiles, gradleAggregateModules, config.getGradlePreferredEnvironment(), gradleIgnoredScopes,gradleLocalRepositoryPath, gradleRunPreStep));
             this.gradleAggregateModules = gradleAggregateModules;
         }
 
