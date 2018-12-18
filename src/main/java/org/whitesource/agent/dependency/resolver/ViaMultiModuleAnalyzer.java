@@ -58,7 +58,7 @@ public class ViaMultiModuleAnalyzer {
             bufferedWriter.write(System.lineSeparator());
             int counter = 1;
             boolean printMessageAppPath = true;
-            HashMap<String, Integer> folderNameCounter = new HashMap<String, Integer>();
+            HashMap<String, Integer> folderNameCounter = new HashMap<>();
             for (String bomFile : bomFiles) {
                 File parentFileOfBom = new File(bomFile).getParentFile();
                 String parentFileName = parentFileOfBom.getName();
@@ -94,7 +94,7 @@ public class ViaMultiModuleAnalyzer {
                             } else {
                                 int i = folderNameCounter.get(parentFileName) + 1;
                                 folderNameCounter.put(parentFileName,i);
-                                bufferedWriter.write(replaceAllSlashes(ALT_NAME + counter + Constants.EQUALS + parentFileName + i));
+                                bufferedWriter.write(replaceAllSlashes(ALT_NAME + counter + Constants.EQUALS + parentFileName + Constants.UNDERSCORE + i));
                             }
                             bufferedWriter.write(System.lineSeparator());
                             counter++;
