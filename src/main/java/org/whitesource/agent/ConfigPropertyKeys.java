@@ -152,6 +152,7 @@ public final class ConfigPropertyKeys {
     public static final String GRADLE_PREFERRED_ENVIRONMENT = "gradle.preferredEnvironment";
     public static final String GRADLE_IGNORE_SOURCE_FILES   = "gradle.ignoreSourceFiles";
     public static final String GRADLE_IGNORE_SCOPES         = "gradle.ignoredScopes";
+    public static final String GRADLE_LOCAL_REPOSITORY_PATH         = "gradle.localRepositoryPath";
 
     public static final String PAKET_RESOLVE_DEPENDENCIES   = "paket.resolveDependencies";
     public static final String PAKET_IGNORED_GROUPS         = "paket.ignoredGroups";

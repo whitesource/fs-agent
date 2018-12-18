@@ -84,11 +84,11 @@ public class DependencyResolutionService {
         final boolean bowerRunPreStep = config.isBowerRunPreStep();
         final boolean bowerIgnoreSourceFiles = config.isBowerIgnoreSourceFiles();
 
-        final boolean nugetResolveDependencies  = config.isNugetResolveDependencies();
-        final boolean nugetRestoreDependencies  = config.isNugetRestoreDependencies();
-        final boolean nugetRunPreStep           = config.isNugetRunPreStep();
-        final boolean nugetIgnoreSourceFiles    = config.isNugetIgnoreSourceFiles();
-        final boolean nugetResolveCsProjFiles   = config.isNugetResolveCsProjFiles();
+        final boolean nugetResolveDependencies = config.isNugetResolveDependencies();
+        final boolean nugetRestoreDependencies = config.isNugetRestoreDependencies();
+        final boolean nugetRunPreStep = config.isNugetRunPreStep();
+        final boolean nugetIgnoreSourceFiles = config.isNugetIgnoreSourceFiles();
+        final boolean nugetResolveCsProjFiles = config.isNugetResolveCsProjFiles();
         final boolean nugetResolvePackagesConfigFiles = config.isNugetResolvePackagesConfigFiles();
 
         final boolean mavenResolveDependencies = config.isMavenResolveDependencies();
@@ -112,6 +112,7 @@ public class DependencyResolutionService {
         final boolean gradleIgnoreSourceFiles = config.isGradleIgnoreSourceFiles();
         boolean gradleRunPreStep = config.isGradleRunPreStep();
         final String[] gradleIgnoredScopes = config.getGradleIgnoredScopes();
+        final String gradleLocalRepositoryPath = config.getGradleLocalRepositoryPath();
 
         final boolean paketResolveDependencies = config.isPaketResolveDependencies();
         final String[] paketIgnoredScopes = config.getPaketIgnoredScopes();
@@ -145,17 +146,18 @@ public class DependencyResolutionService {
         final boolean cocoapodsRunPreStep = config.isCocoapodsRunPreStep();
         final boolean cocoapodsIgnoreSourceFiles = config.isCocoapodsIgnoreSourceFiles();
 
-        final boolean hexResolveDependencies    = config.isHexResolveDependencies();
-        final boolean hexRunPreStep             = config.isHexRunPreStep();
-        final boolean hexAggregateModules       = config.isHexAggregateModules();
-        final boolean hexIgnoreSourceFiles      = config.isHexIgnoreSourceFiles();
+        final boolean hexResolveDependencies = config.isHexResolveDependencies();
+        final boolean hexRunPreStep = config.isHexRunPreStep();
+        final boolean hexAggregateModules = config.isHexAggregateModules();
+        final boolean hexIgnoreSourceFiles = config.isHexIgnoreSourceFiles();
 
         ignoreSourceFiles = config.isIgnoreSourceFiles();
 
         fileScanner = new FilesScanner();
         dependencyResolvers = new ArrayList<>();
         if (npmResolveDependencies) {
-            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreSourceFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmIgnoreNpmLsErrors, npmAccessToken, npmYarnProject, npmIgnoreScripts));
+            dependencyResolvers.add(new NpmDependencyResolver(npmIncludeDevDependencies, npmIgnoreSourceFiles, npmTimeoutDependenciesCollector, npmRunPreStep, npmIgnoreNpmLsErrors,
+                    npmAccessToken, npmYarnProject, npmIgnoreScripts));
         }
         if (bowerResolveDependencies) {
             dependencyResolvers.add(new BowerDependencyResolver(npmTimeoutDependenciesCollector, bowerRunPreStep, bowerIgnoreSourceFiles));
@@ -170,16 +172,19 @@ public class DependencyResolutionService {
             }
         }
         if (mavenResolveDependencies) {
-            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules, mavenRunPreStep, mavenIgnoreDependencyTreeErrors));
+            dependencyResolvers.add(new MavenDependencyResolver(mavenAggregateModules, mavenIgnoredScopes, mavenIgnoreSourceFiles, mavenIgnorePomModules, mavenRunPreStep,
+                    mavenIgnoreDependencyTreeErrors));
             this.mavenAggregateModules = mavenAggregateModules;
         }
         if (pythonResolveDependencies) {
             dependencyResolvers.add(new PythonDependencyResolver(config.getPythonPath(), config.getPipPath(),
-                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree(), pythonRequirementsFileIncludes, pythonIgnoreSourceFiles, ignorePipEnvInstallErrors, runPipenvPreStep, pipenvInstallDevDependencies));
+                    config.isPythonIgnorePipInstallErrors(), config.isPythonInstallVirtualenv(), config.isPythonResolveHierarchyTree(), pythonRequirementsFileIncludes,
+                    pythonIgnoreSourceFiles, ignorePipEnvInstallErrors, runPipenvPreStep, pipenvInstallDevDependencies));
         }
 
         if (gradleResolveDependencies) {
-            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), gradleIgnoreSourceFiles, gradleAggregateModules, config.getGradlePreferredEnvironment(), gradleIgnoredScopes, gradleRunPreStep));
+            dependencyResolvers.add(new GradleDependencyResolver(config.isGradleRunAssembleCommand(), gradleIgnoreSourceFiles, gradleAggregateModules,
+                    config.getGradlePreferredEnvironment(), gradleIgnoredScopes, gradleLocalRepositoryPath, gradleRunPreStep));
             this.gradleAggregateModules = gradleAggregateModules;
         }
 
@@ -188,7 +193,8 @@ public class DependencyResolutionService {
         }
 
         if (goResolveDependencies) {
-            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles, config.isGoGlideIgnoreTestPackages(), config.isGoGradleEnableTaskAlias(), config.getGradlePreferredEnvironment(), config.isAddSha1()));
+            dependencyResolvers.add(new GoDependencyResolver(config.getGoDependencyManager(), config.isGoCollectDependenciesAtRuntime(), goIgnoreSourceFiles,
+                    config.isGoGlideIgnoreTestPackages(), config.isGoGradleEnableTaskAlias(), config.getGradlePreferredEnvironment(), config.isAddSha1()));
         }
 
         if (rubyResolveDependencies) {
@@ -212,7 +218,7 @@ public class DependencyResolutionService {
             dependencyResolvers.add(new CocoaPodsDependencyResolver(cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles));
         }
 
-        if (hexResolveDependencies){
+        if (hexResolveDependencies) {
             dependencyResolvers.add(new HexDependencyResolver(hexIgnoreSourceFiles, hexRunPreStep, hexAggregateModules));
             this.hexAggregateModules = hexAggregateModules;
         }
@@ -234,7 +240,7 @@ public class DependencyResolutionService {
         return gradleAggregateModules;
     }
 
-    public boolean isHexAggregateModules(){
+    public boolean isHexAggregateModules() {
         return hexAggregateModules;
     }
 
