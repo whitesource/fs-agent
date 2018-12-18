@@ -59,7 +59,7 @@ public class FSAConfiguration {
             ConfigPropertyKeys.ENDPOINT_ENABLED, ConfigPropertyKeys.ENDPOINT_PORT, ConfigPropertyKeys.ENDPOINT_CERTIFICATE, ConfigPropertyKeys.ENDPOINT_PASS, ConfigPropertyKeys.ENDPOINT_SSL_ENABLED, ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, ConfigPropertyKeys.OFFLINE_ZIP_PROPERTY_KEY,
             ConfigPropertyKeys.OFFLINE_PRETTY_JSON_KEY, ConfigPropertyKeys.WHITESOURCE_CONFIGURATION, ConfigPropertyKeys.SCANNED_FOLDERS);
 
-    public static final int VIA_DEFAULT_ANALYSIS_LEVEL = 2;
+    public static final int VIA_DEFAULT_ANALYSIS_LEVEL = 1;
     public static final String DEFAULT_KEY = "defaultKey";
     public static final String APP_PATH = "-appPath";
     private static final String FALSE = "false";
@@ -337,7 +337,7 @@ public class FSAConfiguration {
             apiKey & projectName/projectToken & productName/productToken & scannedDirectory
          */
         if (commandLineArgs.apiKey == null || (commandLineArgs.projectToken == null && commandLineArgs.project == null) || commandLineArgs.dependencyDirs == null) {
-            errors.add("apiKey, projectName/token & -d params are required for scan without config file");
+            errors.add("The apiKey and project/projectToken parameters are required to perform a scan without a configuration file");
         }
     }
 
@@ -506,13 +506,14 @@ public class FSAConfiguration {
         String[] pythonRequirementsFileIncludes = config.getPythonIncludesWithPipfile(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, bomPatternForPython);
         boolean pythonRunPipenvPreStep = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RUN_PIPENV_PRE_STEP, false);
         boolean pythonIgnorePipenvInstallErrors = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_PIPENV_INSTALL_ERRORS, false);
-        boolean pythonInstallDevDependencies =  config.getBooleanProperty(ConfigPropertyKeys.PYTHON_PIPENV_DEV_DEPENDENCIES, false);
+        boolean pythonInstallDevDependencies = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_PIPENV_DEV_DEPENDENCIES, false);
 
         boolean gradleResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         boolean gradleRunAssembleCommand = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
         boolean gradleAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
         boolean gradleRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RUN_PRE_STEP, false);
         String[] gradleIgnoredScopes = config.getListProperty(ConfigPropertyKeys.GRADLE_IGNORE_SCOPES, new String[0]);
+        String graldeLocalRepositoryPath = config.getProperty(ConfigPropertyKeys.GRADLE_LOCAL_REPOSITORY_PATH, EMPTY_STRING);
         String gradlePreferredEnvironment = config.getProperty(ConfigPropertyKeys.GRADLE_PREFERRED_ENVIRONMENT, Constants.GRADLE);
         if (gradlePreferredEnvironment.isEmpty()) {
             gradlePreferredEnvironment = Constants.GRADLE;
@@ -550,9 +551,9 @@ public class FSAConfiguration {
         boolean cocoapodsRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RUN_PRE_STEP, false);
 
         // TODO - as long as there's no support for hex on the server side - the default value of hex.resolveDependencies is FALSE
-        boolean hexResolveDependencies  = config.getBooleanProperty(ConfigPropertyKeys.HEX_RESOLVE_DEPENDENECIES, false);
-        boolean hexRunPreStep           = config.getBooleanProperty(ConfigPropertyKeys.HEX_RUN_PRE_STEP, false);
-        boolean hexAggregateModules     = config.getBooleanProperty(ConfigPropertyKeys.HEX_AGGREGATE_MODULES, false);
+        boolean hexResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.HEX_RESOLVE_DEPENDENECIES, false);
+        boolean hexRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.HEX_RUN_PRE_STEP, false);
+        boolean hexAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.HEX_AGGREGATE_MODULES, false);
 
         boolean npmIgnoreSourceFiles;
         boolean bowerIgnoreSourceFiles;
@@ -606,7 +607,7 @@ public class FSAConfiguration {
                 pythonIgnorePipenvInstallErrors, pythonRunPipenvPreStep, pythonInstallDevDependencies,
                 ignoreSourceFiles, whiteSourceConfiguration,
                 gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, gradleIgnoreSourceFiles, gradleRunPreStep, gradleIgnoredScopes,
-                paketResolveDependencies, paketIgnoredScopes, paketRunPreStep, paketPath, paketIgnoreSourceFiles,
+                graldeLocalRepositoryPath, paketResolveDependencies, paketIgnoredScopes, paketRunPreStep, paketPath, paketIgnoreSourceFiles,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, goIgnoreTestPackages, goIgnoreSourceFiles, goGradleEnableTaskAlias,
                 rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles,
                 phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies,

@@ -10,8 +10,9 @@ import org.whitesource.agent.dependency.resolver.DependencyCollector;
 import org.whitesource.agent.hash.HashCalculator;
 import org.whitesource.utils.logger.LoggerFactory;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;

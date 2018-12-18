@@ -20,13 +20,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.whitesource.agent.*;
-import org.whitesource.agent.dependency.resolver.ViaMultiModuleAnalyzer;
-import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
-import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
-import org.whitesource.utils.logger.LoggerFactory;
 import org.whitesource.agent.api.model.AgentProjectInfo;
 import org.whitesource.agent.api.model.Coordinates;
+import org.whitesource.agent.dependency.resolver.ViaMultiModuleAnalyzer;
 import org.whitesource.agent.dependency.resolver.docker.DockerResolver;
+import org.whitesource.agent.dependency.resolver.gradle.GradleDependencyResolver;
+import org.whitesource.agent.dependency.resolver.maven.MavenDependencyResolver;
 import org.whitesource.agent.dependency.resolver.npm.NpmLsJsonDependencyCollector;
 import org.whitesource.agent.dependency.resolver.packageManger.PackageManagerExtractor;
 import org.whitesource.agent.utils.CommandLineProcess;
@@ -43,7 +42,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
-
 
 /**
  * File System Agent.
@@ -124,7 +122,8 @@ public class FileSystemAgent {
                             false, false, false), Constants.TARGET, config.getAnalyzeMultiModule());
             if (viaMultiModuleAnalyzer.getBomFiles().isEmpty()) {
                 viaMultiModuleAnalyzer = new ViaMultiModuleAnalyzer(config.getDependencyDirs().get(0),
-                        new GradleDependencyResolver(false, false, false, Constants.EMPTY_STRING, new String[]{Constants.NONE}, false),
+                        new GradleDependencyResolver(false, false, false, Constants.EMPTY_STRING, new String[]{Constants.NONE},
+                                Constants.EMPTY_STRING, false),
                         Constants.BUILD + File.separator + Constants.LIBS, config.getAnalyzeMultiModule());
             }
             if (!viaMultiModuleAnalyzer.getBomFiles().isEmpty()) {
@@ -196,7 +195,7 @@ public class FileSystemAgent {
     /* --- Private methods --- */
 
     private void addSingleProjectToProjects(ProjectsDetails projectsDetails, String projectName, ProjectsDetails projects) {
-        if(projectsDetails == null || projects == null || projectName == null) {
+        if (projectsDetails == null || projects == null || projectName == null) {
             logger.debug("projectsDetails {} , projects {} , projectName {}", projectsDetails, projectName, projects);
             return;
         }
@@ -207,8 +206,8 @@ public class FileSystemAgent {
             LinkedList<ViaComponents> viaComponents = projectsDetails.getProjectToViaComponents().get(projectInfo);
             projects.getProjectToViaComponents().put(projectInfo, viaComponents);
         } else {
-            for(AgentProjectInfo projectInfo : projectsDetails.getProjects()) {
-                logger.debug("Project not added - {}",projectInfo);
+            for (AgentProjectInfo projectInfo : projectsDetails.getProjects()) {
+                logger.debug("Project not added - {}", projectInfo);
             }
         }
     }

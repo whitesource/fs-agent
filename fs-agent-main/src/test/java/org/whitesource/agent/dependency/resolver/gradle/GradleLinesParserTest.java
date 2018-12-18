@@ -19,14 +19,14 @@ public class GradleLinesParserTest {
     private GradleLinesParser gradleLinesParser;
 
     @Before
-    public void setup(){
-        gradleLinesParser = new GradleLinesParser(false, new GradleCli(Constants.GRADLE_WRAPPER));
+    public void setup() {
+        gradleLinesParser = new GradleLinesParser(false, new GradleCli(Constants.GRADLE_WRAPPER), Constants.EMPTY_STRING);
     }
 
     @Ignore
     @Test
     public void parseLines() throws IOException {
-        String[] params = new String[] {Constants.CMD, "/c", "gradle", Constants.DEPENDENCIES};
+        String[] params = new String[]{Constants.CMD, "/c", "gradle", Constants.DEPENDENCIES};
         String folderPath = Paths.get(Constants.DOT).toAbsolutePath().normalize().toString() +
                 TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\gradle\\sample\\");
         CommandLineProcess commandLineProcess = new CommandLineProcess(folderPath, params);
@@ -36,7 +36,7 @@ public class GradleLinesParserTest {
 
     @Ignore
     @Test
-    public void parseLineFromFile(){
+    public void parseLineFromFile() {
         File file = TestHelper.getFileFromResources("resolver/gradle/lines.txt");
         List<String> lines = readFileAsList(file.getAbsolutePath());
         List<DependencyInfo> dependencyInfoList = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING,new String[0], null);
@@ -61,7 +61,7 @@ public class GradleLinesParserTest {
 
     @Ignore
     @Test
-    public void parseLinesFromString(){
+    public void parseLinesFromString() {
         List<String> lines = new ArrayList<>();
         lines.add("+--- com.google.guava:guava:23.0");
         lines.add("|    +--- com.google.code.findbugs:jsr305:1.3.9");
@@ -116,7 +116,7 @@ public class GradleLinesParserTest {
 
     @Ignore
     @Test
-    public void parseLinesFromString3(){
+    public void parseLinesFromString3() {
         List<String> lines = new ArrayList<>();
         lines.add("archives - Configuration for archive artifacts.");
         lines.add("No dependencies");
