@@ -319,6 +319,7 @@ public class FileSystemScanner {
                 resolutionResults.addAll(resolutionResult);
             }
 
+            resolutionResults.stream().forEach(resolutionResult -> logger.debug("total resolved projects = {}", resolutionResult.getResolvedProjects().size()));
             logger.info(MessageFormat.format("Total dependencies found: {0}", totalDependencies[0]));
 
             // merge additional excludes
