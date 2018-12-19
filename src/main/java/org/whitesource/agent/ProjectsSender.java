@@ -278,13 +278,13 @@ public class ProjectsSender {
             CheckPolicyComplianceResult checkPoliciesResult;
             if (senderConfig.isSendLogsToWss()) {
                 String logData = getLogData();
-                checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductName(),
+                checkPoliciesResult = service.checkPolicyCompliance(new CheckPolicyComplianceRequest(requestConfig.getApiToken(), requestConfig.getProductName(),
                         requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(),
-                        requestConfig.getRequesterEmail(), logData, requestConfig.getProductToken());
+                        requestConfig.getRequesterEmail(), logData, requestConfig.getProductToken()));
             } else {
-                checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductName(),
+                checkPoliciesResult = service.checkPolicyCompliance(new CheckPolicyComplianceRequest(requestConfig.getApiToken(), requestConfig.getProductName(),
                         requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(),
-                        requestConfig.getRequesterEmail(), null, requestConfig.getProductToken());
+                        requestConfig.getRequesterEmail(), null, requestConfig.getProductToken()));
             }
             if (checkPoliciesResult.hasRejections()) {
                 if (senderConfig.isForceUpdate() && senderConfig.isUpdateInventory()) {
@@ -296,7 +296,7 @@ public class ProjectsSender {
                 } else if (!senderConfig.isUpdateInventory()) {
                     logger.info("Some dependencies did not conform with open source policies, review report for details");
                     policyCompliance = false;
-                }  else {
+                } else {
                     logger.info("Some dependencies did not conform with open source policies, review report for details");
                     logger.info("=== UPDATE ABORTED ===");
                     policyCompliance = false;
@@ -332,13 +332,14 @@ public class ProjectsSender {
         //--------------------------------
         if (senderConfig.isSendLogsToWss()) {
             String logData = getLogData();
-            updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
+            updateResult = service.update(new UpdateInventoryRequest(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
                     requestConfig.getProductName(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(),
-                    logData, requestConfig.getScanComment(), requestConfig.getProductToken());
+                    logData, requestConfig.getScanComment(), requestConfig.getProductToken()));
+
         } else {
-            updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
-                    requestConfig.getProductName(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), null,
-                    requestConfig.getScanComment(), requestConfig.getProductToken());
+            updateResult = service.update(new UpdateInventoryRequest(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
+                    requestConfig.getProductName(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(),
+                    null, requestConfig.getScanComment(), requestConfig.getProductToken()));
         }
         String resultInfo = logResult(updateResult);
         // remove line separators
@@ -353,7 +354,7 @@ public class ProjectsSender {
         String updateJson = new Gson().toJson(requestFactory.newUpdateInventoryRequest(requestConfig.getApiToken(),
                 UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getRequesterEmail(),
                 requestConfig.getProductName(), requestConfig.getProductVersion(), projects,
-                requestConfig.getUserKey(), (String) null, (String)null, (String) requestConfig.getProductToken()));
+                requestConfig.getUserKey(), (String) null, (String) null, (String) requestConfig.getProductToken()));
         Path path = Paths.get(fileName);
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             writer.write(updateJson);
