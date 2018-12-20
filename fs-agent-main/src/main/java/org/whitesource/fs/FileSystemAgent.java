@@ -36,6 +36,7 @@ import org.whitesource.utils.StatusCode;
 import org.whitesource.fs.configuration.ScmConfiguration;
 import org.whitesource.fs.configuration.ScmRepositoriesParser;
 import org.whitesource.scm.ScmConnector;
+import org.whitesource.utils.logger.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
