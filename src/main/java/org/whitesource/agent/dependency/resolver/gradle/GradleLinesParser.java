@@ -446,10 +446,10 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                     String sha1 = getSha1(pathToDependency + File.separator + dependencyFileName);
                     // try to find the first file match
                     if (StringUtils.isNotBlank(sha1)) {
-                        dependencyFile = new DependencyFile(sha1, new File(dependencyFileName));
+                        dependencyFile = new DependencyFile(sha1, new File(pathToDependency + File.separator + dependencyFileName));
                         break;
                     } else {
-                        logger.debug("Couldn't find sha1 for " + dependencyFileName + " inside .gradle cache.");
+                        logger.debug("Couldn't find sha1 for " + pathToDependency + File.separator + dependencyFileName + " inside .gradle cache.");
                     }
                 }
             }

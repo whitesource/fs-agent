@@ -75,6 +75,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
+        logger.debug("gradleAggregateModules={}",gradleAggregateModules);
         // In order to use the gradle wrapper, we define the top folder that contains the wrapper
         this.gradleCli.setTopLevelFolderGradlew(topLevelFolder);
         // each bom-file ( = build.gradle) represents a module - identify its folder and scan it using 'gradle dependencies'
@@ -137,6 +138,7 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
             resolutionResult = new ResolutionResult(projectInfoPathMap.keySet().stream()
                     .flatMap(project -> project.getDependencies().stream()).collect(Collectors.toList()), excludes, getDependencyType(), topLevelFolder);
         }
+        logger.debug("total projects = {}",resolutionResult.getResolvedProjects().size());
         return resolutionResult;
     }
 
