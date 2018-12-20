@@ -42,7 +42,7 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
     /* --- Static Members --- */
 
     private static final String POM_XML = "**/pom.xml";
-    private static final List<String> JAVA_EXTENSIONS = Arrays.asList(".java", ".jar", ".war", ".ear", ".car", ".class");
+    private static final List<String> JAVA_EXTENSIONS = Arrays.asList(".java", ".jar", ".war", ".ear", ".car", ".class", "pom.xml");
     private static final String TEST = String.join(File.separator, new String[]{Constants.SRC, "test"});
     private final String MAIN_FOLDER = "Main_Folder";
     private final boolean mavenAggregateModules;
