@@ -67,7 +67,11 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
         Set<String> excludes = new HashSet<>();
         if (ignoreSourceFiles) {
             for (String rubyExtension : RUBY_SCRIPT_EXTENSION) {
-                excludes.add(Constants.PATTERN + rubyExtension);
+                if (rubyExtension.equalsIgnoreCase(".rb")) {
+                    excludes.add(Constants.PATTERN + "!(gems)" + rubyExtension);
+                } else {
+                    excludes.add(Constants.PATTERN + rubyExtension);
+                }
             }
         }
         return excludes;
@@ -90,7 +94,8 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     protected String[] getBomPattern() {
-        return new String[]{Constants.PATTERN + GEM_FILE_LOCK};
+        return new String[]{Constants.PATTERN + GEM_FILE_LOCK,
+                Constants.PATTERN + GEM_FILE, Constants.PATTERN + GEMS_RB, Constants.PATTERN + GEMS_LOCKED};
     }
 
     @Override
