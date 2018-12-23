@@ -95,7 +95,7 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
 
     @Override
     public Collection<String> getSourceFileExtensions() {
-        return Arrays.asList(Constants.JS_EXTENSION);
+        return Arrays.asList(Constants.JS_EXTENSION, BOWER_JSON);
     }
 
     @Override
