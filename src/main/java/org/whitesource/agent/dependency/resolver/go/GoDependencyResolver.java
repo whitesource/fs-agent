@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.whitesource.agent.Constants.BUILD_GRADLE;
 import static org.whitesource.agent.Constants.EMPTY_STRING;
 
 public class GoDependencyResolver extends AbstractDependencyResolver {
@@ -67,30 +68,32 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     private static final String VNDR_CONF       = "vendor.conf";
     private static final String GOGRADLE_LOCK   = "gogradle.lock";
     private static final String GLIDE_LOCK      = "glide.lock";
+    private static final String GLIDE_YAML      = "glide.yaml";
+    private static final String GOPM_FILE       = ".gopmfile";
     private static final String GO_EXTENSION    = ".go";
     private static final String GO_ENSURE       = "ensure";
     private static final String GO_INIT         = "init";
     private static final String GO_SAVE         = "save";
     private static final String GO_ADD_EXTERNAL = "add +external";
-    private static final List<String> GO_SCRIPT_EXTENSION = Arrays.asList(".lock", ".json", GO_EXTENSION);
-    private static final String IMPORTS = "imports";
-    private static final String NAME_GLIDE = "- name: ";
-    private static final String VERSION_GLIDE = "  version: ";
-    private static final String SUBPACKAGES_GLIDE = "  subpackages";
-    private static final String PREFIX_SUBPACKAGES_SECTION = "  - ";
-    private static final String TEST_IMPORTS = "testImports";
-    private static final String GLIDE_YAML = "glide.yaml";
-    private static final String GO_UPDATE = "update";
-    private static final String GOPM_FILE = ".gopmfile";
-    private static final String GOPM_DEPS = "deps";
-    private static final String OPENNING_BRACKET = "[";
-    private static final String EQUAL = "=";
-    private static final String GOPM_TAG = "tag:";
-    private static final String GOPM_COMMIT = "commit:";
-    private static final String GOPM_BRANCH = "branch:";
-    public static String  GO_DEPENDENCIES = "goDependencies";
-    public static final String GRADLE_LOCK = "lock";
-    public static final String GRADLE_GO_LOCK = "goLock";
+    private static final List<String> GO_SCRIPT_EXTENSION = Arrays.asList(GOPKG_LOCK, GODEPS_JSON, VNDR_CONF,
+                                                                            BUILD_GRADLE, GLIDE_LOCK, GLIDE_YAML, GOVENDOR_JSON,
+                                                                            GOPM_FILE);
+    private static final String IMPORTS                     = "imports";
+    private static final String NAME_GLIDE                  = "- name: ";
+    private static final String VERSION_GLIDE               = "  version: ";
+    private static final String SUBPACKAGES_GLIDE           = "  subpackages";
+    private static final String PREFIX_SUBPACKAGES_SECTION  = "  - ";
+    private static final String TEST_IMPORTS                = "testImports";
+    private static final String GO_UPDATE                   = "update";
+    private static final String GOPM_DEPS                   = "deps";
+    private static final String OPENNING_BRACKET            = "[";
+    private static final String EQUAL                       = "=";
+    private static final String GOPM_TAG                    = "tag:";
+    private static final String GOPM_COMMIT                 = "commit:";
+    private static final String GOPM_BRANCH                 = "branch:";
+    public static String  GO_DEPENDENCIES                   = "goDependencies";
+    public static final String GRADLE_LOCK                  = "lock";
+    public static final String GRADLE_GO_LOCK               = "goLock";
 
     private Cli cli;
     private GoDependencyManager goDependencyManager;
@@ -146,7 +149,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected String[] getBomPattern() {
+    public String[] getBomPattern() {
         // when collectDependenciesAtRuntime=false, the FSA should look for the relevant lock/json file, when its true
         // the FSA should look for a *.go file, unless when the dependency-manager is go-gradle, don't return *.go but build.gradle
         if (goDependencyManager == null || (collectDependenciesAtRuntime && goDependencyManager != GoDependencyManager.GO_GRADLE)) {
@@ -171,6 +174,29 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
             }
         }
         return new String[]{EMPTY_STRING};
+    }
+
+    @Override
+    public Collection<String> getManifestFiles(){
+        if (goDependencyManager != null) {
+            switch (goDependencyManager) {
+                case DEP:
+                    return Arrays.asList(GOPKG_LOCK);
+                case GO_DEP:
+                    return Arrays.asList(GODEPS_JSON);
+                case VNDR:
+                    return Arrays.asList(VNDR_CONF);
+                case GO_GRADLE:
+                    return Arrays.asList(Constants.BUILD_GRADLE);
+                case GLIDE:
+                    return Arrays.asList(GLIDE_LOCK, GLIDE_YAML);
+                case GO_VENDOR:
+                    return Arrays.asList(GOVENDOR_JSON);
+                case GOPM:
+                    return Arrays.asList(GOPM_FILE);
+            }
+        }
+        return Arrays.asList(EMPTY_STRING);
     }
 
     @Override

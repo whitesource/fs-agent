@@ -51,6 +51,8 @@ public abstract class AbstractDependencyResolver {
 
     protected abstract String[] getBomPattern();
 
+    public abstract Collection<String> getManifestFiles();
+
     protected abstract Collection<String> getLanguageExcludes();
 
     protected Collection<String> getRelevantScannedFolders(Collection<String> scannedFolders) {

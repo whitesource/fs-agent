@@ -122,6 +122,11 @@ public class NpmDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
+    public Collection<String> getManifestFiles(){
+        return Arrays.asList(PACKAGE_JSON);
+    }
+
+    @Override
     protected ResolutionResult resolveDependencies(String projectFolder, String topLevelFolder, Set<String> bomFiles) {
         if (runPreStep) {
             getDependencyCollector().executePreparationStep(topLevelFolder);

@@ -254,8 +254,8 @@ public class DependencyResolutionService {
 
     public boolean shouldResolveDependencies(Set<String> allFoundFiles) {
         for (AbstractDependencyResolver dependencyResolver : dependencyResolvers) {
-            for (String fileExtension : dependencyResolver.getSourceFileExtensions()) {
-                boolean shouldResolve = allFoundFiles.stream().filter(file -> file.endsWith(fileExtension)).findAny().isPresent();
+            for (String bomFile : dependencyResolver.getManifestFiles()) {
+                boolean shouldResolve = allFoundFiles.stream().filter(file -> file.endsWith(bomFile)).findAny().isPresent();
                 if (shouldResolve) {
                     return true;
                 }

@@ -142,7 +142,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public Collection<String> getSourceFileExtensions() {
-        return new ArrayList<>(Arrays.asList(PY_EXT));
+        return Arrays.asList(pythonRequirementsFileIncludes);
     }
 
     @Override
@@ -158,6 +158,11 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     @Override
     public String[] getBomPattern() {
         return pythonRequirementsFileIncludes;
+    }
+
+    @Override
+    public Collection<String> getManifestFiles(){
+        return Arrays.asList(pythonRequirementsFileIncludes);
     }
 
     @Override

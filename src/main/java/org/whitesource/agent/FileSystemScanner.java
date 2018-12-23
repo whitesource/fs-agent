@@ -468,9 +468,7 @@ public class FileSystemScanner {
     private String[] createResolversIncludesPattern(Collection<AbstractDependencyResolver> dependencyResolvers) {
         Collection<String> resultIncludes = new ArrayList<>();
         for (AbstractDependencyResolver dependencyResolver : dependencyResolvers) {
-            for (String extension : dependencyResolver.getSourceFileExtensions()) {
-                resultIncludes.add(Constants.PATTERN + extension);
-            }
+            resultIncludes.addAll(dependencyResolver.getManifestFiles());
         }
         String[] resultArray = new String[resultIncludes.size()];
         resultIncludes.toArray(resultArray);

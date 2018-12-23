@@ -172,6 +172,11 @@ public class GradleDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
+    public Collection<String> getManifestFiles(){
+        return Arrays.asList(Constants.BUILD_GRADLE);
+    }
+
+    @Override
     protected Collection<String> getLanguageExcludes() {
         return null;
     }
