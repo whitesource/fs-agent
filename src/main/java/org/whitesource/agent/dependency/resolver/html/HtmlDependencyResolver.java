@@ -207,7 +207,7 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public Collection<String> getManifestFiles(){
-        return Arrays.asList(includesPattern);
+        return htmlTypeExtensions;
     }
 
     @Override
