@@ -142,7 +142,9 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public Collection<String> getSourceFileExtensions() {
-        return Arrays.asList(pythonRequirementsFileIncludes);
+        List<String> stringList = Arrays.asList(pythonRequirementsFileIncludes);
+        stringList.stream().forEach(s -> s = Constants.PATTERN + s);
+        return stringList;
     }
 
     @Override
@@ -157,7 +159,9 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public String[] getBomPattern() {
-        return pythonRequirementsFileIncludes;
+        List<String> stringList = Arrays.asList(pythonRequirementsFileIncludes);
+        stringList.stream().forEach(s -> s = Constants.PATTERN + s);
+        return stringList.toArray(new String[0]);
     }
 
     @Override

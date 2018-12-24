@@ -470,7 +470,9 @@ public class FileSystemScanner {
         // TODO - check if can be done with lambda
         for (AbstractDependencyResolver dependencyResolver : dependencyResolvers) {
             for (String manifestFile : dependencyResolver.getManifestFiles()){
-                resultIncludes.add(Constants.PATTERN + manifestFile);
+                if (!manifestFile.isEmpty()) {
+                    resultIncludes.add(Constants.PATTERN + manifestFile);
+                }
             }
         }
         String[] resultArray = new String[resultIncludes.size()];
