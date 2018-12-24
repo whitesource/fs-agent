@@ -121,7 +121,7 @@ public class ResolverConfiguration {
             @JsonProperty(SBT_RESOLVE_DEPENDENCIES) boolean sbtResolveDependencies,
             @JsonProperty(SBT_AGGREGATE_MODULES) boolean sbtAggregateModules,
             @JsonProperty(SBT_RUN_PRE_STEP) boolean sbtRunPreStep,
-            @JsonProperty(SBT_TARGET_FOLDER) String sbtTargetFolder,
+            @JsonProperty(SBT_TARGET_FOLDERS) String[] sbtTargetFolder,
             @JsonProperty(SBT_IGNORE_SOURCE_FILES) boolean sbtIgnoreSourceFiles,
 
             @JsonProperty(HTML_RESOLVE_DEPENDENCIES) boolean htmlResolveDependencies,
@@ -389,7 +389,7 @@ public class ResolverConfiguration {
     @FSAConfigProperty
     private boolean sbtRunPreStep;
     @FSAConfigProperty
-    private String sbtTargetFolder;
+    private String[] sbtTargetFolder;
     @FSAConfigProperty
     private boolean sbtIgnoreSourceFiles;
 
@@ -765,8 +765,8 @@ public class ResolverConfiguration {
         return sbtRunPreStep;
     }
 
-    @JsonProperty(SBT_TARGET_FOLDER)
-    public String getSbtTargetFolder() {
+    @JsonProperty(SBT_TARGET_FOLDERS)
+    public String[] getSbtTargetFolder() {
         return sbtTargetFolder;
     }
 
