@@ -153,6 +153,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                     currentDependency.setSha1(dependencyFile.getSha1());
                     currentDependency.setSystemPath(dependencyFile.getFilePath());
                     currentDependency.setFilename(dependencyFile.getFileName());
+                    currentDependency.setDependencyFile(bomFile);
                     String extension = FilesUtils.getFileExtension(dependencyFile.getFilePath());
                     currentDependency.setType(extension);
                 }

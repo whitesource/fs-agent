@@ -297,7 +297,7 @@ public class ProjectsSender {
                 } else if (!senderConfig.isUpdateInventory()) {
                     logger.info("Some dependencies did not conform with open source policies, review report for details");
                     policyCompliance = false;
-                }  else {
+                } else {
                     logger.info("Some dependencies did not conform with open source policies, review report for details");
                     logger.info("=== UPDATE ABORTED ===");
                     policyCompliance = false;
@@ -336,6 +336,7 @@ public class ProjectsSender {
             updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
                     requestConfig.getProductName(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(),
                     logData, requestConfig.getScanComment(), requestConfig.getProductToken());
+
         } else {
             updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
                     requestConfig.getProductName(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), null,
@@ -354,7 +355,7 @@ public class ProjectsSender {
         String updateJson = new Gson().toJson(requestFactory.newUpdateInventoryRequest(requestConfig.getApiToken(),
                 UpdateType.valueOf(senderConfig.getUpdateTypeValue()), requestConfig.getRequesterEmail(),
                 requestConfig.getProductName(), requestConfig.getProductVersion(), projects,
-                requestConfig.getUserKey(), (String) null, (String)null, (String) requestConfig.getProductToken()));
+                requestConfig.getUserKey(), (String) null, (String) null, (String) requestConfig.getProductToken()));
         Path path = Paths.get(fileName);
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             writer.write(updateJson);
@@ -367,8 +368,8 @@ public class ProjectsSender {
         String resultInfo = Constants.EMPTY_STRING;
         logger.info("Generating offline update request");
         // generate offline request
-        UpdateInventoryRequest updateRequest = service.offlineUpdate(requestConfig.getApiToken(), requestConfig.getProductName(),
-                requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), requestConfig.getScanComment());
+        UpdateInventoryRequest updateRequest = service.offlineUpdate(new UpdateInventoryRequest(requestConfig.getApiToken(), requestConfig.getProductName(),
+                requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), requestConfig.getScanComment()));
         if (senderConfig.isSendLogsToWss()) {
             updateRequest.setLogData(getLogData());
         }
