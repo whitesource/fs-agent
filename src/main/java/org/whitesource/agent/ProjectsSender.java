@@ -278,13 +278,13 @@ public class ProjectsSender {
             CheckPolicyComplianceResult checkPoliciesResult;
             if (senderConfig.isSendLogsToWss()) {
                 String logData = getLogData();
-                checkPoliciesResult = service.checkPolicyCompliance(new CheckPolicyComplianceRequest(requestConfig.getApiToken(), requestConfig.getProductName(),
+                checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductName(),
                         requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(),
-                        requestConfig.getRequesterEmail(), logData, requestConfig.getProductToken()));
+                        requestConfig.getRequesterEmail(), logData, requestConfig.getProductToken());
             } else {
-                checkPoliciesResult = service.checkPolicyCompliance(new CheckPolicyComplianceRequest(requestConfig.getApiToken(), requestConfig.getProductName(),
+                checkPoliciesResult = service.checkPolicyCompliance(requestConfig.getApiToken(), requestConfig.getProductName(),
                         requestConfig.getProductVersion(), projects, senderConfig.isForceCheckAllDependencies(), requestConfig.getUserKey(),
-                        requestConfig.getRequesterEmail(), null, requestConfig.getProductToken()));
+                        requestConfig.getRequesterEmail(), null, requestConfig.getProductToken());
             }
             if (checkPoliciesResult.hasRejections()) {
                 if (senderConfig.isForceUpdate() && senderConfig.isUpdateInventory()) {
@@ -332,14 +332,14 @@ public class ProjectsSender {
         //--------------------------------
         if (senderConfig.isSendLogsToWss()) {
             String logData = getLogData();
-            updateResult = service.update(new UpdateInventoryRequest(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
+            updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
                     requestConfig.getProductName(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(),
-                    logData, requestConfig.getScanComment(), requestConfig.getProductToken()));
+                    logData, requestConfig.getScanComment(), requestConfig.getProductToken());
 
         } else {
-            updateResult = service.update(new UpdateInventoryRequest(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
-                    requestConfig.getProductName(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(),
-                    null, requestConfig.getScanComment(), requestConfig.getProductToken()));
+            updateResult = service.update(requestConfig.getApiToken(), requestConfig.getRequesterEmail(), UpdateType.valueOf(senderConfig.getUpdateTypeValue()),
+                    requestConfig.getProductName(), requestConfig.getProductVersion(), projects, requestConfig.getUserKey(), null,
+                    requestConfig.getScanComment(), requestConfig.getProductToken());
         }
         String resultInfo = logResult(updateResult);
         // remove line separators
