@@ -125,6 +125,11 @@ public class CocoaPodsDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
+    public Collection<String> getManifestFiles(){
+        return Arrays.asList(PODFILE);
+    }
+
+    @Override
     protected Collection<String> getLanguageExcludes() {
         return new ArrayList<>();
     }

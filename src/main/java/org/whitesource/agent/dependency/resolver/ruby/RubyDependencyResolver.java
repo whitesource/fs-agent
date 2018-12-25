@@ -99,6 +99,11 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
+    public Collection<String> getManifestFiles(){
+        return Arrays.asList(GEM_FILE_LOCK);
+    }
+
+    @Override
     protected Collection<String> getLanguageExcludes() {
         return null;
     }

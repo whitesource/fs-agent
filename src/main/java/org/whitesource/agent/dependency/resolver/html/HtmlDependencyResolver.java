@@ -201,8 +201,13 @@ public class HtmlDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected String[] getBomPattern() {
+    public String[] getBomPattern() {
         return includesPattern;
+    }
+
+    @Override
+    public Collection<String> getManifestFiles(){
+        return htmlTypeExtensions;
     }
 
     @Override

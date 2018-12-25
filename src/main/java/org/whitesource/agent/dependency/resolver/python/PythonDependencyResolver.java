@@ -65,8 +65,8 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         this.installVirutalenv = installVirtualEnv;
         this.resolveHierarchyTree = resolveHierarchyTree;
         this.pythonRequirementsFileIncludes = pythonRequirementsFileIncludes;
-        this.ignoreSourceFiles =ignoreSourceFiles;
-        this.ignorePipEnvInstallErrors = ignorePipEnvInstallErrors; 
+        this.ignoreSourceFiles = ignoreSourceFiles;
+        this.ignorePipEnvInstallErrors = ignorePipEnvInstallErrors;
         this.runPipenvPreStep = runPipenvPreStep;
         this.pipenvInstallDevDependencies = pipenvInstallDevDependencies;
     }
@@ -85,18 +85,20 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
         if (Paths.get(pipFilePath).toFile().exists()) {
             resultDependencies = runPipEnvAlgorithm(filesUtils, pipFilePath);
         } else {
-            dependencyInfos = runPipAlgorithm(filesUtils, dependencyInfos, dependenciesFiles);
+            dependencyInfos = runPipAlgorithm(filesUtils, dependenciesFiles);
             resultDependencies.addAll(dependencyInfos);
         }
         return new ResolutionResult(resultDependencies, getExcludes(), getDependencyType(), topLevelFolder);
     }
 
-    private Collection<DependencyInfo> runPipAlgorithm(FilesUtils filesUtils, Collection<DependencyInfo> dependencies, Set<String> dependenciesFiles) {
+    private Collection<DependencyInfo> runPipAlgorithm(FilesUtils filesUtils, Set<String> dependenciesFiles) {
+        LinkedList<DependencyInfo> resultDependencies = new LinkedList<>();
         for (String dependencyFile : dependenciesFiles) {
             String tempDirVirtualEnv = filesUtils.createTmpFolder(true, TempFolders.UNIQUE_PYTHON_TEMP_FOLDER);
             String tempDirPackages = filesUtils.createTmpFolder(false, TempFolders.UNIQUE_PYTHON_TEMP_FOLDER);
             String tempDirDirectPackages = filesUtils.createTmpFolder(false, TempFolders.UNIQUE_PYTHON_TEMP_FOLDER + DIRECT);
             PythonDependencyCollector pythonDependencyCollector;
+            Collection<DependencyInfo> dependencies = new LinkedList<>();
             if (tempDirVirtualEnv != null && tempDirPackages != null) {
                 pythonDependencyCollector = new PythonDependencyCollector(this.pythonPath, this.pipPath, this.installVirutalenv, this.resolveHierarchyTree, this.ignorePipInstallErrors,
                         dependencyFile, tempDirPackages, tempDirVirtualEnv, tempDirDirectPackages);
@@ -109,8 +111,9 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
                 FilesUtils.deleteDirectory(new File(tempDirPackages));
                 FilesUtils.deleteDirectory(new File(tempDirDirectPackages));
             }
+            resultDependencies.addAll(dependencies);
         }
-        return dependencies;
+        return resultDependencies;
     }
 
     private Collection<DependencyInfo> runPipEnvAlgorithm(FilesUtils filesUtils, String pipfilePath) {
@@ -139,7 +142,9 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public Collection<String> getSourceFileExtensions() {
-        return new ArrayList<>(Arrays.asList(PY_EXT));
+        List<String> stringList = Arrays.asList(pythonRequirementsFileIncludes);
+        stringList.stream().forEach(s -> s = Constants.PATTERN + s);
+        return stringList;
     }
 
     @Override
@@ -154,7 +159,16 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public String[] getBomPattern() {
-        return pythonRequirementsFileIncludes;
+        List<String> stringList = new ArrayList<>(Arrays.asList(pythonRequirementsFileIncludes));
+        for (int i = 0; i < stringList.size(); i++) {
+            stringList.set(i, Constants.PATTERN + stringList.get(i));
+        }
+        return stringList.toArray(new String[0]);
+    }
+
+    @Override
+    public Collection<String> getManifestFiles() {
+        return Arrays.asList(pythonRequirementsFileIncludes);
     }
 
     @Override

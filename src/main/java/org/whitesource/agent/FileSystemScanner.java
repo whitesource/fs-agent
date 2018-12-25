@@ -227,7 +227,9 @@ public class FileSystemScanner {
                     }
                 }
             }
-        } else if (dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies(allFiles)) {
+        // the 'allFiles' collection is derived from the manifest-files of each resolver -
+        // therefore no need to check again if the files in that collection match the manifest-files of each resolver
+        } else if (allFiles.size() > 0) {//(dependencyResolutionService != null && dependencyResolutionService.shouldResolveDependencies(allFiles)) {
             logger.info("Attempting to resolve dependencies");
             isIgnoreSourceFiles = dependencyResolutionService.isIgnoreSourceFiles();
 
@@ -467,9 +469,12 @@ public class FileSystemScanner {
 
     private String[] createResolversIncludesPattern(Collection<AbstractDependencyResolver> dependencyResolvers) {
         Collection<String> resultIncludes = new ArrayList<>();
+        // TODO - check if can be done with lambda
         for (AbstractDependencyResolver dependencyResolver : dependencyResolvers) {
-            for (String extension : dependencyResolver.getSourceFileExtensions()) {
-                resultIncludes.add(Constants.PATTERN + extension);
+            for (String manifestFile : dependencyResolver.getManifestFiles()){
+                if (!manifestFile.isEmpty()) {
+                    resultIncludes.add(Constants.PATTERN + manifestFile);
+                }
             }
         }
         String[] resultArray = new String[resultIncludes.size()];

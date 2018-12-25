@@ -208,4 +208,20 @@ public class GradleLinesParserTest {
         //Assert.assertTrue(dependencyInfos.get(2).getChildren().iterator().next().getVersion().equals("4.1.6.RELEASE"));
     }
 
+    @Ignore
+    @Test
+    public void parseLinesFromString5() {
+        List<String> lines = new ArrayList<>();
+        lines.add("|-- github.com/astaxie/beego:053a075");
+        lines.add("|-- github.com/eRez-ws/go-stringUtil:99cfd8b");
+        lines.add("|-- github.com/eladSalti/go_test-t:99cfd8b");
+        lines.add("|-- github.com/garyburd/redigo:569eae5");
+        lines.add("|-- github.com/google/go-querystring:44c6ddd");
+        lines.add("|-- golang.org/x/crypto:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/golang.org/x/crypto");
+        lines.add("|-- golang.org/x/net:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/golang.org/x/net");
+        lines.add("|-- google.golang.org/appengine:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/google.golang.org/appengine");
+        lines.add("\\-- gopkg.in/yaml.v2:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/gopkg.in/yaml.v2");
+        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING, new String[0],null);
+    }
+
 }

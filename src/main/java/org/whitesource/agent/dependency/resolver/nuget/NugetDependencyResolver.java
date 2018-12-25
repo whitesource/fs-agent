@@ -120,6 +120,11 @@ public class NugetDependencyResolver extends AbstractDependencyResolver{
     }
 
     @Override
+    public Collection<String> getManifestFiles(){
+        return Arrays.asList(this.nugetConfigFileType == NugetConfigFileType.CONFIG_FILE_TYPE ? CONFIG : CSPROJ);
+    }
+
+    @Override
     protected Collection<String> getLanguageExcludes() {
         return new ArrayList<>();
     }

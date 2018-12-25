@@ -65,6 +65,11 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
     }
 
     @Override
+    public Collection<String> getManifestFiles(){
+        return Arrays.asList(BOWER_JSON);
+    }
+
+    @Override
     public String getPreferredFileName() {
         return Constants.DOT + BOWER_JSON;
     }
@@ -95,7 +100,7 @@ public class BowerDependencyResolver extends NpmDependencyResolver {
 
     @Override
     public Collection<String> getSourceFileExtensions() {
-        return Arrays.asList(Constants.JS_EXTENSION);
+        return Arrays.asList(BOWER_JSON);
     }
 
     @Override
