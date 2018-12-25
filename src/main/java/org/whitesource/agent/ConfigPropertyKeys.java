@@ -181,7 +181,7 @@ public final class ConfigPropertyKeys {
     public static final String SBT_RESOLVE_DEPENDENCIES     = "sbt.resolveDependencies";
     public static final String SBT_AGGREGATE_MODULES        = "sbt.aggregateModules";
     public static final String SBT_RUN_PRE_STEP             = "sbt.runPreStep";
-    public static final String SBT_TARGET_FOLDER            = "sbt.targetFolder";
+    public static final String SBT_TARGET_FOLDERS = "sbt.targetFolder";
     public static final String SBT_IGNORE_SOURCE_FILES      = "sbt.ignoreSourceFiles";
 
     public static final String HTML_RESOLVE_DEPENDENCIES    = "html.resolveDependencies";
