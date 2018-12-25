@@ -27,6 +27,7 @@ public class AzureDockerImage extends AbstractRemoteDockerImage {
     /* --- Public methods --- */
 
     public String getUniqueIdentifier() {
-        return this.getRegistry() + Constants.FORWARD_SLASH + getRepositoryName() + Constants.AT + getImageDigest();
+        // TODO should be only this.getRegistry() + Constants.FORWARD_SLASH + this.getRepositoryName()  , tag should be added outside
+        return this.getRegistry() + Constants.FORWARD_SLASH + this.getRepositoryName() + Constants.COLON + this.getImageTags().get(0);
     }
 }

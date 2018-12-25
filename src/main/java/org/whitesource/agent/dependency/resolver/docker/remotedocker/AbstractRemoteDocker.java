@@ -63,6 +63,9 @@ public abstract class AbstractRemoteDocker {
                  }
                  logger.info("{} New images were pulled", pulledImagesCount);
                  logger.info("{} Images are up to date (not pulled)", existingImagesCount);
+
+                 // Logout from account if UA logged in
+                 logoutRemoteDocker();
              }
         }
         return imagesPulled;
@@ -89,22 +92,17 @@ public abstract class AbstractRemoteDocker {
 
     protected abstract boolean loginToRemoteRegistry();
 
+    protected abstract void logoutRemoteDocker();
+
     /*
         TODO: this function should return a collection of manifest image object
         TODO: DockerImage object does not include all the required data (like date, tags list, etc...)
-     */
+    */
     protected abstract Set<AbstractRemoteDockerImage> getRemoteRegistryImagesList();
 
     protected abstract boolean isRegistryCliInstalled();
 
     protected abstract String getImageFullURL(AbstractRemoteDockerImage image);
-
-    /*
-    private boolean isNamePullRequired();
-    private boolean isTagPullRequired();
-    private boolean isDigestPullRequired();
-    private boolean isDatePullRequired();
-*/
 
     private Set<AbstractRemoteDockerImage> pullImagesFromRemoteRegistry() {
         Set<AbstractRemoteDockerImage> pulledImagesList = new HashSet<>();
@@ -190,19 +188,6 @@ public abstract class AbstractRemoteDocker {
 
     // TODO: this function should receive manifest image object and check for all values (like date, tags list, etc.)
     private boolean isImagePullRequired(AbstractRemoteDockerImage image) {
-
-        if (image == null) {
-            logger.debug("Docker Image is null");
-            return false;
-        }
-
-        /*
-        // All images are required
-        if (isAllImagesRequired()) {
-            return true;
-        }
-        */
-
         boolean isAllNamesRequired = isAllNamesRequired();
         boolean isAllTagsRequired  = isAllTagsRequired();
         boolean isAllDigestsRequired = isAllDigestsRequired();

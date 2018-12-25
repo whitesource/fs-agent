@@ -56,14 +56,15 @@ public class AzureRemoteDocker extends AbstractRemoteDocker {
         Pair<Integer, InputStream> result;
 
         try {
-            // Log in one time to azure account
-            if (!loggedInToAzure) {
-                logger.info("Log in to Azure account {}", config.getAzureUserName());
+            // Check if user already logged in to azure
+            isUserLoggedIn();
+
+            // If user isn't logged in, then login to azure via az cli.
+            if(!loggedInToAzure) {
                 Process process = Runtime.getRuntime().exec(azureCli.getLoginCommand(config.getAzureUserName(), config.getAzureUserPassword()));
                 int resultValue = process.waitFor();
                 if (resultValue == 0) {
                     logger.info("Log in to Azure account {} - Succeeded", config.getAzureUserName());
-                    loggedInToAzure = true;
                 } else {
                     logger.info("Log in to Azure account {} - Failed", config.getAzureUserName());
                     String errorMessage = IOUtils.toString(process.getInputStream(), StandardCharsets.UTF_8.name());
@@ -153,9 +154,11 @@ public class AzureRemoteDocker extends AbstractRemoteDocker {
                                 logger.debug("Manifest for repository \"{}\": {}", repositoryName, resultValue);
                                 JSONArray jsonArray = new JSONArray(resultValue);
                                 JSONObject jsonObject = jsonArray.getJSONObject(0);
+                                // TODO in case there's  more than one digest?!
                                 String digest = jsonObject.getString(DIGEST);
                                 azureImage.setImageDigest(digest);
                                 azureImage.setImageSha256(getSHA256FromManifest(digest));
+                                //TODO tags not ok
                                 setImageTagsList(azureImage, jsonObject);
 
                                 images.add(azureImage);
@@ -193,6 +196,18 @@ public class AzureRemoteDocker extends AbstractRemoteDocker {
         return result;
     }
 
+    @Override
+    protected void logoutRemoteDocker() {
+        // If user isn't logged in, then logout from azure via az cli.
+        if(!loggedInToAzure) {
+            logger.debug("Logging out from azure account..");
+            boolean loggedOut = isCommandSuccessful(azureCli.getLogoutCommand(config.getAzureUserName()));
+            if (!loggedOut) {
+                logger.error("Failed to logout from azure account");
+            }
+        }
+    }
+
     private void setImageTagsList(AzureDockerImage azureImage, JSONObject jsonObject) {
         List<String> tags = new ArrayList<>();
         JSONArray tagsJsonArray = jsonObject.getJSONArray(TAGS);
@@ -200,5 +215,35 @@ public class AzureRemoteDocker extends AbstractRemoteDocker {
             tags.add(tagsJsonArray.getString(i));
         }
         azureImage.setImageTags(tags);
+    }
+
+    /**
+     * Get Azure logged in users account list.
+     * Check if user logged in. If true then set 'loggedInToAzure' to true and UA will not Login/Logout account.
+     *
+     */
+    private void isUserLoggedIn() {
+        String accountListCmd = azureCli.getLoggedInAccountList();
+        Pair<Integer, InputStream> result = executeCommand(accountListCmd);
+        if (result.getKey() == 0) {
+            try {
+                String accountList = IOUtils.toString(result.getValue(), StandardCharsets.UTF_8.name());
+
+                JSONArray jsonArray = new JSONArray(accountList);
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                    String loggedInUserName = jsonObject.getJSONObject("user").getString("name");
+                    if (loggedInUserName.equalsIgnoreCase(config.getAzureUserName())) {
+                        loggedInToAzure = true;
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                logger.warn("Failed to parse command {} result. Exception: {}", accountListCmd, e.getMessage());
+                logger.debug("Failed to parse command {} result. Exception: {}", accountListCmd, e.getStackTrace());
+            }
+        } else {
+            logger.warn("Failed to get Azure logged in account list, command: {}.", accountListCmd);
+        }
     }
 }
