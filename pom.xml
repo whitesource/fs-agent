@@ -138,7 +138,7 @@
         <dependency>
             <groupId>org.whitesource.analysis</groupId>
             <artifactId>whitesource-analysis-via</artifactId>
-            <version>18.12.1.201</version>
+            <version>18.12.1.203</version>
          </dependency>
 
         <!-- end VIA -->

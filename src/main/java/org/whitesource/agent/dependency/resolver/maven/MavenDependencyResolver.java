@@ -184,7 +184,7 @@ public class MavenDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public String[] getBomPattern() {
-        return new String[]{POM_XML};
+        return new String[]{Constants.PATTERN + POM_XML};
     }
 
     @Override
