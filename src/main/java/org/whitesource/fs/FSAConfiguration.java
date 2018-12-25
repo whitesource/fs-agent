@@ -497,9 +497,11 @@ public class FSAConfiguration {
         boolean pythonResolveSetupPyFiles = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RESOLVE_SETUP_PY_FILES, false);
         String[] bomPatternForPython;
         if (pythonResolveSetupPyFiles) {
-            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.SETUP_PY, Constants.PATTERN + Constants.PIPFILE};
+            bomPatternForPython = new String[]{Constants.PYTHON_REQUIREMENTS, Constants.SETUP_PY, Constants.PIPFILE};
+            //bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.SETUP_PY, Constants.PATTERN + Constants.PIPFILE};
         } else {
-            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.PIPFILE};
+            bomPatternForPython = new String[]{Constants.PYTHON_REQUIREMENTS, Constants.PIPFILE};
+            //bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.PIPFILE};
         }
 
         String[] pythonRequirementsFileIncludes = config.getPythonIncludesWithPipfile(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, bomPatternForPython);

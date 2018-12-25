@@ -419,6 +419,11 @@ public class HexDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
+    public Collection<String> getManifestFiles(){
+        return Arrays.asList(MIX_EXS, MIX_LOCK);
+    }
+
+    @Override
     protected Collection<String> getLanguageExcludes() {
         return null;
     }
