@@ -52,19 +52,19 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     private boolean sbtAggregateModules;
     private boolean ignoreSourceFiles;
     private boolean sbtRunPreStep;
-    private String sbtTargetFolder;
+    private String[] sbtTargetFolders;
     private String[] includes = {"**" + fileSeparator + TARGET + fileSeparator + "**" + fileSeparator + Constants.EMPTY_STRING + RESOLUTION_CACHE + fileSeparator + REPORTS + fileSeparator + "*" + COMPILE_XML};
     private String[] excludes = {"**" + fileSeparator + PROJECT + fileSeparator + "**"};
     private final Logger logger = LoggerFactory.getLogger(SbtDependencyResolver.class);
 
     /* --- Constructors --- */
 
-    public SbtDependencyResolver(boolean sbtAggregateModules, boolean ignoreSourceFiles, boolean sbtRunPreStep, String sbtTargetFolder) {
+    public SbtDependencyResolver(boolean sbtAggregateModules, boolean ignoreSourceFiles, boolean sbtRunPreStep, String[] sbtTargetFolders) {
         this.sbtAggregateModules = sbtAggregateModules;
         this.ignoreSourceFiles = ignoreSourceFiles;
         this.bomParser = new SbtBomParser();
         this.sbtRunPreStep = sbtRunPreStep;
-        this.sbtTargetFolder = sbtTargetFolder;
+        this.sbtTargetFolders = sbtTargetFolders;
     }
 
     /* --- Overridden methods --- */
@@ -82,18 +82,20 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
         // check if sbt.targetFolder is not blank.
         // if not the system trying to search for compile.xml files under the the specific location
         // if yes the system trying to search for compile.xml files under the root of the project
-        if (StringUtils.isNotBlank(sbtTargetFolder)) {
-            Path path = Paths.get(sbtTargetFolder);
-            if (Files.exists(path)) {
-                xmlFiles = findXmlReport(sbtTargetFolder, xmlFiles, new String[]{Constants.PATTERN + COMPILE_XML}, excludes);
-            } else {
-                logger.warn("The target folder path {} doesn't exist", sbtTargetFolder);
+        if (sbtTargetFolders.length > 0) {
+            for(String sbtTargetFolder : sbtTargetFolders) {
+                Path path = Paths.get(sbtTargetFolder);
+                if (Files.exists(path)) {
+                    xmlFiles.addAll(findXmlReport(sbtTargetFolder, xmlFiles, new String[]{Constants.PATTERN + COMPILE_XML}, excludes));
+                } else {
+                    logger.warn("The sbt target folder path {} doesn't exist", sbtTargetFolder);
+                }
             }
         } else {
             Collection<String> targetFolders = findTargetFolders(topLevelFolder);
             if (!targetFolders.isEmpty()) {
                 for (String targetPath : targetFolders) {
-                    xmlFiles = findXmlReport(targetPath, xmlFiles, new String[]{Constants.PATTERN + COMPILE_XML}, excludes);
+                    xmlFiles.addAll(findXmlReport(targetPath, xmlFiles, new String[]{Constants.PATTERN + COMPILE_XML}, excludes));
                 }
             } else {
                 logger.debug("Didn't find any target folder in {}", topLevelFolder);
@@ -238,7 +240,7 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
                 Path path = Paths.get(targetFolder);
                 if (!Files.exists(path)) {
                     targetFolders.remove(targetFolder);
-                    logger.warn("The target folder {} path doesn't exist", sbtTargetFolder);
+                    logger.warn("The target folder {} path doesn't exist", sbtTargetFolders);
                 }
             }
         }

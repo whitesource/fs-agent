@@ -137,7 +137,7 @@ public class DependencyResolutionService {
         final boolean sbtResolveDependencies = config.isSbtResolveDependencies();
         final boolean sbtAggregateModules = config.isSbtAggregateModules();
         final boolean sbtRunPreStep = config.isSbtRunPreStep();
-        final String sbtTargetFolder = config.getSbtTargetFolder();
+        final String[] sbtTargetFolder = config.getSbtTargetFolder();
         final boolean sbtIgnoreSourceFiles = config.isSbtIgnoreSourceFiles();
 
         final boolean htmlResolveDependencies = config.isHtmlResolveDependencies();

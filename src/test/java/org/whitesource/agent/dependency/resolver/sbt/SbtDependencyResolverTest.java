@@ -29,7 +29,7 @@ public class SbtDependencyResolverTest {
     private SbtDependencyResolver sbtDependencyResolver;
 //    @Before
     public void setUp() throws Exception {
-        sbtDependencyResolver = new SbtDependencyResolver(true, true, true , "");
+        sbtDependencyResolver = new SbtDependencyResolver(true, true, true , new String[0]);
     }
 
     @Ignore
