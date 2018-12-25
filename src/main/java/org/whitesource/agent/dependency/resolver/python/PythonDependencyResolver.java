@@ -159,7 +159,7 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public String[] getBomPattern() {
-        List<String> stringList = Arrays.asList(pythonRequirementsFileIncludes);
+        List<String> stringList = new ArrayList<>(Arrays.asList(pythonRequirementsFileIncludes));
         for (int i = 0; i < stringList.size(); i++) {
             stringList.set(i, Constants.PATTERN + stringList.get(i));
         }
