@@ -160,12 +160,14 @@ public class PythonDependencyResolver extends AbstractDependencyResolver {
     @Override
     public String[] getBomPattern() {
         List<String> stringList = Arrays.asList(pythonRequirementsFileIncludes);
-        stringList.stream().forEach(s -> s = Constants.PATTERN + s);
+        for (int i = 0; i < stringList.size(); i++) {
+            stringList.set(i, Constants.PATTERN + stringList.get(i));
+        }
         return stringList.toArray(new String[0]);
     }
 
     @Override
-    public Collection<String> getManifestFiles(){
+    public Collection<String> getManifestFiles() {
         return Arrays.asList(pythonRequirementsFileIncludes);
     }
 
