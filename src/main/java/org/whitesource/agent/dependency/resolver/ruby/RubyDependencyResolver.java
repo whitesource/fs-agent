@@ -93,7 +93,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected String[] getBomPattern() {
+    public String[] getBomPattern() {
         return new String[]{Constants.PATTERN + GEM_FILE_LOCK,
                 Constants.PATTERN + GEM_FILE, Constants.PATTERN + GEMS_RB, Constants.PATTERN + GEMS_LOCKED};
     }
