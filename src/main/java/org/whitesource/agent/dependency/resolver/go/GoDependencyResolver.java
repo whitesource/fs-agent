@@ -178,25 +178,7 @@ public class GoDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public Collection<String> getManifestFiles(){
-        if (goDependencyManager != null) {
-            switch (goDependencyManager) {
-                case DEP:
-                    return Arrays.asList(GOPKG_LOCK);
-                case GO_DEP:
-                    return Arrays.asList(GODEPS_JSON);
-                case VNDR:
-                    return Arrays.asList(VNDR_CONF);
-                case GO_GRADLE:
-                    return Arrays.asList(Constants.BUILD_GRADLE);
-                case GLIDE:
-                    return Arrays.asList(GLIDE_LOCK, GLIDE_YAML);
-                case GO_VENDOR:
-                    return Arrays.asList(GOVENDOR_JSON);
-                case GOPM:
-                    return Arrays.asList(GOPM_FILE);
-            }
-        }
-        return Arrays.asList(EMPTY_STRING);
+        return Arrays.asList(GOPKG_LOCK, GOVENDOR_JSON, VNDR_CONF, Constants.BUILD_GRADLE, GLIDE_LOCK, GLIDE_YAML, GOVENDOR_JSON, GOPM_FILE, GO_EXTENSION);
     }
 
     @Override
