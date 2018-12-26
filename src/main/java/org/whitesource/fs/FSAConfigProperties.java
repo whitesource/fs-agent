@@ -92,14 +92,6 @@ public class FSAConfigProperties extends Properties {
         return property.split(Constants.WHITESPACE);
     }
 
-    public String[] getListPropertyByComma(String propertyName, String[] defaultValue) {
-        String property = getProperty(propertyName);
-        if (property == null) {
-            return defaultValue;
-        }
-        return property.split(Constants.COMMA);
-    }
-
     public String[] getPythonIncludesWithPipfile(String propertyName, String[] defaultValue) {
         String property = getProperty(propertyName);
         if (property == null) {

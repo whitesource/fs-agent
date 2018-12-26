@@ -544,7 +544,7 @@ public class FSAConfiguration {
         boolean sbtResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.SBT_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         boolean sbtAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.SBT_AGGREGATE_MODULES, false);
         boolean sbtRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.SBT_RUN_PRE_STEP, false);
-        String[] sbtTargetFolders = config.getListPropertyByComma(ConfigPropertyKeys.SBT_TARGET_FOLDERS, new String[0]);
+        String sbtTargetFolder = config.getProperty(ConfigPropertyKeys.SBT_TARGET_FOLDER, EMPTY_STRING);
 
         boolean htmlResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, resolveAllDependencies);
@@ -611,7 +611,7 @@ public class FSAConfiguration {
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, goIgnoreTestPackages, goIgnoreSourceFiles, goGradleEnableTaskAlias,
                 rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles,
                 phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies,
-                sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolders, sbtIgnoreSourceFiles,
+                sbtResolveDependencies, sbtAggregateModules, sbtRunPreStep, sbtTargetFolder, sbtIgnoreSourceFiles,
                 htmlResolveDependencies, cocoapodsResolveDependencies, cocoapodsRunPreStep, cocoapodsIgnoreSourceFiles,
                 hexResolveDependencies, hexRunPreStep, hexIgnoreSourceFiles, hexAggregateModules, addSha1);
     }
