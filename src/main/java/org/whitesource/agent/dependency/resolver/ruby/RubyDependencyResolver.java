@@ -100,7 +100,7 @@ public class RubyDependencyResolver extends AbstractDependencyResolver {
 
     @Override
     public Collection<String> getManifestFiles(){
-        return Arrays.asList(GEM_FILE_LOCK);
+        return Arrays.asList(GEM_FILE_LOCK, GEM_FILE, GEMS_RB, GEMS_LOCKED);
     }
 
     @Override
