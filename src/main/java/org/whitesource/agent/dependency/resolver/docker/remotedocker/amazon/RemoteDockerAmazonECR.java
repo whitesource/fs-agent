@@ -358,4 +358,9 @@ public class RemoteDockerAmazonECR extends AbstractRemoteDocker {
         logger.debug("getRemoteRegistryImagesList finish");
         return result;
     }
+
+    @Override
+    protected void logoutRemoteDocker() {
+        // TODO Check if need to logout from amazon account - We dont login to amazon account ? check with george
+    }
 }

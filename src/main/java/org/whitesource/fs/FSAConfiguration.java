@@ -37,6 +37,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.whitesource.agent.Constants.COLON;
@@ -56,7 +58,7 @@ public class FSAConfiguration {
             ConfigPropertyKeys.ENDPOINT_ENABLED, ConfigPropertyKeys.ENDPOINT_PORT, ConfigPropertyKeys.ENDPOINT_CERTIFICATE, ConfigPropertyKeys.ENDPOINT_PASS, ConfigPropertyKeys.ENDPOINT_SSL_ENABLED, ConfigPropertyKeys.OFFLINE_PROPERTY_KEY, ConfigPropertyKeys.OFFLINE_ZIP_PROPERTY_KEY,
             ConfigPropertyKeys.OFFLINE_PRETTY_JSON_KEY, ConfigPropertyKeys.WHITESOURCE_CONFIGURATION, ConfigPropertyKeys.SCANNED_FOLDERS);
 
-    public static final int VIA_DEFAULT_ANALYSIS_LEVEL = 2;
+    public static final int VIA_DEFAULT_ANALYSIS_LEVEL = 1;
     public static final String DEFAULT_KEY = "defaultKey";
     public static final String APP_PATH = "-appPath";
     private static final String FALSE = "false";
@@ -67,6 +69,7 @@ public class FSAConfiguration {
     public static final String WHITE_SOURCE_DEFAULT_FOLDER_PATH = ".";
     public static final String PIP = "pip";
     public static final String PYTHON = "python";
+    public static final String SERVICE_URL_REGEX = "http[s]?:\\/\\/[-\\w\\/=:.]*\\/agent";
 
     public static final int DEFAULT_PORT = 443;
     public static final boolean DEFAULT_SSL = true;
@@ -82,7 +85,7 @@ public class FSAConfiguration {
 
     private final ScmConfiguration scm;
     @FSAConfigProperty
-    private final SenderConfiguration sender;
+    private SenderConfiguration sender;
     @FSAConfigProperty
     private final OfflineConfiguration offline;
     @FSAConfigProperty
@@ -289,7 +292,12 @@ public class FSAConfiguration {
         scm = getScm(config);
         agent = getAgent(config, commandLineArgs.noConfig);
         offline = getOffline(config);
-        sender = getSender(config, serviceUrl);
+        sender = null;
+        try {
+            sender = getSender(config, serviceUrl);
+        } catch (Exception e){
+            errors.add(e.getMessage());
+        }
         resolver = getResolver(config);
         endpoint = getEndpoint(config);
         remoteDockerConfiguration = getRemoteDockerConfiguration(config);
@@ -328,7 +336,7 @@ public class FSAConfiguration {
             apiKey & projectName/projectToken & productName/productToken & scannedDirectory
          */
         if (commandLineArgs.apiKey == null || (commandLineArgs.projectToken == null && commandLineArgs.project == null) || commandLineArgs.dependencyDirs == null) {
-            errors.add("apiKey, projectName/token & -d params are required for scan without config file");
+            errors.add("The apiKey and project/projectToken parameters are required to perform a scan without a configuration file");
         }
     }
 
@@ -373,7 +381,7 @@ public class FSAConfiguration {
 
     public void checkPropertiesForVia(SenderConfiguration sender, ResolverConfiguration resolver, Map<String, Set<String>> appPathsToDependencyDirs, List<String> errors) {
         Set<String> viaAppPaths = appPathsToDependencyDirs.keySet();
-        if (sender.isEnableImpactAnalysis()) {
+        if (sender != null && sender.isEnableImpactAnalysis()) {
             // the default appPath size is one (defaultKey = -d property), this one check if the user set more then one appPath
             if (viaAppPaths.size() == 1) {
                 errors.add("Effective Usage Analysis will not run if the command line parameter 'appPath' is not specified");
@@ -449,10 +457,11 @@ public class FSAConfiguration {
 
     private ResolverConfiguration getResolver(FSAConfigProperties config) {
 
+        boolean resolveAllDependencies = config.getBooleanProperty(ConfigPropertyKeys.RESOLVE_ALL_DEPENDENCIES, true);
         // todo split this in multiple configuration before release fsa as a service
         boolean npmRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.NPM_RUN_PRE_STEP, false);
         boolean npmIgnoreScripts = config.getBooleanProperty(ConfigPropertyKeys.NPM_IGNORE_SCRIPTS, false);
-        boolean npmResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, true);
+        boolean npmResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.NPM_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         boolean npmIncludeDevDependencies = config.getBooleanProperty(ConfigPropertyKeys.NPM_INCLUDE_DEV_DEPENDENCIES, false);
 
         long npmTimeoutDependenciesCollector = config.getLongProperty(ConfigPropertyKeys.NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS, 60);
@@ -460,16 +469,16 @@ public class FSAConfiguration {
         String npmAccessToken = config.getProperty(ConfigPropertyKeys.NPM_ACCESS_TOKEN);
         boolean npmYarnProject = config.getBooleanProperty(ConfigPropertyKeys.NPM_YARN_PROJECT, false);
 
-        boolean bowerResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.BOWER_RESOLVE_DEPENDENCIES, true);
+        boolean bowerResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.BOWER_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         boolean bowerRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.BOWER_RUN_PRE_STEP, false);
 
-        boolean nugetResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, true);
+        boolean nugetResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         boolean nugetRestoreDependencies = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESTORE_DEPENDENCIES, false);
         boolean nugetRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RUN_PRE_STEP, false);
         boolean nugetResolvePakcagesConfigFiles = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_PACKAGES_CONFIG_FILES, true);
         boolean nugetResolveCsProjFiles = config.getBooleanProperty(ConfigPropertyKeys.NUGET_RESOLVE_CS_PROJ_FILES, true);
 
-        boolean mavenResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, true);
+        boolean mavenResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         String[] mavenIgnoredScopes = config.getListProperty(ConfigPropertyKeys.MAVEN_IGNORED_SCOPES, null);
         boolean mavenAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_AGGREGATE_MODULES, false);
         boolean mavenIgnoredPomModules = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_IGNORE_POM_MODULES, true);
@@ -477,7 +486,7 @@ public class FSAConfiguration {
         boolean mavenIgnoreDependencyTreeErrors = config.getBooleanProperty(ConfigPropertyKeys.MAVEN_IGNORE_DEPENDENCY_TREE_ERRORS, false);
         String whiteSourceConfiguration = config.getProperty(ConfigPropertyKeys.PROJECT_CONFIGURATION_PATH);
 
-        boolean pythonResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RESOLVE_DEPENDENCIES, true);
+        boolean pythonResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         String pipPath = config.getProperty(ConfigPropertyKeys.PYTHON_PIP_PATH, PIP);
         String pythonPath = config.getProperty(ConfigPropertyKeys.PYTHON_PATH, PYTHON);
         boolean pythonIsWssPluginInstalled = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IS_WSS_PLUGIN_INSTALLED, false);
@@ -488,61 +497,63 @@ public class FSAConfiguration {
         boolean pythonResolveSetupPyFiles = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RESOLVE_SETUP_PY_FILES, false);
         String[] bomPatternForPython;
         if (pythonResolveSetupPyFiles) {
-            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.SETUP_PY, Constants.PATTERN + Constants.PIPFILE};
+            bomPatternForPython = new String[]{Constants.PYTHON_REQUIREMENTS, Constants.SETUP_PY, Constants.PIPFILE};
+            //bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.SETUP_PY, Constants.PATTERN + Constants.PIPFILE};
         } else {
-            bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.PIPFILE};
+            bomPatternForPython = new String[]{Constants.PYTHON_REQUIREMENTS, Constants.PIPFILE};
+            //bomPatternForPython = new String[]{Constants.PATTERN + Constants.PYTHON_REQUIREMENTS, Constants.PATTERN + Constants.PIPFILE};
         }
 
         String[] pythonRequirementsFileIncludes = config.getPythonIncludesWithPipfile(ConfigPropertyKeys.PYTHON_REQUIREMENTS_FILE_INCLUDES, bomPatternForPython);
         boolean pythonRunPipenvPreStep = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_RUN_PIPENV_PRE_STEP, false);
         boolean pythonIgnorePipenvInstallErrors = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_IGNORE_PIPENV_INSTALL_ERRORS, false);
-        boolean pythonInstallDevDependencies =  config.getBooleanProperty(ConfigPropertyKeys.PYTHON_PIPENV_DEV_DEPENDENCIES, false);
+        boolean pythonInstallDevDependencies = config.getBooleanProperty(ConfigPropertyKeys.PYTHON_PIPENV_DEV_DEPENDENCIES, false);
 
-        boolean gradleResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, true);
+        boolean gradleResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         boolean gradleRunAssembleCommand = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RUN_ASSEMBLE_COMMAND, true);
         boolean gradleAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_AGGREGATE_MODULES, false);
         boolean gradleRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.GRADLE_RUN_PRE_STEP, false);
         String[] gradleIgnoredScopes = config.getListProperty(ConfigPropertyKeys.GRADLE_IGNORE_SCOPES, new String[0]);
+        String graldeLocalRepositoryPath = config.getProperty(ConfigPropertyKeys.GRADLE_LOCAL_REPOSITORY_PATH, EMPTY_STRING);
         String gradlePreferredEnvironment = config.getProperty(ConfigPropertyKeys.GRADLE_PREFERRED_ENVIRONMENT, Constants.GRADLE);
         if (gradlePreferredEnvironment.isEmpty()) {
             gradlePreferredEnvironment = Constants.GRADLE;
         }
 
-        boolean paketResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PAKET_RESOLVE_DEPENDENCIES, true);
+        boolean paketResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PAKET_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         String[] paketIgnoredScopes = config.getListProperty(ConfigPropertyKeys.PAKET_IGNORED_GROUPS, null);
         boolean paketRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.PAKET_RUN_PRE_STEP, false);
         String paketPath = config.getProperty(ConfigPropertyKeys.PAKET_EXE_PATH, null);
 
-        boolean goResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GO_RESOLVE_DEPENDENCIES, true);
+        boolean goResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.GO_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         String goDependencyManager = config.getProperty(ConfigPropertyKeys.GO_DEPENDENCY_MANAGER, EMPTY_STRING);
         boolean goCollectDependenciesAtRuntime = config.getBooleanProperty(ConfigPropertyKeys.GO_COLLECT_DEPENDENCIES_AT_RUNTIME, false);
         boolean goIgnoreTestPackages = config.getBooleanProperty(ConfigPropertyKeys.GO_GLIDE_IGNORE_TEST_PACKAGES, true);
         boolean goGradleEnableTaskAlias = config.getBooleanProperty(ConfigPropertyKeys.GO_GRADLE_ENABLE_TASK_ALIAS, false);
         boolean addSha1 = config.getBooleanProperty("addSha1", false);
 
-        boolean rubyResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.RUBY_RESOLVE_DEPENDENCIES, true);
+        boolean rubyResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.RUBY_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         boolean rubyRunBundleInstall = config.getBooleanProperty(ConfigPropertyKeys.RUBY_RUN_BUNDLE_INSTALL, false);
         boolean rubyOverwriteGemFile = config.getBooleanProperty(ConfigPropertyKeys.RUBY_OVERWRITE_GEM_FILE, false);
         boolean rubyInstallMissingGems = config.getBooleanProperty(ConfigPropertyKeys.RUBY_INSTALL_MISSING_GEMS, false);
 
-        boolean phpResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PHP_RESOLVE_DEPENDENCIES, true);
+        boolean phpResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.PHP_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         boolean phpRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.PHP_RUN_PRE_STEP, false);
         boolean phpIncludeDevDependencies = config.getBooleanProperty(ConfigPropertyKeys.PHP_INCLUDE_DEV_DEPENDENCIES, false);
 
-        boolean sbtResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.SBT_RESOLVE_DEPENDENCIES, true);
+        boolean sbtResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.SBT_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         boolean sbtAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.SBT_AGGREGATE_MODULES, false);
         boolean sbtRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.SBT_RUN_PRE_STEP, false);
         String sbtTargetFolder = config.getProperty(ConfigPropertyKeys.SBT_TARGET_FOLDER, EMPTY_STRING);
 
-        boolean htmlResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, true);
-
-        boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, true);
+        boolean htmlResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.HTML_RESOLVE_DEPENDENCIES, resolveAllDependencies);
+        boolean cocoapodsResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RESOLVE_DEPENDENCIES, resolveAllDependencies);
         boolean cocoapodsRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.COCOAPODS_RUN_PRE_STEP, false);
 
         // TODO - as long as there's no support for hex on the server side - the default value of hex.resolveDependencies is FALSE
-        boolean hexResolveDependencies  = config.getBooleanProperty(ConfigPropertyKeys.HEX_RESOLVE_DEPENDENECIES, false);
-        boolean hexRunPreStep           = config.getBooleanProperty(ConfigPropertyKeys.HEX_RUN_PRE_STEP, false);
-        boolean hexAggregateModules     = config.getBooleanProperty(ConfigPropertyKeys.HEX_AGGREGATE_MODULES, false);
+        boolean hexResolveDependencies = config.getBooleanProperty(ConfigPropertyKeys.HEX_RESOLVE_DEPENDENECIES, false);
+        boolean hexRunPreStep = config.getBooleanProperty(ConfigPropertyKeys.HEX_RUN_PRE_STEP, false);
+        boolean hexAggregateModules = config.getBooleanProperty(ConfigPropertyKeys.HEX_AGGREGATE_MODULES, false);
 
         boolean npmIgnoreSourceFiles;
         boolean bowerIgnoreSourceFiles;
@@ -596,7 +607,7 @@ public class FSAConfiguration {
                 pythonIgnorePipenvInstallErrors, pythonRunPipenvPreStep, pythonInstallDevDependencies,
                 ignoreSourceFiles, whiteSourceConfiguration,
                 gradleResolveDependencies, gradleRunAssembleCommand, gradleAggregateModules, gradlePreferredEnvironment, gradleIgnoreSourceFiles, gradleRunPreStep, gradleIgnoredScopes,
-                paketResolveDependencies, paketIgnoredScopes, paketRunPreStep, paketPath, paketIgnoreSourceFiles,
+                graldeLocalRepositoryPath, paketResolveDependencies, paketIgnoredScopes, paketRunPreStep, paketPath, paketIgnoreSourceFiles,
                 goResolveDependencies, goDependencyManager, goCollectDependenciesAtRuntime, goIgnoreTestPackages, goIgnoreSourceFiles, goGradleEnableTaskAlias,
                 rubyResolveDependencies, rubyRunBundleInstall, rubyOverwriteGemFile, rubyInstallMissingGems, rubyIgnoreSourceFiles,
                 phpResolveDependencies, phpRunPreStep, phpIncludeDevDependencies,
@@ -621,7 +632,7 @@ public class FSAConfiguration {
                 projectVersion, productName, productToken, productVersion, appPath, viaDebug, viaAnalysis, iaLanguage, scanComment, requireKnownSha1);
     }
 
-    private SenderConfiguration getSender(FSAConfigProperties config, String cmdServiceUrl) {
+    private SenderConfiguration getSender(FSAConfigProperties config, String cmdServiceUrl) throws Exception {
         String updateTypeValue = config.getProperty(ConfigPropertyKeys.UPDATE_TYPE, UpdateType.OVERRIDE.toString());
         boolean checkPolicies = config.getBooleanProperty(ConfigPropertyKeys.CHECK_POLICIES_PROPERTY_KEY, false);
         boolean forceCheckAllDependencies = config.getBooleanProperty(ConfigPropertyKeys.FORCE_CHECK_ALL_DEPENDENCIES, false);
@@ -630,6 +641,15 @@ public class FSAConfiguration {
         boolean forceUpdateBuildFailed = config.getBooleanProperty(ConfigPropertyKeys.FORCE_UPDATE_FAIL_BUILD_ON_POLICY_VIOLATION, false);
         boolean enableImpactAnalysis = config.getBooleanProperty(ConfigPropertyKeys.ENABLE_IMPACT_ANALYSIS, false);
         String serviceUrl = cmdServiceUrl != null ? cmdServiceUrl : config.getProperty(SERVICE_URL_KEYWORD, ClientConstants.DEFAULT_SERVICE_URL);
+        Pattern urlPattern = Pattern.compile(SERVICE_URL_REGEX);
+        Matcher matcher = urlPattern.matcher(serviceUrl);
+        if (!matcher.find()){
+            String msg = "Service URL is malformed: " + serviceUrl;
+            if (serviceUrl.endsWith("/agent") == false){
+                msg = msg.concat(" (make sure the URL ends with '/agent')");
+            }
+            throw new Exception(msg);
+        }
         String proxyHost = config.getProperty(ConfigPropertyKeys.PROXY_HOST_PROPERTY_KEY);
         connectionTimeOut = Integer.parseInt(config.getProperty(ClientConstants.CONNECTION_TIMEOUT_KEYWORD,
                 String.valueOf(ClientConstants.DEFAULT_CONNECTION_TIMEOUT_MINUTES)));

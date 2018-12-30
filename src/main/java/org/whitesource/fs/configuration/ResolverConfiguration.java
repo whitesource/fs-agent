@@ -83,7 +83,7 @@ public class ResolverConfiguration {
             @JsonProperty(PYTHON_RUN_PIPENV_PRE_STEP) boolean runPipenvPreStep,
             @JsonProperty(PYTHON_PIPENV_DEV_DEPENDENCIES) boolean pipenvInstallDevDependencies,
             @JsonProperty(IGNORE_SOURCE_FILES) boolean ignoreSourceFiles,
-//            @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
+            //            @JsonProperty(DEPENDENCIES_ONLY) boolean dependenciesOnly,
             @JsonProperty(WHITESOURCE_CONFIGURATION) String whitesourceConfiguration,
 
             @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES) boolean gradleResolveDependencies,
@@ -93,6 +93,7 @@ public class ResolverConfiguration {
             @JsonProperty(GRADLE_IGNORE_SOURCE_FILES) boolean gradleIgnoreSourceFiles,
             @JsonProperty(GRADLE_RUN_PRE_STEP) boolean gradleRunPreStep,
             @JsonProperty(GRADLE_IGNORE_SCOPES) String[] gradleIgnoredScopes,
+            @JsonProperty(GRADLE_LOCAL_REPOSITORY_PATH) String gradleLocalRepositoryPath,
 
             @JsonProperty(PAKET_RESOLVE_DEPENDENCIES) boolean paketResolveDependencies,
             @JsonProperty(PAKET_IGNORED_GROUPS) String[] paketIgnoredScopes,
@@ -132,66 +133,66 @@ public class ResolverConfiguration {
             @JsonProperty(HEX_IGNORE_SOURCE_FILES) boolean hexIgnoreSourceFiles,
             @JsonProperty(HEX_AGGREGATE_MODULES) boolean hexAggregateModules,
             @JsonProperty("addSha1") boolean addSha1) {
-        this.npmRunPreStep                      = npmRunPreStep;
-        this.npmIgnoreScripts                   = npmIgnoreScripts;
-        this.npmResolveDependencies             = npmResolveDependencies;
-        this.npmIncludeDevDependencies          = npmIncludeDevDependencies;
-        this.npmTimeoutDependenciesCollector    = npmTimeoutDependenciesCollector;
-        this.npmAccessToken                     = npmAccessToken;
-        this.npmIgnoreNpmLsErrors               = npmIgnoreNpmLsErrors;
-        this.npmYarnProject                     = npmYarnProject;
-        this.npmIgnoreSourceFiles               = npmIgnoreSourceFiles;
+        this.npmRunPreStep = npmRunPreStep;
+        this.npmIgnoreScripts = npmIgnoreScripts;
+        this.npmResolveDependencies = npmResolveDependencies;
+        this.npmIncludeDevDependencies = npmIncludeDevDependencies;
+        this.npmTimeoutDependenciesCollector = npmTimeoutDependenciesCollector;
+        this.npmAccessToken = npmAccessToken;
+        this.npmIgnoreNpmLsErrors = npmIgnoreNpmLsErrors;
+        this.npmYarnProject = npmYarnProject;
+        this.npmIgnoreSourceFiles = npmIgnoreSourceFiles;
 
-        this.bowerResolveDependencies   = bowerResolveDependencies;
-        this.bowerRunPreStep            = bowerRunPreStep;
-        this.bowerIgnoreSourceFiles               = bowerIgnoreSourceFiles;
+        this.bowerResolveDependencies = bowerResolveDependencies;
+        this.bowerRunPreStep = bowerRunPreStep;
+        this.bowerIgnoreSourceFiles = bowerIgnoreSourceFiles;
 
         this.nugetResolveDependencies = nugetResolveDependencies;
         this.nugetRestoreDependencies = nugetRestoreDependencies;
-        this.nugetRunPreStep          = nugetRunPreStep;
-        this.nugetIgnoreSourceFiles   = nugetIgnoreSourceFiles;
-        this.nugetResolveCsProjFiles  = nugetResolveCsProjFiles;
+        this.nugetRunPreStep = nugetRunPreStep;
+        this.nugetIgnoreSourceFiles = nugetIgnoreSourceFiles;
+        this.nugetResolveCsProjFiles = nugetResolveCsProjFiles;
         this.nugetResolvePackagesConfigFiles = nugetResolvePackagesConfigFiles;
 
-        this.mavenResolveDependencies   = mavenResolveDependencies;
-        this.mavenIgnoredScopes         = mavenIgnoredScopes;
-        this.mavenAggregateModules      = mavenAggregateModules;
-        this.mavenIgnorePomModules      = mavenIgnorePomModules;
-        this.mavenIgnoreSourceFiles     = mavenIgnoreSourceFiles;
-        this.mavenRunPreStep            = mavenRunPreStep;
+        this.mavenResolveDependencies = mavenResolveDependencies;
+        this.mavenIgnoredScopes = mavenIgnoredScopes;
+        this.mavenAggregateModules = mavenAggregateModules;
+        this.mavenIgnorePomModules = mavenIgnorePomModules;
+        this.mavenIgnoreSourceFiles = mavenIgnoreSourceFiles;
+        this.mavenRunPreStep = mavenRunPreStep;
         this.mavenIgnoreDependencyTreeErrors = mavenIgnoreDependencyTreeErrors;
 
-        this.pythonResolveDependencies      = pythonResolveDependencies;
-        this.pipPath                        = pipPath;
-        this.pythonPath                     = pythonPath;
-        this.pythonIsWssPluginInstalled     = pythonIsWssPluginInstalled;
-        this.pythonUninstallWssPlugin       = pythonUninstallWssPlugin;
-        this.pythonIgnorePipInstallErrors   = pythonIgnorePipInstallErrors;
-        this.pythonInstallVirtualenv        = pythonInstallVirtualenv;
-        this.pythonResolveHierarchyTree     = pythonResolveHierarchyTree;
+        this.pythonResolveDependencies = pythonResolveDependencies;
+        this.pipPath = pipPath;
+        this.pythonPath = pythonPath;
+        this.pythonIsWssPluginInstalled = pythonIsWssPluginInstalled;
+        this.pythonUninstallWssPlugin = pythonUninstallWssPlugin;
+        this.pythonIgnorePipInstallErrors = pythonIgnorePipInstallErrors;
+        this.pythonInstallVirtualenv = pythonInstallVirtualenv;
+        this.pythonResolveHierarchyTree = pythonResolveHierarchyTree;
         this.pythonRequirementsFileIncludes = pythonRequirementsFileIncludes;
-        this.pythonResolveSetupPyFiles      = pythonResolveSetupPyFiles;
-        this.pythonIgnoreSourceFiles        = pythonIgnoreSourceFiles;
-        this.ignorePipEnvInstallErrors      = ignorePipEnvInstallErrors;
-        this.runPipenvPreStep               = runPipenvPreStep;
-        this.pipenvInstallDevDependencies   = pipenvInstallDevDependencies;
-        this.ignoreSourceFiles          = ignoreSourceFiles;
-        this.whitesourceConfiguration   = whitesourceConfiguration;
+        this.pythonResolveSetupPyFiles = pythonResolveSetupPyFiles;
+        this.pythonIgnoreSourceFiles = pythonIgnoreSourceFiles;
+        this.ignorePipEnvInstallErrors = ignorePipEnvInstallErrors;
+        this.runPipenvPreStep = runPipenvPreStep;
+        this.pipenvInstallDevDependencies = pipenvInstallDevDependencies;
+        this.ignoreSourceFiles = ignoreSourceFiles;
+        this.whitesourceConfiguration = whitesourceConfiguration;
 
-        this.gradleResolveDependencies  = gradleResolveDependencies;
-        this.gradleAggregateModules     = gradleAggregateModules;
-        this.gradleRunAssembleCommand   = gradleRunAssembleCommand;
+        this.gradleResolveDependencies = gradleResolveDependencies;
+        this.gradleAggregateModules = gradleAggregateModules;
+        this.gradleRunAssembleCommand = gradleRunAssembleCommand;
         this.gradlePreferredEnvironment = gradlePreferredEnvironment;
-        this.gradleIgnoreSourceFiles    = gradleIgnoreSourceFiles;
-        this.gradleRunPreStep           = gradleRunPreStep;
-        this.gradleIgnoreSourceFiles    = gradleIgnoreSourceFiles;
-        this.gradleIgnoredScopes        = gradleIgnoredScopes;
+        this.gradleIgnoreSourceFiles = gradleIgnoreSourceFiles;
+        this.gradleRunPreStep = gradleRunPreStep;
+        this.gradleIgnoredScopes = gradleIgnoredScopes;
+        this.gradleLocalRepositoryPath = gradleLocalRepositoryPath;
 
-        this.paketResolveDependencies   = paketResolveDependencies;
-        this.paketIgnoredScopes         = paketIgnoredScopes;
-        this.paketRunPreStep            = paketRunPreStep;
-        this.paketPath                  = paketPath;
-        this.paketIgnoreSourceFiles     = paketIgnoreSourceFiles;
+        this.paketResolveDependencies = paketResolveDependencies;
+        this.paketIgnoredScopes = paketIgnoredScopes;
+        this.paketRunPreStep = paketRunPreStep;
+        this.paketPath = paketPath;
+        this.paketIgnoreSourceFiles = paketIgnoreSourceFiles;
 
         this.goResolveDependencies = goResolveDependencies;
         if (goDependencyManager != null && !goDependencyManager.isEmpty()) {
@@ -200,34 +201,34 @@ public class ResolverConfiguration {
         this.goCollectDependenciesAtRuntime = goCollectDependenciesAtRuntime;
         this.goGlideIgnoreTestPackages = goIgnoreTestPackages;
         this.goGlideIgnoreSourceFiles = goIgnoreSourceFiles;
-        this.goGradleEnableTaskAlias        = goGradleEnableTaskAlias;
+        this.goGradleEnableTaskAlias = goGradleEnableTaskAlias;
 
-        this.rubyResolveDependencies    = rubyResolveDependencies;
-        this.rubyRunBundleInstall       = rubyRunBundleInstall;
-        this.rubyOverwriteGemFile       = rubyOverwriteGemFile;
-        this.rubyInstallMissingGems     = rubyInstallMissingGems;
-        this.rubyIgnoreSourceFiles      = rubyIgnoreSourceFiles;
+        this.rubyResolveDependencies = rubyResolveDependencies;
+        this.rubyRunBundleInstall = rubyRunBundleInstall;
+        this.rubyOverwriteGemFile = rubyOverwriteGemFile;
+        this.rubyInstallMissingGems = rubyInstallMissingGems;
+        this.rubyIgnoreSourceFiles = rubyIgnoreSourceFiles;
 
-        this.phpResolveDependencies     = phpResolveDependencies;
-        this.phpRunPreStep              = phpRunPreStep;
-        this.phpIncludeDevDependencies  = phpIncludeDevDependencies;
+        this.phpResolveDependencies = phpResolveDependencies;
+        this.phpRunPreStep = phpRunPreStep;
+        this.phpIncludeDevDependencies = phpIncludeDevDependencies;
 
         this.sbtResolveDependencies = sbtResolveDependencies;
-        this.sbtAggregateModules    = sbtAggregateModules;
-        this.sbtRunPreStep          = sbtRunPreStep;
-        this.sbtTargetFolder        = sbtTargetFolder;
-        this.sbtIgnoreSourceFiles   = sbtIgnoreSourceFiles;
+        this.sbtAggregateModules = sbtAggregateModules;
+        this.sbtRunPreStep = sbtRunPreStep;
+        this.sbtTargetFolder = sbtTargetFolder;
+        this.sbtIgnoreSourceFiles = sbtIgnoreSourceFiles;
 
         this.htmlResolveDependencies = htmlResolveDependencies;
 
-        this.cocoapodsResolveDependencies   = cocoapodsResolveDependencies;
-        this.cocoapodsRunPreStep            = cocoapodsRunPreStep;
-        this.cocoapodsIgnoreSourceFiles     = cocoapodsIgnoreSourceFiles;
+        this.cocoapodsResolveDependencies = cocoapodsResolveDependencies;
+        this.cocoapodsRunPreStep = cocoapodsRunPreStep;
+        this.cocoapodsIgnoreSourceFiles = cocoapodsIgnoreSourceFiles;
 
         this.hexResolveDependencies = hexResolveDependencies;
-        this.hexRunPreStep          = hexRunPreStep;
-        this.hexIgnoreSourceFiles   = hexIgnoreSourceFiles;
-        this.hexAggregateModules    = hexAggregateModules;
+        this.hexRunPreStep = hexRunPreStep;
+        this.hexIgnoreSourceFiles = hexIgnoreSourceFiles;
+        this.hexAggregateModules = hexAggregateModules;
 
         this.addSha1 = addSha1;
     }
@@ -330,6 +331,8 @@ public class ResolverConfiguration {
     private boolean gradleAggregateModules;
     @FSAConfigProperty
     private String gradlePreferredEnvironment;
+    @FSAConfigProperty
+    private String gradleLocalRepositoryPath;
     @FSAConfigProperty
     private boolean gradleIgnoreSourceFiles;
     @FSAConfigProperty
@@ -434,7 +437,9 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(NPM_IGNORE_SOURCE_FILES)
-    public boolean isNpmIgnoreSourceFiles() { return npmIgnoreSourceFiles; }
+    public boolean isNpmIgnoreSourceFiles() {
+        return npmIgnoreSourceFiles;
+    }
 
     @JsonProperty(NPM_TIMEOUT_DEPENDENCIES_COLLECTOR_SECONDS)
     public long getNpmTimeoutDependenciesCollector() {
@@ -467,7 +472,9 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(BOWER_IGNORE_SOURCE_FILES)
-    public boolean isBowerIgnoreSourceFiles() { return bowerIgnoreSourceFiles; }
+    public boolean isBowerIgnoreSourceFiles() {
+        return bowerIgnoreSourceFiles;
+    }
 
     @JsonProperty(NUGET_RESOLVE_DEPENDENCIES)
     public boolean isNugetResolveDependencies() {
@@ -485,17 +492,19 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(NUGET_RESOLVE_CS_PROJ_FILES)
-    public boolean isNugetResolveCsProjFiles(){
+    public boolean isNugetResolveCsProjFiles() {
         return nugetResolveCsProjFiles;
     }
 
     @JsonProperty(NUGET_RESOLVE_PACKAGES_CONFIG_FILES)
-    public boolean isNugetResolvePackagesConfigFiles(){
+    public boolean isNugetResolvePackagesConfigFiles() {
         return nugetResolvePackagesConfigFiles;
     }
 
     @JsonProperty(NUGET_IGNORE_SOURCE_FILES)
-    public boolean isNugetIgnoreSourceFiles() { return nugetIgnoreSourceFiles; }
+    public boolean isNugetIgnoreSourceFiles() {
+        return nugetIgnoreSourceFiles;
+    }
 
     @JsonProperty(MAVEN_RESOLVE_DEPENDENCIES)
     public boolean isMavenResolveDependencies() {
@@ -513,16 +522,24 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(MAVEN_IGNORE_POM_MODULES)
-    public boolean isMavenIgnorePomModules() { return mavenIgnorePomModules; }
+    public boolean isMavenIgnorePomModules() {
+        return mavenIgnorePomModules;
+    }
 
     @JsonProperty(MAVEN_IGNORE_SOURCE_FILES)
-    public boolean isMavenIgnoreSourceFiles() { return mavenIgnoreSourceFiles; }
+    public boolean isMavenIgnoreSourceFiles() {
+        return mavenIgnoreSourceFiles;
+    }
 
     @JsonProperty(MAVEN_RUN_PRE_STEP)
-    public boolean isMavenRunPreStep() { return mavenRunPreStep; }
+    public boolean isMavenRunPreStep() {
+        return mavenRunPreStep;
+    }
 
     @JsonProperty(MAVEN_IGNORE_DEPENDENCY_TREE_ERRORS)
-    public boolean isMavenIgnoreDependencyTreeErrors() { return mavenIgnoreDependencyTreeErrors; }
+    public boolean isMavenIgnoreDependencyTreeErrors() {
+        return mavenIgnoreDependencyTreeErrors;
+    }
 
     @JsonProperty(IGNORE_SOURCE_FILES)
     public boolean isIgnoreSourceFiles() {
@@ -584,20 +601,25 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(PYTHON_IGNORE_SOURCE_FILES)
-    public boolean isPythonIgnoreSourceFiles() { return pythonIgnoreSourceFiles; }
+    public boolean isPythonIgnoreSourceFiles() {
+        return pythonIgnoreSourceFiles;
+    }
 
     @JsonProperty(PYTHON_RUN_PIPENV_PRE_STEP)
     public boolean IsRunPipenvPreStep() {
         return this.runPipenvPreStep;
     }
+
     @JsonProperty(PYTHON_IGNORE_PIPENV_INSTALL_ERRORS)
     public boolean isIgnorePipEnvInstallErrors() {
         return this.ignorePipEnvInstallErrors;
     }
+
     @JsonProperty(PYTHON_PIPENV_DEV_DEPENDENCIES)
     public boolean isPipenvInstallDevDependencies() {
         return pipenvInstallDevDependencies;
     }
+
     @JsonProperty(GRADLE_RESOLVE_DEPENDENCIES)
     public boolean isGradleResolveDependencies() {
         return gradleResolveDependencies;
@@ -614,13 +636,24 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(GRADLE_PREFERRED_ENVIRONMENT)
-    public String getGradlePreferredEnvironment() { return gradlePreferredEnvironment; }
+    public String getGradlePreferredEnvironment() {
+        return gradlePreferredEnvironment;
+    }
 
     @JsonProperty(GRADLE_IGNORE_SOURCE_FILES)
-    public boolean isGradleIgnoreSourceFiles() { return gradleIgnoreSourceFiles; }
+    public boolean isGradleIgnoreSourceFiles() {
+        return gradleIgnoreSourceFiles;
+    }
 
     @JsonProperty(GRADLE_RUN_PRE_STEP)
-    public boolean isGradleRunPreStep() { return gradleRunPreStep; }
+    public boolean isGradleRunPreStep() {
+        return gradleRunPreStep;
+    }
+
+    @JsonProperty(GRADLE_LOCAL_REPOSITORY_PATH)
+    public String getGradleLocalRepositoryPath() {
+        return gradleLocalRepositoryPath;
+    }
 
     @JsonProperty(PAKET_RESOLVE_DEPENDENCIES)
     public boolean isPaketResolveDependencies() {
@@ -643,7 +676,9 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(PAKET_IGNORE_SOURCE_FILES)
-    public boolean isPaketIgnoreSourceFiles() { return paketIgnoreSourceFiles; }
+    public boolean isPaketIgnoreSourceFiles() {
+        return paketIgnoreSourceFiles;
+    }
 
     @JsonProperty(GO_RESOLVE_DEPENDENCIES)
     public boolean isGoResolveDependencies() {
@@ -666,10 +701,14 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(GO_IGNORE_SOURCE_FILES)
-    public boolean isGoGlideIgnoreSourceFiles() { return goGlideIgnoreSourceFiles; }
+    public boolean isGoGlideIgnoreSourceFiles() {
+        return goGlideIgnoreSourceFiles;
+    }
 
     @JsonProperty(GO_GRADLE_ENABLE_TASK_ALIAS)
-    public boolean isGoGradleEnableTaskAlias(){  return goGradleEnableTaskAlias;    }
+    public boolean isGoGradleEnableTaskAlias() {
+        return goGradleEnableTaskAlias;
+    }
 
     @JsonProperty(RUBY_RESOLVE_DEPENDENCIES)
     public boolean isRubyResolveDependencies() {
@@ -692,7 +731,9 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(RUBY_IGNORE_SOURCE_FILES)
-    public boolean isRubyIgnoreSourceFiles() { return rubyIgnoreSourceFiles; }
+    public boolean isRubyIgnoreSourceFiles() {
+        return rubyIgnoreSourceFiles;
+    }
 
     @JsonProperty(PHP_RESOLVE_DEPENDENCIES)
     public boolean isPhpResolveDependencies() {
@@ -730,7 +771,9 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(SBT_IGNORE_SOURCE_FILES)
-    public boolean isSbtIgnoreSourceFiles() { return sbtIgnoreSourceFiles; }
+    public boolean isSbtIgnoreSourceFiles() {
+        return sbtIgnoreSourceFiles;
+    }
 
     @JsonProperty(HTML_RESOLVE_DEPENDENCIES)
     public boolean isHtmlResolveDependencies() {
@@ -748,25 +791,27 @@ public class ResolverConfiguration {
     }
 
     @JsonProperty(COCOAPODS_IGNORE_SOURCE_FILES)
-    public boolean isCocoapodsIgnoreSourceFiles() { return cocoapodsIgnoreSourceFiles; }
+    public boolean isCocoapodsIgnoreSourceFiles() {
+        return cocoapodsIgnoreSourceFiles;
+    }
 
     @JsonProperty(HEX_RESOLVE_DEPENDENECIES)
-    public boolean isHexResolveDependencies(){
+    public boolean isHexResolveDependencies() {
         return hexResolveDependencies;
     }
 
     @JsonProperty(HEX_IGNORE_SOURCE_FILES)
-    public boolean isHexIgnoreSourceFiles(){
+    public boolean isHexIgnoreSourceFiles() {
         return hexIgnoreSourceFiles;
     }
 
     @JsonProperty(HEX_RUN_PRE_STEP)
-    public boolean isHexRunPreStep(){
+    public boolean isHexRunPreStep() {
         return hexRunPreStep;
     }
 
     @JsonProperty(HEX_AGGREGATE_MODULES)
-    public boolean isHexAggregateModules(){
+    public boolean isHexAggregateModules() {
         return hexAggregateModules;
     }
 
@@ -774,20 +819,20 @@ public class ResolverConfiguration {
         return this.gradleIgnoredScopes;
     }
 
-    public boolean isAddSha1(){ return addSha1; }
+    public boolean isAddSha1() {
+        return addSha1;
+    }
 
     @Override
     public String toString() {
         logger = LoggerFactory.getLogger(ResolverConfiguration.class);
         StringBuilder result = new StringBuilder();
         Field[] fields = this.getClass().getDeclaredFields();
-
         String newResolver;
         String currentResolver = null;
-        List<String> resolversList = Arrays.asList("npm", "bower", "nuget", "maven", "python",  "gradle", "paket", "go", "ruby", "php", "sbt", "html", "cocoapods", "hex");
+        List<String> resolversList = Arrays.asList("npm", "bower", "nuget", "maven", "python", "gradle", "paket", "go", "ruby", "php", "sbt", "html", "cocoapods", "hex");
         for (Field field : fields) {
             if (field.isAnnotationPresent(FSAConfigProperty.class)) {
-
                 try {
                     field.setAccessible(true);
                     String name = field.getName();
@@ -804,16 +849,14 @@ public class ResolverConfiguration {
                             newResolver = m.group();
                             if (resolversList.contains(newResolver.toLowerCase())) {
                                 if (currentResolver == null || !currentResolver.equals(newResolver)) {
-                                    if(currentResolver != null) {
+                                    if (currentResolver != null) {
                                         result.append(Constants.CLOSE_CURLY_BRACKET);
                                         result.append(Constants.NEW_LINE);
                                     }
                                     result.append(newResolver);
                                     result.append(": {");
                                     currentResolver = newResolver;
-
                                 }
-
                             } else {
                                 // This block for parameters that are not belong to each resolver
                                 result.append(field.getName() + Constants.EQUALS + value + Constants.NEW_LINE);
@@ -821,7 +864,6 @@ public class ResolverConfiguration {
                             }
                         }
                     }
-
                     if (value == null) {
                         result.append(field.getName() + Constants.EQUALS + Constants.EMPTY_STRING + Constants.COMMA + Constants.WHITESPACE);
                     } else {
@@ -831,9 +873,8 @@ public class ResolverConfiguration {
                             result.append(field.getName() + Constants.EQUALS + value + Constants.COMMA + Constants.WHITESPACE);
                         }
                     }
-
                 } catch (IllegalAccessException e) {
-                   logger.debug("Failed in Resolvers Configuration parsing toString - {}. Exception: {}", e.getMessage(), e.getStackTrace());
+                    logger.debug("Failed in Resolvers Configuration parsing toString - {}. Exception: {}", e.getMessage(), e.getStackTrace());
                 }
             }
         }

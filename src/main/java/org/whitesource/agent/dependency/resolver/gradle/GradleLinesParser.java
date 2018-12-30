@@ -7,14 +7,13 @@ import org.whitesource.agent.Constants;
 import org.whitesource.agent.api.model.DependencyInfo;
 import org.whitesource.agent.api.model.DependencyType;
 import org.whitesource.agent.dependency.resolver.maven.MavenTreeDependencyCollector;
+import org.whitesource.agent.utils.FilesScanner;
 import org.whitesource.agent.utils.FilesUtils;
 import org.whitesource.agent.utils.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,6 +40,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private static final int INDENTETION_SPACE = 5;
     private static final String JAR_EXTENSION = Constants.DOT + Constants.JAR;
     private static final String ASTERIX = "(*)";
+    public static final String[] GRADLE_PARSER_EXCLUDES = {"-sources"};
 
     private String fileSeparator;
     private String dotGradlePath;
@@ -53,30 +53,32 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
     private String javaDirPath;
     private String mainDirPath;
     private String srcDirPath;
+    private String gradleLocalRepositoryPath;
     private boolean removeJavaDir;
     private boolean removeMainDir;
     private boolean removeSrcDir;
     private boolean removeJavaFile;
     private boolean mavenFound = true;
 
-    GradleLinesParser(boolean runAssembleCommand, GradleCli gradleCli){
+    GradleLinesParser(boolean runAssembleCommand, GradleCli gradleCli, String gradleLocalRepositoryPath) {
         // send maven.runPreStep default value "false", irrelevant for gradle dependency resolution. (WSE-860)
         super(null, true, false, false);
         this.runAssembleCommand = runAssembleCommand;
+        this.gradleLocalRepositoryPath = gradleLocalRepositoryPath;
         // using the same 'gradleCli' object as the GradleDependencyResolver for if the value of 'preferredEnvironment' changes,
         // it should change for both GradleLInesParser and GradleDependencyResolver
         this.gradleCli = gradleCli;
         fileSeparator = System.getProperty(Constants.FILE_SEPARATOR);
         srcDirPath = fileSeparator + Constants.SRC;
         mainDirPath = srcDirPath + fileSeparator + MAIN;
-        javaDirPath = mainDirPath + fileSeparator+ JAVA;
+        javaDirPath = mainDirPath + fileSeparator + JAVA;
     }
 
     public List<DependencyInfo> parseLines(List<String> lines, String rootDirectory, String directoryName, String[] ignoredScopes, String bomFile) {
-        if (StringUtils.isBlank(dotGradlePath)){
+        if (StringUtils.isBlank(dotGradlePath)) {
             this.dotGradlePath = getDotGradleFolderPath();
         }
-        if (this.dotGradlePath == null){
+        if (this.dotGradlePath == null) {
             return new ArrayList<>();
         }
         this.rootDirectory = rootDirectory;
@@ -89,7 +91,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             lines = ignoreScopesOfGradleDependencies(ignoredScopes, lines);
         }
         List<String> projectsLines = lines.stream()
-                .filter(line->(line.contains(PLUS) || line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))
+                .filter(line -> (line.contains(PLUS) || line.contains(SLASH) || line.contains(Constants.PIPE)) && !line.contains(ASTERIX))
                 .collect(Collectors.toList());
         List<DependencyInfo> dependenciesList = new ArrayList<>();
         Stack<DependencyInfo> parentDependencies = new Stack<>();
@@ -97,10 +99,10 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         int prevLineIndentation = 0;
         boolean duplicateDependency = false;
         boolean insideProject = false;
-        for (String line : projectsLines){
+        for (String line : projectsLines) {
             try {
-                if (line.indexOf(Constants.COLON) == -1 || line.contains(PROJECT)){
-                    if (line.contains(PROJECT)){
+                if (line.indexOf(Constants.COLON) == -1 || line.contains(PROJECT)) {
+                    if (line.contains(PROJECT)) {
                         /*
                         * there may be such scenarios -
                          \--- project :tapestry-ioc
@@ -158,7 +160,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 }
                 currentDependency.setDependencyType(DependencyType.GRADLE);
 
-                if (dependenciesList.contains(currentDependency)){
+                if (dependenciesList.contains(currentDependency)) {
                     duplicateDependency = true;
                     continue;
                 }
@@ -168,23 +170,23 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                         continue;
                     }
                     // Check if 2 dependencies are siblings (under the hierarchy level)
-                    if (lastSpace == prevLineIndentation){
+                    if (lastSpace == prevLineIndentation) {
                         parentDependencies.pop();
 
                     } else if (lastSpace < prevLineIndentation) {
-                    // Find father dependency of current node
+                        // Find father dependency of current node
                     /*+--- org.webjars.npm:isurl:1.0.0
                       |    +--- org.webjars.npm:has-to-string-tag-x:[1.2.0,2) -> 1.4.1
                       |    |    \--- org.webjars.npm:has-symbol-support-x:[1.4.1,2) -> 1.4.1
                       |    \--- org.webjars.npm:is-object:[1.0.1,2) -> 1.0.1
                     */
-                        while (prevLineIndentation > lastSpace - INDENTETION_SPACE && !parentDependencies.isEmpty()){
+                        while (prevLineIndentation > lastSpace - INDENTETION_SPACE && !parentDependencies.isEmpty()) {
                             parentDependencies.pop();
                             prevLineIndentation -= INDENTETION_SPACE;
                         }
                     }
 
-                    if(!parentDependencies.isEmpty()) {
+                    if (!parentDependencies.isEmpty()) {
                         parentDependencies.peek().getChildren().add(currentDependency);
                     } else {
                         // if - for some reason - this is a transitive dependency but the parent-dependencies stack is empty,
@@ -200,8 +202,8 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                     parentDependencies.push(currentDependency);
                 }
                 prevLineIndentation = lastSpace;
-            } catch (Exception e){
-                logger.warn("Couldn't parse line {}, error: {} - {}",line, e.getClass().toString(), e.getMessage());
+            } catch (Exception e) {
+                logger.warn("Couldn't parse line {}, error: {} - {}", line, e.getClass().toString(), e.getMessage());
                 logger.debug("Exception: {}", e.getStackTrace());
             }
         }
@@ -216,12 +218,12 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             if (Character.isLetter(line.charAt(0))) {
                 int indexOfWhiteSpace = line.indexOf(' ');
                 // in case line is a single word take it.. else take the first word before whitespace
-                if(indexOfWhiteSpace == -1) {
+                if (indexOfWhiteSpace == -1) {
                     scope = line;
                 } else {
                     scope = line.substring(0, indexOfWhiteSpace);
                 }
-                gradleScopes.put(scope,"");
+                gradleScopes.put(scope, "");
             } else {
                 if (gradleScopes.containsKey(scope)) {
                     String strConcatinator = gradleScopes.get(scope);
@@ -240,42 +242,62 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
 
     private String getDotGradleFolderPath() {
         String currentUsersHomeDir = System.getProperty(Constants.USER_HOME);
-        File dotGradle = Paths.get(currentUsersHomeDir, ".gradle", "caches","modules-2","files-2.1").toFile();
+        File dotGradle = Paths.get(currentUsersHomeDir, ".gradle", "caches", "modules-2", "files-2.1").toFile();
 
         if (dotGradle.exists()) {
             return dotGradle.getAbsolutePath();
         }
         logger.error("Could not get .gradle path, dependencies information will not be send to WhiteSource server.");
-        return  null;
+        return null;
     }
 
-    private DependencyFile getDependencySha1(DependencyInfo dependencyInfo){
+    private DependencyFile getDependencySha1(DependencyInfo dependencyInfo) {
         DependencyFile dependencyFile = getSha1FromGradleCache(dependencyInfo);
-        if (dependencyFile == null){
+        if (dependencyFile == null) {
             // if dependency not found in .gradle cache - looking for it in .m2 cache
             dependencyFile = getSha1FromM2(dependencyInfo);
-            if (dependencyFile == null || dependencyFile.getSha1().equals(Constants.EMPTY_STRING)){
+            if (dependencyFile == null || dependencyFile.getSha1().equals(Constants.EMPTY_STRING)) {
                 // if dependency not found in .m2 cache - running 'gradle assemble' command which should download the dependency to .grade cache
                 // making sure the download attempt is performed only once for a directory, otherwise there might be an infinite loop
-                if(!rootDirectory.concat(directoryName).equals(prevRootDirectory)){
+                if (!rootDirectory.concat(directoryName).equals(prevRootDirectory)) {
                     dependenciesDownloadAttemptPerformed = false;
                 }
-                if (!dependenciesDownloadAttemptPerformed && downloadDependencies()){
+                if (!dependenciesDownloadAttemptPerformed && downloadDependencies()) {
                     dependencyFile = getDependencySha1(dependencyInfo);
                 } else {
-                    logger.error("Couldn't find sha1 for " + dependencyInfo.getGroupId() + Constants.DOT +
-                            dependencyInfo.getArtifactId() + Constants.DOT + dependencyInfo.getVersion());
+                    dependencyFile = getSha1FromLocalRepo(dependencyInfo);
+                    if (dependencyFile == null) {
+                        logger.error("Couldn't find sha1 for " + dependencyInfo.getGroupId() + Constants.DOT +
+                                dependencyInfo.getArtifactId() + Constants.DOT + dependencyInfo.getVersion());
+                    }
                 }
             }
         }
         return dependencyFile;
     }
 
-    private DependencyFile getSha1FromGradleCache(DependencyInfo dependencyInfo){
+    // get sha1 form local repository
+    private DependencyFile getSha1FromLocalRepo(DependencyInfo dependencyInfo) {
+        File localRepo = new File(gradleLocalRepositoryPath);
+        DependencyFile dependencyFile = null;
+        if (localRepo.exists() && localRepo.isDirectory()) {
+            String artifactId = dependencyInfo.getArtifactId();
+            String version = dependencyInfo.getVersion();
+            String dependencyName = artifactId + Constants.DASH + version;
+            logger.debug("Looking for " + dependencyName + " in {}", localRepo.getPath());
+            dependencyFile = findDependencySha1(dependencyName, gradleLocalRepositoryPath);
+        } else {
+            logger.warn("Could not find path {}", localRepo.getPath());
+        }
+        return dependencyFile;
+    }
+
+    private DependencyFile getSha1FromGradleCache(DependencyInfo dependencyInfo) {
         String groupId = dependencyInfo.getGroupId();
         String artifactId = dependencyInfo.getArtifactId();
         String version = dependencyInfo.getVersion();
         logger.debug("looking for " + groupId + "." + artifactId + "." + version + " in .gradle cache");
+        String dependencyName = artifactId + Constants.DASH + version;
         DependencyFile dependencyFile = null;
         // gradle file path includes the sha1
         if (dotGradlePath != null) {
@@ -285,27 +307,16 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             // 2 folders one for pom and another for the jar. Look for the one with the jar in order to get the sha1
             // .gradle\caches\modules-2\files-2.1\junit\junit\4.12\2973d150c0dc1fefe998f834810d68f278ea58ec
             if (dependencyFolder.isDirectory()) {
-                outerloop:
-                for (File folder : dependencyFolder.listFiles()) {
-                    if (folder.isDirectory()) {
-                        for (File file : folder.listFiles()) {
-                            if ((file.getName().endsWith(Constants.JAR_EXTENSION) || file.getName().endsWith(AAR_EXTENSION) || file.getName().endsWith(EXE_EXTENSION)) && !file.getName().contains("-sources")) {
-                                String sha1 = getSha1(file.getPath());
-                                dependencyFile = new DependencyFile(sha1,file);
-                                break outerloop;
-                            }
-                        }
-                    }
-                }
+                dependencyFile = findDependencySha1(dependencyName, pathToDependency);
             }
         }
-        if (dependencyFile == null){
-            logger.debug("Couldn't find sha1 for " + groupId + Constants.DOT + artifactId + Constants.DOT + version + " inside .gradle cache." );
+        if (dependencyFile == null) {
+            logger.debug("Couldn't find sha1 for " + groupId + Constants.DOT + artifactId + Constants.DOT + version + " inside .gradle cache.");
         }
         return dependencyFile;
     }
 
-    private DependencyFile getSha1FromM2(DependencyInfo dependencyInfo){
+    private DependencyFile getSha1FromM2(DependencyInfo dependencyInfo) {
         if (!mavenFound)
             return null;
         String groupId = dependencyInfo.getGroupId();
@@ -313,27 +324,27 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         String version = dependencyInfo.getVersion();
         logger.debug("looking for " + groupId + "." + artifactId + "." + version + " in .m2 cache");
         DependencyFile dependencyFile = null;
-        if (StringUtils.isBlank(M2Path)){
+        if (StringUtils.isBlank(M2Path)) {
             this.M2Path = getMavenM2Path(Constants.DOT);
-            if (M2Path == null){
+            if (M2Path == null) {
                 logger.debug("Couldn't find .m2 path - maven is not installed");
                 mavenFound = false;
                 return null;
             }
         }
 
-        String pathToDependency = M2Path.concat(fileSeparator + String.join(fileSeparator,groupId.split("\\.")) +
+        String pathToDependency = M2Path.concat(fileSeparator + String.join(fileSeparator, groupId.split("\\.")) +
                 fileSeparator + artifactId + fileSeparator + version
                 + fileSeparator + artifactId + Constants.DASH + version + Constants.JAR_EXTENSION);
         File file = new File(pathToDependency);
         if (file.isFile()) {
             String sha1 = getSha1(pathToDependency);
-            dependencyFile = new DependencyFile(sha1,file);
+            dependencyFile = new DependencyFile(sha1, file);
             if (sha1.equals(Constants.EMPTY_STRING)) {
                 logger.debug("Couldn't calculate sha1 for " + groupId + Constants.DOT + artifactId + Constants.DOT + version + ".  ");
             }
         } else {
-            logger.debug("Couldn't find sha1 for " + groupId + Constants.DOT + artifactId + Constants.DOT + version + " inside .m2 cache." );
+            logger.debug("Couldn't find sha1 for " + groupId + Constants.DOT + artifactId + Constants.DOT + version + " inside .m2 cache.");
         }
         return dependencyFile;
     }
@@ -350,7 +361,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                 List<String> lines = gradleCli.runCmd(rootDirectory, gradleCommandParams);
                 //removeTempJavaFolder();
                 String errors = FilesUtils.removeTempFiles(rootDirectory, creationTime);
-                if (!errors.isEmpty()){
+                if (!errors.isEmpty()) {
                     logger.error(errors);
                 }
                 if (!lines.isEmpty()) {
@@ -360,7 +371,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
                         }
                     }
                 }
-            } catch (IOException e){
+            } catch (IOException e) {
                 logger.debug("Failed running 'gradle assemble' command, got exception: " + e.getMessage());
             }
         } else {
@@ -370,7 +381,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         return false;
     }
 
-    private void validateJavaFileExistence() throws IOException{
+    private void validateJavaFileExistence() throws IOException {
         // the 'gradle assemble' command, existence of a java file (even empty) inside 'src/main/java' is required.
         // therefore, verifying the file and the path exist - if not creating it, and after running the assemble command removing the item that was added
         String javaDirPath = rootDirectory + directoryName + this.javaDirPath;
@@ -378,7 +389,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
         String srcDirPath = rootDirectory + directoryName + this.srcDirPath;
         File srcDir = new File(srcDirPath);
         removeSrcDir = false;
-        if (!srcDir.isDirectory()){ // src folder doesn't exist - create the whole tree
+        if (!srcDir.isDirectory()) { // src folder doesn't exist - create the whole tree
             FileUtils.forceMkdir(javaDir);
             logger.debug("no 'src' folder, created temp " + javaDirPath);
             removeSrcDir = true;
@@ -386,7 +397,7 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             String mainDirPath = rootDirectory + directoryName + this.mainDirPath;
             File mainDir = new File(mainDirPath);
             removeMainDir = false;
-            if (!mainDir.isDirectory()){ // main folder doesn't exist - create it with its sub-folder
+            if (!mainDir.isDirectory()) { // main folder doesn't exist - create it with its sub-folder
                 FileUtils.forceMkdir(javaDir);
                 logger.debug("no 'src/main' folder, created temp " + javaDirPath);
                 removeMainDir = true;
@@ -400,27 +411,53 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             }
         }
         removeJavaFile = false;
-        if (!javaFileExists(rootDirectory + directoryName + this.javaDirPath)){ // the java folder doesn't have any java file inside it - creating a temp file
+        if (!javaFileExists(rootDirectory + directoryName + this.javaDirPath)) { // the java folder doesn't have any java file inside it - creating a temp file
             File javaFile = new File(javaDirPath + fileSeparator + TMP_JAVA_FILE);
             removeJavaFile = javaFile.createNewFile();
             logger.debug("no java file, created temp " + javaFile.getPath());
         }
     }
 
-    private boolean javaFileExists(String directoryName){
+    private boolean javaFileExists(String directoryName) {
         File directory = new File(directoryName);
         File[] fList = directory.listFiles();
-        if (fList != null){
-            for (File file : fList){
-                if (file.isFile()){
+        if (fList != null) {
+            for (File file : fList) {
+                if (file.isFile()) {
                     if (file.getName().endsWith(JAVA_EXTENSION))
                         return true;
-                } else if (file.isDirectory()){
+                } else if (file.isDirectory()) {
                     return javaFileExists(file.getAbsolutePath());
                 }
             }
         }
         return false;
+    }
+
+    private DependencyFile findDependencySha1(String dependencyName, String pathToDependency) {
+        FilesScanner filesScanner = new FilesScanner();
+        DependencyFile dependencyFile = null;
+        String[] parserIncludes = new String[]{Constants.GLOB_PATTERN_PREFIX + dependencyName + JAR_EXTENSION, Constants.GLOB_PATTERN_PREFIX + dependencyName + EXE_EXTENSION,
+                Constants.GLOB_PATTERN_PREFIX + dependencyName + AAR_EXTENSION};
+        String[] directoryContent = filesScanner.getDirectoryContent(pathToDependency, parserIncludes, GRADLE_PARSER_EXCLUDES,
+                true, false, false);
+        if (directoryContent.length != 0) {
+            for (String dependencyFileName : directoryContent) {
+                if (dependencyFileName.contains(dependencyName)) {
+                    String sha1 = getSha1(pathToDependency + File.separator + dependencyFileName);
+                    // try to find the first file match
+                    if (StringUtils.isNotBlank(sha1)) {
+                        dependencyFile = new DependencyFile(sha1, new File(pathToDependency + File.separator + dependencyFileName));
+                        break;
+                    } else {
+                        logger.debug("Couldn't find sha1 for " + pathToDependency + File.separator + dependencyFileName + " inside .gradle cache.");
+                    }
+                }
+            }
+        } else {
+            logger.debug("Could not find the dependency {} in {}", dependencyName, pathToDependency);
+        }
+        return dependencyFile;
     }
 
     // removing only the folders/ file that were created
@@ -429,23 +466,23 @@ public class GradleLinesParser extends MavenTreeDependencyCollector {
             FileUtils.forceDelete(new File(rootDirectory + directoryName + this.javaDirPath));
         } else if (removeMainDir) {
             FileUtils.forceDelete(new File(rootDirectory + directoryName + this.mainDirPath));
-        } else if (removeSrcDir){
+        } else if (removeSrcDir) {
             FileUtils.forceDelete(new File(rootDirectory + directoryName + this.srcDirPath));
-        } else if (removeJavaFile){
+        } else if (removeJavaFile) {
             FileUtils.forceDelete(new File(rootDirectory + directoryName + javaDirPath + fileSeparator + TMP_JAVA_FILE));
         }
     }
 
     private class DependencyFile {
-       private String sha1;
-       private String filePath;
-       private String fileName;
+        private String sha1;
+        private String filePath;
+        private String fileName;
 
-       public DependencyFile(String sha1, File file){
-           this.sha1 = sha1;
-           this.filePath = file.getPath();
-           this.fileName = file.getName();
-       }
+        public DependencyFile(String sha1, File file) {
+            this.sha1 = sha1;
+            this.filePath = file.getPath();
+            this.fileName = file.getName();
+        }
 
         public String getSha1() {
             return sha1;

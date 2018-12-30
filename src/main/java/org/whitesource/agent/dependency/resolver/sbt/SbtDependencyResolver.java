@@ -150,8 +150,13 @@ public class SbtDependencyResolver extends AbstractDependencyResolver {
     }
 
     @Override
-    protected String[] getBomPattern() {
-        return new String[]{"**" + fileSeparator + BUILD_SBT};
+    public String[] getBomPattern() {
+        return new String[]{Constants.PATTERN + BUILD_SBT};
+    }
+
+    @Override
+    public Collection<String> getManifestFiles(){
+        return Arrays.asList(BUILD_SBT);
     }
 
     @Override

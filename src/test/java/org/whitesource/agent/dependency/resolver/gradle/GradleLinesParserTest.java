@@ -19,14 +19,14 @@ public class GradleLinesParserTest {
     private GradleLinesParser gradleLinesParser;
 
     @Before
-    public void setup(){
-        gradleLinesParser = new GradleLinesParser(false, new GradleCli(Constants.GRADLE_WRAPPER));
+    public void setup() {
+        gradleLinesParser = new GradleLinesParser(false, new GradleCli(Constants.GRADLE_WRAPPER), Constants.EMPTY_STRING);
     }
 
     @Ignore
     @Test
     public void parseLines() throws IOException {
-        String[] params = new String[] {Constants.CMD, "/c", "gradle", Constants.DEPENDENCIES};
+        String[] params = new String[]{Constants.CMD, "/c", "gradle", Constants.DEPENDENCIES};
         String folderPath = Paths.get(Constants.DOT).toAbsolutePath().normalize().toString() +
                 TestHelper.getOsRelativePath("\\src\\test\\resources\\resolver\\gradle\\sample\\");
         CommandLineProcess commandLineProcess = new CommandLineProcess(folderPath, params);
@@ -36,7 +36,7 @@ public class GradleLinesParserTest {
 
     @Ignore
     @Test
-    public void parseLineFromFile(){
+    public void parseLineFromFile() {
         File file = TestHelper.getFileFromResources("resolver/gradle/lines.txt");
         List<String> lines = readFileAsList(file.getAbsolutePath());
         List<DependencyInfo> dependencyInfoList = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING,new String[0], null);
@@ -61,7 +61,7 @@ public class GradleLinesParserTest {
 
     @Ignore
     @Test
-    public void parseLinesFromString(){
+    public void parseLinesFromString() {
         List<String> lines = new ArrayList<>();
         lines.add("+--- com.google.guava:guava:23.0");
         lines.add("|    +--- com.google.code.findbugs:jsr305:1.3.9");
@@ -116,7 +116,7 @@ public class GradleLinesParserTest {
 
     @Ignore
     @Test
-    public void parseLinesFromString3(){
+    public void parseLinesFromString3() {
         List<String> lines = new ArrayList<>();
         lines.add("archives - Configuration for archive artifacts.");
         lines.add("No dependencies");
@@ -206,6 +206,22 @@ public class GradleLinesParserTest {
         lines.add("4 actionable tasks: 4 executed");
         List<DependencyInfo> dependencyInfos = gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING, new String[0], null);
         //Assert.assertTrue(dependencyInfos.get(2).getChildren().iterator().next().getVersion().equals("4.1.6.RELEASE"));
+    }
+
+    @Ignore
+    @Test
+    public void parseLinesFromString5() {
+        List<String> lines = new ArrayList<>();
+        lines.add("|-- github.com/astaxie/beego:053a075");
+        lines.add("|-- github.com/eRez-ws/go-stringUtil:99cfd8b");
+        lines.add("|-- github.com/eladSalti/go_test-t:99cfd8b");
+        lines.add("|-- github.com/garyburd/redigo:569eae5");
+        lines.add("|-- github.com/google/go-querystring:44c6ddd");
+        lines.add("|-- golang.org/x/crypto:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/golang.org/x/crypto");
+        lines.add("|-- golang.org/x/net:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/golang.org/x/net");
+        lines.add("|-- google.golang.org/appengine:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/google.golang.org/appengine");
+        lines.add("\\-- gopkg.in/yaml.v2:github.com/astaxie/beego#053a075344c118a5cc41981b29ef612bb53d20ca/vendor/gopkg.in/yaml.v2");
+        gradleLinesParser.parseLines(lines, Constants.EMPTY_STRING, Constants.EMPTY_STRING, new String[0],null);
     }
 
 }

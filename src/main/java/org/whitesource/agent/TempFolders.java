@@ -11,6 +11,7 @@ public class TempFolders {
 
     /* --- Static members --- */
 
+    private static final String PATH_TO_TEMP_DIR = System.getProperty("java.io.tmpdir");
     private static final String WHITESOURCE_ARCHIVE_EXTRACTOR = "WhiteSource-ArchiveExtractor";
     private static final String WHITE_BUILD_GRADLE_FOLDER = "WhiteSource-Build-Gradle";
     private static final String WHITESOURCE_HTML_RESOLVER = "WhiteSource-html-resolver";
@@ -29,11 +30,16 @@ public class TempFolders {
     public static final String UNIQUE_PLATFORM_DEPENDENT_TEMP_FOLDER = UniqueNamesGenerator.createUniqueName(WHITESOURCE_PLATFORM_DEPENDENT_TMP_DIR, Constants.EMPTY_STRING);
     public static final String UNIQUE_WHITESOURCE_ARCHIVE_EXTRACTOR_TEMP_FOLDER = UniqueNamesGenerator.createUniqueName(WHITESOURCE_ARCHIVE_EXTRACTOR, Constants.EMPTY_STRING);
 
-    private static final String PATH_TO_ARCHIVE_EXTRACTOR = Paths.get(System.getProperty("java.io.tmpdir"), WHITESOURCE_ARCHIVE_EXTRACTOR).toString();
-    private static final String PATH_TO_SCM_CONNECTOR_TMP_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir"), UNIQUE_SCM_TEMP_FOLDER).toString();
+    private static final String PATH_TO_UNIQUE_HTML_TEMP_FOLDER = Paths.get(PATH_TO_TEMP_DIR, UNIQUE_HTML_TEMP_FOLDER).toString();
+    private static final String PATH_TO_UNIQUE_GRADLE_TEMP_FOLDER = Paths.get(PATH_TO_TEMP_DIR, UNIQUE_GRADLE_TEMP_FOLDER).toString();
+    private static final String PATH_TO_UNIQUE_DOTNET_TEMP_FOLDER = Paths.get(PATH_TO_TEMP_DIR, UNIQUE_DOTNET_TEMP_FOLDER).toString();
+    private static final String PATH_TO_UNIQUE_PYTHON_TEMP_FOLDER = Paths.get(PATH_TO_TEMP_DIR, UNIQUE_PYTHON_TEMP_FOLDER).toString();
+    private static final String PATH_TO_UNIQUE_DOCKER_TEMP_FOLDER = Paths.get(PATH_TO_TEMP_DIR, UNIQUE_DOCKER_TEMP_FOLDER).toString();
+    private static final String PATH_TO_SCM_CONNECTOR_TMP_DIRECTORY = Paths.get(PATH_TO_TEMP_DIR, UNIQUE_SCM_TEMP_FOLDER).toString();
+    private static final String PATH_TO_UNIQUE_ARCHIVE_EXTRACTOR_TEMP_FOLDER = Paths.get(PATH_TO_TEMP_DIR, UNIQUE_WHITESOURCE_ARCHIVE_EXTRACTOR_TEMP_FOLDER).toString();
 
     // Agents api temp folder - CheckSumUtils folder :: calculateOtherPlatformSha1 method
-    private static final String PATH_TO_PLATFORM_DEPENDENT_TMP_DIR = Paths.get(System.getProperty("java.io.tmpdir"), UNIQUE_PLATFORM_DEPENDENT_TEMP_FOLDER).toString();
+    private static final String PATH_TO_PLATFORM_DEPENDENT_TMP_DIR = Paths.get(PATH_TO_TEMP_DIR, UNIQUE_PLATFORM_DEPENDENT_TEMP_FOLDER).toString();
 
     /* --- Constructors --- */
 
@@ -44,9 +50,14 @@ public class TempFolders {
     /* --- Methods --- */
 
     public void deleteTempFolders() {
-        deleteTempFoldersHelper(PATH_TO_ARCHIVE_EXTRACTOR);
+        deleteTempFoldersHelper(PATH_TO_UNIQUE_HTML_TEMP_FOLDER);
+        deleteTempFoldersHelper(PATH_TO_UNIQUE_GRADLE_TEMP_FOLDER);
+        deleteTempFoldersHelper(PATH_TO_UNIQUE_DOTNET_TEMP_FOLDER);
+        deleteTempFoldersHelper(PATH_TO_UNIQUE_PYTHON_TEMP_FOLDER);
+        deleteTempFoldersHelper(PATH_TO_UNIQUE_DOCKER_TEMP_FOLDER);
         deleteTempFoldersHelper(PATH_TO_SCM_CONNECTOR_TMP_DIRECTORY);
         deleteTempFoldersHelper(PATH_TO_PLATFORM_DEPENDENT_TMP_DIR);
+        deleteTempFoldersHelper(PATH_TO_UNIQUE_ARCHIVE_EXTRACTOR_TEMP_FOLDER);
     }
 
     public void deleteTempFoldersHelper(String path) {
