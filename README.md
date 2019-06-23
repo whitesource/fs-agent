@@ -1,6 +1,8 @@
 WhiteSource File System Agent
 ==============================
 
+**As part of WhiteSource's [Unified Agent](https://whitesource.atlassian.net/wiki/spaces/WD/pages/33718339/Unified+Agent) strategy and roadmap, we have updated the latest versions of the Unified Agent (v18.12.2 and above) with a WhiteSource commercial license. A separate GitHub-based distribution [repository](https://github.com/whitesource/unified-agent-distribution) contains versions 18.12.2 and above of the Unified Agent. Click [here](https://whitesource.atlassian.net/wiki/spaces/WD/pages/718405635/WhiteSource+Unified+Agent+Updates+January+2019) for more information on these changes.**
+
 An [external update agent][1] for projects.
 
 The agent looks for open source usage in your projects and update your [White Source][2] account.
